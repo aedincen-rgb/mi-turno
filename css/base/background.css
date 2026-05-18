@@ -1,0 +1,20 @@
+/* ════════════════════════════════════════════════════════════════
+   MI TURNO · base/background.css
+   Formas de fondo flotantes
+   ════════════════════════════════════════════════════════════════ */
+
+.bg-shapes{opacity:0.5;}
+
+.bg-shapes{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
+
+.shape-1{top:-10%;left:-10%;width:60vw;height:60vw;background:var(--accent);opacity:0.10;}
+
+.shape-1{opacity:0.07;}
+
+.shape-2{bottom:-10%;right:-15%;width:70vw;height:70vw;background:var(--accent2);opacity:0.08;animation-delay:-5s;}
+
+.shape-2{opacity:0.06;}
+
+.shape-3{top:35%;left:55%;width:50vw;height:50vw;background:var(--accent-deep);opacity:0.06;animation-delay:-10s;}
+
+.shape-3{opacity:0.04;}

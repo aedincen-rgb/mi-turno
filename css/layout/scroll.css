@@ -1,0 +1,17 @@
+/* ════════════════════════════════════════════════════════════════
+   MI TURNO · layout/scroll.css
+   ════════════════════════════════════════════════════════════════ */
+
+.scr{
+  flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y;
+  padding:14px 16px calc(96px + var(--sab));
+  display:flex;flex-direction:column;gap:14px;
+  scrollbar-width:none;
+  /* Containment: el navegador puede saltarse layout/paint fuera de viewport */
+  contain:layout style;
+  /* GPU compositing */
+  transform:translateZ(0);
+}
+
+.scr::-webkit-scrollbar{display:none;}

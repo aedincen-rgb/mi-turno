@@ -1,0 +1,40 @@
+/* ════════════════════════════════════════════════════════════════
+   MI TURNO · layout/action-button.css
+   ════════════════════════════════════════════════════════════════ */
+
+.action-btn{will-change:transform;}
+
+.action-stage{
+  margin-top:24px;
+  display:flex;flex-direction:column;align-items:center;gap:18px;
+}
+
+.action-btn{
+  width:104px;height:104px;border-radius:50%;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
+  transition:transform 0.3s var(--spring), filter 0.2s var(--ease);
+  color:#fff;
+}
+
+.action-btn-go{
+  background:linear-gradient(135deg, var(--accent2) 0%, var(--accent) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.28),
+    inset 0 -1px 0 rgba(0,0,0,0.08),
+    0 8px 28px var(--accent-glow);
+  animation:pulseGlow 3s ease-in-out infinite;
+}
+
+.action-btn-stop{
+  background:linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.22),
+    inset 0 -1px 0 rgba(0,0,0,0.10),
+    0 8px 28px rgba(220,38,38,0.32);
+}
+
+.action-btn:active{transform:scale(0.92);filter:brightness(0.95);}
+
+.action-icon{font-size:22px;line-height:1;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.2));}
+
+.action-lbl{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;}

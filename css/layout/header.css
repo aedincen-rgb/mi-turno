@@ -1,0 +1,57 @@
+/* ════════════════════════════════════════════════════════════════
+   MI TURNO · layout/header.css
+   ════════════════════════════════════════════════════════════════ */
+
+.hdr{
+  margin:calc(var(--sat) + 12px) 14px 0;
+  padding:12px 18px;
+  display:flex;justify-content:space-between;align-items:center;flex-shrink:0;
+  gap:8px;
+  position:relative;z-index:10;
+  border-radius:28px;
+  background:color-mix(in srgb, var(--surface) 55%, transparent);
+  backdrop-filter:blur(40px) saturate(200%);
+  -webkit-backdrop-filter:blur(40px) saturate(200%);
+  border:1px solid color-mix(in srgb, var(--border) 60%, transparent);
+  box-shadow:
+    0 12px 36px rgba(0,0,0,0.08),
+    0 2px 6px rgba(0,0,0,0.04),
+    inset 0 1px 0 color-mix(in srgb, white 30%, transparent);
+}
+
+[data-theme="dark"] .hdr{
+  background:color-mix(in srgb, var(--surface) 70%, transparent);
+  box-shadow:
+    0 12px 36px rgba(0,0,0,0.5),
+    inset 0 1px 0 rgba(255,255,255,0.05);
+}
+
+.hdr-l{display:flex;flex-direction:column;gap:2px;min-width:0;}
+
+.hdr-brand{
+  font-family:var(--font-sans);font-weight:800;font-size:15px;
+  color:var(--text);letter-spacing:-0.5px;line-height:1.1;
+  display:flex;align-items:center;gap:8px;
+}
+
+.hdr-live{
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:9px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;
+  padding:3px 7px;border-radius:var(--r-pill);
+  background:var(--success-dim);color:var(--success);
+}
+
+.hdr-live::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--success);animation:pulse 2s infinite;}
+
+.hdr-sub{font-size:10px;color:var(--muted);font-weight:500;letter-spacing:0.06em;text-transform:uppercase;opacity:0.85;}
+
+.hdr-r{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+
+.hdr-clock{font-size:13px;font-weight:500;color:var(--muted);font-variant-numeric:tabular-nums;letter-spacing:-0.01em;}
+
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
+
+@keyframes pulseGlow{
+  0%,100%{box-shadow:0 0 24px var(--accent-glow), inset 0 1px 0 rgba(255,255,255,0.15);}
+  50%{box-shadow:0 0 44px var(--accent-glow), inset 0 1px 0 rgba(255,255,255,0.15);}
+}

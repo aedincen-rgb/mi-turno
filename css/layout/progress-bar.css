@@ -1,0 +1,106 @@
+/* ════════════════════════════════════════════════════════════════
+   MI TURNO · layout/progress-bar.css
+   ════════════════════════════════════════════════════════════════ */
+
+.prog-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding:0 2px;}
+
+.prog-lbl{font-size:10.5px;color:var(--muted);font-weight:700;letter-spacing:0.2em;text-transform:uppercase;opacity:0.9;}
+
+.prog-val{
+  font-size:14px;font-weight:800;
+  color:var(--text);
+  font-variant-numeric:tabular-nums;
+  letter-spacing:-0.01em;
+  background:linear-gradient(90deg, #5B86E5, #7DA8FF, #8FB3FF);
+  -webkit-background-clip:text;
+  background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+
+[data-theme="dark"] .prog-val{
+  background:linear-gradient(90deg, #7DA8FF, #9FBEFF, #B3CDFF);
+  -webkit-background-clip:text;
+  background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+
+.bar-track{
+  height:12px;
+  background:color-mix(in srgb, var(--surface2) 85%, transparent);
+  border-radius:var(--r-pill);
+  overflow:hidden;
+  border:1px solid color-mix(in srgb, var(--border) 60%, transparent);
+  box-shadow:
+    inset 0 1.5px 3px rgba(20,30,60,0.08),
+    inset 0 -1px 0 rgba(255,255,255,0.5),
+    0 1px 0 rgba(255,255,255,0.4);
+  position:relative;
+}
+
+[data-theme="dark"] .bar-track{
+  background:color-mix(in srgb, var(--surface2) 70%, transparent);
+  box-shadow:
+    inset 0 1.5px 3px rgba(0,0,0,0.4),
+    inset 0 -1px 0 rgba(255,255,255,0.03);
+}
+
+.bar-fill{
+  height:100%;
+  border-radius:var(--r-pill);
+  background:linear-gradient(90deg,
+    #5B86E5 0%,
+    #7DA8FF 35%,
+    #8FB3FF 65%,
+    #B3CDFF 100%);
+  background-size:200% 100%;
+  animation:barFlow 6s ease-in-out infinite;
+  transition:width 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position:relative;
+  box-shadow:
+    inset 0 1.5px 0 rgba(255,255,255,0.45),
+    inset 0 -1px 0 rgba(0,0,0,0.08),
+    0 2px 8px rgba(91,134,229,0.35),
+    0 0 14px rgba(125,168,255,0.30);
+}
+
+.bar-fill::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg, transparent 30%, rgba(255,255,255,0.5) 50%, transparent 70%);background-size:200% 100%;animation:shimmer 2.8s ease-in-out infinite;border-radius:var(--r-pill);}
+
+.bar-fill-over{
+  background:linear-gradient(90deg, #FF4D6D 0%, #FF6B35 50%, #FFAB00 100%);
+  background-size:200% 100%;
+  animation:barFlow 4s ease-in-out infinite;
+  box-shadow:
+    inset 0 1.5px 0 rgba(255,255,255,0.45),
+    0 2px 12px rgba(255,77,109,0.45),
+    0 0 18px rgba(255,107,53,0.35);
+}
+
+.hero-amount-live{
+  animation:heroBreath 2.2s ease-in-out infinite;
+  transform-origin:center;
+}
+
+.bar-fill-live{
+  animation:barGlowPulse 2.8s ease-in-out infinite;
+}
+
+.bar-fill-live::before{
+  content:'';
+  position:absolute;
+  right:-2px;
+  top:50%;
+  transform:translateY(-50%);
+  width:16px;height:16px;
+  border-radius:50%;
+  background:radial-gradient(circle at 30% 30%, #FFFFFF 0%, #7DA8FF 45%, #5B86E5 100%);
+  box-shadow:
+    0 0 0 2px rgba(255,255,255,0.4),
+    0 0 12px rgba(125,168,255,0.75),
+    0 0 22px rgba(91,134,229,0.5);
+  animation:barDotPulse 1.4s ease-in-out infinite;
+  z-index:3;
+}
+
+.prog-val-live{
+  animation:valueGlow 2.2s ease-in-out infinite;
+}

@@ -1,0 +1,27 @@
+/* ════════════════════════════════════════════════════════════════
+   MI TURNO · components/dark-mode-overrides.css
+   ════════════════════════════════════════════════════════════════ */
+
+[data-theme="dark"] .hero{
+  background:color-mix(in srgb, var(--surface) 60%, transparent);
+  border-color:color-mix(in srgb, var(--border2) 45%, transparent);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.055) inset,
+    0 8px 32px rgba(0,0,0,0.35),
+    0 1px 3px rgba(0,0,0,0.25);
+}
+
+[data-theme="dark"] #initSplash{background:#0a0c12;}
+
+[data-theme="dark"] .is-name{color:#ecedf3;}
+
+[data-theme="dark"] .is-tag{color:#7c8395;}
+
+[data-theme="dark"] .is-ring{border-color:#2a2f3b;border-top-color:#7DA8FF;}
+
+[data-theme="dark"] .tabs{
+  background:color-mix(in srgb, var(--surface) 70%, transparent);
+  box-shadow:
+    0 12px 36px rgba(0,0,0,0.5),
+    inset 0 1px 0 rgba(255,255,255,0.05);
+}

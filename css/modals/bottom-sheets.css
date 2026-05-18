@@ -1,0 +1,23 @@
+/* ════════════════════════════════════════════════════════════════
+   MI TURNO · modals/bottom-sheets.css
+   ════════════════════════════════════════════════════════════════ */
+
+.mol-ov{
+  position:fixed;inset:0;z-index:300;
+  background:rgba(0,0,0,0.55);
+  display:flex;align-items:flex-end;justify-content:center;
+  -webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);
+  animation:fadeIn 0.25s var(--ease);
+}
+
+.mol-sh{
+  width:100%;max-width:480px;
+  background:var(--surface);
+  border-radius:var(--radius) var(--radius) 0 0;
+  padding:18px 22px max(26px, var(--sab));
+  border:1px solid var(--border);border-bottom:none;
+  box-shadow:var(--sh-3);
+  animation:slideUp 0.4s var(--spring);
+}
+
+.mol-hdl{width:36px;height:5px;background:var(--border2);border-radius:3px;margin:0 auto 18px;opacity:0.5;}

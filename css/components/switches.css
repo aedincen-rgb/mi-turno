@@ -1,0 +1,105 @@
+/* ════════════════════════════════════════════════════════════════
+   MI TURNO · components/switches.css
+   ════════════════════════════════════════════════════════════════ */
+
+.ios-sw{position:relative;width:54px;height:32px;flex-shrink:0;}
+
+.sw-track{
+  position:absolute;
+  cursor:pointer;
+  inset:0;
+  border-radius:var(--r-pill);
+  /* Track translúcido + cristal */
+  background:color-mix(in srgb, var(--border2) 75%, transparent);
+  backdrop-filter:blur(12px) saturate(160%);
+  -webkit-backdrop-filter:blur(12px) saturate(160%);
+  border:1px solid color-mix(in srgb, var(--border) 60%, transparent);
+  box-shadow:
+    /* Sombra interior superior (rebaje de cristal) */
+    inset 0 1.5px 3px rgba(0,0,0,0.08),
+    /* Highlight inferior interno */
+    inset 0 -1px 0 color-mix(in srgb, white 18%, transparent),
+    /* Sombra exterior muy sutil */
+    0 1px 2px rgba(0,0,0,0.05);
+  /* Curva nativa iOS */
+  transition:
+    background 0.4s var(--ios-ease),
+    border-color 0.4s var(--ios-ease),
+    box-shadow 0.4s var(--ios-ease);
+}
+
+.sw-track::before{
+  content:'';
+  position:absolute;
+  height:26px;width:26px;
+  left:2px;top:2px;
+  border-radius:50%;
+  background:
+    /* Highlight superior del cristal (radial) */
+    radial-gradient(
+      circle at 30% 28%,
+      rgba(255,255,255,0.98) 0%,
+      rgba(255,255,255,0.85) 22%,
+      rgba(245,247,252,0.95) 55%,
+      rgba(228,232,240,0.98) 100%
+    );
+  box-shadow:
+    /* Highlight superior */
+    inset 0 1px 0 rgba(255,255,255,0.9),
+    /* Sombra interna inferior para volumen */
+    inset 0 -1px 1px rgba(0,0,0,0.05),
+    /* Sombra exterior fuerte para que flote */
+    0 3px 8px rgba(0,0,0,0.18),
+    0 1px 3px rgba(0,0,0,0.10),
+    /* Anillo de contorno sutil */
+    0 0 0 0.5px rgba(0,0,0,0.04);
+  transition:
+    transform 0.4s var(--ios-ease),
+    box-shadow 0.4s var(--ios-ease),
+    background 0.4s var(--ios-ease);
+}
+
+.sw-track::after{
+  content:'';
+  position:absolute;
+  top:50%;left:14px;
+  width:14px;height:14px;
+  font-size:11px;
+  line-height:14px;
+  text-align:center;
+  color:rgba(245,158,11,0.75);
+  transform:translateY(-50%);
+  transition:
+    transform 0.4s var(--ios-ease),
+    left 0.4s var(--ios-ease),
+    color 0.3s var(--ios-ease),
+    content 0s 0.2s;
+  pointer-events:none;
+  z-index:2;
+  font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+}
+
+[data-theme="dark"] .sw-track{
+  background:color-mix(in srgb, var(--border) 80%, transparent);
+  border-color:color-mix(in srgb, var(--border2) 60%, transparent);
+  box-shadow:
+    inset 0 1.5px 3px rgba(0,0,0,0.35),
+    inset 0 -1px 0 color-mix(in srgb, white 5%, transparent),
+    0 1px 2px rgba(0,0,0,0.20);
+}
+
+[data-theme="dark"] .sw-track::before{
+  background:radial-gradient(
+    circle at 30% 28%,
+    rgba(255,255,255,0.95) 0%,
+    rgba(240,242,248,0.92) 22%,
+    rgba(220,224,235,0.95) 55%,
+    rgba(200,206,222,0.98) 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.9),
+    inset 0 -1px 1px rgba(0,0,0,0.10),
+    0 3px 10px rgba(0,0,0,0.45),
+    0 1px 3px rgba(0,0,0,0.30),
+    0 0 0 0.5px rgba(0,0,0,0.20);
+}

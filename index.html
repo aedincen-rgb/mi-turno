@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Mi Turno"/>
+<meta name="theme-color" id="metaThemeColor" content="#f5f7fb"/>
+
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
+<link rel="apple-touch-icon" sizes="152x152" href="icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+
+<title>Mi Turno · Colombia</title>
+
+<script src="js/config.js"></script>
+<script src="js/theme-boot.js"></script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://yrpqvmqmchsxpotytxiy.supabase.co" crossorigin>
+<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,200;9..40,300;9..40,400;9..40,500;9..40,600;9..40,700;9..40,800;9..40,900&display=swap" rel="stylesheet">
+
+<!-- CSS FRAGMENTADO -->
+<link rel="stylesheet" href="css/base/variables.css">
+<link rel="stylesheet" href="css/base/reset.css">
+<link rel="stylesheet" href="css/base/typography.css">
+<link rel="stylesheet" href="css/base/background.css">
+<link rel="stylesheet" href="css/base/media-queries.css">
+
+<link rel="stylesheet" href="css/layout/header.css">
+<link rel="stylesheet" href="css/layout/scroll.css">
+<link rel="stylesheet" href="css/layout/hero-card.css">
+<link rel="stylesheet" href="css/layout/progress-bar.css">
+<link rel="stylesheet" href="css/layout/action-button.css">
+<link rel="stylesheet" href="css/layout/shapes.css">
+<link rel="stylesheet" href="css/layout/fade-animations.css">
+<link rel="stylesheet" href="css/layout/misc-animations.css">
+<link rel="stylesheet" href="css/layout/misc.css">
+
+<link rel="stylesheet" href="css/components/cards.css">
+<link rel="stylesheet" href="css/components/buttons.css">
+<link rel="stylesheet" href="css/components/buttons-glass.css">
+<link rel="stylesheet" href="css/components/inputs.css">
+<link rel="stylesheet" href="css/components/switches.css">
+<link rel="stylesheet" href="css/components/config-rows.css">
+<link rel="stylesheet" href="css/components/dashboard-hero.css">
+<link rel="stylesheet" href="css/components/dashboard-kpis.css">
+<link rel="stylesheet" href="css/components/dashboard-chart.css">
+<link rel="stylesheet" href="css/components/dashboard-tip.css">
+<link rel="stylesheet" href="css/components/assistant-chat.css">
+<link rel="stylesheet" href="css/components/history-list.css">
+<link rel="stylesheet" href="css/components/auth-screen.css">
+<link rel="stylesheet" href="css/components/misc.css">
+<link rel="stylesheet" href="css/components/dark-mode-overrides.css">
+
+<link rel="stylesheet" href="css/modals/overlay.css">
+<link rel="stylesheet" href="css/modals/modal-card.css">
+<link rel="stylesheet" href="css/modals/bottom-sheets.css">
+<link rel="stylesheet" href="css/modals/auth-screen.css">
+<link rel="stylesheet" href="css/modals/assistant-chat.css">
+<link rel="stylesheet" href="css/modals/time-picker.css">
+<link rel="stylesheet" href="css/modals/splash.css">
+<link rel="stylesheet" href="css/modals/misc.css">
+<link rel="stylesheet" href="css/modals/dark-overrides.css">
+
+<link rel="stylesheet" href="css/animations/keyframes.css">
+
+<!-- Librerías externas -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js" crossorigin></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+</head>
+<body>
+
+<div class="bg-shapes">
+  <div class="shape shape-1"></div>
+  <div class="shape shape-2"></div>
+  <div class="shape shape-3"></div>
+</div>
+
+<div id="initSplash">
+  <div class="is-logo">
+    <svg viewBox="0 0 100 100" fill="none" stroke="white" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="50" cy="56" r="28"/>
+      <path d="M50 36 L50 56 L65 56"/>
+      <path d="M40 17 L60 17"/>
+      <path d="M50 17 L50 28"/>
+    </svg>
+  </div>
+  <div class="is-name">Mi Turno</div>
+  <div class="is-tag">Colombia · Nómina inteligente</div>
+  <div class="is-ring"></div>
+</div>
+
+<div id="root"></div>
+
+<!-- JS FRAGMENTADO -->
+
+<!-- 1. Config inicial -->
+<script src="js/config/react-init.js"></script>
+<script src="js/config/env.js"></script>
+<script src="js/config/viewport-fix.js"></script>
+<script src="js/config/globals.js"></script>
+
+<!-- 2. Utilidades -->
+<script src="js/utils/storage.js"></script>
+<script src="js/utils/format.js"></script>
+<script src="js/utils/haptic.js"></script>
+<script src="js/utils/network.js"></script>
+<script src="js/utils/uuid.js"></script>
+<script src="js/utils/festivos.js"></script>
+<script src="js/utils/time.js"></script>
+<script src="js/utils/validation.js"></script>
+<script src="js/utils/otp.js"></script>
+
+<!-- 3. Servicios -->
+<script src="js/services/supabase.js"></script>
+<script src="js/services/supabase-init.js"></script>
+<script src="js/services/calculator.js"></script>
+<script src="js/services/data.js"></script>
+<script src="js/services/ai.js"></script>
+<script src="js/services/export-files.js"></script>
+<script src="js/services/export-email.js"></script>
+
+<!-- 4. Tabs -->
+<script src="js/tabs/home.js"></script>
+<script src="js/tabs/dashboard.js"></script>
+<script src="js/tabs/assistant.js"></script>
+<script src="js/tabs/history.js"></script>
+<script src="js/tabs/config.js"></script>
+
+<!-- 5. Modales -->
+<script src="js/modals/forgot-password.js"></script>
+<script src="js/modals/pin-setup.js"></script>
+<script src="js/modals/manage-account.js"></script>
+<script src="js/modals/diagnostico.js"></script>
+<script src="js/modals/asignar-pins.js"></script>
+<script src="js/modals/usuarios.js"></script>
+<script src="js/modals/export-report.js"></script>
+
+<!-- 6. App top-level -->
+<script src="js/app/auth-screen.js"></script>
+<script src="js/app/app-main.js"></script>
+<script src="js/app/root.js"></script>
+<script src="js/app/sw-register.js"></script>
+<script src="js/app/init.js"></script>
+
+</body>
+</html>

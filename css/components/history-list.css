@@ -1,0 +1,22 @@
+/* ════════════════════════════════════════════════════════════════
+   MI TURNO · components/history-list.css
+   ════════════════════════════════════════════════════════════════ */
+
+.brk-row,.hist-row{
+  background:color-mix(in srgb, var(--surface) 75%, transparent);
+  backdrop-filter:blur(16px) saturate(160%);
+  -webkit-backdrop-filter:blur(16px) saturate(160%);
+  border:1px solid color-mix(in srgb, var(--border) 50%, transparent);
+  box-shadow:
+    0 1px 0 color-mix(in srgb, white 16%, transparent) inset,
+    0 4px 12px rgba(0,0,0,0.03);
+}
+
+[data-theme="dark"] .brk-row,
+[data-theme="dark"] .hist-row{
+  background:color-mix(in srgb, var(--surface) 66%, transparent);
+  border-color:color-mix(in srgb, var(--border2) 40%, transparent);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.04) inset,
+    0 4px 12px rgba(0,0,0,0.28);
+}

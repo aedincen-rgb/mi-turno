@@ -1,0 +1,25 @@
+/* ════════════════════════════════════════════════════════════════
+   MI TURNO · components/auth-screen.css
+   ════════════════════════════════════════════════════════════════ */
+
+.modal-card,.auth-card{
+  background:color-mix(in srgb, var(--surface) 80%, transparent);
+  backdrop-filter:blur(32px) saturate(180%);
+  -webkit-backdrop-filter:blur(32px) saturate(180%);
+  border:1px solid color-mix(in srgb, var(--border) 55%, transparent);
+  box-shadow:
+    0 1px 0 color-mix(in srgb, white 20%, transparent) inset,
+    0 20px 60px rgba(0,0,0,0.10),
+    0 4px 16px rgba(0,0,0,0.06);
+}
+
+[data-theme="dark"] .modal-card,
+[data-theme="dark"] .auth-card,
+[data-theme="dark"] .mol-sh{
+  background:color-mix(in srgb, var(--surface) 72%, transparent);
+  border-color:color-mix(in srgb, var(--border2) 44%, transparent);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.05) inset,
+    0 20px 60px rgba(0,0,0,0.55),
+    0 4px 16px rgba(0,0,0,0.35);
+}
