@@ -281,7 +281,7 @@ function App(props){
     h('div',{className:'scr'},
       tab==='home'?h(HomeTab,{calc:calc, activo:activo, ahora:ahoraDate, salario:salario, vh:vh, onIni:onIni, onFin:onFin})
       :tab==='dashboard'?h(DashboardTab,{calc:calc, turnos:turnosMes, salario:salario, vh:vh, ahora:ahoraDate, themeKey:theme})
-      :tab==='ai'?h(AsistenteTab,{turnos:turnosMes, calc:calc, salario:salario, vh:vh})
+      :tab==='ai'?h(AsistenteTab,{turnos:turnosMes, turnosAll:turnos, calc:calc, salario:salario, vh:vh})
       :tab==='history'?h(HistoryTab,{turnos:turnos, activo:activo, durActual:durActual, onBorrar:onBorrar, onBorrarUno:onBorrarUno, onExportPDF:onExportPDF, onExportExcel:onExportExcel})
       :h(ConfigTab,{salario:salario, valorHora:vh, session:session, onSalario:onSalario, onSignOut:props.onSignOut, theme:theme, onThemeChange:setTheme})),
 
