@@ -6,7 +6,7 @@ function App(props){
   var session=props.session;
   var onSessionPatch=props.onSessionPatch;
   var uid=session.uid;
-  vare isCloud=!session.pinOnly&&!session.guest&&CLOUD_MODE;
+  var isCloud=!session.pinOnly&&!session.guest&&CLOUD_MODE;
   var loadedRef=useRef(false);
 
   var th=useState(leer('mt_theme','light'));
