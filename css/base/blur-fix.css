@@ -10,7 +10,7 @@
    ════════════════════════════════════════════════════════════════ */
 
 /* ─── REGLA UNIVERSAL: cualquier elemento con backdrop-filter ─── */
-[class*="card"],
+[class*='card'],
 .modal-card,
 .ovl,
 .hdr,
@@ -32,7 +32,7 @@
 }
 
 /* ─── Para los elementos que tienen blur Y están dentro de scroll ─── */
-.scr [class*="card"],
+.scr [class*='card'],
 .scr .modal-card,
 .scr .btn-glass,
 .scr .kpi-card,
@@ -45,17 +45,22 @@
   contain: layout style;
 }
 
-/* ─── Overlay y modales: forzar repaint completo ─── */
+/* ─── Overlay: blur estático en su propia capa, nunca scrollea ─── */
 .ovl {
   transform: translateZ(0);
   -webkit-transform: translateZ(0);
-  will-change: backdrop-filter;
+  /* No will-change:backdrop-filter — queremos que el blur sea ESTÁTICO */
+  contain: paint;
+  overflow: hidden; /* refuerzo: el scroll va en .modal-card */
 }
 
+/* ─── Modal card: scroll propio, aislado del blur del overlay ─── */
 .modal-card {
   transform: translateZ(0);
   -webkit-transform: translateZ(0);
   will-change: transform;
+  /* Contener pintura: el scroll interno no afecta la capa del overlay */
+  contain: paint layout;
 }
 
 /* ─── Reset will-change al terminar scroll (optimización iOS) ─── */

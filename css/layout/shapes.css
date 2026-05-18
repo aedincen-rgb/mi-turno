@@ -2,10 +2,12 @@
    MI TURNO · layout/shapes.css
    ════════════════════════════════════════════════════════════════ */
 
-.shape{
-  position:absolute;border-radius:50%;filter:blur(90px);
-  animation:float 22s infinite ease-in-out alternate;
-  will-change:transform;
-  transform:translateZ(0);
-  contain:layout style paint;
+.shape {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+  animation: float 22s infinite ease-in-out alternate;
+  will-change: transform;
+  transform: translateZ(0);
+  contain: layout style paint;
 }

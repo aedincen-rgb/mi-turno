@@ -1,44 +1,72 @@
 /* ════════════════════════════════════════════════════════════════
    MI TURNO · base/variables.css
-   Variables CSS (paleta, espaciados, sombras)
+   iOS 26 Liquid Glass – design tokens
    ════════════════════════════════════════════════════════════════ */
 
-:root{
-  /* iOS 26 cool whites */
-  --bg:#f5f7fb;
-  --surface:#ffffff;
-  --surface2:#eef2f8;
-  --border:#e3e8f1;
-  --border2:#ccd4e1;
-  --text:#1c1f27;
-  --muted:#7a8294;
-  /* Soft iOS blue accent */
-  --accent:#5B86E5;
-  --accent2:#7DA8FF;
-  --accent3:#8FB3FF;
-  --accent-soft:#C7D8FF;
-  --accent-tint:#E8F0FF;
-  --accent-deep:#4F6BBF;
-  --accent-dim:rgba(91,134,229,0.10);
-  --accent-glow:rgba(91,134,229,0.25);
-  /* Status */
-  --danger:#dc6b65;
-  --danger-dim:rgba(220,107,101,0.09);
-  --success:#5BA88E;
-  --success-dim:rgba(91,168,142,0.09);
-  --info:#5B83C9;
-  --night:#4F6BBF;
-  --radius:24px;
-  --radius-sm:16px;
-  --r-pill:9999px;
-  --font-sans:'DM Sans',-apple-system,BlinkMacSystemFont,sans-serif;
-  --ease:cubic-bezier(0.16,1,0.3,1);
-  --spring:cubic-bezier(0.34,1.56,0.64,1);
-  /* iOS native motion curve (Apple HIG) */
-  --ios-ease:cubic-bezier(0.32,0.72,0,1);
-  --sat:env(safe-area-inset-top,0px);
-  --sab:env(safe-area-inset-bottom,0px);
-  --sh-1:0 1px 3px rgba(20,30,60,0.04);
-  --sh-2:0 8px 32px rgba(20,30,60,0.04);
-  --sh-3:0 16px 48px rgba(20,30,60,0.06);
+:root {
+  /* ── Background: gradient mesh (cielo iOS 26) ── */
+  --bg: linear-gradient(165deg, #c8dfff 0%, #d8e9ff 28%, #e5efff 58%, #f0f5ff 80%, #f5f8ff 100%);
+
+  /* ── Surfaces ── */
+  --surface: #ffffff;
+  --surface2: #eef2f8;
+  --border: #e3e8f1;
+  --border2: #ccd4e1;
+  --text: #1c1f27;
+  --muted: #7a8294;
+
+  /* ── Accent blues ── */
+  --accent: #5b86e5;
+  --accent2: #7da8ff;
+  --accent3: #8fb3ff;
+  --accent-soft: #c7d8ff;
+  --accent-tint: #e8f0ff;
+  --accent-deep: #4f6bbf;
+  --accent-dim: rgba(91, 134, 229, 0.12);
+  --accent-glow: rgba(91, 134, 229, 0.3);
+
+  /* ── Status ── */
+  --danger: #dc6b65;
+  --danger-dim: rgba(220, 107, 101, 0.09);
+  --success: #5ba88e;
+  --success-dim: rgba(91, 168, 142, 0.09);
+  --info: #5b83c9;
+  --night: #4f6bbf;
+
+  /* ── Geometry ── */
+  --radius: 24px;
+  --radius-sm: 16px;
+  --r-pill: 9999px;
+
+  /* ── Typography ── */
+  --font-sans: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+
+  /* ── Easing ── */
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ios-ease: cubic-bezier(0.32, 0.72, 0, 1);
+
+  /* ── Safe area ── */
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+
+  /* ── Liquid Glass tokens (light mode) ── */
+  --glass-heavy: rgba(255, 255, 255, 0.7);
+  --glass-mid: rgba(255, 255, 255, 0.58);
+  --glass-thin: rgba(255, 255, 255, 0.4);
+  --glass-border: rgba(255, 255, 255, 0.6);
+  --glass-border-sm: rgba(255, 255, 255, 0.42);
+  --spec-top: rgba(255, 255, 255, 0.95); /* borde especular superior */
+  --spec-bot: rgba(0, 0, 0, 0.035);
+
+  /* ── Blur recipes ── */
+  --blur-xl: blur(72px) saturate(220%);
+  --blur-lg: blur(56px) saturate(215%);
+  --blur-md: blur(40px) saturate(205%);
+  --blur-sm: blur(28px) saturate(195%);
+
+  /* ── Shadows (más profundas para capas flotantes) ── */
+  --sh-1: 0 2px 8px rgba(20, 30, 80, 0.06), 0 1px 2px rgba(91, 134, 229, 0.04);
+  --sh-2: 0 8px 32px rgba(20, 30, 80, 0.09), 0 2px 8px rgba(91, 134, 229, 0.06);
+  --sh-3: 0 20px 60px rgba(20, 30, 80, 0.13), 0 6px 20px rgba(91, 134, 229, 0.08);
 }

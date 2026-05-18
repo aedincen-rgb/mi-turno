@@ -2,7 +2,8 @@
    MI TURNO · components/assistant-chat.css
    ════════════════════════════════════════════════════════════════ */
 
-.bar-track,.chat-window{
-  background:color-mix(in srgb, var(--surface2) 70%, transparent);
-  border-color:color-mix(in srgb, var(--border) 50%, transparent);
+.bar-track,
+.chat-window {
+  background: color-mix(in srgb, var(--surface2) 70%, transparent);
+  border-color: color-mix(in srgb, var(--border) 50%, transparent);
 }
