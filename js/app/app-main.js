@@ -2,7 +2,10 @@
 //  MI TURNO · app/app-main.js
 //  Componente principal App con tabs
 // ════════════════════════════════════════════════════════════════
-function App(props){
+functiesto borrar 
+  
+
+on App(props){
   var session=props.session;
   var onSessionPatch=props.onSessionPatch;
   var uid=session.uid;
