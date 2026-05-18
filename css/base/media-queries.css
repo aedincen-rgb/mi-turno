@@ -54,6 +54,12 @@ input,select,textarea{font-family:inherit;outline:none;background:transparent;co
   .shape,.bar-fill::after,.action-btn-go,.bar-fill-live,.bar-fill-live::before,
   .hero-amount-live,.prog-val-live,.active-dot,.hdr-live::before{
     animation:none !important;
+    transform:translateY(0) !important;
+    box-shadow:
+      inset 0 1.5px 0 rgba(255,255,255,0.50),
+      inset 0 -1px 0 rgba(0,0,0,0.10),
+      0 7px 0 0 #3550A8,
+      0 10px 28px rgba(91,134,229,0.40) !important;
   }
 }
 
@@ -66,6 +72,7 @@ input,select,textarea{font-family:inherit;outline:none;background:transparent;co
 .low-power .hero-amount-live,
 .low-power .prog-val-live{
   animation:none !important;
+  transform:translateY(0) !important;
 }
 .low-power 
 
