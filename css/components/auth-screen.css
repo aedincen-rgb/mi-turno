@@ -1,7 +1,14 @@
 /* ════════════════════════════════════════════════════════════════
    MI TURNO · components/auth-screen.css
    ════════════════════════════════════════════════════════════════ */
-
+.auth-logo-img {
+  width: 70px;
+  height: 70px;
+  border-radius: 28px;
+  background: #0f172a;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+  margin-bottom: 1rem;
+}
 .modal-card,.auth-card{
   background:color-mix(in srgb, var(--surface) 80%, transparent);
   backdrop-filter:blur(32px) saturate(180%);
