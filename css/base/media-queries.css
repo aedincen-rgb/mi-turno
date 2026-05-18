@@ -85,12 +85,7 @@ textarea {
     scroll-behavior: auto !important;
   }
   .shape,
-  .bar-fill::after,
   .action-btn-go,
-  .bar-fill-live,
-  .bar-fill-live::before,
-  .hero-amount-live,
-  .prog-val-live,
   .active-dot,
   .hdr-live::before {
     animation: none !important;
@@ -105,12 +100,7 @@ textarea {
 
 /* Modo bajo consumo (batería <20% sin cargar): para animaciones decorativas */
 .low-power .shape,
-.low-power .bar-fill::after,
-.low-power .action-btn-go,
-.low-power .bar-fill-live,
-.low-power .bar-fill-live::before,
-.low-power .hero-amount-live,
-.low-power .prog-val-live {
+.low-power .action-btn-go {
   animation: none !important;
   transform: translateY(0) !important;
 }
