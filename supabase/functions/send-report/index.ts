@@ -10,103 +10,112 @@
 // - Logs en tabla email_logs para auditoría
 // ════════════════════════════════════════════════════════════════
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS'
 };
 
 interface SendReportRequest {
-  to: string;              // correo destino
-  subject?: string;        // asunto (opcional)
-  message?: string;        // mensaje del cuerpo (opcional)
-  format: "pdf" | "xlsx";  // tipo de adjunto
-  filename: string;        // nombre del archivo
-  fileBase64: string;      // contenido del archivo en base64
+  to: string; // correo destino
+  subject?: string; // asunto (opcional)
+  message?: string; // mensaje del cuerpo (opcional)
+  format: 'pdf' | 'xlsx'; // tipo de adjunto
+  filename: string; // nombre del archivo
+  fileBase64: string; // contenido del archivo en base64
 }
 
 serve(async (req: Request) => {
   // CORS preflight
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders });
   }
 
   try {
     // ── 1. Validar autenticación ──
-    const authHeader = req.headers.get("Authorization");
+    const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      return jsonResponse({ error: "No autenticado" }, 401);
+      return jsonResponse({ error: 'No autenticado' }, 401);
     }
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } },
+      global: { headers: { Authorization: authHeader } }
     });
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError
+    } = await supabase.auth.getUser();
     if (authError || !user) {
-      return jsonResponse({ error: "Sesión inválida" }, 401);
+      return jsonResponse({ error: 'Sesión inválida' }, 401);
     }
 
     // ── 2. Parsear y validar payload ──
     const body: SendReportRequest = await req.json();
 
     if (!body.to || !body.fileBase64 || !body.filename || !body.format) {
-      return jsonResponse({ error: "Faltan campos requeridos" }, 400);
+      return jsonResponse({ error: 'Faltan campos requeridos' }, 400);
     }
 
     // Validar email destinatario
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(body.to)) {
-      return jsonResponse({ error: "Correo destino inválido" }, 400);
+      return jsonResponse({ error: 'Correo destino inválido' }, 400);
     }
 
     // Validar formato
-    if (body.format !== "pdf" && body.format !== "xlsx") {
-      return jsonResponse({ error: "Formato no permitido" }, 400);
+    if (body.format !== 'pdf' && body.format !== 'xlsx') {
+      return jsonResponse({ error: 'Formato no permitido' }, 400);
     }
 
     // Validar tamaño del archivo (máximo 10MB en base64 ≈ 7.5MB real)
     if (body.fileBase64.length > 10 * 1024 * 1024) {
-      return jsonResponse({ error: "Archivo demasiado grande (máx 7MB)" }, 400);
+      return jsonResponse({ error: 'Archivo demasiado grande (máx 7MB)' }, 400);
     }
 
     // ── 3. Rate limiting (máximo 10 envíos por hora por usuario) ──
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
     const { count } = await supabase
-      .from("email_logs")
-      .select("*", { count: "exact", head: true })
-      .eq("user_id", user.id)
-      .gte("created_at", oneHourAgo);
+      .from('email_logs')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .gte('created_at', oneHourAgo);
 
     if (count !== null && count >= 10) {
-      return jsonResponse({
-        error: "Límite alcanzado: 10 correos por hora. Intenta más tarde.",
-      }, 429);
+      return jsonResponse(
+        {
+          error: 'Límite alcanzado: 10 correos por hora. Intenta más tarde.'
+        },
+        429
+      );
     }
 
     // ── 4. Construir email con Resend ──
-    const resendApiKey = Deno.env.get("RESEND_API_KEY");
+    const resendApiKey = Deno.env.get('RESEND_API_KEY');
     if (!resendApiKey) {
-      console.error("RESEND_API_KEY no configurada");
-      return jsonResponse({ error: "Servicio no configurado" }, 500);
+      console.error('RESEND_API_KEY no configurada');
+      return jsonResponse({ error: 'Servicio no configurado' }, 500);
     }
 
-    const fromEmail = Deno.env.get("RESEND_FROM_EMAIL") || "Mi Turno <onboarding@resend.dev>";
-    const mimeType = body.format === "pdf" 
-      ? "application/pdf" 
-      : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+    const fromEmail = Deno.env.get('RESEND_FROM_EMAIL') || 'Mi Turno <onboarding@resend.dev>';
+    const mimeType =
+      body.format === 'pdf'
+        ? 'application/pdf'
+        : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 
-    const formatLabel = body.format === "pdf" ? "PDF" : "Excel";
+    const formatLabel = body.format === 'pdf' ? 'PDF' : 'Excel';
     const subject = body.subject || `📊 Tu reporte de turnos (${formatLabel})`;
-    const userName = (user.email || "").split("@")[0];
+    const userName = (user.email || '').split('@')[0];
     const friendlyName = userName.charAt(0).toUpperCase() + userName.slice(1);
 
-    const message = body.message || `Hola ${friendlyName},
+    const message =
+      body.message ||
+      `Hola ${friendlyName},
 
 Adjunto encontrarás tu reporte de turnos en formato ${formatLabel}, generado desde Mi Turno.
 
@@ -143,11 +152,11 @@ Mi Turno · Colombia`;
 </html>`;
 
     // ── 5. Llamar a Resend ──
-    const resendResponse = await fetch("https://api.resend.com/emails", {
-      method: "POST",
+    const resendResponse = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
       headers: {
-        "Authorization": `Bearer ${resendApiKey}`,
-        "Content-Type": "application/json",
+        Authorization: `Bearer ${resendApiKey}`,
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
         from: fromEmail,
@@ -158,59 +167,64 @@ Mi Turno · Colombia`;
         attachments: [
           {
             filename: body.filename,
-            content: body.fileBase64,
-          },
-        ],
-      }),
+            content: body.fileBase64
+          }
+        ]
+      })
     });
 
     const resendData = await resendResponse.json();
 
     if (!resendResponse.ok) {
-      console.error("Resend error:", resendData);
-      
+      console.error('Resend error:', resendData);
+
       // Log del fallo
-      await supabase.from("email_logs").insert({
+      await supabase.from('email_logs').insert({
         user_id: user.id,
         to_email: body.to,
         format: body.format,
         filename: body.filename,
-        status: "failed",
-        error_message: JSON.stringify(resendData).substring(0, 500),
+        status: 'failed',
+        error_message: JSON.stringify(resendData).substring(0, 500)
       });
-      
-      return jsonResponse({
-        error: resendData.message || "Error al enviar el correo",
-      }, 500);
+
+      return jsonResponse(
+        {
+          error: resendData.message || 'Error al enviar el correo'
+        },
+        500
+      );
     }
 
     // ── 6. Log de éxito ──
-    await supabase.from("email_logs").insert({
+    await supabase.from('email_logs').insert({
       user_id: user.id,
       to_email: body.to,
       format: body.format,
       filename: body.filename,
-      status: "sent",
-      resend_id: resendData.id,
+      status: 'sent',
+      resend_id: resendData.id
     });
 
     return jsonResponse({
       success: true,
       messageId: resendData.id,
-      message: `✓ Reporte enviado a ${body.to}`,
+      message: `✓ Reporte enviado a ${body.to}`
     });
-
   } catch (error) {
-    console.error("Error en send-report:", error);
-    return jsonResponse({
-      error: error.message || "Error interno del servidor",
-    }, 500);
+    console.error('Error en send-report:', error);
+    return jsonResponse(
+      {
+        error: error.message || 'Error interno del servidor'
+      },
+      500
+    );
   }
 });
 
 function jsonResponse(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' }
   });
 }

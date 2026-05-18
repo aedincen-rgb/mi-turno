@@ -6,7 +6,24 @@
   "scripts": {
     "dev": "python -m http.server 8000",
     "serve": "npx http-server -p 8000 -c-1",
-    "deploy": "echo 'Deploy to Vercel/Netlify manually or via CI'"
+    "deploy": "echo 'Deploy to Vercel/Netlify manually or via CI'",
+    "lint": "eslint 'js/**/*.js'",
+    "lint:fix": "eslint 'js/**/*.js' --fix",
+    "format": "prettier --write 'js/**/*.js' 'css/**/*.css' 'supabase/**/*.ts'",
+    "format:check": "prettier --check 'js/**/*.js' 'css/**/*.css' 'supabase/**/*.ts'",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "js/**/*.js": [
+      "prettier --write",
+      "eslint --fix"
+    ],
+    "css/**/*.css": [
+      "prettier --write"
+    ],
+    "supabase/**/*.ts": [
+      "prettier --write"
+    ]
   },
   "keywords": [
     "turnos",
@@ -24,6 +41,11 @@
     "url": "https://github.com/tu-usuario/mi-turno.git"
   },
   "devDependencies": {
-    "http-server": "^14.1.1"
+    "eslint": "^9.39.4",
+    "eslint-config-prettier": "^10.1.8",
+    "http-server": "^14.1.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.5",
+    "prettier": "^3.8.3"
   }
 }

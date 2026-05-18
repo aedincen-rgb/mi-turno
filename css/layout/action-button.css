@@ -3,86 +3,105 @@
    Botón de acción 3D – iOS 26 physics press
    ════════════════════════════════════════════════════════════════ */
 
-.action-stage{
-  margin-top:24px;
-  display:flex;flex-direction:column;align-items:center;gap:18px;
+.action-stage {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
 }
 
-.action-btn{
-  will-change:transform,box-shadow;
-  width:104px;height:104px;border-radius:50%;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
-  color:#fff;
-  position:relative;
+.action-btn {
+  will-change: transform, box-shadow;
+  width: 104px;
+  height: 104px;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  color: #fff;
+  position: relative;
   /* spring en release, ease-out en press */
   transition:
-    transform 0.13s cubic-bezier(0.34,1.56,0.64,1),
-    box-shadow 0.13s cubic-bezier(0.16,1,0.3,1);
+    transform 0.13s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.13s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* ── GO – Iniciar ──────────────────────────────────────────── */
-.action-btn-go{
-  background:linear-gradient(155deg,#9FBEFF 0%,#7DA8FF 18%,#5B86E5 65%,#4A71D4 100%);
+.action-btn-go {
+  background: linear-gradient(155deg, #9fbeff 0%, #7da8ff 18%, #5b86e5 65%, #4a71d4 100%);
   box-shadow:
-    inset 0 1.5px 0 rgba(255,255,255,0.50),
-    inset 0 -1px 0 rgba(0,0,0,0.10),
-    0 7px 0 0 #3550A8,
-    0 10px 28px rgba(91,134,229,0.40);
-  transform:translateY(0);
-  animation:btn3dBreathe 3.2s cubic-bezier(0.45,0,0.55,1) infinite;
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.5),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1),
+    0 7px 0 0 #3550a8,
+    0 10px 28px rgba(91, 134, 229, 0.4);
+  transform: translateY(0);
+  animation: btn3dBreathe 3.2s cubic-bezier(0.45, 0, 0.55, 1) infinite;
 }
 
-.action-btn-go:active{
-  transform:translateY(5px);
+.action-btn-go:active {
+  transform: translateY(5px);
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.28),
-    inset 0 -2px 0 rgba(0,0,0,0.22),
-    0 2px 0 0 #3550A8,
-    0 2px 8px rgba(91,134,229,0.18);
-  animation:none;
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.22),
+    0 2px 0 0 #3550a8,
+    0 2px 8px rgba(91, 134, 229, 0.18);
+  animation: none;
 }
 
 /* ── STOP – Parar ──────────────────────────────────────────── */
-.action-btn-stop{
-  background:linear-gradient(155deg,#f87171 0%,#ef4444 40%,#dc2626 100%);
+.action-btn-stop {
+  background: linear-gradient(155deg, #f87171 0%, #ef4444 40%, #dc2626 100%);
   box-shadow:
-    inset 0 1.5px 0 rgba(255,255,255,0.40),
-    inset 0 -1px 0 rgba(0,0,0,0.12),
-    0 7px 0 0 #7F1D1D,
-    0 10px 28px rgba(220,38,38,0.36);
-  transform:translateY(0);
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.4),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.12),
+    0 7px 0 0 #7f1d1d,
+    0 10px 28px rgba(220, 38, 38, 0.36);
+  transform: translateY(0);
 }
 
-.action-btn-stop:active{
-  transform:translateY(5px);
+.action-btn-stop:active {
+  transform: translateY(5px);
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.24),
-    inset 0 -2px 0 rgba(0,0,0,0.25),
-    0 2px 0 0 #7F1D1D,
-    0 2px 8px rgba(220,38,38,0.18);
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.25),
+    0 2px 0 0 #7f1d1d,
+    0 2px 8px rgba(220, 38, 38, 0.18);
 }
 
 /* ── Animación respira-flota 3D ────────────────────────────── */
 /* La sombra lateral sube +3px cuando el botón sube -3px      */
 /* → el "piso" visual no se mueve, solo el botón flota         */
-@keyframes btn3dBreathe{
-  0%,100%{
-    transform:translateY(0);
+@keyframes btn3dBreathe {
+  0%,
+  100% {
+    transform: translateY(0);
     box-shadow:
-      inset 0 1.5px 0 rgba(255,255,255,0.50),
-      inset 0 -1px 0 rgba(0,0,0,0.10),
-      0 7px 0 0 #3550A8,
-      0 10px 28px rgba(91,134,229,0.40);
+      inset 0 1.5px 0 rgba(255, 255, 255, 0.5),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.1),
+      0 7px 0 0 #3550a8,
+      0 10px 28px rgba(91, 134, 229, 0.4);
   }
-  50%{
-    transform:translateY(-3px);
+  50% {
+    transform: translateY(-3px);
     box-shadow:
-      inset 0 1.5px 0 rgba(255,255,255,0.58),
-      inset 0 -1px 0 rgba(0,0,0,0.08),
-      0 10px 0 0 #3550A8,
-      0 16px 40px rgba(91,134,229,0.58);
+      inset 0 1.5px 0 rgba(255, 255, 255, 0.58),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.08),
+      0 10px 0 0 #3550a8,
+      0 16px 40px rgba(91, 134, 229, 0.58);
   }
 }
 
-.action-icon{font-size:22px;line-height:1;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.22));}
-.action-lbl{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;}
+.action-icon {
+  font-size: 22px;
+  line-height: 1;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.22));
+}
+.action-lbl {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}

@@ -10,7 +10,7 @@
    ════════════════════════════════════════════════════════════════ */
 
 /* ─── REGLA UNIVERSAL: cualquier elemento con backdrop-filter ─── */
-[class*="card"],
+[class*='card'],
 .modal-card,
 .ovl,
 .hdr,
@@ -32,7 +32,7 @@
 }
 
 /* ─── Para los elementos que tienen blur Y están dentro de scroll ─── */
-.scr [class*="card"],
+.scr [class*='card'],
 .scr .modal-card,
 .scr .btn-glass,
 .scr .kpi-card,

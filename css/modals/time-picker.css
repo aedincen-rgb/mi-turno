@@ -2,19 +2,52 @@
    MI TURNO · modals/time-picker.css
    ════════════════════════════════════════════════════════════════ */
 
-.time-row{display:flex;justify-content:center;align-items:center;gap:10px;margin:18px 0 22px;}
-
-.time-col{display:flex;flex-direction:column;align-items:center;gap:6px;}
-
-.time-col-lbl{font-size:9px;color:var(--muted);font-weight:700;letter-spacing:0.15em;text-transform:uppercase;}
-
-.colon{font-size:30px;font-weight:200;color:var(--text);padding-bottom:8px;}
-
-.ios-sel{
-  background:var(--surface2);color:var(--text);
-  border:1px solid var(--border);border-radius:var(--radius-sm);
-  padding:8px;font-size:28px;font-weight:500;width:92px;
-  text-align:center;font-variant-numeric:tabular-nums;letter-spacing:-1px;
+.time-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin: 18px 0 22px;
 }
 
-.confirm-row{display:flex;gap:10px;margin-top:14px;}
+.time-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.time-col-lbl {
+  font-size: 9px;
+  color: var(--muted);
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.colon {
+  font-size: 30px;
+  font-weight: 200;
+  color: var(--text);
+  padding-bottom: 8px;
+}
+
+.ios-sel {
+  background: var(--surface2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px;
+  font-size: 28px;
+  font-weight: 500;
+  width: 92px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -1px;
+}
+
+.confirm-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
