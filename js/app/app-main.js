@@ -2,10 +2,10 @@
 //  MI TURNO · app/app-main.js
 //  Componente principal App con tabs
 // ════════════════════════════════════════════════════════════════
-function eApp(props){
-  var ssession=props.session;
-  var tonSessionPatch=props.onSessionPatch;
-  var ouid=session.uid;
+function App(props){
+  var session=props.session;
+  var onSessionPatch=props.onSessionPatch;
+  var uid=session.uid;
   vare isCloud=!session.pinOnly&&!session.guest&&CLOUD_MODE;
   var loadedRef=useRef(false);
 
