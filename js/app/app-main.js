@@ -326,7 +326,6 @@ function App(props) {
   );
 
   var durActual = activo ? Math.round((ahora - new Date(activo.inicio)) / 60000) : 0;
-  var festHoy = esFest(ahoraDate);
 
   function onIni() {
     haptic();
@@ -399,6 +398,24 @@ function App(props) {
   var ex = useState(null);
   var exportMode = ex[0],
     setExportMode = ex[1]; // null | 'pdf' | 'xlsx'
+
+  var onlineState = useState(navigator.onLine);
+  var isOnline = onlineState[0],
+    setIsOnline = onlineState[1];
+  useEffect(function () {
+    function goOn() {
+      setIsOnline(true);
+    }
+    function goOff() {
+      setIsOnline(false);
+    }
+    window.addEventListener('online', goOn);
+    window.addEventListener('offline', goOff);
+    return function () {
+      window.removeEventListener('online', goOn);
+      window.removeEventListener('offline', goOff);
+    };
+  }, []);
   function onExportPDF() {
     haptic();
     setExportMode('pdf');
@@ -518,34 +535,17 @@ function App(props) {
       { className: 'hdr' },
       h(
         'div',
-        { className: 'hdr-l' },
-        activo ? h('span', { className: 'hdr-live' }, 'EN VIVO') : null
-      ),
-      h(
-        'div',
-        { className: 'hdr-c' },
-        h(
-          'div',
-          { className: 'hdr-brand' },
-          h('img', {
-            src: 'img/logo-mark.svg',
-            width: 30,
-            height: 30,
-            alt: '',
-            draggable: false,
-            style: { borderRadius: 8, flexShrink: 0, display: 'block' }
-          }),
-          'Mi Turno'
-        ),
-        h(
-          'div',
-          { className: 'hdr-sub' },
-          ahoraDate.toLocaleDateString('es-CO', {
-            weekday: 'short',
-            day: 'numeric',
-            month: 'short'
-          }) + (festHoy ? ' · Festivo' : '')
-        )
+        { className: 'hdr-brand' },
+        h('img', {
+          src: 'img/logo-mark.svg',
+          width: 30,
+          height: 30,
+          alt: '',
+          draggable: false,
+          style: { borderRadius: 8, flexShrink: 0, display: 'block' }
+        }),
+        'Mi Turno',
+        h('span', { className: 'hdr-dot ' + (isOnline ? 'hdr-dot-on' : 'hdr-dot-off') })
       ),
       h(
         'div',
