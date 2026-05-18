@@ -25,6 +25,7 @@ function App(props){
   var s6=useState('home');      var tab=s6[0], setTab=s6[1];
   var s7=useState(false);       var showOlv=s7[0], setShowOlv=s7[1];
   var s9=useState(true);        var loading=s9[0], setLoading=s9[1];
+  var sx=useState(false);       var splashExit=sx[0], setSplashExit=sx[1];
   var s10=useState(null);       var toast=s10[0], setToast=s10[1];
   var pss=useState(false); var showPinSetup=pss[0], setShowPinSetup=pss[1];
 
@@ -63,6 +64,7 @@ function App(props){
     var cancelled=false;
     loadedRef.current=false;
     setLoading(true);
+    var splashStart=Date.now();
     cargarDatos(uid, session.pinOnly).then(function(data){
       if(cancelled) return;
       if(!data||!data.turnos){data={turnos:[],activo:null,salario:SMIN};}
@@ -72,16 +74,29 @@ function App(props){
       loadedRef.current=true;
       setTimeout(function(){
         if(!cancelled){
-          setLoading(false);
-          var hasPin=leer('mt_pin_'+uid,null)||leer('mt_pin_app_'+uid,null)||session.pin;
-          var isRealCloudUser=!session.pinOnly&&!session.guest&&CLOUD_MODE&&!!session.email;
-          if(isRealCloudUser&&!hasPin){ setShowPinSetup(true); }
+          var elapsed=Date.now()-splashStart;
+          var remain=Math.max(0, 1080-elapsed);
+          setTimeout(function(){
+            if(!cancelled){
+              setSplashExit(true);
+              setTimeout(function(){
+                if(!cancelled){
+                  setLoading(false);
+                  var hasPin=leer('mt_pin_'+uid,null)||leer('mt_pin_app_'+uid,null)||session.pin;
+                  var isRealCloudUser=!session.pinOnly&&!session.guest&&CLOUD_MODE&&!!session.email;
+                  if(isRealCloudUser&&!hasPin){ setShowPinSetup(true); }
+                }
+              }, 330);
+            }
+          }, remain);
         }
       }, 350);
     }).catch(function(e){
       if(!cancelled){
         setTurnos([]);setActivo(null);setSalario(SMIN);
-        loadedRef.current=true;setLoading(false);
+        loadedRef.current=true;
+        setSplashExit(true);
+        setTimeout(function(){ if(!cancelled) setLoading(false); }, 330);
       }
     });
     return function(){cancelled=true;};
@@ -205,11 +220,18 @@ function App(props){
   function onExportPDF(){haptic();setExportMode('pdf');}
   function onExportExcel(){haptic();setExportMode('xlsx');}
 
-  if(loading) return h('div',{className:'splash'},
-    h('img',{src:'img/logo-mark.svg', className:'sp-logo', alt:'mi turno', draggable:false}),
+  if(loading) return h('div',{className:'splash'+(splashExit?' splash--exit':'')},
+    h('div',{className:'sp-logo-wrap'},
+      h('img',{src:'img/logo-mark.svg',className:'sp-logo',alt:'Mi Turno',draggable:false}),
+      h('span',{className:'sp-glow'}),
+      h('span',{className:'sp-ping'}),
+      h('span',{className:'sp-ping-2'})),
     h('div',{className:'sp-ttl'},'Mi Turno'),
     h('div',{className:'sp-sub'},'Colombia · Nómina inteligente'),
-    h('div',{className:'sp-ring'}));
+    h('div',{className:'sp-dots'},
+      h('span',{className:'sp-dot'}),
+      h('span',{className:'sp-dot'}),
+      h('span',{className:'sp-dot'})));
 
   var tStr=ahoraDate.toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
 

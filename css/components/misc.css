@@ -25,49 +25,59 @@
 }
 
 #initSplash{
-  position:fixed;inset:0;z-index:9999;
+  position:fixed;inset:0;z-index:9999;overflow:hidden;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
-  background:linear-gradient(165deg,#c8dfff 0%,#d8e9ff 28%,#e5efff 58%,#f0f5ff 100%);
-  transition:opacity 0.5s ease-out;
+  background:linear-gradient(168deg,#0d1e5c 0%,#1840b8 40%,#3265d8 72%,#5B86E5 100%);
+  transition:opacity 0.45s ease-out;
+}
+
+#initSplash::before{
+  content:'';position:absolute;
+  width:500px;height:500px;border-radius:50%;
+  background:radial-gradient(circle,rgba(91,134,229,0.18) 0%,transparent 65%);
+  top:-155px;right:-125px;pointer-events:none;
 }
 
 #initSplash.fadeout{opacity:0;pointer-events:none;}
 
 .is-logo{
-  width:120px;height:120px;
+  width:96px;height:96px;
   display:block;
   margin-bottom:22px;
-  animation:isLogoIn 0.7s cubic-bezier(0.34,1.56,0.64,1) both;
-  filter:drop-shadow(0 18px 36px rgba(50,100,210,0.22)) drop-shadow(0 4px 10px rgba(50,100,210,0.12));
+  animation:isLogoIn 0.72s cubic-bezier(0.34,1.56,0.64,1) 0.08s both;
+  filter:drop-shadow(0 18px 42px rgba(0,10,60,0.44)) drop-shadow(0 4px 10px rgba(0,10,60,0.26));
   -webkit-user-drag:none;
 }
 
 .is-name{
-  font-size:32px;font-weight:800;letter-spacing:-1.3px;
-  color:#1c1f27;margin-bottom:6px;
-  animation:isFadeIn 0.6s 0.18s ease-out both;
+  font-size:34px;font-weight:900;letter-spacing:-1.5px;
+  color:#ffffff;margin-bottom:6px;
+  animation:isFadeIn 0.5s 0.4s ease-out both;
 }
 
 .is-tag{
-  font-size:13px;color:#7a8294;font-weight:500;letter-spacing:0.01em;
-  animation:isFadeIn 0.6s 0.28s ease-out both;
+  font-size:13px;color:rgba(255,255,255,0.62);font-weight:500;letter-spacing:0.01em;
+  animation:isFadeIn 0.5s 0.55s ease-out both;
 }
 
 .is-ring{
-  width:26px;height:26px;border-radius:50%;
-  border:2.5px solid #e3e8f1;
-  border-top-color:#527FCC;
-  margin-top:38px;
-  animation:spin 0.85s linear infinite, isFadeIn 0.6s 0.45s ease-out both;
+  width:24px;height:24px;border-radius:50%;
+  border:2.5px solid rgba(255,255,255,0.18);
+  border-top-color:rgba(255,255,255,0.8);
+  margin-top:42px;
+  animation:spin 0.85s linear infinite, isFadeIn 0.5s 0.72s ease-out both;
 }
 
 @keyframes isLogoIn{
-  0%{opacity:0;transform:scale(0.82) translateY(8px);}
-  100%{opacity:1;transform:scale(1) translateY(0);}
+  0%  {opacity:0;transform:scale(0.45) translateY(10px);}
+  58% {opacity:1;transform:scale(1.12) translateY(0);}
+  78% {transform:scale(0.95);}
+  92% {transform:scale(1.04);}
+  100%{opacity:1;transform:scale(1);}
 }
 
 @keyframes isFadeIn{
-  0%{opacity:0;transform:translateY(10px);}
+  0%  {opacity:0;transform:translateY(16px);}
   100%{opacity:1;transform:translateY(0);}
 }
 

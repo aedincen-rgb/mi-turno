@@ -1,21 +1,170 @@
 /* ════════════════════════════════════════════════════════════════
-   MI TURNO · modals/splash.css
+   MI TURNO · modals/splash.css — Intro animado estilo Nequi
    ════════════════════════════════════════════════════════════════ */
 
-.splash{position:fixed;inset:0;z-index:500;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--bg);}
+/* ─── Keyframes ─────────────────────────────────────────────── */
 
-.sp-logo{
-  width:88px;height:88px;
-  display:block;
-  margin-bottom:20px;
-  filter:drop-shadow(0 12px 28px rgba(50,100,200,0.24)) drop-shadow(0 3px 8px rgba(50,100,200,0.14));
-  -webkit-user-drag:none;
+@keyframes spBgIn {
+  from { opacity: 0 }
+  to   { opacity: 1 }
 }
 
-.sp-ttl{font-size:30px;font-weight:800;color:var(--text);letter-spacing:-1.2px;margin-bottom:6px;}
+@keyframes spLogoIn {
+  0%   { transform: scale(0.38);  opacity: 0 }
+  55%  { transform: scale(1.14);  opacity: 1 }
+  75%  { transform: scale(0.94) }
+  90%  { transform: scale(1.05) }
+  100% { transform: scale(1);     opacity: 1 }
+}
 
-.sp-sub{font-size:12px;color:var(--muted);font-weight:500;margin-bottom:30px;letter-spacing:-0.005em;}
+@keyframes spGlow {
+  0%   { opacity: 0; transform: scale(0.6) }
+  45%  { opacity: 1; transform: scale(1)   }
+  100% { opacity: 0; transform: scale(1.8) }
+}
 
-.sp-ring{width:26px;height:26px;border:2.5px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.85s linear infinite;}
+@keyframes spPing {
+  0%   { transform: scale(1);   opacity: 0.55 }
+  100% { transform: scale(3.0); opacity: 0    }
+}
 
-.sp-in{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,0.35);border-top-color:#fff;border-radius:50%;animation:spin 0.85s linear infinite;vertical-align:middle;}
+@keyframes spPing2 {
+  0%   { transform: scale(1);   opacity: 0.3 }
+  100% { transform: scale(2.3); opacity: 0   }
+}
+
+@keyframes spUp {
+  from { transform: translateY(22px); opacity: 0 }
+  to   { transform: translateY(0);    opacity: 1 }
+}
+
+@keyframes spDot {
+  0%, 100% { transform: translateY(0);    opacity: 0.35 }
+  50%       { transform: translateY(-8px); opacity: 1    }
+}
+
+@keyframes spShimmer {
+  0%   { background-position: -200% center }
+  100% { background-position:  200% center }
+}
+
+@keyframes spOut {
+  0%   { opacity: 1; transform: scale(1)    }
+  100% { opacity: 0; transform: scale(1.08) }
+}
+
+/* ─── Fondo ──────────────────────────────────────────────────── */
+
+.splash {
+  position: fixed; inset: 0; z-index: 500;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  background: linear-gradient(168deg, #0d1e5c 0%, #1840b8 40%, #3265d8 72%, #5B86E5 100%);
+  overflow: hidden;
+  animation: spBgIn 0.18s ease both;
+}
+
+/* blobs decorativos */
+.splash::before {
+  content: '';
+  position: absolute;
+  width: 520px; height: 520px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(91,134,229,0.2) 0%, transparent 65%);
+  top: -160px; right: -130px;
+  pointer-events: none;
+}
+.splash::after {
+  content: '';
+  position: absolute;
+  width: 360px; height: 360px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(100,180,255,0.13) 0%, transparent 65%);
+  bottom: -100px; left: -90px;
+  pointer-events: none;
+}
+
+/* estado de salida */
+.splash--exit {
+  animation: spOut 0.32s cubic-bezier(0.4, 0, 0.7, 0.9) forwards !important;
+  pointer-events: none;
+}
+
+/* ─── Logo ───────────────────────────────────────────────────── */
+
+.sp-logo-wrap {
+  position: relative;
+  width: 88px; height: 88px;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 26px;
+}
+
+.sp-logo {
+  width: 88px; height: 88px;
+  display: block; position: relative; z-index: 2;
+  filter:
+    drop-shadow(0 20px 44px rgba(0, 10, 60, 0.48))
+    drop-shadow(0 5px 12px rgba(0, 10, 60, 0.30));
+  animation: spLogoIn 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) 0.22s both;
+  -webkit-user-drag: none;
+}
+
+/* glow burst que explota al aterrizar el logo */
+.sp-glow {
+  position: absolute; inset: -8px;
+  border-radius: 28px;
+  background: radial-gradient(circle, rgba(125,168,255,0.55) 0%, transparent 70%);
+  animation: spGlow 0.9s ease 0.78s both;
+  pointer-events: none; z-index: 1;
+}
+
+/* anillos ping */
+.sp-ping {
+  position: absolute; inset: -5px;
+  border-radius: 50%;
+  border: 2.5px solid rgba(125, 168, 255, 0.55);
+  animation: spPing 1.1s cubic-bezier(0, 0, 0.2, 1) 0.72s both;
+  pointer-events: none;
+}
+
+.sp-ping-2 {
+  position: absolute; inset: -5px;
+  border-radius: 50%;
+  border: 2px solid rgba(125, 168, 255, 0.28);
+  animation: spPing2 1.1s cubic-bezier(0, 0, 0.2, 1) 0.92s both;
+  pointer-events: none;
+}
+
+/* ─── Texto ──────────────────────────────────────────────────── */
+
+.sp-ttl {
+  font-size: 36px; font-weight: 900;
+  color: #ffffff; letter-spacing: -1.6px;
+  margin-bottom: 8px;
+  animation: spUp 0.52s cubic-bezier(0.34, 1.56, 0.64, 1) 0.56s both;
+}
+
+.sp-sub {
+  font-size: 13px; color: rgba(255, 255, 255, 0.62);
+  font-weight: 500; letter-spacing: 0.01em;
+  margin-bottom: 52px;
+  animation: spUp 0.52s cubic-bezier(0.34, 1.56, 0.64, 1) 0.72s both;
+}
+
+/* ─── Indicador de carga (3 puntos) ──────────────────────────── */
+
+.sp-dots {
+  display: flex; gap: 8px;
+  animation: spUp 0.4s ease 0.9s both;
+}
+
+.sp-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.48);
+}
+.sp-dot:nth-child(1) { animation: spDot 1.0s ease-in-out 0.90s infinite; }
+.sp-dot:nth-child(2) { animation: spDot 1.0s ease-in-out 1.05s infinite; }
+.sp-dot:nth-child(3) { animation: spDot 1.0s ease-in-out 1.20s infinite; }
+
+/* reemplaza el viejo spinner */
+.sp-ring { display: none; }
+.sp-in   { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.35); border-top-color: #fff; border-radius: 50%; animation: spin 0.85s linear infinite; vertical-align: middle; }
