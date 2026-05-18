@@ -1,0 +1,84 @@
+/* ════════════════════════════════════════════════════════════════
+   MI TURNO · base/blur-fix.css
+   Fix global: backdrop-filter consistente durante scroll en iOS
+   
+   PROBLEMA: backdrop-filter en iOS Safari se "pega" al hacer scroll
+   y no actualiza el blur con el contenido que pasa debajo.
+   
+   SOLUCIÓN: forzar GPU compositing + repaint en cada frame con
+   transform: translateZ(0) y will-change estratégico.
+   ════════════════════════════════════════════════════════════════ */
+
+/* ─── REGLA UNIVERSAL: cualquier elemento con backdrop-filter ─── */
+[class*="card"],
+.modal-card,
+.ovl,
+.hdr,
+.tabs,
+.btn-glass,
+.dash-hero,
+.kpi-card,
+.tip-box,
+.auth-card,
+.bar-track,
+.hist-row,
+.brk-row,
+.chat-bubble {
+  /* Forzar GPU compositing → backdrop-filter se actualiza correctamente */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  /* Aislar el contexto de pintura */
+  isolation: isolate;
+}
+
+/* ─── Para los elementos que tienen blur Y están dentro de scroll ─── */
+.scr [class*="card"],
+.scr .modal-card,
+.scr .btn-glass,
+.scr .kpi-card,
+.scr .tip-box,
+.scr .hist-row,
+.scr .brk-row {
+  /* Re-render durante scroll */
+  will-change: transform, backdrop-filter;
+  /* Mantener composición consistente */
+  contain: layout style;
+}
+
+/* ─── Overlay y modales: forzar repaint completo ─── */
+.ovl {
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  will-change: backdrop-filter;
+}
+
+.modal-card {
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  will-change: transform;
+}
+
+/* ─── Reset will-change al terminar scroll (optimización iOS) ─── */
+@supports (-webkit-touch-callout: none) {
+  /* Solo iOS: composición agresiva */
+  .hdr,
+  .tabs,
+  .modal-card,
+  .dash-hero,
+  .kpi-card,
+  .tip-box {
+    -webkit-transform: translate3d(0, 0, 0);
+    transform: translate3d(0, 0, 0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    -webkit-perspective: 1000;
+    perspective: 1000;
+  }
+}
+
+/* ─── Para tarjetas en el .scr durante scroll activo ─── */
+.scr {
+  /* El contenedor scroll también debe estar en su capa GPU */
+  -webkit-overflow-scrolling: touch;
+  transform: translateZ(0);
+}
