@@ -122,3 +122,30 @@ async function enviarReportePorEmail(opts){
   
   return data;
 }
+
+async function enviarPINPorEmail(opts){
+  // opts: {to, pin, userName?}
+  if(!SUPA||!CLOUD_MODE){
+    throw new Error('Sin conexión a la nube');
+  }
+  var sessionRes = await SUPA.auth.getSession();
+  if(!sessionRes.data.session){
+    throw new Error('Debes iniciar sesión para enviar correos');
+  }
+  var token = sessionRes.data.session.access_token;
+  var url = window.SUPABASE_CONFIG.url + '/functions/v1/send-pin';
+  var response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer ' + token,
+      'Content-Type': 'application/json',
+      'apikey': window.SUPABASE_CONFIG.anonKey
+    },
+    body: JSON.stringify(opts)
+  });
+  var data = await response.json();
+  if(!response.ok){
+    throw new Error(data.error || 'Error enviando correo');
+  }
+  return data;
+}

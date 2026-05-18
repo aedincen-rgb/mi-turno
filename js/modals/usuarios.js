@@ -57,7 +57,8 @@ function UsuariosModal(props){
   function enviarReset(email){
     if(!SUPA||!CLOUD_MODE) return;
     setBusy(true); setFeedback(null);
-    SUPA.auth.resetPasswordForEmail(email).then(function(res){
+    var redirectTo = window.location.origin + window.location.pathname;
+    SUPA.auth.resetPasswordForEmail(email, { redirectTo: redirectTo }).then(function(res){
       if(res&&res.error) throw res.error;
       setFeedback({type:'ok',msg:'✓ Email de reseteo enviado a '+email});
       setResetUser(null);
