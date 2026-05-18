@@ -1,5 +1,6 @@
 /* ════════════════════════════════════════════════════════════════
    MI TURNO · components/buttons-glass.css
+   iOS 26 Liquid Glass – botones de cristal
    ════════════════════════════════════════════════════════════════ */
 
 .btn-glass{
@@ -17,44 +18,42 @@
   letter-spacing:0.04em;
   text-transform:uppercase;
   color:var(--glass-color, var(--text));
-  background:color-mix(in srgb, var(--glass-tint, var(--surface)) 60%, transparent);
-  backdrop-filter:blur(22px) saturate(180%);
-  -webkit-backdrop-filter:blur(22px) saturate(180%);
-  border:1px solid color-mix(in srgb, var(--glass-color, var(--border2)) 30%, transparent);
+  /* Liquid Glass base */
+  background:color-mix(in srgb, var(--glass-tint, white) 55%, rgba(255,255,255,0.50));
+  backdrop-filter:var(--blur-lg);
+  -webkit-backdrop-filter:var(--blur-lg);
+  border:1px solid color-mix(in srgb, var(--glass-color, white) 22%, rgba(255,255,255,0.55));
   box-shadow:
-    /* Highlight interno superior (aro de cristal) */
-    inset 0 1px 0 color-mix(in srgb, white 35%, transparent),
-    /* Sombra interna inferior para dar profundidad */
-    inset 0 -1px 0 color-mix(in srgb, var(--glass-color, black) 8%, transparent),
-    /* Glow exterior tenue del color */
-    0 8px 24px color-mix(in srgb, var(--glass-color, black) 14%, transparent),
-    /* Sombra suave para que flote */
-    0 2px 8px rgba(0,0,0,0.04);
+    inset 0 1.5px 0 rgba(255,255,255,0.90),
+    inset 0 -1px 0 color-mix(in srgb, var(--glass-color, black) 6%, transparent),
+    0 8px 28px color-mix(in srgb, var(--glass-color, black) 12%, transparent),
+    0 2px 8px rgba(20,30,80,0.05);
   transition:
-    transform 0.25s var(--ios-ease),
-    box-shadow 0.3s var(--ios-ease),
-    background 0.25s var(--ios-ease);
+    transform 0.22s var(--ios-ease),
+    box-shadow 0.25s var(--ios-ease),
+    background 0.22s var(--ios-ease);
   isolation:isolate;
   will-change:transform;
 }
 
+/* Specular top face – efecto lupa */
 .btn-glass::before{
   content:'';
   position:absolute;
   top:0;left:0;right:0;
-  height:50%;
+  height:52%;
   background:linear-gradient(
     180deg,
-    color-mix(in srgb, white 22%, transparent) 0%,
-    color-mix(in srgb, white 6%, transparent) 50%,
+    rgba(255,255,255,0.55) 0%,
+    rgba(255,255,255,0.18) 55%,
     transparent 100%
   );
   pointer-events:none;
   border-radius:var(--radius-sm) var(--radius-sm) 0 0;
   z-index:1;
-  opacity:0.95;
 }
 
+/* Destello diagonal al hover */
 .btn-glass::after{
   content:'';
   position:absolute;
@@ -62,15 +61,15 @@
   left:-30%;
   width:30%;
   background:linear-gradient(
-    100deg,
+    105deg,
     transparent 0%,
-    color-mix(in srgb, white 18%, transparent) 50%,
+    rgba(255,255,255,0.32) 50%,
     transparent 100%
   );
   transform:skewX(-18deg);
   pointer-events:none;
   z-index:2;
-  transition:left 0.7s var(--ios-ease);
+  transition:left 0.65s var(--ios-ease);
 }
 
 .btn-glass:hover::after{left:130%;}
@@ -80,12 +79,13 @@
 .btn-glass:active{
   transform:scale(0.96);
   box-shadow:
-    inset 0 1px 0 color-mix(in srgb, white 28%, transparent),
+    inset 0 1px 0 rgba(255,255,255,0.70),
     inset 0 -1px 0 color-mix(in srgb, var(--glass-color, black) 6%, transparent),
-    0 4px 14px color-mix(in srgb, var(--glass-color, black) 18%, transparent),
-    0 1px 4px rgba(0,0,0,0.05);
+    0 4px 14px color-mix(in srgb, var(--glass-color, black) 16%, transparent),
+    0 1px 4px rgba(20,30,80,0.06);
 }
 
+/* ── Variantes ─────────────────────────────────────────────── */
 .btn-glass.glass-pdf{
   --glass-color:#dc2626;
   --glass-tint:#fee2e2;
@@ -98,7 +98,7 @@
 
 .btn-glass.glass-account{
   --glass-color:var(--accent);
-  --glass-tint:var(--accent-dim);
+  --glass-tint:var(--accent-tint);
 }
 
 .btn-glass.glass-signout{
@@ -106,30 +106,31 @@
   --glass-tint:var(--danger-dim);
 }
 
+/* ── Dark mode ─────────────────────────────────────────────── */
 [data-theme="dark"] .btn-glass{
-  background:color-mix(in srgb, var(--glass-tint, var(--surface2)) 30%, transparent);
-  border-color:color-mix(in srgb, var(--glass-color, var(--border2)) 38%, transparent);
+  background:color-mix(in srgb, var(--glass-tint, var(--surface2)) 20%, rgba(255,255,255,0.07));
+  border-color:color-mix(in srgb, var(--glass-color, white) 28%, rgba(255,255,255,0.12));
   box-shadow:
-    inset 0 1px 0 color-mix(in srgb, white 12%, transparent),
-    inset 0 -1px 0 rgba(0,0,0,0.18),
-    0 8px 24px color-mix(in srgb, var(--glass-color, black) 22%, transparent),
-    0 2px 8px rgba(0,0,0,0.18);
+    inset 0 1.5px 0 rgba(255,255,255,0.12),
+    inset 0 -1px 0 rgba(0,0,0,0.20),
+    0 8px 28px color-mix(in srgb, var(--glass-color, black) 22%, transparent),
+    0 2px 8px rgba(0,0,0,0.20);
 }
 
 [data-theme="dark"] .btn-glass::before{
   background:linear-gradient(
     180deg,
-    color-mix(in srgb, white 10%, transparent) 0%,
-    color-mix(in srgb, white 3%, transparent) 50%,
+    rgba(255,255,255,0.12) 0%,
+    rgba(255,255,255,0.04) 55%,
     transparent 100%
   );
 }
 
 [data-theme="dark"] .btn-glass::after{
   background:linear-gradient(
-    100deg,
+    105deg,
     transparent 0%,
-    color-mix(in srgb, white 10%, transparent) 50%,
+    rgba(255,255,255,0.10) 50%,
     transparent 100%
   );
 }

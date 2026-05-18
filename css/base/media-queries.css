@@ -11,7 +11,8 @@
 
 
 [data-theme="dark"]{
-  --bg:#0a0c12;
+  /* Background: espacio nocturno profundo */
+  --bg:linear-gradient(165deg,#050f20 0%,#080f26 35%,#060c1c 65%,#040810 100%);
   --surface:#14171f;
   --surface2:#1c2029;
   --border:#2a2f3b;
@@ -25,16 +26,27 @@
   --accent-tint:rgba(125,168,255,0.08);
   --accent-deep:#5B86E5;
   --accent-dim:rgba(125,168,255,0.14);
-  --accent-glow:rgba(125,168,255,0.30);
+  --accent-glow:rgba(125,168,255,0.32);
   --danger:#e58a85;
   --danger-dim:rgba(229,138,133,0.13);
   --success:#7EC4A6;
   --success-dim:rgba(126,196,166,0.13);
   --info:#90AED9;
   --night:#7DA8FF;
-  --sh-1:0 1px 3px rgba(0,0,0,0.4);
-  --sh-2:0 8px 32px rgba(0,0,0,0.32);
-  --sh-3:0 16px 48px rgba(0,0,0,0.5);
+
+  /* Liquid Glass tokens dark */
+  --glass-heavy:rgba(255,255,255,0.09);
+  --glass-mid:rgba(255,255,255,0.07);
+  --glass-thin:rgba(255,255,255,0.05);
+  --glass-border:rgba(255,255,255,0.14);
+  --glass-border-sm:rgba(255,255,255,0.10);
+  --spec-top:rgba(255,255,255,0.11);
+  --spec-bot:rgba(0,0,0,0.28);
+
+  /* Shadows */
+  --sh-1:0 2px 8px rgba(0,0,0,0.40);
+  --sh-2:0 8px 32px rgba(0,0,0,0.45);
+  --sh-3:0 20px 60px rgba(0,0,0,0.58);
 }
 
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}

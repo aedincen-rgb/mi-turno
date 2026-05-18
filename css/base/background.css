@@ -1,20 +1,40 @@
 /* ════════════════════════════════════════════════════════════════
    MI TURNO · base/background.css
-   Formas de fondo flotantes
+   Gradient mesh: orbs que forman el cielo iOS 26
    ════════════════════════════════════════════════════════════════ */
 
-.bg-shapes{opacity:0.5;}
+.bg-shapes{
+  position:fixed;inset:0;z-index:0;
+  pointer-events:none;overflow:hidden;
+}
 
-.bg-shapes{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
+/* Orb superior-izquierdo: zona azul real */
+.shape-1{
+  top:-15%;left:-15%;
+  width:75vw;height:75vw;
+  background:var(--accent);
+  opacity:0.28;
+}
 
-.shape-1{top:-10%;left:-10%;width:60vw;height:60vw;background:var(--accent);opacity:0.10;}
+/* Orb inferior-derecho: zona celeste suave */
+.shape-2{
+  bottom:-5%;right:-15%;
+  width:85vw;height:85vw;
+  background:var(--accent2);
+  opacity:0.22;
+  animation-delay:-5s;
+}
 
-.shape-1{opacity:0.07;}
+/* Orb central: profundidad índigo */
+.shape-3{
+  top:30%;left:50%;
+  width:60vw;height:60vw;
+  background:var(--accent-deep);
+  opacity:0.16;
+  animation-delay:-10s;
+}
 
-.shape-2{bottom:-10%;right:-15%;width:70vw;height:70vw;background:var(--accent2);opacity:0.08;animation-delay:-5s;}
-
-.shape-2{opacity:0.06;}
-
-.shape-3{top:35%;left:55%;width:50vw;height:50vw;background:var(--accent-deep);opacity:0.06;animation-delay:-10s;}
-
-.shape-3{opacity:0.04;}
+/* Dark mode: orbs más vibrantes sobre fondo oscuro */
+[data-theme="dark"] .shape-1{opacity:0.55;}
+[data-theme="dark"] .shape-2{opacity:0.42;}
+[data-theme="dark"] .shape-3{opacity:0.30;}

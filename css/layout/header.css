@@ -1,5 +1,6 @@
 /* ════════════════════════════════════════════════════════════════
    MI TURNO · layout/header.css
+   iOS 26 Liquid Glass header flotante
    ════════════════════════════════════════════════════════════════ */
 
 .hdr{
@@ -9,21 +10,26 @@
   gap:8px;
   position:relative;z-index:10;
   border-radius:28px;
-  background:color-mix(in srgb, var(--surface) 55%, transparent);
-  backdrop-filter:blur(40px) saturate(200%);
-  -webkit-backdrop-filter:blur(40px) saturate(200%);
-  border:1px solid color-mix(in srgb, var(--border) 60%, transparent);
+  /* Liquid Glass */
+  background:var(--glass-heavy);
+  backdrop-filter:var(--blur-xl);
+  -webkit-backdrop-filter:var(--blur-xl);
+  border:1px solid var(--glass-border);
   box-shadow:
-    0 12px 36px rgba(0,0,0,0.08),
-    0 2px 6px rgba(0,0,0,0.04),
-    inset 0 1px 0 color-mix(in srgb, white 30%, transparent);
+    inset 0 1.5px 0 var(--spec-top),
+    inset 0 -0.5px 0 var(--spec-bot),
+    0 4px 24px rgba(91,134,229,0.10),
+    0 1px 4px rgba(20,30,80,0.06);
 }
 
 [data-theme="dark"] .hdr{
-  background:color-mix(in srgb, var(--surface) 70%, transparent);
+  background:var(--glass-heavy);
+  border-color:var(--glass-border);
   box-shadow:
-    0 12px 36px rgba(0,0,0,0.5),
-    inset 0 1px 0 rgba(255,255,255,0.05);
+    inset 0 1.5px 0 var(--spec-top),
+    inset 0 -0.5px 0 var(--spec-bot),
+    0 8px 40px rgba(0,0,0,0.50),
+    0 0 24px rgba(125,168,255,0.08);
 }
 
 .hdr-l{display:flex;flex-direction:column;gap:2px;min-width:0;}
