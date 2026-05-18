@@ -584,8 +584,174 @@ function aiAnswer(question, state){
   }
 
   // ════════════════════════════════════════════════════════════
+  //  COMPOSICIÓN DE CORREO (acción real, no solo texto)
+  // ════════════════════════════════════════════════════════════
+
+  if(_aiIsEmailIntent(t)){
+    var emailAction=_aiBuildEmail(question, t, c, state);
+    return {
+      text:emailAction.preview,
+      action:{type:'email_compose', data:emailAction.data}
+    };
+  }
+
+  // ════════════════════════════════════════════════════════════
   //  FALLBACK
   // ════════════════════════════════════════════════════════════
 
-  return '🤔 No estoy seguro de qué buscas. Algunas cosas que puedo responder:\n\n• "¿Cuánto gané hoy?" · "¿Y ayer?"\n• "Compara con mes pasado"\n• "¿Cuándo llego a la meta?"\n• "¿Cuánto si trabajo 4h más?"\n• "Mejor día de la semana"\n• "Próximos festivos"\n• "Mi racha"\n\n💡 Escribe **/capacidades** para ver todo lo que sé.';
+  return '🤔 No estoy seguro de qué buscas. Algunas cosas que puedo responder:\n\n• "¿Cuánto gané hoy?" · "¿Y ayer?"\n• "Compara con mes pasado"\n• "¿Cuándo llego a la meta?"\n• "¿Cuánto si trabajo 4h más?"\n• "Mejor día de la semana"\n• "Próximos festivos"\n• "Mi racha"\n• **"Envía mi reporte por correo a juan@empresa.com"**\n• **"Redacta un correo formal para mi jefe"**\n\n💡 Escribe **/capacidades** para ver todo lo que sé.';
+}
+
+// ════════════════════════════════════════════════════════════════
+//  COMPOSICIÓN DE EMAIL · detección y plantillas
+// ════════════════════════════════════════════════════════════════
+
+function _aiIsEmailIntent(t){
+  // Verbo de envío
+  var hasVerbo=_aiHas(t,'enviar','envia','envía','manda','mandar','mandame','envíame','enviame',
+                       'redacta','redactar','compon','componer','escribe un','escribir un');
+  // Sustantivo
+  var hasSust=_aiHas(t,'correo','email','mail','mensaje','reporte por correo','reporte al mail');
+  return hasVerbo && hasSust;
+}
+
+function _aiBuildEmail(raw, t, c, state){
+  // ── Destinatario ──
+  var emailMatch=raw.match(/[\w.+-]+@[\w-]+\.[\w.-]+/);
+  var to=emailMatch?emailMatch[0].toLowerCase():'';
+  if(!to && state.session && state.session.email) to=state.session.email;
+  if(!to && _aiHas(t,'mi correo','mi email','a mi','para mi','mi propio')){
+    to=(state.session && state.session.email) || '';
+  }
+
+  // ── Formato ──
+  var format=_aiHas(t,'excel','xlsx','xls','hoja','spreadsheet','planilla')?'xlsx':'pdf';
+
+  // ── Adjuntar reporte ──
+  var attach=!_aiHas(t,'sin adjunto','sin archivo','sin pdf','sin reporte','solo texto','sin anex');
+
+  // ── Tipo de email (define plantilla) ──
+  var tipo='resumen';
+  if(_aiHas(t,'jefe','supervisor','rrhh','empleador','patron','recursos humanos','gerente','jefa','contador')) tipo='formal';
+  if(_aiHas(t,'extra','sobretiempo')) tipo='extras';
+  if(_aiHas(t,'festiv','domingo')) tipo='festivos';
+  if(_aiHas(t,'nocturn','noche')) tipo='nocturnas';
+  if(_aiHas(t,'reporte','informe','completo','detallad')) tipo='reporte';
+  if(_aiHas(t,'justific','explic')) tipo='justificacion';
+
+  var mesNombre=c.ahora.toLocaleDateString('es-CO',{month:'long',year:'numeric'});
+  var mesCap=mesNombre.charAt(0).toUpperCase()+mesNombre.slice(1);
+
+  var subject='', body='';
+
+  if(tipo==='formal'){
+    subject='Reporte de turnos · '+mesCap;
+    body='Buenos días,\n\n'+
+      'Adjunto mi reporte oficial de turnos correspondiente a '+mesNombre+'.\n\n'+
+      'Resumen ejecutivo:\n'+
+      '• Días trabajados: '+c.diasTrab+' ('+c.turnosMes.length+' turnos)\n'+
+      '• Total de horas: '+fDur(c.totalMins)+'\n'+
+      '• Horas extras: '+fDur(c.extraMins)+(c.extraMins>0?' · '+fCOP(c.extraCOP):'')+'\n'+
+      '• Horas festivas: '+fDur(c.festMins)+(c.festMins>0?' · '+fCOP(c.festCOP):'')+'\n'+
+      '• Horas nocturnas: '+fDur(c.nocturnasMins)+(c.nocturnasMins>0?' · '+fCOP(c.nocturnasCOP):'')+'\n\n'+
+      'El detalle completo día por día, con los recargos calculados según la Ley 2101 de 2021 y el CST (Arts. 168-171), '+
+      'se encuentra en el archivo adjunto.\n\n'+
+      'Quedo atento a cualquier consulta o ajuste.\n\n'+
+      'Cordialmente.';
+  }
+  else if(tipo==='extras'){
+    var lineasExt=Object.keys(c.bd).filter(function(k){return c.bd[k].mins>0 && k.indexOf('extra')===0;}).map(function(k){
+      return '• '+RC[k].label+': '+fDur(c.bd[k].mins)+' · '+fCOP(c.bd[k].cop);
+    }).join('\n')||'• Sin horas extras en este período.';
+    subject='Detalle de horas extras · '+mesCap;
+    body='Buenas tardes,\n\n'+
+      'Comparto el detalle de mis horas extras del mes de '+mesNombre+':\n\n'+
+      lineasExt+'\n\n'+
+      'Total extras: '+fDur(c.extraMins)+' · '+fCOP(c.extraCOP)+'\n\n'+
+      'Recuerdo que las horas extras se generan al superar las 46 horas semanales (jornada máxima legal, Ley 2101/2021). '+
+      'Los recargos aplicados son: +25% diurna, +75% nocturna, +100% festiva diurna y +150% festiva nocturna sobre el valor hora base.\n\n'+
+      'Adjunto el reporte completo con la trazabilidad por turno.\n\n'+
+      'Quedo atento.\n\nSaludos.';
+  }
+  else if(tipo==='festivos'){
+    var lineasFest=c.festTrab.map(function(d){
+      return '• '+_fechaLarga(d.fecha)+' · '+fDur(d.mins)+' · '+fCOP(d.cop);
+    }).join('\n')||'• Sin días festivos trabajados en este período.';
+    subject='Turnos en festivos · '+mesCap;
+    body='Hola,\n\n'+
+      'Detalle de turnos trabajados en días festivos / dominicales durante '+mesNombre+':\n\n'+
+      lineasFest+'\n\n'+
+      'Total festivos: '+c.festTrab.length+' día'+(c.festTrab.length!==1?'s':'')+' · '+fDur(c.festMins)+' · '+fCOP(c.festCOP)+'\n\n'+
+      'Recargos aplicados: +75% (diurna festiva), +110% (nocturna festiva), '+
+      'según la Ley 2101 de 2021.\n\n'+
+      'Adjunto el reporte completo.\n\n'+
+      'Saludos.';
+  }
+  else if(tipo==='nocturnas'){
+    subject='Detalle de jornada nocturna · '+mesCap;
+    body='Hola,\n\n'+
+      'Comparto el detalle de mis horas nocturnas (9pm-6am) trabajadas en '+mesNombre+':\n\n'+
+      '• Nocturna ordinaria: '+fDur(c.bd.noctOrd.mins)+' · '+fCOP(c.bd.noctOrd.cop)+'\n'+
+      '• Nocturna festiva: '+fDur(c.bd.noctFest.mins)+' · '+fCOP(c.bd.noctFest.cop)+'\n'+
+      '• Extra nocturna: '+fDur(c.bd.extraNoct.mins)+' · '+fCOP(c.bd.extraNoct.cop)+'\n'+
+      '• Extra fest. nocturna: '+fDur(c.bd.extraFestNoct.mins)+' · '+fCOP(c.bd.extraFestNoct.cop)+'\n\n'+
+      'Total: '+fDur(c.nocturnasMins)+' · '+fCOP(c.nocturnasCOP)+'\n\n'+
+      'El recargo nocturno mínimo es del +35% sobre el valor hora base (Ley 2101/2021).\n\n'+
+      'Adjunto el reporte detallado.\n\n'+
+      'Saludos.';
+  }
+  else if(tipo==='justificacion'){
+    subject='Justificación de turnos · '+mesCap;
+    body='Buen día,\n\n'+
+      'Adjunto la justificación de mis turnos trabajados durante '+mesNombre+':\n\n'+
+      '• '+c.diasTrab+' días con turno · '+fDur(c.totalMins)+'\n'+
+      '• Distribución por jornada:\n'+_bdLines(c.bd).replace(/\n/g,'\n  ')+'\n\n'+
+      'Cada turno está registrado con hora de inicio, hora de fin y duración exacta. Los recargos se aplican según la legislación laboral colombiana (Ley 2101/2021, CST Arts. 168-171).\n\n'+
+      'El documento adjunto contiene la trazabilidad completa.\n\n'+
+      'Atento a cualquier comentario.\n\nCordialmente.';
+  }
+  else if(tipo==='reporte'){
+    subject='Mi reporte de turnos · '+mesCap;
+    body='Hola,\n\n'+
+      'Adjunto mi reporte de turnos de '+mesNombre+'.\n\n'+
+      'Resumen rápido:\n'+
+      '• '+c.diasTrab+' turnos · '+fDur(c.totalMins)+'\n'+
+      '• Ingreso bruto: '+fCOP(c.totalCOP)+' ('+c.pctSalario.toFixed(1)+'% del salario base)\n'+
+      '• Promedio: '+fCOP(c.prom)+' por turno\n'+
+      (c.proy>0?'• Proyección al cierre: '+fCOP(c.proy)+'\n':'')+
+      '\nEl detalle completo está en el archivo adjunto.\n\nSaludos.';
+  }
+  else { // resumen (default)
+    var mejorLine=c.mejor?'🏆 Mejor día: '+_fechaLarga(c.mejor.fecha)+' · '+fCOP(c.mejor.cop)+'\n':'';
+    subject='Resumen del mes · '+mesCap;
+    body='Hola,\n\n'+
+      'Este es mi resumen de turnos del mes:\n\n'+
+      '📊 '+c.diasTrab+' turnos · '+fDur(c.totalMins)+'\n'+
+      '💰 Ingresos: '+fCOP(c.totalCOP)+' ('+c.pctSalario.toFixed(1)+'% del salario base)\n'+
+      (c.extraMins>0?'⚡ Extras: '+fDur(c.extraMins)+' · '+fCOP(c.extraCOP)+'\n':'')+
+      (c.nocturnasMins>0?'☾ Nocturnas: '+fDur(c.nocturnasMins)+'\n':'')+
+      (c.festMins>0?'✦ Festivas: '+fDur(c.festMins)+'\n':'')+
+      (c.proy>0?'📈 Proyección: '+fCOP(c.proy)+'\n':'')+
+      '\n'+mejorLine+
+      '\nReporte completo en el adjunto.\n\nSaludos.';
+  }
+
+  // Sin destinatario detectado → IA pide que el usuario complete
+  var preview;
+  if(!to){
+    preview='Preparé un correo. Solo me falta a quién enviarlo — completa el destinatario en la tarjeta:';
+  } else {
+    preview='He redactado este correo para **'+to+'**. Revísalo, edítalo si quieres y pulsa **Enviar**:';
+  }
+
+  return {
+    preview:preview,
+    data:{
+      to:to,
+      subject:subject,
+      body:body,
+      format:format,
+      attach:attach
+    }
+  };
 }
