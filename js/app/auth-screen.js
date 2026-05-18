@@ -273,7 +273,17 @@ function AuthScreen(props){
 
   return h('div',{className:'auth-wrap'},
     h('div',{className:'auth-hero'},
-      h('div',{className:'auth-logo-box'},'⏱'),
+      h<img 
+  src="icon-192.png" 
+  alt="Mi Turno" 
+  className="login-icon-img"
+  style={{ 
+    width: '70px', 
+    height: '70px', 
+    objectFit: 'contain',
+    marginBottom: '16px'
+  }} 
+/>,
       h('div',{className:'auth-app-name'},'Mi Turno'),
       h('div',{className:'auth-tagline'},
         modo==='login'
