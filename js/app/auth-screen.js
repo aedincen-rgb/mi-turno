@@ -273,18 +273,16 @@ function AuthScreen(props){
   // ════════════════════════════════════════════════════════════════
   return h('div', { className: 'auth-wrap' },
     h('div', { className: 'auth-hero' },
-      // Icono personalizado (reemplaza el reloj azul por la imagen PNG)
       h('img', {
-        src: 'icon-192.png',
+        src: 'img/logo-mark.svg',
         alt: 'Mi Turno',
+        draggable: false,
         style: {
-          width: '70px',
-          height: '70px',
-          objectFit: 'cover',
-          borderRadius: '20px',
-          marginBottom: '16px',
-          backgroundColor: '#0f172a',
-          boxShadow: '0 8px 20px rgba(0,0,0,0.1)'
+          width: '86px',
+          height: '86px',
+          display: 'block',
+          margin: '0 auto 18px',
+          filter: 'drop-shadow(0 12px 28px rgba(50,100,200,0.22)) drop-shadow(0 3px 8px rgba(50,100,200,0.12))'
         }
       }),
       h('div', { className: 'auth-app-name' }, 'Mi Turno'),

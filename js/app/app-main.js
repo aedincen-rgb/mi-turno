@@ -206,7 +206,7 @@ function App(props){
   function onExportExcel(){haptic();setExportMode('xlsx');}
 
   if(loading) return h('div',{className:'splash'},
-    h('div',{className:'sp-logo'},'⏱'),
+    h('img',{src:'img/logo-mark.svg', className:'sp-logo', alt:'mi turno', draggable:false}),
     h('div',{className:'sp-ttl'},'Mi Turno'),
     h('div',{className:'sp-sub'},'Colombia · Nómina inteligente'),
     h('div',{className:'sp-ring'}));
@@ -269,7 +269,10 @@ function App(props){
       h('div',{className:'hdr-l'},
         activo?h('span',{className:'hdr-live'},'EN VIVO'):null),
       h('div',{className:'hdr-c'},
-        h('div',{className:'hdr-brand'}, 'Mi Turno'),
+        h('div',{className:'hdr-brand'},
+          h('img',{src:'img/logo-mark.svg', width:30, height:30, alt:'', draggable:false,
+            style:{borderRadius:8, flexShrink:0, display:'block'}}),
+          'Mi Turno'),
         h('div',{className:'hdr-sub'},
           ahoraDate.toLocaleDateString('es-CO',{weekday:'short',day:'numeric',month:'short'})+(festHoy?' · Festivo':''))),
       h('div',{className:'hdr-r'},

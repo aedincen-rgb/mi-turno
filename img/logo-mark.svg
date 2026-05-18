@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="mi turno">
+  <defs>
+    <!-- Container background: white → icy blue -->
+    <linearGradient id="g-bg" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0%"   stop-color="#FFFFFF"/>
+      <stop offset="55%"  stop-color="#EBF3FF"/>
+      <stop offset="100%" stop-color="#D4E6FF"/>
+    </linearGradient>
+
+    <!-- "mi" text gradient: pale top → vivid blue mid → deeper blue base -->
+    <linearGradient id="g-mi" x1="256" y1="60" x2="256" y2="370" gradientUnits="userSpaceOnUse">
+      <stop offset="0%"   stop-color="#A8D2FF"/>
+      <stop offset="38%"  stop-color="#4B8EF6"/>
+      <stop offset="100%" stop-color="#2B68D8"/>
+    </linearGradient>
+
+    <!-- Top specular highlight -->
+    <linearGradient id="g-spec" x1="256" y1="14" x2="256" y2="260" gradientUnits="userSpaceOnUse">
+      <stop offset="0%"   stop-color="rgba(255,255,255,0.92)"/>
+      <stop offset="60%"  stop-color="rgba(255,255,255,0.18)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+    </linearGradient>
+
+    <!-- Glass border: bright top-left → muted mid → soft bottom-right -->
+    <linearGradient id="g-bd" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0%"   stop-color="#C8DDFF" stop-opacity="1"/>
+      <stop offset="42%"  stop-color="#88B4F0" stop-opacity="0.42"/>
+      <stop offset="100%" stop-color="#D8EAFF" stop-opacity="0.90"/>
+    </linearGradient>
+
+    <!-- Drop shadow -->
+    <filter id="f-sh" x="-20%" y="-15%" width="150%" height="150%">
+      <feDropShadow dx="0" dy="18" stdDeviation="26" flood-color="#2858B8" flood-opacity="0.20"/>
+    </filter>
+
+    <!-- Clip to squircle shape -->
+    <clipPath id="cl">
+      <rect x="14" y="14" width="484" height="484" rx="120"/>
+    </clipPath>
+  </defs>
+
+  <!-- Shadow layer (subtle, bluish) -->
+  <rect x="14" y="22" width="484" height="484" rx="120"
+        fill="none" filter="url(#f-sh)" stroke="rgba(140,190,255,0.08)" stroke-width="1"/>
+
+  <!-- Main background -->
+  <rect x="14" y="14" width="484" height="484" rx="120" fill="url(#g-bg)"/>
+
+  <!-- Top glass specular sweep -->
+  <rect x="26" y="16" width="460" height="248" rx="106" fill="url(#g-spec)" clip-path="url(#cl)"/>
+
+  <!-- Subtle bottom ambient glow -->
+  <ellipse cx="256" cy="456" rx="172" ry="44" fill="rgba(150,205,255,0.16)" clip-path="url(#cl)"/>
+
+  <!-- Outer glass border -->
+  <rect x="14" y="14" width="484" height="484" rx="120"
+        fill="none" stroke="url(#g-bd)" stroke-width="2.5"/>
+
+  <!-- Inner bright highlight border (top-left rim) -->
+  <rect x="17" y="17" width="478" height="478" rx="117"
+        fill="none" stroke="rgba(228,242,255,0.96)" stroke-width="1.5"/>
+
+  <!-- ══ "mi" hero mark ══ -->
+  <text
+    x="256"
+    y="266"
+    text-anchor="middle"
+    dominant-baseline="central"
+    font-family="'Nunito','SF Pro Rounded','Varela Round','Arial Rounded MT Bold','Trebuchet MS',sans-serif"
+    font-size="288"
+    font-weight="900"
+    letter-spacing="-14"
+    fill="url(#g-mi)">mi</text>
+</svg>
