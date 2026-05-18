@@ -9,6 +9,25 @@ function Root() {
     setSession(function(s){ return s?Object.assign({},s,p):s; });
   }
 
+  // ── Intro animation (se muestra para TODOS los usuarios) ──────
+  var si=useState(true);  var showIntro=si[0], setShowIntro=si[1];
+  var se=useState(false); var introExit=se[0], setIntroExit=se[1];
+  var ip=useState(false); var introPlayed=ip[0], setIntroPlayed=ip[1];
+
+  useEffect(function(){
+    var alive=true;
+    var t1=setTimeout(function(){
+      if(!alive) return;
+      setIntroExit(true);
+      setTimeout(function(){
+        if(!alive) return;
+        setShowIntro(false);
+        setIntroPlayed(true);
+      }, 340);
+    }, 1400);
+    return function(){ alive=false; clearTimeout(t1); };
+  },[]);
+
   useEffect(function(){
     var t=setTimeout(function(){
       var s=document.getElementById('initSplash');
@@ -107,8 +126,22 @@ function Root() {
     setSession(validated);
   }
 
+  // ── Mostrar intro para todos (primera vez y usuarios que regresan)
+  if(showIntro) return h('div',{className:'splash'+(introExit?' splash--exit':'')},
+    h('div',{className:'sp-logo-wrap'},
+      h('img',{src:'img/logo-mark.svg',className:'sp-logo',alt:'Mi Turno',draggable:false}),
+      h('span',{className:'sp-glow'}),
+      h('span',{className:'sp-ping'}),
+      h('span',{className:'sp-ping-2'})),
+    h('div',{className:'sp-ttl'},'Mi Turno'),
+    h('div',{className:'sp-sub'},'Colombia · Nómina inteligente'),
+    h('div',{className:'sp-dots'},
+      h('span',{className:'sp-dot'}),
+      h('span',{className:'sp-dot'}),
+      h('span',{className:'sp-dot'})));
+
   if(!session){
     return h(AuthScreen, { onAuth:handleAuth });
   }
-  return h(App, {key:session.uid, session:session, onSignOut:signOut, onSessionPatch:patchSession});
+  return h(App, {key:session.uid, session:session, onSignOut:signOut, onSessionPatch:patchSession, introPlayed:introPlayed});
 }

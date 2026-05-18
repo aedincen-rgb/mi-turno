@@ -72,10 +72,11 @@ function App(props){
       setActivo(data.activo||null);
       setSalario(data.salario||SMIN);
       loadedRef.current=true;
+      var initDelay = props.introPlayed ? 0 : 350;
       setTimeout(function(){
         if(!cancelled){
           var elapsed=Date.now()-splashStart;
-          var remain=Math.max(0, 1080-elapsed);
+          var remain=props.introPlayed ? 0 : Math.max(0,1080-elapsed);
           setTimeout(function(){
             if(!cancelled){
               setSplashExit(true);
@@ -90,7 +91,7 @@ function App(props){
             }
           }, remain);
         }
-      }, 350);
+      }, initDelay);
     }).catch(function(e){
       if(!cancelled){
         setTurnos([]);setActivo(null);setSalario(SMIN);
@@ -220,7 +221,7 @@ function App(props){
   function onExportPDF(){haptic();setExportMode('pdf');}
   function onExportExcel(){haptic();setExportMode('xlsx');}
 
-  if(loading) return h('div',{className:'splash'+(splashExit?' splash--exit':'')},
+  if(loading) return h('div',{className:'splash'+(splashExit?' splash--exit':'')+(props.introPlayed?' splash--plain':'')},
     h('div',{className:'sp-logo-wrap'},
       h('img',{src:'img/logo-mark.svg',className:'sp-logo',alt:'Mi Turno',draggable:false}),
       h('span',{className:'sp-glow'}),
