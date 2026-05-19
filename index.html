@@ -93,7 +93,19 @@
 </div>
 
 <div id="initSplash">
-  <img src="img/logo-mark.svg" class="is-logo" alt="mi turno" draggable="false"/>
+  <svg class="is-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Mi Turno" draggable="false">
+    <defs>
+      <linearGradient id="is-ltr" x1="256" y1="55" x2="256" y2="425" gradientUnits="userSpaceOnUse">
+        <stop offset="0%" stop-color="#B4D0FF"/>
+        <stop offset="25%" stop-color="#6FA0FA"/>
+        <stop offset="65%" stop-color="#4475EC"/>
+        <stop offset="100%" stop-color="#2C52C8"/>
+      </linearGradient>
+    </defs>
+    <path d="M 96,422 L 96,182 C 96,93 196,93 196,182 L 196,422 M 196,422 L 196,182 C 196,93 296,93 296,182 L 296,422" fill="none" stroke="url(#is-ltr)" stroke-width="86" stroke-linecap="round" stroke-linejoin="round"/>
+    <line x1="398" y1="182" x2="398" y2="422" stroke="url(#is-ltr)" stroke-width="86" stroke-linecap="round"/>
+    <circle cx="418" cy="70" r="46" fill="url(#is-ltr)"/>
+  </svg>
   <div class="is-name">Mi Turno</div>
   <div class="is-tag">Colombia · Nómina inteligente</div>
   <div class="is-dots">
@@ -143,6 +155,7 @@
 <script src="js/tabs/config.js"></script>
 
 <!-- 5. Modales -->
+<script src="js/modals/splash.js"></script>
 <script src="js/modals/error-viewer.js"></script>
 <script src="js/modals/forgot-password.js"></script>
 <script src="js/modals/pin-setup.js"></script>

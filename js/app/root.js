@@ -15,35 +15,6 @@ function Root() {
     });
   }
 
-  // ── Intro animation ──────────────────────────────────────────
-  // Persiste en localStorage: solo se muestra la primera vez ever.
-  // iOS evicta la página del fondo → al volver NO repetimos el intro.
-  var alreadyPlayed = leer('mt_intro_played', false);
-  var si = useState(!alreadyPlayed);
-  var showIntro = si[0],
-    setShowIntro = si[1];
-  var se = useState(false);
-  var introExit = se[0],
-    setIntroExit = se[1];
-
-  useEffect(function () {
-    if (!showIntro) return; // ya fue reproducido antes
-    var alive = true;
-    var t1 = setTimeout(function () {
-      if (!alive) return;
-      setIntroExit(true);
-      setTimeout(function () {
-        if (!alive) return;
-        setShowIntro(false);
-        grabar('mt_intro_played', true); // persiste para no volver a mostrar
-      }, 340);
-    }, 1400);
-    return function () {
-      alive = false;
-      clearTimeout(t1);
-    };
-  }, []);
-
   useEffect(function () {
     var t = setTimeout(function () {
       var s = document.getElementById('initSplash');
@@ -157,8 +128,6 @@ function Root() {
     setSession(validated);
   }
 
-  if (showIntro) return h(SplashScreen, { exit: introExit });
-
   if (!session) {
     return h(AuthScreen, { onAuth: handleAuth });
   }
@@ -167,6 +136,6 @@ function Root() {
     session: session,
     onSignOut: signOut,
     onSessionPatch: patchSession,
-    introPlayed: alreadyPlayed || !showIntro
+    introPlayed: true
   });
 }
