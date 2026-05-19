@@ -1,82 +1,219 @@
-const CACHE_NAME = 'mi-turno-v4';
-const CDN_URLS = [
-  'https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js',
-  'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',
-  'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
-  'https://cdn.jsdelivr.net/npm/chart.js'
+// ════════════════════════════════════════════════════════════════
+//  MI TURNO · SERVICE WORKER v5
+//  Offline-first: shell cache + stale-while-revalidate
+// ════════════════════════════════════════════════════════════════
+var CACHE = 'mt-v5';
+
+// CDN libs — cache-first forever
+var CDN_HOSTS = ['cdnjs.cloudflare.com', 'jsdelivr.net', 'fonts.gstatic.com', 'fonts.googleapis.com'];
+
+// App shell — pre-cached on install so the app loads 100% offline
+var SHELL = [
+  '/',
+  '/index.html',
+  '/img/logo-mark.svg',
+  // base
+  '/css/base/variables.css',
+  '/css/base/reset.css',
+  '/css/base/typography.css',
+  '/css/base/background.css',
+  '/css/base/media-queries.css',
+  '/css/base/blur-fix.css',
+  // layout
+  '/css/layout/header.css',
+  '/css/layout/scroll.css',
+  '/css/layout/hero-card.css',
+  '/css/layout/progress-bar.css',
+  '/css/layout/action-button.css',
+  '/css/layout/shapes.css',
+  '/css/layout/fade-animations.css',
+  '/css/layout/misc-animations.css',
+  '/css/layout/misc.css',
+  // components
+  '/css/components/cards.css',
+  '/css/components/buttons.css',
+  '/css/components/buttons-glass.css',
+  '/css/components/inputs.css',
+  '/css/components/switches.css',
+  '/css/components/config-rows.css',
+  '/css/components/dashboard-hero.css',
+  '/css/components/dashboard-kpis.css',
+  '/css/components/dashboard-chart.css',
+  '/css/components/dashboard-tip.css',
+  '/css/components/assistant-chat.css',
+  '/css/components/history-list.css',
+  '/css/components/auth-screen.css',
+  '/css/components/misc.css',
+  '/css/components/dark-mode-overrides.css',
+  // modals
+  '/css/modals/overlay.css',
+  '/css/modals/modal-card.css',
+  '/css/modals/bottom-sheets.css',
+  '/css/modals/auth-screen.css',
+  '/css/modals/assistant-chat.css',
+  '/css/modals/time-picker.css',
+  '/css/modals/splash.css',
+  '/css/modals/misc.css',
+  '/css/modals/dark-overrides.css',
+  // animations
+  '/css/animations/keyframes.css',
+  // js config
+  '/js/config.js',
+  '/js/theme-boot.js',
+  '/js/config/react-init.js',
+  '/js/config/env.js',
+  '/js/config/viewport-fix.js',
+  '/js/config/globals.js',
+  // js utils
+  '/js/utils/storage.js',
+  '/js/utils/format.js',
+  '/js/utils/haptic.js',
+  '/js/utils/network.js',
+  '/js/utils/uuid.js',
+  '/js/utils/festivos.js',
+  '/js/utils/time.js',
+  '/js/utils/validation.js',
+  '/js/utils/otp.js',
+  // js services
+  '/js/services/supabase.js',
+  '/js/services/supabase-init.js',
+  '/js/services/calculator.js',
+  '/js/services/data.js',
+  '/js/services/ai.js',
+  '/js/services/export-files.js',
+  '/js/services/export-email.js',
+  '/js/services/sync.js',
+  // js tabs
+  '/js/tabs/home.js',
+  '/js/tabs/dashboard.js',
+  '/js/tabs/assistant.js',
+  '/js/tabs/history.js',
+  '/js/tabs/config.js',
+  // js modals
+  '/js/modals/forgot-password.js',
+  '/js/modals/pin-setup.js',
+  '/js/modals/manage-account.js',
+  '/js/modals/diagnostico.js',
+  '/js/modals/asignar-pins.js',
+  '/js/modals/usuarios.js',
+  '/js/modals/export-report.js',
+  // js app
+  '/js/app/auth-screen.js',
+  '/js/app/app-main.js',
+  '/js/app/root.js',
+  '/js/app/sw-register.js',
+  '/js/app/init.js'
 ];
 
-// Instalación: cachea CDN + todos los estáticos de la app
-self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(async cache => {
-      // Cache CDN
-      await Promise.allSettled(CDN_URLS.map(url =>
-        fetch(url, {mode: 'cors'}).then(r => r.ok && cache.put(url, r))
-      ));
-      // Cache archivos propios (HTML, CSS, JS, iconos, manifest)
-      const appResources = [
-        './',
-        './index.html',
-        './manifest.json',
-        './sw.js',
-        './icon-180.png',
-        './icon-192.png',
-        './icon-512.png',
-        // Incluye TODAS las rutas de tus 77 archivos, por ejemplo:
-        './css/base/variables.css',
-        './css/base/reset.css',
-        // ... (agrega el resto de tus CSS y JS)
-        './js/config.js',
-        './js/app/init.js',
-        // etc. (usa un array con todas las rutas reales)
-      ];
-      await Promise.allSettled(appResources.map(url =>
-        fetch(url, {mode: 'cors'}).then(r => r.ok && cache.put(url, r))
-      ));
-    })
-  );
-  // NO usamos skipWaiting() aquí para evitar recargas forzadas
-});
-
-// Activación: limpia caches viejas SIN forzar clients.claim()
-self.addEventListener('activate', event => {
-  event.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
-    )
-    // clients.claim() se llama solo si el usuario lo solicita explícitamente
+self.addEventListener('install', function (e) {
+  e.waitUntil(
+    caches
+      .open(CACHE)
+      .then(function (cache) {
+        // addAll aborts if any fetch fails; use individual adds with fallback
+        return Promise.allSettled(
+          SHELL.map(function (url) {
+            return cache.add(url).catch(function (err) {
+              console.warn('[SW] No se pudo cachear:', url, err);
+            });
+          })
+        );
+      })
+      .then(function () {
+        return self.skipWaiting();
+      })
   );
 });
 
-// Fetch: estrategia "Cache First" para offline-first
-self.addEventListener('fetch', event => {
-  const url = new URL(event.request.url);
-  if (event.request.method !== 'GET') return;
-  // No interceptar peticiones a Supabase (API dinámica)
-  if (url.hostname.includes('supabase')) return;
-  
-  event.respondWith(
-    caches.match(event.request).then(cached => {
+self.addEventListener('activate', function (e) {
+  e.waitUntil(
+    caches
+      .keys()
+      .then(function (keys) {
+        return Promise.all(
+          keys
+            .filter(function (k) {
+              return k !== CACHE;
+            })
+            .map(function (k) {
+              return caches.delete(k);
+            })
+        );
+      })
+      .then(function () {
+        return self.clients.claim();
+      })
+  );
+});
+
+function isCdnUrl(url) {
+  return CDN_HOSTS.some(function (h) {
+    return url.hostname.includes(h);
+  });
+}
+
+function isSupabase(url) {
+  return url.hostname.includes('supabase');
+}
+
+function isSameOrigin(url) {
+  return url.origin === self.location.origin;
+}
+
+// Cache-first: return cached; fetch + update cache in background
+function cacheFirst(req) {
+  return caches.open(CACHE).then(function (cache) {
+    return cache.match(req).then(function (cached) {
       if (cached) return cached;
-      return fetch(event.request).then(response => {
-        if (response.ok) {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
-        }
-        return response;
-      }).catch(() => cached); // Si falla la red, devuelve cache
-    })
-  );
-});
+      return fetch(req).then(function (res) {
+        if (res.ok) cache.put(req, res.clone());
+        return res;
+      });
+    });
+  });
+}
 
-// Mensaje para actualizar SW sin recargar
-self.addEventListener('message', event => {
-  if (event.data === 'skipWaiting') {
-    self.skipWaiting();
-    self.clients.claim();
+// Stale-while-revalidate: return cached immediately; fetch fresh in background
+function staleWhileRevalidate(req) {
+  return caches.open(CACHE).then(function (cache) {
+    return cache.match(req).then(function (cached) {
+      var fetchPromise = fetch(req)
+        .then(function (res) {
+          if (res.ok) cache.put(req, res.clone());
+          return res;
+        })
+        .catch(function () {
+          return cached;
+        });
+      // Return cached immediately if available; otherwise wait for network
+      return cached || fetchPromise;
+    });
+  });
+}
+
+self.addEventListener('fetch', function (e) {
+  if (e.request.method !== 'GET') return;
+
+  var url;
+  try {
+    url = new URL(e.request.url);
+  } catch (err) {
+    return;
+  }
+
+  // Supabase API: always network-only (never cache auth/data calls)
+  if (isSupabase(url)) return;
+
+  // CDN libraries: cache-first (stable versions, never change)
+  if (isCdnUrl(url)) {
+    e.respondWith(cacheFirst(e.request));
+    return;
+  }
+
+  // Same-origin (local app files): stale-while-revalidate
+  // → instant load from cache, updates in background
+  if (isSameOrigin(url)) {
+    e.respondWith(staleWhileRevalidate(e.request));
+    return;
   }
 });

@@ -10,8 +10,9 @@ function cargarDatos(uid, pinOnly) {
     var s = leer(dk(uid, 's'), SMIN);
     return { turnos: t, activo: a, salario: s };
   };
-  if (!CLOUD_MODE || pinOnly || !SUPA) return Promise.resolve(getLocal());
-  return withTimeout(supaSyncDown(uid), 8000, 'sync')
+  // Sin red: devolver datos locales al instante (no esperar timeout de 8s)
+  if (!CLOUD_MODE || pinOnly || !SUPA || !navigator.onLine) return Promise.resolve(getLocal());
+  return withTimeout(supaSyncDown(uid), 4000, 'sync')
     .then(function (remote) {
       if (!remote) return getLocal();
       var remoteTurnos = (remote.turnos || []).filter(function (t) {

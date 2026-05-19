@@ -131,6 +131,10 @@ const projectGlobals = {
   supaSetActivo: 'readonly',
   supaSetSalario: 'readonly',
   supaSyncDown: 'readonly',
+  enqueueOp: 'readonly',
+  flushSyncQueue: 'readonly',
+  pendingOpsCount: 'readonly',
+  clearSyncQueue: 'readonly',
   buildContext: 'readonly',
   aiAnswer: 'readonly',
   calcCats: 'readonly',
@@ -223,6 +227,28 @@ export default [
     },
     rules: {
       'no-undef': 'off', // TypeScript handles this
+    },
+  },
+
+  // ── Service Worker (runs in SW context, not window)
+  {
+    files: ['sw.js'],
+    languageOptions: {
+      ecmaVersion: 2020,
+      sourceType: 'script',
+      globals: {
+        self: 'readonly',
+        caches: 'readonly',
+        fetch: 'readonly',
+        console: 'readonly',
+        URL: 'readonly',
+        Promise: 'readonly',
+      },
+    },
+    rules: {
+      ...sharedRules,
+      'no-undef': 'error',
+      'no-unused-vars': ['warn', { vars: 'local', args: 'none', caughtErrors: 'none' }],
     },
   },
 

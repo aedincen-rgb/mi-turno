@@ -83,6 +83,26 @@ function App(props) {
   var showPinSetup = pss[0],
     setShowPinSetup = pss[1];
 
+  // Modo compacto del header al hacer scroll (tomado de tu rama master + mejorado)
+  var cp = useState(false);
+  var compact = cp[0],
+    setCompact = cp[1];
+  var scrRef = useRef(null);
+  useEffect(function () {
+    var el = scrRef.current;
+    if (!el) return;
+    function handleScroll() {
+      var next = el.scrollTop > 24;
+      setCompact(function (prev) {
+        return prev === next ? prev : next;
+      });
+    }
+    el.addEventListener('scroll', handleScroll, { passive: true });
+    return function () {
+      el.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
+
   var toastRef = useRef(null);
   function showToast(m) {
     setToast(m);
@@ -326,7 +346,15 @@ function App(props) {
   );
 
   var durActual = activo ? Math.round((ahora - new Date(activo.inicio)) / 60000) : 0;
-  var festHoy = esFest(ahoraDate);
+
+  // Escribe en cloud: intenta directo si hay red, encola si no.
+  // Todas las ops son idempotentes → sin riesgo de duplicados al re-intentar.
+  function cloudSync(op, directFn) {
+    if (!isCloud) return;
+    enqueueOp(op);
+    if (navigator.onLine) flushSyncQueue(uid).catch(function () {});
+    else directFn && directFn(); // noop placeholder
+  }
 
   function onIni() {
     haptic();
@@ -336,7 +364,7 @@ function App(props) {
       setActivo(nuevo);
       setShowOlv(false);
       showToast('Turno iniciado');
-      if (isCloud) supaSetActivo(uid, nuevo);
+      cloudSync({ type: 'setActivo', uid: uid, data: nuevo });
     });
   }
 
@@ -351,10 +379,8 @@ function App(props) {
     setActivo(null);
     setShowOlv(false);
     showToast('Turno cerrado');
-    if (isCloud) {
-      supaInsertTurno(uid, turnoCerrado);
-      supaSetActivo(uid, null);
-    }
+    cloudSync({ type: 'insertTurno', uid: uid, data: turnoCerrado });
+    cloudSync({ type: 'setActivo', uid: uid, data: null });
   }
 
   function onOlv(finISO) {
@@ -367,23 +393,21 @@ function App(props) {
     setActivo(null);
     setShowOlv(false);
     showToast('Turno guardado');
-    if (isCloud) {
-      supaInsertTurno(uid, turnoCerrado);
-      supaSetActivo(uid, null);
-    }
+    cloudSync({ type: 'insertTurno', uid: uid, data: turnoCerrado });
+    cloudSync({ type: 'setActivo', uid: uid, data: null });
   }
 
   function onSalario(v) {
     haptic();
     setSalario(v);
     showToast('Salario actualizado');
-    if (isCloud) supaSetSalario(uid, v);
+    cloudSync({ type: 'setSalario', uid: uid, data: v });
   }
   function onBorrar() {
     haptic();
     setTurnos([]);
     showToast('Historial borrado');
-    if (isCloud) supaDeleteAllTurnos(uid);
+    cloudSync({ type: 'deleteAllTurnos', uid: uid });
   }
   function onBorrarUno(id) {
     haptic();
@@ -393,12 +417,39 @@ function App(props) {
       });
     });
     showToast('Turno eliminado');
-    if (isCloud) supaDeleteTurno(uid, id);
+    cloudSync({ type: 'deleteTurno', uid: uid, id: id });
   }
   // Estado para modal de exportar (PDF o Excel)
   var ex = useState(null);
   var exportMode = ex[0],
     setExportMode = ex[1]; // null | 'pdf' | 'xlsx'
+
+  var onlineState = useState(navigator.onLine);
+  var isOnline = onlineState[0],
+    setIsOnline = onlineState[1];
+  useEffect(function () {
+    function goOn() {
+      setIsOnline(true);
+    }
+    function goOff() {
+      setIsOnline(false);
+    }
+    window.addEventListener('online', goOn);
+    window.addEventListener('offline', goOff);
+    return function () {
+      window.removeEventListener('online', goOn);
+      window.removeEventListener('offline', goOff);
+    };
+  }, []);
+
+  // Flush cola offline cuando vuelve la red
+  useEffect(
+    function () {
+      if (isOnline && isCloud) flushSyncQueue(uid).catch(function () {});
+    },
+    [isOnline]
+  );
+
   function onExportPDF() {
     haptic();
     setExportMode('pdf');
@@ -411,6 +462,9 @@ function App(props) {
   if (loading) return h(SplashScreen, { exit: splashExit, plain: props.introPlayed });
 
   var tStr = ahoraDate.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
+  var dStr =
+    ahoraDate.toLocaleDateString('es-CO', { weekday: 'short', day: 'numeric', month: 'short' }) +
+    (esFest(ahoraDate) ? ' · Fest' : '');
 
   function tabIcon(name) {
     var c = {
@@ -515,42 +569,34 @@ function App(props) {
 
     h(
       'div',
-      { className: 'hdr' },
+      { className: 'hdr' + (compact ? ' hdr--compact' : '') },
       h(
         'div',
         { className: 'hdr-l' },
-        activo ? h('span', { className: 'hdr-live' }, 'EN VIVO') : null
-      ),
-      h(
-        'div',
-        { className: 'hdr-c' },
+        h('span', { className: 'hdr-led ' + (isOnline ? 'hdr-led-on' : 'hdr-led-off') }),
+        h('img', {
+          src: 'img/logo-mark.svg',
+          width: 24,
+          height: 24,
+          alt: '',
+          draggable: false,
+          style: { borderRadius: 6, flexShrink: 0, display: 'block' }
+        }),
         h(
           'div',
-          { className: 'hdr-brand' },
-          h('img', {
-            src: 'img/logo-mark.svg',
-            width: 30,
-            height: 30,
-            alt: '',
-            draggable: false,
-            style: { borderRadius: 8, flexShrink: 0, display: 'block' }
-          }),
-          'Mi Turno'
-        ),
-        h(
-          'div',
-          { className: 'hdr-sub' },
-          ahoraDate.toLocaleDateString('es-CO', {
-            weekday: 'short',
-            day: 'numeric',
-            month: 'short'
-          }) + (festHoy ? ' · Festivo' : '')
+          { className: 'hdr-info' },
+          h('div', { className: 'hdr-brand' }, 'Mi Turno'),
+          h(
+            'div',
+            { className: 'hdr-meta' },
+            h('span', { className: 'hdr-date' }, dStr),
+            h('span', { className: 'hdr-clock' }, tStr)
+          )
         )
       ),
       h(
         'div',
         { className: 'hdr-r' },
-        h('div', { className: 'hdr-clock' }, tStr),
         h(
           'button',
           {
@@ -603,7 +649,7 @@ function App(props) {
 
     h(
       'div',
-      { className: 'scr' },
+      { className: 'scr', ref: scrRef },
       tab === 'home'
         ? h(HomeTab, {
             calc: calc,
