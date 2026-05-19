@@ -115,6 +115,14 @@ const projectGlobals = {
   esFest: 'readonly',
   getColombianHolidays: 'readonly',
 
+  // utils/error-logger.js
+  logError: 'readonly',
+  getErrors: 'readonly',
+  clearErrors: 'readonly',
+  deleteError: 'readonly',
+  addErrorListener: 'readonly',
+  removeErrorListener: 'readonly',
+
   // utils/otp.js
   otpGenerar: 'readonly',
   otpVerificar: 'readonly',
@@ -160,6 +168,7 @@ const projectGlobals = {
   ExportReportModal: 'readonly',
   PinSetup: 'readonly',
   DiagnosticoModal: 'readonly',
+  ErrorViewerModal: 'readonly',
 
   // Tab components
   HomeTab: 'readonly',

@@ -24,6 +24,9 @@ function ConfigTab(props) {
   var usg = useState(false);
   var showUsuarios = usg[0],
     setShowUsuarios = usg[1];
+  var evs = useState(false);
+  var showErrorViewer = evs[0],
+    setShowErrorViewer = evs[1];
 
   function guardarSalario() {
     haptic();
@@ -372,12 +375,17 @@ function ConfigTab(props) {
               'button',
               {
                 className: 'btn-glass glass-account',
+                style: {
+                  color: 'var(--danger)',
+                  fontWeight: '800',
+                  border: '1px solid var(--danger)'
+                },
                 onClick: function () {
                   haptic();
-                  alert('Logs del sistema - Próximamente');
+                  setShowErrorViewer(true);
                 }
               },
-              '📝 Logs'
+              '🐞 Consola Dev'
             )
           )
         )
@@ -447,6 +455,23 @@ function ConfigTab(props) {
             session: session,
             onClose: function () {
               setShowUsuarios(false);
+            }
+          })
+        )
+      : null,
+    showErrorViewer
+      ? h(
+          'div',
+          {
+            className: 'ovl',
+            onClick: function (ev) {
+              if (ev.target === ev.currentTarget) setShowErrorViewer(false);
+            }
+          },
+          h(ErrorViewerModal, {
+            session: session,
+            onClose: function () {
+              setShowErrorViewer(false);
             }
           })
         )
