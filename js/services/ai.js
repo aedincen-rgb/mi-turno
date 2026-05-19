@@ -367,6 +367,257 @@ function _trend(curr, prev) {
   return sig + pct.toFixed(1) + '%';
 }
 
+// ─── MODO ADMIN · helpers ──────────────────────────────────────
+
+var _ADMIN_ERR = {
+  'splashscreen is not defined': {
+    causa: 'app-main.js (donde vive SplashScreen) carga DESPUÉS de root.js.',
+    fix: 'En index.html la sección "6. App top-level" debe tener: auth-screen → app-main → root → sw-register → init.',
+    archivo: 'index.html → sección "6. App top-level"'
+  },
+  'unexpected identifier': {
+    causa: 'Error de sintaxis en un JS. El SW en caché puede estar sirviendo una versión corrupta.',
+    fix: '1. La consola indica el archivo y línea. 2. Incrementa la versión del SW (mt-v6) en sw.js para limpiar caché en todos los clientes.',
+    archivo: 'sw.js → CACHE_NAME · el error histórico estaba en supabase-init.js línea 41'
+  },
+  'supabase is not defined': {
+    causa: 'SUPA no se inicializó. supabase-init.js falló o su CDN cargó tarde.',
+    fix: 'El script CDN de @supabase/supabase-js debe estar en index.html ANTES de supabase-init.js. Revisa CLOUD_MODE y errores en consola.',
+    archivo: 'js/services/supabase-init.js · js/config/globals.js'
+  },
+  'cannot read': {
+    causa: 'Acceso a propiedad de null/undefined. state, session o un array puede no estar listo.',
+    fix: 'Agrega guard: if (!state || !state.turnos) return; antes del acceso.',
+    archivo: 'js/services/calculator.js · js/services/data.js'
+  },
+  'failed to register': {
+    causa: 'El Service Worker no pudo registrarse. Requiere HTTPS o localhost.',
+    fix: 'Sirve la app desde HTTPS en producción. En dev usa localhost (no IP de red).',
+    archivo: 'js/app/sw-register.js · sw.js'
+  },
+  'quota exceeded': {
+    causa: 'localStorage lleno — el dispositivo no puede guardar más datos.',
+    fix: 'El usuario debe borrar historial. Usa grabar() con try/catch para capturar el error sin romper la app.',
+    archivo: 'js/utils/storage.js · js/app/app-main.js'
+  },
+  'is not a function': {
+    causa: 'Función global no disponible — script no cargó o cargó en orden incorrecto.',
+    fix: 'Orden en index.html: config → utils → services → tabs → modals → app. Revisa la consola: el nombre de la función indica el archivo.',
+    archivo: 'index.html → orden de scripts'
+  },
+  network: {
+    causa: 'Error de red al conectar con Supabase.',
+    fix: 'Verifica SUPABASE_URL y SUPABASE_ANON_KEY en js/config.js. Confirma que el proyecto Supabase esté activo en el dashboard.',
+    archivo: 'js/config.js · js/services/supabase-init.js'
+  },
+  'pin lookup': {
+    causa: 'La tabla pin_lookup no existe o tiene RLS mal configurado en Supabase.',
+    fix: 'Supabase Dashboard → Table Editor: crea tabla pin_lookup con columnas user_email (text) y pin (text). Habilita RLS con política SELECT pública o por email.',
+    archivo: 'Supabase Dashboard · js/app/root.js'
+  },
+  docalc: {
+    causa: 'calculator.js no cargó o cargó después de quien lo llama.',
+    fix: 'En index.html calculator.js debe estar en "3. Servicios" ANTES de los tabs.',
+    archivo: 'index.html · js/services/calculator.js'
+  },
+  fcop: {
+    causa: 'format.js no cargó.',
+    fix: 'format.js debe estar en "2. Utilidades" antes de services.',
+    archivo: 'index.html · js/utils/format.js'
+  }
+};
+
+function _adminDiag(q, t) {
+  var keys = Object.keys(_ADMIN_ERR);
+  for (var i = 0; i < keys.length; i++) {
+    if (t.indexOf(keys[i]) >= 0 || q.indexOf(keys[i]) >= 0) {
+      var e = _ADMIN_ERR[keys[i]];
+      return (
+        '**Causa:** ' + e.causa + '\n\n**Fix:** ' + e.fix + '\n\n**Archivo:** `' + e.archivo + '`'
+      );
+    }
+  }
+  // Alias fuzzy
+  var aliases = [
+    ['splashscreen', 'splashscreen is not defined'],
+    ['splash screen', 'splashscreen is not defined'],
+    ['unexpected', 'unexpected identifier'],
+    ['sintaxis', 'unexpected identifier'],
+    ['supabase', 'supabase is not defined'],
+    ['supa', 'supabase is not defined'],
+    ['cannot read', 'cannot read'],
+    ['service worker', 'failed to register'],
+    ['sw ', 'failed to register'],
+    ['quota', 'quota exceeded'],
+    ['localstorage', 'quota exceeded'],
+    ['is not a function', 'is not a function'],
+    ['networkfail', 'network'],
+    ['cors', 'network'],
+    ['pin_lookup', 'pin lookup'],
+    ['docalc', 'docalc'],
+    ['calcpordia', 'docalc'],
+    ['cargardatos', 'is not a function'],
+    ['insertturno', 'is not a function'],
+    ['fcop', 'fcop'],
+    ['fdur', 'fcop']
+  ];
+  for (var j = 0; j < aliases.length; j++) {
+    if (_aiHas(t, aliases[j][0])) {
+      var ee = _ADMIN_ERR[aliases[j][1]];
+      if (ee)
+        return (
+          '**Causa:** ' +
+          ee.causa +
+          '\n\n**Fix:** ' +
+          ee.fix +
+          '\n\n**Archivo:** `' +
+          ee.archivo +
+          '`'
+        );
+    }
+  }
+  return null;
+}
+
+function _adminErrorDict() {
+  var lines = Object.keys(_ADMIN_ERR)
+    .map(function (k) {
+      return '• `' + k + '` — ' + _ADMIN_ERR[k].causa.split('.')[0];
+    })
+    .join('\n');
+  return (
+    '📖 **Diccionario de errores** [Admin]\n\n' +
+    lines +
+    '\n\n_Pregúntame por un error específico para ver causa + fix + archivo._'
+  );
+}
+
+function _adminAppMap() {
+  return (
+    '🗺 **Mapa de la app** [Admin]\n\n' +
+    '**JS (orden de carga en index.html):**\n' +
+    '1. `config/` → globals · env · viewport-fix · globals\n' +
+    '2. `utils/` → storage · format · haptic · network · uuid · festivos · time · validation · otp\n' +
+    '3. `services/` → supabase · supabase-init · sync · calculator · data · ai · export-files · export-email\n' +
+    '4. `tabs/` → home · dashboard · assistant · history · config\n' +
+    '5. `modals/` → forgot-password · pin-setup · manage-account · diagnostico · asignar-pins · usuarios · export-report\n' +
+    '6. `app/` → **auth-screen** → **app-main** → **root** → sw-register → init\n\n' +
+    '**Árbol React:**\n' +
+    '`Root` → `AuthScreen` ó `App`\n' +
+    '`App` → `HomeTab | DashboardTab | AsistenteTab | HistoryTab | ConfigTab`\n\n' +
+    '**Globals clave:** `SUPA` · `CLOUD_MODE` · `SMIN` · `RC` · `HSEM` · `SKEY`\n' +
+    '**Admin:** email `admin@miturno.com` ó PIN `9999`'
+  );
+}
+
+function _adminCodeHints() {
+  return (
+    '📂 **Pistas de código** [Admin]\n\n' +
+    '• **Cálculo recargos:** `js/services/calculator.js` → `doCalc()` · `calcPorDia()`\n' +
+    '• **Motor IA:** `js/services/ai.js` → `aiAnswer()` · `buildContext()` · `_aiBuildEmail()`\n' +
+    '• **Sync offline:** `js/services/sync.js` → `enqueueOp()` · `flushSyncQueue()`\n' +
+    '• **Festivos CO:** `js/utils/festivos.js` → `getColombianHolidays()` · `esFest()`\n' +
+    '• **Datos Supabase:** `js/services/data.js` → `cargarDatos()` · `insertTurno()`\n' +
+    '• **Sesión:** `js/app/root.js` → `Root()` · `aplicar()` · `signOut()`\n' +
+    '• **Auth screen:** `js/app/auth-screen.js` → `AuthScreen()`\n' +
+    '• **App principal:** `js/app/app-main.js` → `App()` · `SplashScreen()` · `cloudSync()`\n' +
+    '• **Tab inicio:** `js/tabs/home.js` → `HomeTab()`\n' +
+    '• **Service Worker:** `sw.js` → cache `mt-v5`\n\n' +
+    '**CSS key:**\n' +
+    '• Variables: `css/base/variables.css`\n' +
+    '• Splash HTML: `css/components/misc.css` (#initSplash · .is-logo · .is-dots)\n' +
+    '• Splash React: `css/modals/splash.css` (.splash · .sp-logo · .sp-dots)\n' +
+    '• Botones 3D: `css/layout/action-button.css`'
+  );
+}
+
+function _adminDebugStatus(state, c) {
+  var ses = state.session || {};
+  var storagekb = '?';
+  try {
+    var sz = 0;
+    for (var k in localStorage) {
+      if (Object.prototype.hasOwnProperty.call(localStorage, k))
+        sz += (localStorage[k] || '').length;
+    }
+    storagekb = (sz / 1024).toFixed(1);
+  } catch (e) {}
+  return (
+    '🖥 **Debug · Estado del sistema** [Admin]\n\n' +
+    '• **CLOUD_MODE:** ' +
+    (typeof CLOUD_MODE !== 'undefined' ? (CLOUD_MODE ? '✅ activo' : '❌ desactivado') : '?') +
+    '\n• **Supabase:** ' +
+    (typeof SUPA !== 'undefined' && SUPA ? '✅' : '❌') +
+    '\n• **Session UID:** ' +
+    (ses.uid ? ses.uid.slice(0, 8) + '...' : 'N/A') +
+    '\n• **Email:** ' +
+    (ses.email || 'N/A') +
+    '\n• **isAdmin:** ' +
+    (ses.isAdmin ? '✅' : '❌') +
+    '\n• **pinOnly:** ' +
+    (ses.pinOnly ? 'sí' : 'no') +
+    '\n• **Guest:** ' +
+    (ses.guest ? 'sí' : 'no') +
+    '\n• **localStorage:** ~' +
+    storagekb +
+    ' KB\n• **Turnos mes:** ' +
+    c.diasTrab +
+    '\n• **Online:** ' +
+    (navigator.onLine ? '✅' : '❌ offline') +
+    '\n\n_/errores · /app · /codigo para más info._'
+  );
+}
+
+function _adminEntorno(state) {
+  var cloud = typeof CLOUD_MODE !== 'undefined' && CLOUD_MODE;
+  return (
+    '🌐 **Entorno** [Admin]\n\n' +
+    '• **Modo:** ' +
+    (cloud ? 'Cloud (Supabase activo)' : 'Local (sin cloud)') +
+    '\n• **Supabase:** ' +
+    (typeof SUPA !== 'undefined' && SUPA ? '✅ inicializado' : '❌ no disponible') +
+    '\n• **SW:** ' +
+    ('serviceWorker' in navigator ? '✅ soportado — cache mt-v5' : '❌ no soportado') +
+    '\n• **Online:** ' +
+    (navigator.onLine ? '✅' : '❌') +
+    '\n• **Platform:** ' +
+    (typeof IS_IOS !== 'undefined' && IS_IOS ? 'iOS' : 'Web') +
+    (typeof IS_STANDALONE !== 'undefined' && IS_STANDALONE ? ' · PWA' : '') +
+    '\n\n💡 Para forzar actualización de caché en clientes: cambiar `mt-v5` → `mt-v6` en `sw.js`.'
+  );
+}
+
+function _adminArquitectura(t) {
+  if (_aiHas(t, 'calculator', 'calcul', 'recarg', 'docalc', 'calculo')) {
+    return '`js/services/calculator.js` — `doCalc(turnos, activo, ahora, vh)` retorna desglose completo. `calcPorDia(turnos, vh)` agrupa por día. Factores en `RC` (globals.js). Semanas: lunes a domingo, máximo 46h antes de extras.';
+  }
+  if (_aiHas(t, ' ia', 'motor ia', 'aianswer', 'buildcontext', 'ai.js')) {
+    return '`js/services/ai.js` — `aiAnswer(question, state)` es el entry point. `buildContext(state)` prepara métricas financieras. `_aiBuildEmail()` construye borradores. 100% offline, sin red.';
+  }
+  if (_aiHas(t, 'splash', 'pantalla inicial', 'initsplash', 'splashscreen')) {
+    return '**#initSplash** = HTML puro en `index.html`, estilos en `css/components/misc.css`, removido del DOM a los 700ms (en `root.js`).\n**SplashScreen** = componente React en `app-main.js`, estilos en `css/modals/splash.css`, se muestra mientras `App` carga datos de Supabase.';
+  }
+  if (_aiHas(t, 'auth', 'autenticacion', 'login', 'sesion', 'root')) {
+    return '`js/app/root.js` — `Root()` gestiona la sesión. Admin: email `admin@miturno.com` ó PIN `9999`. Con cloud: auth Supabase + lookup en tabla `pin_lookup`. Sin cloud: PIN en localStorage.';
+  }
+  if (_aiHas(t, 'sync', 'offline', 'cola', 'queue', 'encolar')) {
+    return '`js/services/sync.js` — `enqueueOp(op)` encola ops. `flushSyncQueue(uid)` las envía con red. `clearSyncQueue(uid)` limpia al cerrar sesión. Cola persiste en localStorage. Ops idempotentes: seguro re-intentar.';
+  }
+  if (_aiHas(t, 'service worker', 'cache', 'pwa', 'sw.js')) {
+    return '`sw.js` — cache `mt-v5`. Pre-cachea el shell (HTML, CSS, JS, SVG, PNG). CDN (Supabase SDK, React, Chart.js): cache-first. Supabase API: NUNCA cachea. Para forzar actualización: cambiar `mt-v5` → `mt-v6`.';
+  }
+  if (_aiHas(t, 'supabase', 'base de datos', 'tabla')) {
+    return '`js/services/supabase.js` — funciones de acceso (insertTurno, setActivo, setSalario...). `supabase-init.js` — inicializa `SUPA` y `CLOUD_MODE`. Tablas: `turnos`, `activo`, `pin_lookup`. Credenciales en `js/config.js`.';
+  }
+  if (_aiHas(t, 'export', 'pdf', 'excel', 'xlsx')) {
+    return '`js/services/export-files.js` — `exportPDF()`, `exportExcel()`, versiones Base64 para email. Librerías: jsPDF + jsPDF-AutoTable (PDF), SheetJS/xlsx (Excel), cargadas desde CDN en index.html.';
+  }
+  if (_aiHas(t, 'variable', 'globals', 'constante', 'smin', ' rc', 'hsem')) {
+    return '`js/config/globals.js` — `SUPA` (cliente Supabase), `CLOUD_MODE` (bool), `SMIN` (1423500 = salario mínimo Colombia 2025), `HSEM` (46h/semana), `RC` (mapa de recargos con labels, factores, colores), `SKEY` (clave localStorage sesión).';
+  }
+  return null;
+}
+
 // ─── MOTOR PRINCIPAL ───────────────────────────────────────────
 
 function aiAnswer(question, state) {
@@ -376,7 +627,15 @@ function aiAnswer(question, state) {
 
   // ── SLASH COMMANDS ──
   if (q === '/ayuda' || q === '/help' || q === '/?') {
-    return '**Comandos disponibles:**\n• /ayuda · esta lista\n• /limpiar · borra la conversación\n• /capacidades · lista completa de funciones\n• /stats · resumen exprés del mes\n\n**Tip:** puedes preguntar en lenguaje natural. Soy 100% offline.';
+    var adminCmds =
+      state.session && state.session.isAdmin
+        ? '\n\n🔐 **Superusuario:**\n• /admin · /debug · /errores · /app · /codigo'
+        : '';
+    return (
+      '**Comandos disponibles:**\n• /ayuda · esta lista\n• /limpiar · borra la conversación\n• /capacidades · lista completa de funciones\n• /stats · resumen exprés del mes' +
+      adminCmds +
+      '\n\n**Tip:** puedes preguntar en lenguaje natural. Soy 100% offline.'
+    );
   }
   if (q === '/capacidades' || q === '/funciones' || q === '/skills') {
     return '**Sé responder sobre:**\n\n📊 **Análisis del mes**\n• Total ganado · horas · turnos · mejor día · peor día\n• Horas extras · festivas · nocturnas · diurnas\n• Promedios · proyección · ritmo\n\n📅 **Periodos específicos**\n• Hoy · ayer · esta semana · semana pasada · mes pasado\n\n📈 **Comparativas**\n• Mes actual vs anterior · semana actual vs pasada\n\n🔮 **Predicciones**\n• Cuándo llego a la meta · cuánto si trabajo X horas más\n• Mejor/peor caso al cierre · simulación\n\n📌 **Patrones**\n• Día de semana más rentable · racha de días\n• Turno más largo / más corto · velocidad COP/h\n\n⚖️ **Legal Colombia**\n• Ley 2101/2021 · jornada nocturna · extras · máximo 46h\n• Próximos festivos\n\n💡 **Más**\n• Récords personales · motivación · ayuda app';
@@ -402,13 +661,141 @@ function aiAnswer(question, state) {
     );
   }
 
+  // ══════════════════════════════════════════════════════════════
+  //  MODO SUPERUSUARIO (isAdmin)
+  // ══════════════════════════════════════════════════════════════
+
+  var _isAdmin = !!(state.session && state.session.isAdmin);
+
+  if (_isAdmin) {
+    // Slash commands de admin
+    if (q === '/admin' || q === '/superusuario' || q === '/su') {
+      return (
+        '🔐 **Modo superusuario activo**\n\n' +
+        'Comandos exclusivos:\n' +
+        '• `/debug` — estado del sistema\n' +
+        '• `/errores` — diccionario de errores comunes\n' +
+        '• `/app` — mapa de archivos y componentes\n' +
+        '• `/codigo` — pistas de funciones y archivos\n\n' +
+        'También puedo analizar errores de consola — pégame el mensaje y te digo causa, fix y archivo.'
+      );
+    }
+    if (q === '/errores' || q === '/errdict' || q === '/errors' || q === '/bugs') {
+      return _adminErrorDict();
+    }
+    if (q === '/app' || q === '/estructura' || q === '/mapa' || q === '/archivos') {
+      return _adminAppMap();
+    }
+    if (q === '/debug' || q === '/status' || q === '/sistema' || q === '/estado' || q === '/info') {
+      return _adminDebugStatus(state, c);
+    }
+    if (q === '/codigo' || q === '/code' || q === '/funciones' || q === '/hints') {
+      return _adminCodeHints();
+    }
+
+    // Detectar error de consola pegado (mensajes tipo "X is not defined", "Unexpected identifier", etc.)
+    if (
+      _aiHas(
+        t,
+        'is not defined',
+        'is not a function',
+        'unexpected identifier',
+        'unexpected token',
+        'cannot read',
+        'uncaught',
+        'syntax error',
+        'quota exceeded',
+        'failed to register',
+        'splashscreen',
+        'docalc',
+        'fcop',
+        'pin lookup',
+        'pin_lookup'
+      )
+    ) {
+      var diag = _adminDiag(q, t);
+      if (diag) return '🔧 **[Admin · Diagnóstico]**\n\n' + diag;
+    }
+
+    // Preguntas sobre entorno / cloud / SW
+    if (
+      _aiHas(
+        t,
+        'entorno',
+        'ambiente',
+        'produccion',
+        'cloud mode',
+        'service worker',
+        'cache sw',
+        'version sw',
+        'mt-v',
+        'vercel',
+        'supabase activo'
+      )
+    ) {
+      return _adminEntorno(state);
+    }
+
+    // Preguntas sobre arquitectura / archivos / funciones
+    if (
+      _aiHas(
+        t,
+        'donde esta',
+        'que archivo',
+        'que funcion',
+        'como funciona',
+        'estructura',
+        'arquitectura',
+        'componente',
+        'servicio',
+        'modulo',
+        'calculator',
+        'docalc',
+        'calcpordia',
+        'cargardatos',
+        'insertturno',
+        'splash',
+        'initsplash',
+        'sync',
+        'offline',
+        'service worker',
+        'supabase',
+        'export',
+        'globals'
+      )
+    ) {
+      var archR = _adminArquitectura(t);
+      if (archR) return '📁 **[Admin]** ' + archR;
+    }
+
+    // Diagnostico fuzzy: cualquier mención de "error" con contexto técnico
+    if (
+      _aiHas(t, 'error', 'fallo', 'roto', 'broken', 'crash', 'excepcion') &&
+      _aiHas(t, 'consola', 'console', 'js', 'script', 'archivo', 'funcion', 'codigo', 'app', 'log')
+    ) {
+      var diagFuzzy = _adminDiag(q, t);
+      if (diagFuzzy) return '🔧 **[Admin · Diagnóstico]**\n\n' + diagFuzzy;
+      return (
+        '🔧 **[Admin]** No reconozco ese error específico. Prueba:\n' +
+        '• Pegar el mensaje exacto de la consola\n' +
+        '• `/errores` para ver el diccionario completo\n' +
+        '• `/app` para el mapa de archivos\n' +
+        '• `/debug` para el estado del sistema'
+      );
+    }
+  }
+
   // ── INTERACCIÓN HUMANA ──
   if (_aiHas(t, 'hola', 'buenas', 'hey', 'que tal', 'saludos', 'que hubo', 'holi', 'ola')) {
     var hora = c.ahora.getHours();
     var saludo = hora < 12 ? '¡Buenos días!' : hora < 19 ? '¡Buenas tardes!' : '¡Buenas noches!';
+    var adminHint = _isAdmin
+      ? ' 🔐 _Modo superusuario activo — escribe `/admin` para comandos de diagnóstico._'
+      : '';
     return (
       saludo +
-      ' Soy tu asistente local 100% offline. Conozco tus turnos, recargos y proyecciones. **Tip:** escribe `/capacidades` para ver todo lo que sé hacer.'
+      ' Soy tu asistente local 100% offline. Conozco tus turnos, recargos y proyecciones. **Tip:** escribe `/capacidades` para ver todo lo que sé hacer.' +
+      adminHint
     );
   }
   if (_aiHas(t, 'gracias', 'thanks', 'thx', 'genial', 'perfecto', 'excelente')) {
@@ -1370,7 +1757,13 @@ function aiAnswer(question, state) {
   //  FALLBACK
   // ════════════════════════════════════════════════════════════
 
-  return '🤔 No estoy seguro de qué buscas. Algunas cosas que puedo responder:\n\n• "¿Cuánto gané hoy?" · "¿Y ayer?"\n• "Compara con mes pasado"\n• "¿Cuándo llego a la meta?"\n• "¿Cuánto si trabajo 4h más?"\n• "Mejor día de la semana"\n• "Próximos festivos"\n• "Mi racha"\n• **"Envía mi reporte por correo a juan@empresa.com"**\n• **"Redacta un correo formal para mi jefe"**\n\n💡 Escribe **/capacidades** para ver todo lo que sé.';
+  var fallbackAdmin = _isAdmin
+    ? '\n\n🔐 _Admin: `/debug` · `/errores` · `/app` · `/codigo` · o pega un error de consola._'
+    : '';
+  return (
+    '🤔 No estoy seguro de qué buscas. Algunas cosas que puedo responder:\n\n• "¿Cuánto gané hoy?" · "¿Y ayer?"\n• "Compara con mes pasado"\n• "¿Cuándo llego a la meta?"\n• "¿Cuánto si trabajo 4h más?"\n• "Mejor día de la semana"\n• "Próximos festivos"\n• "Mi racha"\n• **"Envía mi reporte por correo a juan@empresa.com"**\n• **"Redacta un correo formal para mi jefe"**\n\n💡 Escribe **/capacidades** para ver todo lo que sé.' +
+    fallbackAdmin
+  );
 }
 
 // ════════════════════════════════════════════════════════════════
