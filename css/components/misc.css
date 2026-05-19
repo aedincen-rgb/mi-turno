@@ -33,7 +33,15 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(168deg, #0d1e5c 0%, #1840b8 40%, #3265d8 72%, #5b86e5 100%);
+  /* Mismo cielo que la app — consistente con la UI */
+  background: linear-gradient(
+    165deg,
+    #c8dfff 0%,
+    #d8e9ff 28%,
+    #e5efff 58%,
+    #f0f5ff 80%,
+    #f5f8ff 100%
+  );
   transition: opacity 0.45s ease-out;
 }
 
@@ -43,9 +51,22 @@
   width: 500px;
   height: 500px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(91, 134, 229, 0.18) 0%, transparent 65%);
+  background: radial-gradient(circle, rgba(91, 134, 229, 0.12) 0%, transparent 65%);
   top: -155px;
   right: -125px;
+  pointer-events: none;
+}
+
+/* Segundo orb inferior izquierdo (igual que .splash) */
+#initSplash::after {
+  content: '';
+  position: absolute;
+  width: 360px;
+  height: 360px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(125, 168, 255, 0.1) 0%, transparent 65%);
+  bottom: -80px;
+  left: -80px;
   pointer-events: none;
 }
 
@@ -60,8 +81,9 @@
   display: block;
   margin-bottom: 22px;
   animation: isLogoIn 0.72s cubic-bezier(0.34, 1.56, 0.64, 1) 0.08s both;
-  filter: drop-shadow(0 18px 42px rgba(0, 10, 60, 0.44))
-    drop-shadow(0 4px 10px rgba(0, 10, 60, 0.26));
+  /* Sombra suave para fondo claro */
+  filter: drop-shadow(0 16px 32px rgba(60, 100, 200, 0.22))
+    drop-shadow(0 4px 8px rgba(60, 100, 200, 0.12));
   -webkit-user-drag: none;
 }
 
@@ -69,29 +91,50 @@
   font-size: 34px;
   font-weight: 900;
   letter-spacing: -1.5px;
-  color: #ffffff;
+  color: var(--text, #1c1f27);
   margin-bottom: 6px;
   animation: isFadeIn 0.5s 0.4s ease-out both;
 }
 
 .is-tag {
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.62);
+  color: var(--muted, #7a8294);
   font-weight: 500;
   letter-spacing: 0.01em;
   animation: isFadeIn 0.5s 0.55s ease-out both;
 }
 
+/* Eliminado el anillo estilo reloj; se muestra un indicador de 3 puntos */
 .is-ring {
-  width: 24px;
-  height: 24px;
+  display: none;
+}
+
+/* Indicador de carga: 3 puntos animados (mismo estilo que .sp-dots) */
+.is-dots {
+  display: flex;
+  gap: 7px;
+  margin-top: 48px;
+  animation: isFadeIn 0.5s 0.72s ease-out both;
+}
+
+.is-dot {
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  border: 2.5px solid rgba(255, 255, 255, 0.18);
-  border-top-color: rgba(255, 255, 255, 0.8);
-  margin-top: 42px;
-  animation:
-    spin 0.85s linear infinite,
-    isFadeIn 0.5s 0.72s ease-out both;
+  background: var(--accent, #5b86e5);
+  opacity: 0.45;
+}
+
+.is-dot:nth-child(1) {
+  animation: spDot 1s ease-in-out 0.8s infinite;
+}
+
+.is-dot:nth-child(2) {
+  animation: spDot 1s ease-in-out 0.95s infinite;
+}
+
+.is-dot:nth-child(3) {
+  animation: spDot 1s ease-in-out 1.1s infinite;
 }
 
 @keyframes isLogoIn {

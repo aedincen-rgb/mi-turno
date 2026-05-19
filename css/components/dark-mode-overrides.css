@@ -21,21 +21,26 @@
   -webkit-text-fill-color: transparent;
 }
 
-/* ── Splash screen ── */
+/* ── Splash screen — dark mode: mismo azul marino que .splash ── */
 [data-theme='dark'] #initSplash {
-  background: linear-gradient(165deg, #050f20 0%, #080f26 35%, #060c1c 65%, #040810 100%);
+  background: linear-gradient(168deg, #0d1e5c 0%, #1840b8 40%, #3265d8 72%, #5b86e5 100%);
 }
 
-/* ── Auth ── */
+[data-theme='dark'] .is-logo {
+  filter: drop-shadow(0 18px 42px rgba(0, 10, 60, 0.44))
+    drop-shadow(0 4px 10px rgba(0, 10, 60, 0.26));
+}
+
 [data-theme='dark'] .is-name {
-  color: #ecedf3;
+  color: #ffffff;
 }
+
 [data-theme='dark'] .is-tag {
-  color: #7c8395;
+  color: rgba(255, 255, 255, 0.62);
 }
-[data-theme='dark'] .is-ring {
-  border-color: #2a2f3b;
-  border-top-color: #7da8ff;
+
+[data-theme='dark'] .is-dot {
+  background: rgba(255, 255, 255, 0.55);
 }
 
 /* ── Tab bar ── */
