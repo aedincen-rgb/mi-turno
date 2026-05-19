@@ -21,6 +21,8 @@ function HomeTab(props) {
   }
   var displayAmount = calc.totalCOP + liveDelta;
 
+  var durActual = activo ? Math.round((ahora - new Date(activo.inicio)) / 60000) : 0;
+  var pctMes = Math.min(100, (displayAmount / props.salario) * 100);
   var tipos = Object.keys(calc.bd).filter(function (k) {
     return calc.bd[k].mins > 0;
   });
@@ -32,7 +34,11 @@ function HomeTab(props) {
       'div',
       { className: 'hero' },
       h('div', { className: 'hero-eyebrow' }, 'Estimado este mes'),
-      h('div', { className: 'hero-amount' }, fCOP(displayAmount)),
+      h(
+        'div',
+        { className: 'hero-amount' + (activo ? ' hero-amount-live' : '') },
+        fCOP(displayAmount)
+      ),
       h(
         'div',
         { className: 'hero-sub' },
@@ -54,6 +60,61 @@ function HomeTab(props) {
           },
           h('div', { className: 'action-icon' }, activo ? '■' : '▶'),
           h('div', { className: 'action-lbl' }, activo ? 'Parar' : 'Iniciar')
+        ),
+        activo
+          ? h(
+              'div',
+              { className: 'active-box' },
+              h(
+                'div',
+                { className: 'active-tag' },
+                h('div', { className: 'active-dot' }),
+                'En turno'
+              ),
+              h('div', { className: 'active-timer' }, fDur(durActual)),
+              h(
+                'div',
+                { className: 'active-since' },
+                'Desde ' +
+                  new Date(activo.inicio).toLocaleTimeString('es-CO', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })
+              ),
+              durActual >= U12H / 60000 - 60
+                ? h('div', { className: 'active-warn' }, '⚠ Próximo recordatorio de 12h')
+                : null
+            )
+          : null
+      ),
+      h(
+        'div',
+        { className: 'progress-block' },
+        h(
+          'div',
+          { className: 'prog-row' },
+          h('span', { className: 'prog-lbl' }, 'Avance del salario base'),
+          h(
+            'span',
+            {
+              className: 'prog-val' + (activo ? ' prog-val-live' : ''),
+              style: {
+                color: pctMes >= 100 ? 'var(--success)' : activo ? 'var(--accent)' : 'var(--text)'
+              }
+            },
+            pctMes.toFixed(1) + '%'
+          )
+        ),
+        h(
+          'div',
+          { className: 'bar-track' },
+          h('div', {
+            className:
+              'bar-fill' +
+              (pctMes >= 100 ? ' bar-fill-over' : '') +
+              (activo ? ' bar-fill-live' : ''),
+            style: { width: pctMes + '%' }
+          })
         )
       )
     ),
