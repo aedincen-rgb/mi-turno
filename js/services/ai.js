@@ -131,7 +131,7 @@ function buildContext(state) {
   var diurnaOrdMins = bd.diurnaOrd.mins || 0,
     diurnaOrdCOP = bd.diurnaOrd.cop || 0;
   var proy = diasTrab > 0 ? (totalCOP / diaActual) * diasMes : 0;
-  var pctSalario = (totalCOP / salario) * 100;
+  var pctSalario = salario > 0 ? (totalCOP / salario) * 100 : 0;
   var falta = Math.max(0, salario - totalCOP);
   var horasParaMeta = vh > 0 ? falta / vh : 0;
 
@@ -271,6 +271,21 @@ function buildContext(state) {
   // ── Días hábiles restantes (no domingos ni festivos del calendario laboral, contando todos) ──
   var diasRestantes = diasMes - diaActual;
 
+  // ── Liquidación Proporcional (CST Colombia) ──
+  var diasMesEfectivos = Math.max(1, diaActual);
+  var estPrima = (salario * diasMesEfectivos) / 360;
+  var estCesantias = (salario * diasMesEfectivos) / 360;
+  var estIntereses = (estCesantias * diasMesEfectivos * 0.12) / 360;
+  var estVacaciones = (salario * diasMesEfectivos) / 720;
+  var estTransporte = totalCOP > SMIN * 2 ? 0 : (182140 * diasMesEfectivos) / 30;
+  var totalLiq = estPrima + estCesantias + estIntereses + estVacaciones + estTransporte;
+  var deducciones = totalCOP * 0.08;
+  var sueldoNeto = totalCOP - deducciones + estTransporte;
+
+  // ── Bienestar ──
+  var hrsSemanales = diaActual > 0 ? totalMins / 60 / (diaActual / 7) : 0;
+  var alertaFatiga = hrsSemanales > 48 || rachaActual >= 6;
+
   return {
     // Tiempo
     ahora: ahora,
@@ -336,7 +351,54 @@ function buildContext(state) {
     proxFests: proxFests,
     copPorHoraReal: copPorHoraReal,
     // Rachas
-    rachaActual: rachaActual
+    rachaActual: rachaActual,
+    // Liquidación proporcional
+    totalLiq: totalLiq,
+    estPrima: estPrima,
+    estCesantias: estCesantias,
+    estVacaciones: estVacaciones,
+    estTransporte: estTransporte,
+    deducciones: deducciones,
+    sueldoNeto: sueldoNeto,
+    // Bienestar
+    burnout: alertaFatiga,
+    hrsSemanales: hrsSemanales,
+    // Diccionarios para asistente de desarrollo (admin)
+    _dictionary: {
+      html: 'HTML: El esqueleto. index.html es la puerta de entrada principal.',
+      css: 'CSS: Los estilos. La app usa 38 archivos CSS modulares.',
+      js: 'JavaScript: El cerebro. 39+ archivos JS manejan la lógica y Supabase.',
+      'sw.js':
+        'Service Worker: Maneja el modo offline y el caché persistente. ¡Cuidado con el caché viejo!',
+      pwa: 'Progressive Web App: Web instalable + funciona offline.',
+      cache:
+        'Memoria temporal. El SW es el más terco — usa F12 → Application → Unregister para limpiar.',
+      404: 'Error: El archivo no existe en esa ruta.',
+      500: 'Error de servidor: Algo falló en Vercel o en la lógica.',
+      react: 'Librería de UI. h() = React.createElement(). useState/useEffect = hooks.',
+      git: 'Control de versiones. Commit (foto), Branch (rama), Push (subir).',
+      vercel: 'Donde vive la app. Despliega automáticamente desde GitHub.',
+      supabase: 'Base de datos + Auth en la nube. RLS controla quién puede qué.',
+      modular: 'Muchos archivos pequeños vs uno gigante. Facilita el mantenimiento.',
+      rls: 'Row Level Security: Políticas en Supabase que controlan acceso por usuario.',
+      'error-logger':
+        'js/utils/error-logger.js captura window.onerror y los guarda en localStorage.',
+      'error-viewer':
+        'js/modals/error-viewer.js — la Consola de Desarrollo (🐞) que ves en el panel admin.'
+    },
+    _devMap: {
+      emoji: 'Lógica visual: js/tabs/home.js (botones) o js/utils/icons.js (SVG navegación).',
+      color: 'Modifica css/base/variables.css para temas globales.',
+      boton: 'Estilos: css/layout/action-button.css. Lógica de inicio: js/tabs/home.js.',
+      calculo: 'Toda la lógica matemática: js/services/calculator.js.',
+      supabase: 'Configuración: js/config.js. Helpers CRUD: js/services/supabase.js.',
+      login: 'js/app/auth-screen.js y css/components/auth-screen.css.',
+      error: 'Logger: js/utils/error-logger.js. Visor: js/modals/error-viewer.js.',
+      pdf: 'js/services/export-files.js.',
+      ia: 'js/services/ai.js — este mismo motor.',
+      vercel: 'Si no carga: revisa Env Variables en Vercel → revisa si el SW cachea versión vieja.',
+      offline: 'js/utils/storage.js (localStorage) + js/tabs/sync-queue.js (cola offline).'
+    }
   };
 }
 
@@ -632,7 +694,7 @@ function aiAnswer(question, state) {
         ? '\n\n🔐 **Superusuario:**\n• /admin · /debug · /errores · /app · /codigo'
         : '';
     return (
-      '**Comandos disponibles:**\n• /ayuda · esta lista\n• /limpiar · borra la conversación\n• /capacidades · lista completa de funciones\n• /stats · resumen exprés del mes' +
+      '**Comandos disponibles:**\n• /ayuda · esta lista\n• /limpiar · borra la conversación\n• /capacidades · lista completa de funciones\n• /stats · resumen exprés del mes\n• /liquidar · sueldo neto + prestaciones\n• /ley · normativa laboral Colombia\n• /salud · bienestar y alertas de fatiga' +
       adminCmds +
       '\n\n**Tip:** puedes preguntar en lenguaje natural. Soy 100% offline.'
     );
@@ -658,6 +720,130 @@ function aiAnswer(question, state) {
       (c.mejor ? _fechaLarga(c.mejor.fecha) : '—') +
       '\n• Proyección: ' +
       fCOP(c.proy)
+    );
+  }
+
+  // ── /LIQUIDAR ──
+  if (
+    q === '/liquidar' ||
+    _aiHas(t, 'liquidacion', 'cuanto me deben', 'mis prestaciones', 'prima', 'cesantia')
+  ) {
+    return (
+      '💰 **Proyección Financiera (Día ' +
+      c.diaActual +
+      '):**\n\n' +
+      '**A recibir (Neto): ' +
+      fCOP(c.sueldoNeto) +
+      '**\n' +
+      '• Bruto: ' +
+      fCOP(c.totalCOP) +
+      '\n' +
+      '• Desc. Ley (8%): -' +
+      fCOP(c.deducciones) +
+      '\n' +
+      '• Aux. Transp: +' +
+      fCOP(c.estTransporte) +
+      '\n\n' +
+      '**Prestaciones Acumuladas:**\n' +
+      '• Prima: ' +
+      fCOP(c.estPrima) +
+      '\n' +
+      '• Cesantías: ' +
+      fCOP(c.estCesantias) +
+      '\n' +
+      '• Vacaciones: ' +
+      fCOP(c.estVacaciones) +
+      '\n\n' +
+      '*Cálculos informativos basados en el CST.*'
+    );
+  }
+
+  // ── /LEY ──
+  if (
+    q === '/ley' ||
+    _aiHas(
+      t,
+      'normativa',
+      'mis derechos',
+      'codigo sustantivo',
+      'cst',
+      'ley laboral',
+      'legal colombia'
+    )
+  ) {
+    return (
+      '⚖️ **Normativa Laboral Colombia 2025:**\n\n' +
+      '• **Jornada Máxima:** 46 horas semanales (Ley 2101 de 2021).\n' +
+      '• **Recargo Nocturno:** +35% (9:00 PM a 6:00 AM).\n' +
+      '• **Auxilio Transporte:** Tienes derecho si ganas menos de 2 SMMLV (' +
+      fCOP(SMIN * 2) +
+      ').\n' +
+      '• **Día de Descanso:** Es obligatorio tras 6 días de trabajo.\n' +
+      '• **Extras:** Máximo 2 horas diarias y 12 semanales.\n\n' +
+      '¿Tienes dudas sobre algún recargo específico?'
+    );
+  }
+
+  // ── AUXILIO TRANSPORTE ──
+  if (_aiHas(t, 'auxilio', 'subsidio transporte') && _aiHas(t, 'transport')) {
+    var tieneDerecho = c.totalCOP <= SMIN * 2;
+    return (
+      '🚌 **Auxilio de Transporte 2025:**\n\n' +
+      '• Valor mensual: **$182.140**.\n' +
+      '• Requisito: Ganar hasta 2 SMMLV.\n' +
+      (tieneDerecho
+        ? '✅ Según tus ingresos actuales, **tienes derecho** a percibirlo.'
+        : '⚠️ Tus ingresos superan los 2 SMMLV, por lo cual **no aplica** este auxilio.')
+    );
+  }
+
+  // ── /SALUD ──
+  if (q === '/salud' || _aiHas(t, 'cansado', 'fatiga', 'bienestar', 'burnout', 'agotamiento')) {
+    var saludMsg = c.burnout
+      ? '⚠️ **Alerta de Fatiga:** Tu ritmo actual (' +
+        c.hrsSemanales.toFixed(1) +
+        'h/sem) o tu racha de ' +
+        c.rachaActual +
+        ' días sugieren que necesitas un descanso urgente.'
+      : '✅ **Estado de Bienestar:** Tu carga laboral está dentro de los límites. Promedio de ' +
+        c.hrsSemanales.toFixed(1) +
+        'h semanales.';
+    return (
+      saludMsg +
+      '\n\n**Recomendación:**\n' +
+      (c.nocturnasMins > c.totalMins * 0.4
+        ? '• Tienes mucha carga nocturna. Prioriza el sueño en total oscuridad.'
+        : '• Intenta mantener al menos un día de desconexión total a la semana.')
+    );
+  }
+
+  // ── /AHORRO ──
+  if (_aiHas(t, 'ahorro', 'quiero ganar', 'para llegar a') || q.startsWith('/ahorro')) {
+    var metaAhorro = _aiNum(t);
+    if (!metaAhorro || metaAhorro < 1000) metaAhorro = c.salario;
+    var faltaMeta = Math.max(0, metaAhorro - c.totalCOP);
+    if (faltaMeta === 0)
+      return (
+        '¡Felicidades! Ya superaste la meta de ' +
+        fCOP(metaAhorro) +
+        '. Llevas ' +
+        fCOP(c.totalCOP) +
+        '.'
+      );
+    var turnosNec = c.prom > 0 ? Math.ceil(faltaMeta / c.prom) : '—';
+    return (
+      '🎯 **Análisis de Meta:**\n\n' +
+      '• Para alcanzar ' +
+      fCOP(metaAhorro) +
+      ' te faltan **' +
+      fCOP(faltaMeta) +
+      '**.\n' +
+      '• A tu ritmo actual, necesitas **' +
+      turnosNec +
+      ' turnos** adicionales.\n' +
+      '• Eso equivale a ' +
+      (faltaMeta / c.vh).toFixed(1) +
+      ' horas base.'
     );
   }
 
@@ -691,6 +877,23 @@ function aiAnswer(question, state) {
     }
     if (q === '/codigo' || q === '/code' || q === '/funciones' || q === '/hints') {
       return _adminCodeHints();
+    }
+
+    // Consulta al diccionario de términos técnicos
+    for (var _term in c._dictionary) {
+      if (_aiHas(t, _term)) {
+        return (
+          '📖 **Diccionario técnico:**\n\n' +
+          c._dictionary[_term] +
+          '\n\n💡 *Específico para Mi Turno.*'
+        );
+      }
+    }
+    // Mapa de archivos por tema
+    for (var _topic in c._devMap) {
+      if (_aiHas(t, _topic) && _aiHas(t, 'donde', 'archivo', 'cambio', 'modulo')) {
+        return '📁 **[Admin]** ' + c._devMap[_topic];
+      }
     }
 
     // Detectar error de consola pegado (mensajes tipo "X is not defined", "Unexpected identifier", etc.)
