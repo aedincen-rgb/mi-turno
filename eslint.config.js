@@ -134,6 +134,7 @@ const projectGlobals = {
   enqueueOp: 'readonly',
   flushSyncQueue: 'readonly',
   pendingOpsCount: 'readonly',
+  clearSyncQueue: 'readonly',
   buildContext: 'readonly',
   aiAnswer: 'readonly',
   calcCats: 'readonly',

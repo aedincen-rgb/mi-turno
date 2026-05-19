@@ -136,6 +136,7 @@ function Root() {
   function signOut() {
     haptic();
     try {
+      if (session) clearSyncQueue(session.uid);
       var wasCloud = session && session.cloud && !session.pinOnly && !session.guest;
       grabar(SKEY, null);
       setSession(null);

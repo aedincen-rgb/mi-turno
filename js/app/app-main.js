@@ -83,6 +83,26 @@ function App(props) {
   var showPinSetup = pss[0],
     setShowPinSetup = pss[1];
 
+  // Modo compacto del header al hacer scroll (tomado de tu rama master + mejorado)
+  var cp = useState(false);
+  var compact = cp[0],
+    setCompact = cp[1];
+  var scrRef = useRef(null);
+  useEffect(function () {
+    var el = scrRef.current;
+    if (!el) return;
+    function handleScroll() {
+      var next = el.scrollTop > 24;
+      setCompact(function (prev) {
+        return prev === next ? prev : next;
+      });
+    }
+    el.addEventListener('scroll', handleScroll, { passive: true });
+    return function () {
+      el.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
+
   var toastRef = useRef(null);
   function showToast(m) {
     setToast(m);
@@ -442,6 +462,9 @@ function App(props) {
   if (loading) return h(SplashScreen, { exit: splashExit, plain: props.introPlayed });
 
   var tStr = ahoraDate.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
+  var dStr =
+    ahoraDate.toLocaleDateString('es-CO', { weekday: 'short', day: 'numeric', month: 'short' }) +
+    (esFest(ahoraDate) ? ' · Fest' : '');
 
   function tabIcon(name) {
     var c = {
@@ -546,25 +569,34 @@ function App(props) {
 
     h(
       'div',
-      { className: 'hdr' },
+      { className: 'hdr' + (compact ? ' hdr--compact' : '') },
       h(
         'div',
-        { className: 'hdr-brand' },
+        { className: 'hdr-l' },
+        h('span', { className: 'hdr-led ' + (isOnline ? 'hdr-led-on' : 'hdr-led-off') }),
         h('img', {
           src: 'img/logo-mark.svg',
-          width: 30,
-          height: 30,
+          width: 24,
+          height: 24,
           alt: '',
           draggable: false,
-          style: { borderRadius: 8, flexShrink: 0, display: 'block' }
+          style: { borderRadius: 6, flexShrink: 0, display: 'block' }
         }),
-        'Mi Turno',
-        h('span', { className: 'hdr-dot ' + (isOnline ? 'hdr-dot-on' : 'hdr-dot-off') })
+        h(
+          'div',
+          { className: 'hdr-info' },
+          h('div', { className: 'hdr-brand' }, 'Mi Turno'),
+          h(
+            'div',
+            { className: 'hdr-meta' },
+            h('span', { className: 'hdr-date' }, dStr),
+            h('span', { className: 'hdr-clock' }, tStr)
+          )
+        )
       ),
       h(
         'div',
         { className: 'hdr-r' },
-        h('div', { className: 'hdr-clock' }, tStr),
         h(
           'button',
           {
@@ -617,7 +649,7 @@ function App(props) {
 
     h(
       'div',
-      { className: 'scr' },
+      { className: 'scr', ref: scrRef },
       tab === 'home'
         ? h(HomeTab, {
             calc: calc,

@@ -88,3 +88,11 @@ function pendingOpsCount(uid) {
     return o.uid === uid;
   }).length;
 }
+
+// Descarta toda la cola de un uid (al cerrar sesión)
+function clearSyncQueue(uid) {
+  var q = leer(SYNC_Q_KEY, []).filter(function (o) {
+    return o.uid !== uid;
+  });
+  grabar(SYNC_Q_KEY, q);
+}
