@@ -43,3 +43,24 @@
 .fadeUp > *:nth-child(5) {
   animation-delay: 0.2s;
 }
+.fadeUp > *:nth-child(6) {
+  animation-delay: 0.24s;
+}
+.fadeUp > *:nth-child(7) {
+  animation-delay: 0.28s;
+}
+.fadeUp > *:nth-child(8) {
+  animation-delay: 0.32s;
+}
+.fadeUp > *:nth-child(9) {
+  animation-delay: 0.36s;
+}
+.fadeUp > *:nth-child(10) {
+  animation-delay: 0.4s;
+}
+.fadeUp > *:nth-child(11) {
+  animation-delay: 0.44s;
+}
+.fadeUp > *:nth-child(12) {
+  animation-delay: 0.48s;
+}

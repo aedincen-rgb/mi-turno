@@ -70,20 +70,31 @@
   font-weight: 500;
   border: 1.5px solid transparent;
   transition:
-    border-color 0.2s var(--ease),
-    background 0.2s var(--ease);
+    border-color 0.22s var(--ease),
+    background 0.22s var(--ease),
+    box-shadow 0.22s var(--ease);
   -webkit-appearance: none;
   appearance: none;
+}
+
+.inp::placeholder {
+  color: var(--muted);
+  opacity: 0.55;
+  font-weight: 400;
 }
 
 .inp:focus {
   border-color: var(--accent);
   background: var(--surface);
-  box-shadow: 0 0 0 3px var(--accent-dim);
+  box-shadow:
+    0 0 0 3px var(--accent-dim),
+    inset 0 1.5px 4px color-mix(in srgb, var(--accent) 6%, transparent);
+  outline: none;
 }
 
 .inp:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 button:focus-visible,

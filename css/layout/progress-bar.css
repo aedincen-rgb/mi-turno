@@ -130,3 +130,15 @@
 .prog-val-live {
   animation: valueGlow 2.2s ease-in-out infinite;
 }
+
+/* Superado el salario base: gradiente verde */
+.prog-val--over {
+  background: linear-gradient(
+    90deg,
+    var(--success),
+    color-mix(in srgb, var(--success) 65%, #a8ffde)
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}

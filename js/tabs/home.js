@@ -22,7 +22,8 @@ function HomeTab(props) {
   var displayAmount = calc.totalCOP + liveDelta;
 
   var durActual = activo ? Math.round((ahora - new Date(activo.inicio)) / 60000) : 0;
-  var pctMes = Math.min(100, (displayAmount / props.salario) * 100);
+  var pctRaw = props.salario > 0 ? (displayAmount / props.salario) * 100 : 0;
+  var pctMes = Math.min(100, pctRaw);
   var tipos = Object.keys(calc.bd).filter(function (k) {
     return calc.bd[k].mins > 0;
   });
@@ -97,10 +98,10 @@ function HomeTab(props) {
           h(
             'span',
             {
-              className: 'prog-val' + (activo ? ' prog-val-live' : ''),
-              style: {
-                color: pctMes >= 100 ? 'var(--success)' : activo ? 'var(--accent)' : 'var(--text)'
-              }
+              className:
+                'prog-val' +
+                (pctMes >= 100 ? ' prog-val--over' : '') +
+                (activo ? ' prog-val-live' : '')
             },
             pctMes.toFixed(1) + '%'
           )

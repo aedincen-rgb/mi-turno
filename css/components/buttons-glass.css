@@ -152,3 +152,14 @@
   --glass-color: #34d399;
   --glass-tint: rgba(5, 150, 105, 0.1);
 }
+
+/* ── Estado deshabilitado ── */
+.btn-glass:disabled {
+  opacity: 0.42;
+  pointer-events: none;
+  filter: saturate(0.4);
+}
+
+.btn-glass:disabled::after {
+  display: none;
+}

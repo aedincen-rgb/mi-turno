@@ -60,6 +60,7 @@
     0 7px 0 0 #7f1d1d,
     0 10px 28px rgba(220, 38, 38, 0.36);
   transform: translateY(0);
+  animation: btn3dBreatheRed 3.2s cubic-bezier(0.45, 0, 0.55, 1) infinite;
 }
 
 .action-btn-stop:active {
@@ -69,6 +70,28 @@
     inset 0 -2px 0 rgba(0, 0, 0, 0.25),
     0 2px 0 0 #7f1d1d,
     0 2px 8px rgba(220, 38, 38, 0.18);
+  animation: none;
+}
+
+/* Misma física que go pero con colores rojos */
+@keyframes btn3dBreatheRed {
+  0%,
+  100% {
+    transform: translateY(0);
+    box-shadow:
+      inset 0 1.5px 0 rgba(255, 255, 255, 0.4),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.12),
+      0 7px 0 0 #7f1d1d,
+      0 10px 28px rgba(220, 38, 38, 0.36);
+  }
+  50% {
+    transform: translateY(-3px);
+    box-shadow:
+      inset 0 1.5px 0 rgba(255, 255, 255, 0.48),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.09),
+      0 10px 0 0 #7f1d1d,
+      0 16px 40px rgba(220, 38, 38, 0.55);
+  }
 }
 
 /* ── Animación respira-flota 3D ────────────────────────────── */

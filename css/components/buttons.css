@@ -44,12 +44,27 @@
     0 4px 14px var(--accent-glow);
 }
 
+.btn-accent:active {
+  transform: scale(0.95);
+  box-shadow:
+    inset 0 1.5px 3px rgba(0, 0, 0, 0.14),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.04),
+    0 2px 6px var(--accent-glow);
+  filter: brightness(0.93);
+}
+
 .btn-ghost {
   background: color-mix(in srgb, var(--surface2) 75%, transparent);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   color: var(--muted);
   border: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+}
+
+.btn-ghost:active {
+  transform: scale(0.96);
+  background: color-mix(in srgb, var(--surface2) 90%, transparent);
+  color: var(--text);
 }
 
 .btn-danger {
@@ -59,8 +74,24 @@
 }
 
 .btn-danger:active {
+  transform: scale(0.95);
   background: var(--danger);
   color: #fff;
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--danger) 35%, transparent);
+}
+
+/* Estado cargando — deshabilita interacción y muestra spinner */
+.btn--loading {
+  pointer-events: none;
+  opacity: 0.75;
+  cursor: wait;
+}
+
+/* Botones deshabilitados */
+.btn:disabled {
+  opacity: 0.45;
+  pointer-events: none;
+  filter: saturate(0.5);
 }
 
 .btn-edit {
