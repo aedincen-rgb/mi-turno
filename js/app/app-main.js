@@ -2,7 +2,7 @@
 //  MI TURNO · app/app-main.js
 //  Componente principal App con tabs
 // ════════════════════════════════════════════════════════════════
-function SplashScreen(props) {
+funcyhon pi7tion SplashScreen(props) {
   var cls = 'splash' + (props.exit ? ' splash--exit' : '') + (props.plain ? ' splash--plain' : '');
   return h(
     'div',
