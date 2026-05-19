@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════
 //  MI TURNO · modals/usuarios.js
-//  Modal usuarios admin
+//  Modal usuarios admin — lista, detalle, editar PIN, eliminar
 // ════════════════════════════════════════════════════════════════
 function UsuariosModal(props) {
   var us = useState([]);
@@ -34,6 +34,22 @@ function UsuariosModal(props) {
   var resetUser = rs[0],
     setResetUser = rs[1];
 
+  // ── Edit PIN ──────────────────────────────────────────────────
+  var ep = useState(false);
+  var editingPin = ep[0],
+    setEditingPin = ep[1];
+  var pi = useState('');
+  var pinInput = pi[0],
+    setPinInput = pi[1];
+
+  // ── Delete confirmation ───────────────────────────────────────
+  var cd = useState(null); // null | 'pin_only' | 'full'
+  var confirmDelMode = cd[0],
+    setConfirmDelMode = cd[1];
+  var ct = useState('');
+  var confirmText = ct[0],
+    setConfirmText = ct[1];
+
   function fmtFecha(s) {
     if (!s) return 'Nunca';
     try {
@@ -59,7 +75,9 @@ function UsuariosModal(props) {
     setLoading(true);
     setError(null);
     withTimeout(
-      SUPA.from('pin_lookup').select('*').order('updated_at', { ascending: false }),
+      SUPA.from('pin_lookup')
+        .select('user_id,user_email,pin,updated_at')
+        .order('updated_at', { ascending: false }),
       IS_IOS_SAFARI ? 15000 : 8000,
       'Cargar usuarios'
     )
@@ -80,9 +98,7 @@ function UsuariosModal(props) {
 
   function copiar(texto) {
     try {
-      if (navigator.clipboard) {
-        navigator.clipboard.writeText(String(texto));
-      }
+      if (navigator.clipboard) navigator.clipboard.writeText(String(texto));
       haptic();
       setFeedback({ type: 'ok', msg: '✓ Copiado' });
       setTimeout(function () {
@@ -114,6 +130,109 @@ function UsuariosModal(props) {
       });
   }
 
+  // ── Guardar nuevo PIN ─────────────────────────────────────────
+  function guardarPin(user) {
+    var p = pinInput.trim();
+    if (!/^\d{4}$/.test(p)) {
+      setFeedback({ type: 'err', msg: 'PIN debe tener exactamente 4 dígitos' });
+      return;
+    }
+    if (p === '9999' && user.user_email !== 'admin@miturno.com') {
+      setFeedback({ type: 'err', msg: 'PIN 9999 reservado para el administrador' });
+      return;
+    }
+    var dup = users.find(function (u) {
+      return u.pin === p && u.user_id !== user.user_id;
+    });
+    if (dup) {
+      setFeedback({ type: 'err', msg: 'PIN ' + p + ' ya está en uso por ' + dup.user_email });
+      return;
+    }
+    setBusy(true);
+    setFeedback(null);
+    withTimeout(
+      SUPA.from('pin_lookup').upsert(
+        {
+          user_id: user.user_id,
+          user_email: user.user_email,
+          pin: p,
+          updated_at: new Date().toISOString()
+        },
+        { onConflict: 'user_id' }
+      ),
+      IS_IOS_SAFARI ? 15000 : 8000,
+      'Actualizar PIN'
+    )
+      .then(function (res) {
+        if (res && res.error) throw res.error;
+        setUsers(function (prev) {
+          return prev.map(function (u) {
+            return u.user_id === user.user_id ? Object.assign({}, u, { pin: p }) : u;
+          });
+        });
+        setDetail(function (d) {
+          return d ? Object.assign({}, d, { pin: p }) : d;
+        });
+        setEditingPin(false);
+        setPinInput('');
+        setFeedback({ type: 'ok', msg: '✓ PIN actualizado a ' + p });
+        setTimeout(function () {
+          setFeedback(null);
+        }, 2500);
+      })
+      .catch(function (e) {
+        setFeedback({ type: 'err', msg: traducirError(e) || 'Error al actualizar PIN' });
+      })
+      .finally(function () {
+        setBusy(false);
+      });
+  }
+
+  // ── Eliminar usuario ──────────────────────────────────────────
+  function eliminarUsuario(user, borrarDatos) {
+    setBusy(true);
+    setFeedback(null);
+    var ops = [SUPA.from('pin_lookup').delete().eq('user_id', user.user_id)];
+    if (borrarDatos && user.user_id) {
+      ops.push(SUPA.from('turnos').delete().eq('user_id', user.user_id));
+      ops.push(SUPA.from('turno_activo').delete().eq('user_id', user.user_id));
+      ops.push(SUPA.from('perfiles').delete().eq('id', user.user_id));
+    }
+    withTimeout(Promise.all(ops), IS_IOS_SAFARI ? 20000 : 10000, 'Eliminar usuario')
+      .then(function (results) {
+        var firstErr = results.find(function (r) {
+          return r && r.error && r.error.code !== 'PGRST116';
+        });
+        if (firstErr) throw firstErr.error;
+        setUsers(function (prev) {
+          return prev.filter(function (u) {
+            return u.user_id !== user.user_id;
+          });
+        });
+        setDetail(null);
+        setConfirmDelMode(null);
+        setConfirmText('');
+        var msg = borrarDatos
+          ? '✓ Usuario y todos sus datos eliminados'
+          : '✓ Acceso revocado — cuenta de auth intacta';
+        setFeedback({ type: 'ok', msg: msg });
+        setTimeout(function () {
+          setFeedback(null);
+        }, 3500);
+      })
+      .catch(function (e) {
+        setFeedback({
+          type: 'err',
+          msg: traducirError(e) || 'Error al eliminar. Verifica políticas RLS en Supabase.'
+        });
+        setConfirmDelMode(null);
+        setConfirmText('');
+      })
+      .finally(function () {
+        setBusy(false);
+      });
+  }
+
   var q = query.trim().toLowerCase();
   var filtered = users.filter(function (u) {
     if (filter === 'admin' && u.pin !== '9999' && u.user_email !== 'admin@miturno.com')
@@ -137,8 +256,7 @@ function UsuariosModal(props) {
   var stats = {
     total: users.length,
     activos: users.filter(function (u) {
-      if (!u.updated_at) return false;
-      return Date.now() - new Date(u.updated_at).getTime() < 7 * 86400000;
+      return u.updated_at && Date.now() - new Date(u.updated_at).getTime() < 7 * 86400000;
     }).length,
     admins: users.filter(function (u) {
       return u.pin === '9999' || u.user_email === 'admin@miturno.com';
@@ -148,13 +266,17 @@ function UsuariosModal(props) {
     }).length
   };
 
-  // Vista detalle
+  // ── Vista detalle ─────────────────────────────────────────────
   if (detail) {
     var esAdm = detail.pin === '9999' || detail.user_email === 'admin@miturno.com';
     var inicial = (detail.user_email || '?')[0].toUpperCase();
+    var emailOk = detail.user_email && detail.user_email.indexOf('@') > 0;
+
     return h(
       'div',
       { className: 'modal-card', style: { maxWidth: 480 } },
+
+      // Header
       h(
         'div',
         { style: { display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 } },
@@ -164,6 +286,11 @@ function UsuariosModal(props) {
             onClick: function () {
               haptic();
               setDetail(null);
+              setEditingPin(false);
+              setPinInput('');
+              setConfirmDelMode(null);
+              setConfirmText('');
+              setResetUser(null);
             },
             style: {
               background: 'transparent',
@@ -183,12 +310,14 @@ function UsuariosModal(props) {
           'Detalle de usuario'
         )
       ),
+
+      // Avatar card
       h(
         'div',
         {
           style: {
             textAlign: 'center',
-            marginBottom: 20,
+            marginBottom: 16,
             padding: '20px 0',
             background: esAdm
               ? 'linear-gradient(135deg, var(--accent-dim) 0%, var(--surface) 100%)'
@@ -251,9 +380,11 @@ function UsuariosModal(props) {
             )
           : null
       ),
+
+      // PIN + fecha rows
       h(
         'div',
-        { style: { display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 } },
+        { style: { display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 14 } },
         h(
           'div',
           {
@@ -351,6 +482,8 @@ function UsuariosModal(props) {
           )
         )
       ),
+
+      // Feedback banner
       feedback
         ? h(
             'div',
@@ -374,6 +507,8 @@ function UsuariosModal(props) {
             feedback.msg
           )
         : null,
+
+      // ── Resetear contraseña (confirmación) ──
       resetUser
         ? h(
             'div',
@@ -389,13 +524,20 @@ function UsuariosModal(props) {
             h(
               'div',
               {
-                style: { fontSize: 13.5, fontWeight: 700, color: 'var(--accent)', marginBottom: 6 }
+                style: {
+                  fontSize: 13.5,
+                  fontWeight: 700,
+                  color: 'var(--accent)',
+                  marginBottom: 6
+                }
               },
               '📧 Enviar reseteo de contraseña'
             ),
             h(
               'div',
-              { style: { fontSize: 12, color: 'var(--text)', marginBottom: 10, lineHeight: 1.5 } },
+              {
+                style: { fontSize: 12, color: 'var(--text)', marginBottom: 10, lineHeight: 1.5 }
+              },
               'Se enviará un email a ',
               h('strong', null, detail.user_email),
               ' con un enlace.'
@@ -447,10 +589,207 @@ function UsuariosModal(props) {
             )
           )
         : null,
-      !resetUser
+
+      // ── Editar PIN (inline form) ──
+      editingPin && !resetUser && !confirmDelMode
+        ? h(
+            'div',
+            {
+              style: {
+                padding: 14,
+                borderRadius: 'var(--radius)',
+                marginBottom: 12,
+                background: 'var(--accent-dim)',
+                border: '2px solid var(--accent)'
+              }
+            },
+            h(
+              'div',
+              {
+                style: {
+                  fontSize: 13,
+                  fontWeight: 700,
+                  color: 'var(--accent)',
+                  marginBottom: 10
+                }
+              },
+              '✏️ Nuevo PIN para ' + detail.user_email
+            ),
+            h('input', {
+              type: 'tel',
+              maxLength: 4,
+              pattern: '[0-9]*',
+              inputMode: 'numeric',
+              className: 'inp',
+              placeholder: '4 dígitos',
+              value: pinInput,
+              onChange: function (e) {
+                setPinInput(e.target.value.replace(/\D/g, '').slice(0, 4));
+              },
+              style: {
+                letterSpacing: '6px',
+                fontSize: 22,
+                fontWeight: 900,
+                textAlign: 'center',
+                fontFamily: 'ui-monospace,monospace',
+                marginBottom: 10
+              }
+            }),
+            h(
+              'div',
+              { style: { display: 'flex', gap: 8 } },
+              h(
+                'button',
+                {
+                  onClick: function () {
+                    guardarPin(detail);
+                  },
+                  disabled: busy || pinInput.length !== 4,
+                  style: {
+                    flex: 1,
+                    padding: '10px',
+                    borderRadius: 'var(--radius-sm)',
+                    border: 'none',
+                    background: pinInput.length === 4 ? 'var(--accent)' : 'var(--surface2)',
+                    color: pinInput.length === 4 ? '#fff' : 'var(--muted)',
+                    fontWeight: 700,
+                    fontSize: 13,
+                    cursor: pinInput.length === 4 ? 'pointer' : 'not-allowed'
+                  }
+                },
+                busy ? 'Guardando...' : '✓ Guardar PIN'
+              ),
+              h(
+                'button',
+                {
+                  onClick: function () {
+                    setEditingPin(false);
+                    setPinInput('');
+                  },
+                  style: {
+                    flex: 1,
+                    padding: '10px',
+                    borderRadius: 'var(--radius-sm)',
+                    border: '1px solid var(--border)',
+                    background: 'transparent',
+                    color: 'var(--text)',
+                    fontWeight: 600,
+                    fontSize: 13,
+                    cursor: 'pointer'
+                  }
+                },
+                'Cancelar'
+              )
+            )
+          )
+        : null,
+
+      // ── Confirmación de eliminación ──
+      confirmDelMode && !resetUser
+        ? h(
+            'div',
+            {
+              style: {
+                padding: 14,
+                borderRadius: 'var(--radius)',
+                marginBottom: 12,
+                background: 'var(--danger-dim)',
+                border: '2px solid var(--danger)'
+              }
+            },
+            h(
+              'div',
+              {
+                style: {
+                  fontSize: 13.5,
+                  fontWeight: 800,
+                  color: 'var(--danger)',
+                  marginBottom: 6
+                }
+              },
+              confirmDelMode === 'full'
+                ? '⚠️ Eliminar usuario y TODOS sus datos'
+                : '⚠️ Revocar acceso (solo PIN)'
+            ),
+            h(
+              'div',
+              {
+                style: { fontSize: 12, color: 'var(--text)', marginBottom: 10, lineHeight: 1.6 }
+              },
+              confirmDelMode === 'full'
+                ? 'Se borrarán de Supabase: PIN, turnos, perfil y turno activo. La cuenta de autenticación (email/contraseña) permanece en Supabase Auth.'
+                : 'Solo se elimina la entrada de pin_lookup. Sus datos (turnos, perfil) se conservan.',
+              h('br'),
+              h('strong', null, 'Escribe el email para confirmar:')
+            ),
+            h('input', {
+              type: 'email',
+              className: 'inp',
+              placeholder: detail.user_email,
+              value: confirmText,
+              onChange: function (e) {
+                setConfirmText(e.target.value);
+              },
+              style: { marginBottom: 10 }
+            }),
+            h(
+              'div',
+              { style: { display: 'flex', gap: 8 } },
+              h(
+                'button',
+                {
+                  onClick: function () {
+                    eliminarUsuario(detail, confirmDelMode === 'full');
+                  },
+                  disabled: busy || confirmText.trim() !== detail.user_email,
+                  style: {
+                    flex: 1,
+                    padding: '10px',
+                    borderRadius: 'var(--radius-sm)',
+                    border: 'none',
+                    background:
+                      confirmText.trim() === detail.user_email
+                        ? 'var(--danger)'
+                        : 'var(--surface2)',
+                    color: confirmText.trim() === detail.user_email ? '#fff' : 'var(--muted)',
+                    fontWeight: 700,
+                    fontSize: 12.5,
+                    cursor: confirmText.trim() === detail.user_email ? 'pointer' : 'not-allowed'
+                  }
+                },
+                busy ? 'Eliminando...' : '🗑 Confirmar'
+              ),
+              h(
+                'button',
+                {
+                  onClick: function () {
+                    setConfirmDelMode(null);
+                    setConfirmText('');
+                  },
+                  style: {
+                    flex: 1,
+                    padding: '10px',
+                    borderRadius: 'var(--radius-sm)',
+                    border: '1px solid var(--border)',
+                    background: 'transparent',
+                    color: 'var(--text)',
+                    fontWeight: 600,
+                    fontSize: 12.5,
+                    cursor: 'pointer'
+                  }
+                },
+                'Cancelar'
+              )
+            )
+          )
+        : null,
+
+      // ── Botones de acción principales ──
+      !resetUser && !editingPin && !confirmDelMode
         ? h(
             'div',
             { style: { display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 14 } },
+            // Copiar email
             h(
               'button',
               {
@@ -475,19 +814,101 @@ function UsuariosModal(props) {
               h('span', { style: { fontSize: 18 } }, '📧'),
               h('span', null, 'Copiar correo')
             ),
+            // Resetear contraseña
             h(
               'button',
               {
                 onClick: function () {
                   setResetUser(detail);
                 },
-                disabled: esAdm,
+                disabled: !emailOk || esAdm,
                 style: {
                   padding: '12px',
                   borderRadius: 'var(--radius-sm)',
                   border: '1px solid var(--accent)',
                   background: 'var(--accent-dim)',
-                  color: esAdm ? 'var(--muted)' : 'var(--accent)',
+                  color: !emailOk || esAdm ? 'var(--muted)' : 'var(--accent)',
+                  fontWeight: 600,
+                  fontSize: 13,
+                  cursor: !emailOk || esAdm ? 'not-allowed' : 'pointer',
+                  textAlign: 'left',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  opacity: !emailOk || esAdm ? 0.5 : 1
+                }
+              },
+              h('span', { style: { fontSize: 18 } }, '🔑'),
+              h('span', null, 'Resetear contraseña (email)')
+            ),
+            // Cambiar PIN
+            h(
+              'button',
+              {
+                onClick: function () {
+                  haptic();
+                  setEditingPin(true);
+                  setPinInput('');
+                },
+                style: {
+                  padding: '12px',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--accent)',
+                  background: 'var(--accent-dim)',
+                  color: 'var(--accent)',
+                  fontWeight: 600,
+                  fontSize: 13,
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10
+                }
+              },
+              h('span', { style: { fontSize: 18 } }, '🔢'),
+              h('span', null, detail.pin ? 'Cambiar PIN (' + detail.pin + ')' : 'Asignar PIN')
+            ),
+            // Separador zona de peligro
+            h(
+              'div',
+              {
+                style: {
+                  marginTop: 6,
+                  marginBottom: 2,
+                  fontSize: 10,
+                  fontWeight: 700,
+                  color: 'var(--danger)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.6px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6
+                }
+              },
+              h('div', {
+                style: { flex: 1, height: 1, background: 'var(--danger)', opacity: 0.3 }
+              }),
+              'Zona de peligro',
+              h('div', {
+                style: { flex: 1, height: 1, background: 'var(--danger)', opacity: 0.3 }
+              })
+            ),
+            // Revocar acceso (solo PIN)
+            h(
+              'button',
+              {
+                onClick: function () {
+                  haptic();
+                  setConfirmDelMode('pin_only');
+                  setConfirmText('');
+                },
+                disabled: esAdm,
+                style: {
+                  padding: '12px',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--danger)',
+                  background: 'var(--danger-dim)',
+                  color: esAdm ? 'var(--muted)' : 'var(--danger)',
                   fontWeight: 600,
                   fontSize: 13,
                   cursor: esAdm ? 'not-allowed' : 'pointer',
@@ -495,14 +916,62 @@ function UsuariosModal(props) {
                   display: 'flex',
                   alignItems: 'center',
                   gap: 10,
-                  opacity: esAdm ? 0.5 : 1
+                  opacity: esAdm ? 0.45 : 1
                 }
               },
-              h('span', { style: { fontSize: 18 } }, '🔑'),
-              h('span', null, 'Resetear contraseña (email)')
+              h('span', { style: { fontSize: 18 } }, '🚫'),
+              h(
+                'div',
+                { style: { minWidth: 0 } },
+                h('div', null, 'Revocar acceso'),
+                h(
+                  'div',
+                  { style: { fontSize: 10.5, opacity: 0.7, marginTop: 1 } },
+                  'Borra el PIN — datos y cuenta de auth intactos'
+                )
+              )
+            ),
+            // Eliminar usuario + datos
+            h(
+              'button',
+              {
+                onClick: function () {
+                  haptic();
+                  setConfirmDelMode('full');
+                  setConfirmText('');
+                },
+                disabled: esAdm,
+                style: {
+                  padding: '12px',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--danger)',
+                  background: 'var(--danger-dim)',
+                  color: esAdm ? 'var(--muted)' : 'var(--danger)',
+                  fontWeight: 600,
+                  fontSize: 13,
+                  cursor: esAdm ? 'not-allowed' : 'pointer',
+                  textAlign: 'left',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  opacity: esAdm ? 0.45 : 1
+                }
+              },
+              h('span', { style: { fontSize: 18 } }, '🗑'),
+              h(
+                'div',
+                { style: { minWidth: 0 } },
+                h('div', null, 'Eliminar usuario + datos'),
+                h(
+                  'div',
+                  { style: { fontSize: 10.5, opacity: 0.7, marginTop: 1 } },
+                  'PIN, turnos, perfil y turno activo'
+                )
+              )
             )
           )
         : null,
+
       h(
         'button',
         {
@@ -510,6 +979,11 @@ function UsuariosModal(props) {
           onClick: function () {
             haptic();
             setDetail(null);
+            setEditingPin(false);
+            setPinInput('');
+            setConfirmDelMode(null);
+            setConfirmText('');
+            setResetUser(null);
           }
         },
         '← Volver a la lista'
@@ -517,7 +991,7 @@ function UsuariosModal(props) {
     );
   }
 
-  // Vista lista
+  // ── Vista lista ───────────────────────────────────────────────
   return h(
     'div',
     { className: 'modal-card', style: { maxWidth: 520 } },
@@ -576,6 +1050,7 @@ function UsuariosModal(props) {
       )
     ),
 
+    // Stats grid
     h(
       'div',
       {
@@ -587,134 +1062,68 @@ function UsuariosModal(props) {
           marginTop: 12
         }
       },
-      h(
-        'div',
+      [
         {
-          style: {
-            background: 'var(--surface2)',
-            padding: '10px 6px',
-            borderRadius: 'var(--radius-sm)',
-            textAlign: 'center',
-            border: '1px solid var(--border)'
-          }
+          v: stats.total,
+          lbl: 'Total',
+          bg: 'var(--surface2)',
+          bc: 'var(--border)',
+          fc: 'var(--text)'
         },
-        h(
-          'div',
-          { style: { fontSize: 18, fontWeight: 900, color: 'var(--text)', lineHeight: 1 } },
-          stats.total
-        ),
-        h(
+        {
+          v: stats.activos,
+          lbl: 'Activos 7d',
+          bg: 'var(--success-dim,rgba(16,185,129,0.12))',
+          bc: 'var(--success,#10b981)',
+          fc: 'var(--success,#10b981)'
+        },
+        {
+          v: stats.admins,
+          lbl: 'Admins',
+          bg: 'var(--accent-dim)',
+          bc: 'var(--accent)',
+          fc: 'var(--accent)'
+        },
+        {
+          v: stats.sinPin,
+          lbl: 'Sin PIN',
+          bg: 'var(--danger-dim)',
+          bc: 'var(--danger)',
+          fc: 'var(--danger)'
+        }
+      ].map(function (s, i) {
+        return h(
           'div',
           {
+            key: i,
             style: {
-              fontSize: 9,
-              color: 'var(--muted)',
-              marginTop: 3,
-              textTransform: 'uppercase',
-              fontWeight: 700,
-              letterSpacing: '0.3px'
+              background: s.bg,
+              padding: '10px 6px',
+              borderRadius: 'var(--radius-sm)',
+              textAlign: 'center',
+              border: '1px solid ' + s.bc
             }
           },
-          'Total'
-        )
-      ),
-      h(
-        'div',
-        {
-          style: {
-            background: 'var(--success-dim,rgba(16,185,129,0.12))',
-            padding: '10px 6px',
-            borderRadius: 'var(--radius-sm)',
-            textAlign: 'center',
-            border: '1px solid var(--success,#10b981)'
-          }
-        },
-        h(
-          'div',
-          {
-            style: { fontSize: 18, fontWeight: 900, color: 'var(--success,#10b981)', lineHeight: 1 }
-          },
-          stats.activos
-        ),
-        h(
-          'div',
-          {
-            style: {
-              fontSize: 9,
-              color: 'var(--muted)',
-              marginTop: 3,
-              textTransform: 'uppercase',
-              fontWeight: 700,
-              letterSpacing: '0.3px'
-            }
-          },
-          'Activos 7d'
-        )
-      ),
-      h(
-        'div',
-        {
-          style: {
-            background: 'var(--accent-dim)',
-            padding: '10px 6px',
-            borderRadius: 'var(--radius-sm)',
-            textAlign: 'center',
-            border: '1px solid var(--accent)'
-          }
-        },
-        h(
-          'div',
-          { style: { fontSize: 18, fontWeight: 900, color: 'var(--accent)', lineHeight: 1 } },
-          stats.admins
-        ),
-        h(
-          'div',
-          {
-            style: {
-              fontSize: 9,
-              color: 'var(--muted)',
-              marginTop: 3,
-              textTransform: 'uppercase',
-              fontWeight: 700,
-              letterSpacing: '0.3px'
-            }
-          },
-          'Admins'
-        )
-      ),
-      h(
-        'div',
-        {
-          style: {
-            background: 'var(--danger-dim)',
-            padding: '10px 6px',
-            borderRadius: 'var(--radius-sm)',
-            textAlign: 'center',
-            border: '1px solid var(--danger)'
-          }
-        },
-        h(
-          'div',
-          { style: { fontSize: 18, fontWeight: 900, color: 'var(--danger)', lineHeight: 1 } },
-          stats.sinPin
-        ),
-        h(
-          'div',
-          {
-            style: {
-              fontSize: 9,
-              color: 'var(--muted)',
-              marginTop: 3,
-              textTransform: 'uppercase',
-              fontWeight: 700,
-              letterSpacing: '0.3px'
-            }
-          },
-          'Sin PIN'
-        )
-      )
+          h('div', { style: { fontSize: 18, fontWeight: 900, color: s.fc, lineHeight: 1 } }, s.v),
+          h(
+            'div',
+            {
+              style: {
+                fontSize: 9,
+                color: 'var(--muted)',
+                marginTop: 3,
+                textTransform: 'uppercase',
+                fontWeight: 700,
+                letterSpacing: '0.3px'
+              }
+            },
+            s.lbl
+          )
+        );
+      })
     ),
 
+    // Search
     h('input', {
       type: 'text',
       className: 'inp',
@@ -726,6 +1135,7 @@ function UsuariosModal(props) {
       style: { marginBottom: 10 }
     }),
 
+    // Filters
     h(
       'div',
       { style: { display: 'flex', gap: 6, marginBottom: 10, overflowX: 'auto', paddingBottom: 2 } },
@@ -762,6 +1172,7 @@ function UsuariosModal(props) {
       })
     ),
 
+    // Sort
     h(
       'div',
       { style: { display: 'flex', gap: 6, marginBottom: 12, fontSize: 11 } },
@@ -797,6 +1208,7 @@ function UsuariosModal(props) {
       })
     ),
 
+    // Feedback en lista
     feedback
       ? h(
           'div',
@@ -818,6 +1230,7 @@ function UsuariosModal(props) {
         )
       : null,
 
+    // User list
     loading
       ? h(
           'div',
@@ -837,7 +1250,26 @@ function UsuariosModal(props) {
                 borderRadius: 'var(--radius)'
               }
             },
-            error
+            error,
+            h(
+              'button',
+              {
+                onClick: cargar,
+                style: {
+                  display: 'block',
+                  margin: '12px auto 0',
+                  padding: '8px 16px',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--danger)',
+                  background: 'transparent',
+                  color: 'var(--danger)',
+                  fontWeight: 600,
+                  fontSize: 12,
+                  cursor: 'pointer'
+                }
+              },
+              '↺ Reintentar'
+            )
           )
         : filtered.length === 0
           ? h(
@@ -863,11 +1295,16 @@ function UsuariosModal(props) {
                 return h(
                   'button',
                   {
-                    key: u.user_id,
+                    key: u.user_id || u.user_email,
                     onClick: function () {
                       haptic();
                       setDetail(u);
                       setFeedback(null);
+                      setEditingPin(false);
+                      setPinInput('');
+                      setConfirmDelMode(null);
+                      setConfirmText('');
+                      setResetUser(null);
                     },
                     style: {
                       padding: '10px 12px',
@@ -1019,7 +1456,7 @@ function UsuariosModal(props) {
         }
       },
       h('strong', null, '💡 '),
-      'Toca un usuario para ver detalles.'
+      'Toca un usuario para gestionar: cambiar PIN, resetear contraseña o eliminar.'
     ),
 
     h(
