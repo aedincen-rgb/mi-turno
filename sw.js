@@ -1,40 +1,219 @@
 // ════════════════════════════════════════════════════════════════
-//  MI TURNO · SERVICE WORKER
-//  Cache de librerías CDN para arranque rápido offline-first
+//  MI TURNO · SERVICE WORKER v5
+//  Offline-first: shell cache + stale-while-revalidate
 // ════════════════════════════════════════════════════════════════
-const CACHE='mt-v3';
-const CDN=[
-  'https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js',
-  'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',
-  'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
-  'https://cdn.jsdelivr.net/npm/chart.js'
+var CACHE = 'mt-v5';
+
+// CDN libs — cache-first forever
+var CDN_HOSTS = ['cdnjs.cloudflare.com', 'jsdelivr.net', 'fonts.gstatic.com', 'fonts.googleapis.com'];
+
+// App shell — pre-cached on install so the app loads 100% offline
+var SHELL = [
+  '/',
+  '/index.html',
+  '/img/logo-mark.svg',
+  // base
+  '/css/base/variables.css',
+  '/css/base/reset.css',
+  '/css/base/typography.css',
+  '/css/base/background.css',
+  '/css/base/media-queries.css',
+  '/css/base/blur-fix.css',
+  // layout
+  '/css/layout/header.css',
+  '/css/layout/scroll.css',
+  '/css/layout/hero-card.css',
+  '/css/layout/progress-bar.css',
+  '/css/layout/action-button.css',
+  '/css/layout/shapes.css',
+  '/css/layout/fade-animations.css',
+  '/css/layout/misc-animations.css',
+  '/css/layout/misc.css',
+  // components
+  '/css/components/cards.css',
+  '/css/components/buttons.css',
+  '/css/components/buttons-glass.css',
+  '/css/components/inputs.css',
+  '/css/components/switches.css',
+  '/css/components/config-rows.css',
+  '/css/components/dashboard-hero.css',
+  '/css/components/dashboard-kpis.css',
+  '/css/components/dashboard-chart.css',
+  '/css/components/dashboard-tip.css',
+  '/css/components/assistant-chat.css',
+  '/css/components/history-list.css',
+  '/css/components/auth-screen.css',
+  '/css/components/misc.css',
+  '/css/components/dark-mode-overrides.css',
+  // modals
+  '/css/modals/overlay.css',
+  '/css/modals/modal-card.css',
+  '/css/modals/bottom-sheets.css',
+  '/css/modals/auth-screen.css',
+  '/css/modals/assistant-chat.css',
+  '/css/modals/time-picker.css',
+  '/css/modals/splash.css',
+  '/css/modals/misc.css',
+  '/css/modals/dark-overrides.css',
+  // animations
+  '/css/animations/keyframes.css',
+  // js config
+  '/js/config.js',
+  '/js/theme-boot.js',
+  '/js/config/react-init.js',
+  '/js/config/env.js',
+  '/js/config/viewport-fix.js',
+  '/js/config/globals.js',
+  // js utils
+  '/js/utils/storage.js',
+  '/js/utils/format.js',
+  '/js/utils/haptic.js',
+  '/js/utils/network.js',
+  '/js/utils/uuid.js',
+  '/js/utils/festivos.js',
+  '/js/utils/time.js',
+  '/js/utils/validation.js',
+  '/js/utils/otp.js',
+  // js services
+  '/js/services/supabase.js',
+  '/js/services/supabase-init.js',
+  '/js/services/calculator.js',
+  '/js/services/data.js',
+  '/js/services/ai.js',
+  '/js/services/export-files.js',
+  '/js/services/export-email.js',
+  '/js/services/sync.js',
+  // js tabs
+  '/js/tabs/home.js',
+  '/js/tabs/dashboard.js',
+  '/js/tabs/assistant.js',
+  '/js/tabs/history.js',
+  '/js/tabs/config.js',
+  // js modals
+  '/js/modals/forgot-password.js',
+  '/js/modals/pin-setup.js',
+  '/js/modals/manage-account.js',
+  '/js/modals/diagnostico.js',
+  '/js/modals/asignar-pins.js',
+  '/js/modals/usuarios.js',
+  '/js/modals/export-report.js',
+  // js app
+  '/js/app/auth-screen.js',
+  '/js/app/app-main.js',
+  '/js/app/root.js',
+  '/js/app/sw-register.js',
+  '/js/app/init.js'
 ];
-self.addEventListener('install',function(e){
-  e.waitUntil(caches.open(CACHE).then(function(c){
-    return Promise.allSettled(CDN.map(function(u){
-      return fetch(u,{mode:'cors'}).then(function(r){if(r.ok)return c.put(u,r);});
-    }));
-  }).then(function(){return self.skipWaiting();}));
+
+self.addEventListener('install', function (e) {
+  e.waitUntil(
+    caches
+      .open(CACHE)
+      .then(function (cache) {
+        // addAll aborts if any fetch fails; use individual adds with fallback
+        return Promise.allSettled(
+          SHELL.map(function (url) {
+            return cache.add(url).catch(function (err) {
+              console.warn('[SW] No se pudo cachear:', url, err);
+            });
+          })
+        );
+      })
+      .then(function () {
+        return self.skipWaiting();
+      })
+  );
 });
-self.addEventListener('activate',function(e){
-  e.waitUntil(caches.keys().then(function(keys){
-    return Promise.all(keys.filter(function(k){return k!==CACHE;}).map(function(k){return caches.delete(k);}));
-  }).then(function(){return self.clients.claim();}));
+
+self.addEventListener('activate', function (e) {
+  e.waitUntil(
+    caches
+      .keys()
+      .then(function (keys) {
+        return Promise.all(
+          keys
+            .filter(function (k) {
+              return k !== CACHE;
+            })
+            .map(function (k) {
+              return caches.delete(k);
+            })
+        );
+      })
+      .then(function () {
+        return self.clients.claim();
+      })
+  );
 });
-self.addEventListener('fetch',function(e){
-  var u=new URL(e.request.url);
-  if(e.request.method!=='GET')return;
-  if(u.hostname.indexOf('supabase')>=0)return;
-  if(u.hostname.indexOf('cdnjs')>=0||u.hostname.indexOf('jsdelivr')>=0||u.hostname.indexOf('fonts.g')>=0){
-    e.respondWith(caches.match(e.request).then(function(cached){
-      if(cached)return cached;
-      return fetch(e.request).then(function(r){
-        if(r.ok){var clone=r.clone();caches.open(CACHE).then(function(c){c.put(e.request,clone);});}
-        return r;
-      }).catch(function(){return cached;});
-    }));
+
+function isCdnUrl(url) {
+  return CDN_HOSTS.some(function (h) {
+    return url.hostname.includes(h);
+  });
+}
+
+function isSupabase(url) {
+  return url.hostname.includes('supabase');
+}
+
+function isSameOrigin(url) {
+  return url.origin === self.location.origin;
+}
+
+// Cache-first: return cached; fetch + update cache in background
+function cacheFirst(req) {
+  return caches.open(CACHE).then(function (cache) {
+    return cache.match(req).then(function (cached) {
+      if (cached) return cached;
+      return fetch(req).then(function (res) {
+        if (res.ok) cache.put(req, res.clone());
+        return res;
+      });
+    });
+  });
+}
+
+// Stale-while-revalidate: return cached immediately; fetch fresh in background
+function staleWhileRevalidate(req) {
+  return caches.open(CACHE).then(function (cache) {
+    return cache.match(req).then(function (cached) {
+      var fetchPromise = fetch(req)
+        .then(function (res) {
+          if (res.ok) cache.put(req, res.clone());
+          return res;
+        })
+        .catch(function () {
+          return cached;
+        });
+      // Return cached immediately if available; otherwise wait for network
+      return cached || fetchPromise;
+    });
+  });
+}
+
+self.addEventListener('fetch', function (e) {
+  if (e.request.method !== 'GET') return;
+
+  var url;
+  try {
+    url = new URL(e.request.url);
+  } catch (err) {
+    return;
+  }
+
+  // Supabase API: always network-only (never cache auth/data calls)
+  if (isSupabase(url)) return;
+
+  // CDN libraries: cache-first (stable versions, never change)
+  if (isCdnUrl(url)) {
+    e.respondWith(cacheFirst(e.request));
+    return;
+  }
+
+  // Same-origin (local app files): stale-while-revalidate
+  // → instant load from cache, updates in background
+  if (isSameOrigin(url)) {
+    e.respondWith(staleWhileRevalidate(e.request));
+    return;
   }
 });

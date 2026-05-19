@@ -127,12 +127,6 @@
     inset 0 -1px 0 rgba(255, 255, 255, 0.04);
 }
 
-/* ── Active-tag ── */
-[data-theme='dark'] .active-tag {
-  background: rgba(91, 168, 142, 0.14);
-  border-color: rgba(126, 196, 166, 0.22);
-}
-
 /* ── hist-cur (turno actual en historial) ── */
 [data-theme='dark'] .hist-cur {
   background: rgba(125, 168, 255, 0.1);

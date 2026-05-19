@@ -15,18 +15,19 @@ function Root() {
     });
   }
 
-  // ── Intro animation (se muestra para TODOS los usuarios) ──────
-  var si = useState(true);
+  // ── Intro animation ──────────────────────────────────────────
+  // Persiste en localStorage: solo se muestra la primera vez ever.
+  // iOS evicta la página del fondo → al volver NO repetimos el intro.
+  var alreadyPlayed = leer('mt_intro_played', false);
+  var si = useState(!alreadyPlayed);
   var showIntro = si[0],
     setShowIntro = si[1];
   var se = useState(false);
   var introExit = se[0],
     setIntroExit = se[1];
-  var ip = useState(false);
-  var introPlayed = ip[0],
-    setIntroPlayed = ip[1];
 
   useEffect(function () {
+    if (!showIntro) return; // ya fue reproducido antes
     var alive = true;
     var t1 = setTimeout(function () {
       if (!alive) return;
@@ -34,7 +35,7 @@ function Root() {
       setTimeout(function () {
         if (!alive) return;
         setShowIntro(false);
-        setIntroPlayed(true);
+        grabar('mt_intro_played', true); // persiste para no volver a mostrar
       }, 340);
     }, 1400);
     return function () {
@@ -113,13 +114,16 @@ function Root() {
     });
 
     var sub = SUPA.auth.onAuthStateChange(function (event, supaSession) {
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
+      if (event === 'SIGNED_IN') {
+        // Solo al iniciar sesión por primera vez
         if (supaSession) aplicar(supaSession);
       } else if (event === 'SIGNED_OUT') {
         grabar(SKEY, null);
         setSession(null);
         applying = false;
       }
+      // TOKEN_REFRESHED / USER_UPDATED: el SDK actualiza el token internamente.
+      // No llamamos setSession para evitar re-renders + re-mount del App.
     });
 
     return function () {
@@ -162,6 +166,6 @@ function Root() {
     session: session,
     onSignOut: signOut,
     onSessionPatch: patchSession,
-    introPlayed: introPlayed
+    introPlayed: alreadyPlayed || !showIntro
   });
 }

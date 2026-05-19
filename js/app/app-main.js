@@ -327,6 +327,15 @@ function App(props) {
 
   var durActual = activo ? Math.round((ahora - new Date(activo.inicio)) / 60000) : 0;
 
+  // Escribe en cloud: intenta directo si hay red, encola si no.
+  // Todas las ops son idempotentes → sin riesgo de duplicados al re-intentar.
+  function cloudSync(op, directFn) {
+    if (!isCloud) return;
+    enqueueOp(op);
+    if (navigator.onLine) flushSyncQueue(uid).catch(function () {});
+    else directFn && directFn(); // noop placeholder
+  }
+
   function onIni() {
     haptic();
     var ini = new Date().toISOString();
@@ -335,7 +344,7 @@ function App(props) {
       setActivo(nuevo);
       setShowOlv(false);
       showToast('Turno iniciado');
-      if (isCloud) supaSetActivo(uid, nuevo);
+      cloudSync({ type: 'setActivo', uid: uid, data: nuevo });
     });
   }
 
@@ -350,10 +359,8 @@ function App(props) {
     setActivo(null);
     setShowOlv(false);
     showToast('Turno cerrado');
-    if (isCloud) {
-      supaInsertTurno(uid, turnoCerrado);
-      supaSetActivo(uid, null);
-    }
+    cloudSync({ type: 'insertTurno', uid: uid, data: turnoCerrado });
+    cloudSync({ type: 'setActivo', uid: uid, data: null });
   }
 
   function onOlv(finISO) {
@@ -366,23 +373,21 @@ function App(props) {
     setActivo(null);
     setShowOlv(false);
     showToast('Turno guardado');
-    if (isCloud) {
-      supaInsertTurno(uid, turnoCerrado);
-      supaSetActivo(uid, null);
-    }
+    cloudSync({ type: 'insertTurno', uid: uid, data: turnoCerrado });
+    cloudSync({ type: 'setActivo', uid: uid, data: null });
   }
 
   function onSalario(v) {
     haptic();
     setSalario(v);
     showToast('Salario actualizado');
-    if (isCloud) supaSetSalario(uid, v);
+    cloudSync({ type: 'setSalario', uid: uid, data: v });
   }
   function onBorrar() {
     haptic();
     setTurnos([]);
     showToast('Historial borrado');
-    if (isCloud) supaDeleteAllTurnos(uid);
+    cloudSync({ type: 'deleteAllTurnos', uid: uid });
   }
   function onBorrarUno(id) {
     haptic();
@@ -392,7 +397,7 @@ function App(props) {
       });
     });
     showToast('Turno eliminado');
-    if (isCloud) supaDeleteTurno(uid, id);
+    cloudSync({ type: 'deleteTurno', uid: uid, id: id });
   }
   // Estado para modal de exportar (PDF o Excel)
   var ex = useState(null);
@@ -416,6 +421,15 @@ function App(props) {
       window.removeEventListener('offline', goOff);
     };
   }, []);
+
+  // Flush cola offline cuando vuelve la red
+  useEffect(
+    function () {
+      if (isOnline && isCloud) flushSyncQueue(uid).catch(function () {});
+    },
+    [isOnline]
+  );
+
   function onExportPDF() {
     haptic();
     setExportMode('pdf');
