@@ -65,7 +65,7 @@ function HomeTab(props) {
       },
       h('span', { className: 'mood-icon' }, '✦'),
       h('span', { className: 'mood-text', id: 'mood-text' },
-        getMoodPhrase ? getMoodPhrase(buildContext(props)) : 'Cada turno cuenta, tú decides el rumbo. 💪'
+        'Cada turno cuenta, tú decides el rumbo. 💪'
       )
     ),
 
