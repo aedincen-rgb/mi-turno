@@ -1,0 +1,50 @@
+/* ════════════════════════════════════════════════════════════════
+   MI TURNO · components/config-rows.css
+   ════════════════════════════════════════════════════════════════ */
+
+.cfg-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--border);
+  min-height: 42px;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  transition: background 0.2s;
+}
+
+.cfg-row:active {
+  opacity: 0.6;
+}
+
+.cfg-row:last-child {
+  border-bottom: none;
+}
+
+.cfg-k {
+  font-size: 14px;
+  color: var(--text);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.rec-chip {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.cfg-v {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}

@@ -1,0 +1,103 @@
+/* ════════════════════════════════════════════════════════════════
+   MI TURNO · components/cards.css
+   iOS 26 Liquid Glass – tarjetas generales
+   ════════════════════════════════════════════════════════════════ */
+
+.card {
+  padding: var(--sz-3); /* 24px para un look más espacioso */
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.card-ttl {
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 600;
+  margin-bottom: 14px;
+  opacity: 0.82;
+}
+
+[data-theme='dark'] .card {
+  background: var(--glass-heavy);
+  border-color: var(--glass-border);
+  box-shadow:
+    inset 0 1.5px 0 var(--spec-top),
+    inset 0 -0.5px 0 var(--spec-bot),
+    var(--sh-2);
+}
+
+/* ═══════════════════════════════════════════════════════
+   Mood Bar · Frase motivacional entre tarjetas
+   Azul translúcido estilo iOS 26
+   ═══════════════════════════════════════════════════════ */
+
+.mood-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 16px;
+  margin: 2px 0 2px;
+  border-radius: 40px;
+  background: rgba(10, 132, 255, 0.06);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(10, 132, 255, 0.10);
+  cursor: default;
+  transition: all 0.35s ease;
+  user-select: none;
+  -webkit-user-select: none;
+  min-height: 32px;
+}
+
+[data-theme='dark'] .mood-bar {
+  background: rgba(10, 132, 255, 0.04);
+  border-color: rgba(10, 132, 255, 0.07);
+}
+
+.mood-bar:active {
+  transform: scale(0.98);
+  background: rgba(10, 132, 255, 0.10);
+}
+
+.mood-icon {
+  font-size: 10px;
+  color: rgba(10, 132, 255, 0.55);
+  flex-shrink: 0;
+  line-height: 1;
+  transition: transform 0.5s ease;
+}
+
+.mood-bar:hover .mood-icon {
+  transform: rotate(90deg);
+}
+
+.mood-text {
+  font-size: 11px;
+  font-weight: 480;
+  letter-spacing: -0.01em;
+  color: rgba(10, 132, 255, 0.70);
+  line-height: 1.35;
+  text-align: center;
+  transition: opacity 0.4s ease;
+}
+
+[data-theme='dark'] .mood-text {
+  color: rgba(100, 180, 255, 0.65);
+}
+
+[data-theme='dark'] .mood-icon {
+  color: rgba(100, 180, 255, 0.45);
+}
+
+/* Animación fade cuando cambia la frase */
+.mood-text-changing {
+  opacity: 0;
+  transform: translateY(2px);
+}

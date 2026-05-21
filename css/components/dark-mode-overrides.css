@@ -1,0 +1,142 @@
+/* ════════════════════════════════════════════════════════════════
+   MI TURNO · components/dark-mode-overrides.css
+   iOS 26 Liquid Glass – dark mode overrides
+   ════════════════════════════════════════════════════════════════ */
+
+/* ── Hero card ── */
+[data-theme='dark'] .hero {
+  background: var(--glass-heavy);
+  border-color: var(--glass-border);
+  box-shadow:
+    inset 0 1.5px 0 var(--spec-top),
+    inset 0 -0.5px 0 var(--spec-bot),
+    var(--sh-3);
+}
+
+/* ── Hero gradient text (más brillo en oscuro) ── */
+[data-theme='dark'] .hero-amount {
+  background: linear-gradient(160deg, #6ea0ff 0%, #7da8ff 40%, #9fbeff 75%, #b3cdff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ── Splash screen ── */
+[data-theme='dark'] #initSplash {
+  background: rgba(10, 12, 18, 0.85);
+  backdrop-filter: blur(30px) saturate(180%);
+  -webkit-backdrop-filter: blur(30px) saturate(180%);
+}
+
+/* ── Auth ── */
+[data-theme='dark'] .is-name {
+  color: #ecedf3;
+}
+[data-theme='dark'] .is-tag {
+  color: #7c8395;
+}
+[data-theme='dark'] .is-ring {
+  border-color: #2a2f3b;
+  border-top-color: #7da8ff;
+}
+
+/* ── Tab bar ── */
+[data-theme='dark'] .tabs {
+  background: var(--glass-heavy);
+  border-color: var(--glass-border);
+  box-shadow:
+    inset 0 1.5px 0 var(--spec-top),
+    inset 0 -0.5px 0 var(--spec-bot),
+    0 8px 48px rgba(0, 0, 0, 0.55),
+    0 0 28px rgba(125, 168, 255, 0.08);
+}
+
+/* ── Tab indicator dark ── */
+[data-theme='dark'] .tab-indicator {
+  background: rgba(125, 168, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.13);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 2px 14px var(--accent-glow);
+}
+
+/* ── Cards y superficies ── */
+[data-theme='dark'] .card {
+  background: var(--glass-heavy);
+  border-color: var(--glass-border);
+  box-shadow:
+    inset 0 1.5px 0 var(--spec-top),
+    inset 0 -0.5px 0 var(--spec-bot),
+    var(--sh-2);
+}
+
+/* ── Icon button ── */
+[data-theme='dark'] .icon-btn {
+  background: var(--glass-mid);
+  border-color: var(--glass-border-sm);
+}
+
+/* ── Modal sheet ── */
+[data-theme='dark'] .mol-sh {
+  background: var(--glass-heavy);
+  border-color: var(--glass-border);
+  box-shadow:
+    inset 0 1.5px 0 var(--spec-top),
+    inset 0 -24px 60px rgba(0, 0, 0, 0.3);
+}
+
+/* ── Filas ── */
+[data-theme='dark'] .brk-row,
+[data-theme='dark'] .hist-row {
+  background: var(--glass-thin);
+  border-color: var(--glass-border-sm);
+  box-shadow:
+    inset 0 1px 0 var(--spec-top),
+    var(--sh-1);
+}
+
+/* ── Dashboard glass ── */
+[data-theme='dark'] .card,
+[data-theme='dark'] .dash-hero {
+  background: var(--glass-heavy);
+  border-color: var(--glass-border);
+  box-shadow:
+    inset 0 1.5px 0 var(--spec-top),
+    inset 0 -0.5px 0 var(--spec-bot),
+    var(--sh-2);
+}
+
+/* ── Ritmo badge dark ── */
+[data-theme='dark'] .ritmo-badge {
+  background: rgba(125, 168, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+/* ── Progress bar track ── */
+[data-theme='dark'] .bar-track {
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow:
+    inset 0 1.5px 3px rgba(0, 0, 0, 0.5),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.04);
+}
+
+/* ── Switch track ── */
+[data-theme='dark'] .sw-track {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow:
+    inset 0 1.5px 3px rgba(0, 0, 0, 0.4),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.04);
+}
+
+/* ── Active-tag ── */
+[data-theme='dark'] .active-tag {
+  background: rgba(91, 168, 142, 0.14);
+  border-color: rgba(126, 196, 166, 0.22);
+}
+
+/* ── hist-cur (turno actual en historial) ── */
+[data-theme='dark'] .hist-cur {
+  background: rgba(125, 168, 255, 0.1);
+  border-color: rgba(125, 168, 255, 0.2);
+}
