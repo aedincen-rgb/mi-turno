@@ -119,6 +119,22 @@
 
 <div id="root"></div>
 
+<script>
+  /* Failsafe del splash inicial: si la app no llega a arrancar bien,
+     la pantalla azul NUNCA debe quedarse pegada. A los 8 s se retira
+     sí o sí, así queda visible la app (o el mensaje de error). */
+  (function () {
+    setTimeout(function () {
+      var s = document.getElementById('initSplash');
+      if (!s) return; // la app ya lo retiró con normalidad
+      s.classList.add('fadeout');
+      setTimeout(function () {
+        if (s.parentNode) s.parentNode.removeChild(s);
+      }, 500);
+    }, 8000);
+  })();
+</script>
+
 <!-- JS FRAGMENTADO -->
 
 <!-- 1. Config inicial -->

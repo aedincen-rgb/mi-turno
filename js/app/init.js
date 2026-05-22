@@ -20,10 +20,15 @@ try {
     ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(Root, null));
     console.log('[MT] App montada con éxito.');
   } else {
-    const missing = Object.keys(deps).filter(k => !deps[k]).join(', ');
+    const missing = Object.keys(deps)
+      .filter(k => !deps[k])
+      .join(', ');
     throw new Error('Faltan dependencias críticas: ' + (missing || 'React/Root'));
   }
 } catch (e) {
+  // Retira el splash inicial: si no, su z-index taparía este mensaje.
+  var sp = document.getElementById('initSplash');
+  if (sp && sp.parentNode) sp.parentNode.removeChild(sp);
   document.getElementById('root').innerHTML =
     '<div style="color:#b91c1c;padding:40px;font-family:-apple-system,sans-serif;text-align:center"><div style="font-size:44px;margin-bottom:14px">⚠</div><div style="font-size:17px;font-weight:700;margin-bottom:6px">Error al iniciar</div><div style="font-size:12.5px;opacity:0.6">' +
     e.message +
