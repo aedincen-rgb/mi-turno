@@ -8,6 +8,22 @@ function HomeTab(props) {
     ahora = props.ahora,
     vh = props.vh;
 
+  // Frase IA rotativa (misma fuente y ritmo que el hero del Asistente)
+  var moodPhrases = _aiHeroPhrases(props);
+  var mp = useState(0);
+  var moodIdx = mp[0],
+    setMoodIdx = mp[1];
+  useEffect(function () {
+    var t = setInterval(function () {
+      setMoodIdx(function (n) {
+        return n + 1;
+      });
+    }, 7000);
+    return function () {
+      clearInterval(t);
+    };
+  }, []);
+
   var liveDelta = 0;
   if (activo && vh) {
     var nowMs = ahora.getTime();
@@ -53,106 +69,102 @@ function HomeTab(props) {
       )
     ),
 
-    // Mood Bar · Frase motivacional
+    // Frase IA · texto limpio, rota cada 7 s, abre el Asistente al tocar
     h(
       'div',
       {
-        className: 'mood-bar',
-        id: 'mood-bar',
+        className: 'mood-line',
         onClick: function () {
+          haptic();
           if (props.onOpenAssistant) props.onOpenAssistant();
         }
       },
-      h('span', { className: 'mood-icon' }, '✦'),
+      h('span', { className: 'mood-spark' }, '✦'),
       h(
         'span',
-        { className: 'mood-text', id: 'mood-text' },
-        'Cada turno cuenta, tú decides el rumbo. 💪'
+        { className: 'mood-phrase', key: moodIdx },
+        moodPhrases[moodIdx % moodPhrases.length]
       )
     ),
 
-    // Tarjeta 2: Control de Turno (Botón e Información)
+    // Control de turno · botón flotante (sin tarjeta que lo encajone)
     h(
       'div',
-      { className: 'card' },
+      { className: 'action-stage', style: { marginTop: 0 } },
       h(
-        'div',
-        { className: 'action-stage', style: { marginTop: 0 } },
-        h(
-          'button',
-          {
-            className: 'action-btn ' + (activo ? 'action-btn-stop' : 'action-btn-go'),
-            onClick: function () {
-              haptic();
-              activo ? props.onFin() : props.onIni();
-            }
-          },
-          activo
-            ? h(
-                'svg',
-                {
-                  className: 'action-icon',
-                  viewBox: '0 0 24 24',
-                  width: 30,
-                  height: 30,
-                  'aria-hidden': 'true'
-                },
-                h('rect', { x: 6.5, y: 6.5, width: 11, height: 11, rx: 3, fill: 'currentColor' })
-              )
-            : h(
-                'svg',
-                {
-                  className: 'action-icon',
-                  viewBox: '0 0 24 24',
-                  width: 34,
-                  height: 34,
-                  'aria-hidden': 'true'
-                },
-                h('path', {
-                  d: 'M14.5 2.5 L5.5 13 L11 13 L9.5 21.5 L18.5 11 L13 11 Z',
-                  fill: 'currentColor'
-                })
-              ),
-          h('div', { className: 'action-lbl' }, activo ? 'Parar' : 'Iniciar')
-        ),
+        'button',
+        {
+          className: 'action-btn ' + (activo ? 'action-btn-stop' : 'action-btn-go'),
+          onClick: function () {
+            haptic();
+            activo ? props.onFin() : props.onIni();
+          }
+        },
         activo
           ? h(
+              'svg',
+              {
+                className: 'action-icon',
+                viewBox: '0 0 24 24',
+                width: 30,
+                height: 30,
+                'aria-hidden': 'true'
+              },
+              h('rect', { x: 6.5, y: 6.5, width: 11, height: 11, rx: 3, fill: 'currentColor' })
+            )
+          : h(
+              'svg',
+              {
+                className: 'action-icon',
+                viewBox: '0 0 24 24',
+                width: 34,
+                height: 34,
+                'aria-hidden': 'true'
+              },
+              h('path', {
+                d: 'M14.5 2.5 L5.5 13 L11 13 L9.5 21.5 L18.5 11 L13 11 Z',
+                fill: 'currentColor'
+              })
+            ),
+        h('div', { className: 'action-lbl' }, activo ? 'Parar' : 'Iniciar')
+      ),
+      activo
+        ? h(
+            'div',
+            { className: 'active-box' },
+            h(
               'div',
-              { className: 'active-box' },
+              { className: 'active-tag' },
+              h('div', { className: 'active-dot' }),
+              'En turno'
+            ),
+            h(
+              'div',
+              { style: { margin: '8px 0' } },
               h(
                 'div',
-                { className: 'active-tag' },
-                h('div', { className: 'active-dot' }),
-                'En turno'
-              ),
-              h(
-                'div',
-                { style: { margin: '8px 0' } },
+                { className: 'num-glass-card', style: { padding: '6px 20px' } },
                 h(
                   'div',
-                  { className: 'num-glass-card', style: { padding: '6px 20px' } },
-                  h(
-                    'div',
-                    { className: 'active-timer', style: { fontSize: '42px' } },
-                    fDur(durActual)
-                  )
+                  { className: 'active-timer', style: { fontSize: '42px' } },
+                  fDur(durActual)
                 )
-              ),
-              h(
-                'div',
-                { className: 'active-since' },
-                'Desde ' +
-                  new Date(activo.inicio).toLocaleTimeString('es-CO', {
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })
-              ),
-              durActual >= U12H / 60000 - 60
-                ? h('div', { className: 'active-warn' }, '⚠ Próximo recordatorio de 12h')
-                : null
-            )
-          : null
-      )
+              )
+            ),
+            h(
+              'div',
+              { className: 'active-since' },
+              'Desde ' +
+                new Date(activo.inicio).toLocaleTimeString('es-CO', {
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })
+            ),
+            durActual >= U12H / 60000 - 60
+              ? h('div', { className: 'active-warn' }, '⚠ Próximo recordatorio de 12h')
+              : null
+          )
+        : null
     ),
 
     // Tarjeta 3: Avance del Salario Base

@@ -146,6 +146,7 @@ const projectGlobals = {
 
   // tabs/assistant.js
   _aiClearHistory: 'readonly',
+  _aiHeroPhrases: 'readonly',
 
   deleteError: 'readonly',
   aiAnswer: 'readonly',
