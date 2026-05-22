@@ -2,7 +2,7 @@
 //  MI TURNO · SERVICE WORKER
 //  Cache de librerías CDN para arranque rápido offline-first
 // ════════════════════════════════════════════════════════════════
-const CACHE = 'mt-v8'; // cierre de sesión sincronizado + botón rayo + failsafe splash
+const CACHE = 'mt-v9'; // rediseño pantalla IA + frase rotativa + Inicio sin tarjetas de más
 const CDN = [
   'https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js',
