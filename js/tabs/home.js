@@ -64,7 +64,9 @@ function HomeTab(props) {
         }
       },
       h('span', { className: 'mood-icon' }, '✦'),
-      h('span', { className: 'mood-text', id: 'mood-text' },
+      h(
+        'span',
+        { className: 'mood-text', id: 'mood-text' },
         'Cada turno cuenta, tú decides el rumbo. 💪'
       )
     ),
@@ -85,41 +87,70 @@ function HomeTab(props) {
               activo ? props.onFin() : props.onIni();
             }
           },
-          h('div', { className: 'action-icon' }, activo ? '■' : '▶'),
+          activo
+            ? h(
+                'svg',
+                {
+                  className: 'action-icon',
+                  viewBox: '0 0 24 24',
+                  width: 30,
+                  height: 30,
+                  'aria-hidden': 'true'
+                },
+                h('rect', { x: 6.5, y: 6.5, width: 11, height: 11, rx: 3, fill: 'currentColor' })
+              )
+            : h(
+                'svg',
+                {
+                  className: 'action-icon',
+                  viewBox: '0 0 24 24',
+                  width: 34,
+                  height: 34,
+                  'aria-hidden': 'true'
+                },
+                h('path', {
+                  d: 'M14.5 2.5 L5.5 13 L11 13 L9.5 21.5 L18.5 11 L13 11 Z',
+                  fill: 'currentColor'
+                })
+              ),
           h('div', { className: 'action-lbl' }, activo ? 'Parar' : 'Iniciar')
         ),
         activo
           ? h(
-            'div',
-            { className: 'active-box' },
-            h(
               'div',
-              { className: 'active-tag' },
-              h('div', { className: 'active-dot' }),
-              'En turno'
-            ),
-            h(
-              'div',
-              { style: { margin: '8px 0' } },
+              { className: 'active-box' },
               h(
                 'div',
-                { className: 'num-glass-card', style: { padding: '6px 20px' } },
-                h('div', { className: 'active-timer', style: { fontSize: '42px' } }, fDur(durActual))
-              )
-            ),
-            h(
-              'div',
-              { className: 'active-since' },
-              'Desde ' +
-              new Date(activo.inicio).toLocaleTimeString('es-CO', {
-                hour: '2-digit',
-                minute: '2-digit'
-              })
-            ),
-            durActual >= U12H / 60000 - 60
-              ? h('div', { className: 'active-warn' }, '⚠ Próximo recordatorio de 12h')
-              : null
-          )
+                { className: 'active-tag' },
+                h('div', { className: 'active-dot' }),
+                'En turno'
+              ),
+              h(
+                'div',
+                { style: { margin: '8px 0' } },
+                h(
+                  'div',
+                  { className: 'num-glass-card', style: { padding: '6px 20px' } },
+                  h(
+                    'div',
+                    { className: 'active-timer', style: { fontSize: '42px' } },
+                    fDur(durActual)
+                  )
+                )
+              ),
+              h(
+                'div',
+                { className: 'active-since' },
+                'Desde ' +
+                  new Date(activo.inicio).toLocaleTimeString('es-CO', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })
+              ),
+              durActual >= U12H / 60000 - 60
+                ? h('div', { className: 'active-warn' }, '⚠ Próximo recordatorio de 12h')
+                : null
+            )
           : null
       )
     ),
@@ -148,9 +179,7 @@ function HomeTab(props) {
         { className: 'bar-track' },
         h('div', {
           className:
-            'bar-fill' +
-            (pctMes >= 100 ? ' bar-fill-over' : '') +
-            (activo ? ' bar-fill-live' : ''),
+            'bar-fill' + (pctMes >= 100 ? ' bar-fill-over' : '') + (activo ? ' bar-fill-live' : ''),
           style: { width: pctMes + '%' }
         })
       )
@@ -159,44 +188,44 @@ function HomeTab(props) {
     tipos.length > 0 ? h('div', { className: 'sec-lbl' }, 'Desglose por tipo') : null,
     tipos.length === 0
       ? h(
-        'div',
-        { className: 'empty' },
-        h('div', { className: 'empty-ico' }, '⏱'),
-        h('div', { className: 'empty-txt' }, 'Presiona INICIAR para comenzar'),
-        h('div', { className: 'empty-sub' }, 'Tu turno se registra automáticamente')
-      )
-      : tipos.map(function (tipo) {
-        var val = calc.bd[tipo],
-          r = RC[tipo];
-        return h(
           'div',
-          { key: tipo, className: 'brk-row', style: { '--brk-color': r.color } },
-          h(
+          { className: 'empty' },
+          h('div', { className: 'empty-ico' }, '⏱'),
+          h('div', { className: 'empty-txt' }, 'Presiona INICIAR para comenzar'),
+          h('div', { className: 'empty-sub' }, 'Tu turno se registra automáticamente')
+        )
+      : tipos.map(function (tipo) {
+          var val = calc.bd[tipo],
+            r = RC[tipo];
+          return h(
             'div',
-            { className: 'brk-l' },
+            { key: tipo, className: 'brk-row', style: { '--brk-color': r.color } },
             h(
               'div',
-              {
-                className: 'brk-chip',
-                style: { '--chip-bg': r.bg, '--chip-bd': r.bd, color: r.color }
-              },
-              r.icon
-            ),
-            h(
-              'div',
-              { className: 'brk-meta' },
-              h('div', { className: 'brk-name' }, r.label),
+              { className: 'brk-l' },
               h(
                 'div',
-                { className: 'brk-detail' },
-                h('span', null, fDur(val.mins)),
-                h('span', { className: 'brk-detail-sep' }),
-                h('span', null, '×' + r.factor.toFixed(2))
+                {
+                  className: 'brk-chip',
+                  style: { '--chip-bg': r.bg, '--chip-bd': r.bd, color: r.color }
+                },
+                r.icon
+              ),
+              h(
+                'div',
+                { className: 'brk-meta' },
+                h('div', { className: 'brk-name' }, r.label),
+                h(
+                  'div',
+                  { className: 'brk-detail' },
+                  h('span', null, fDur(val.mins)),
+                  h('span', { className: 'brk-detail-sep' }),
+                  h('span', null, '×' + r.factor.toFixed(2))
+                )
               )
-            )
-          ),
-          h('div', { className: 'brk-amount' }, fCOP(val.cop))
-        );
-      })
+            ),
+            h('div', { className: 'brk-amount' }, fCOP(val.cop))
+          );
+        })
   );
 }
