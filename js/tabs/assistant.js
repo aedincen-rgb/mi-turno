@@ -54,6 +54,46 @@ function _aiFormat(text) {
     .replace(/\*([^*]+)\*/g, '<em>$1</em>');
 }
 
+// ── Frases del hero: motivadoras + informativas, según los datos ──
+function _aiHeroPhrases(props) {
+  var c = props.calc || {};
+  var bd = c.bd || {};
+  var totalMins = c.totalMins || 0;
+  var totalCOP = c.totalCOP || 0;
+  var salario = props.salario || 0;
+  var pct = salario > 0 ? Math.round((totalCOP / salario) * 100) : 0;
+
+  function _mins(k) {
+    return (bd[k] && bd[k].mins) || 0;
+  }
+  var extraMins =
+    _mins('extraDiurna') + _mins('extraNoct') + _mins('extraFestDiur') + _mins('extraFestNoct');
+  var festMins =
+    _mins('diurnaFest') + _mins('noctFest') + _mins('extraFestDiur') + _mins('extraFestNoct');
+
+  if (totalMins <= 0) {
+    return [
+      'Aún no registras turnos este mes. Cuando quieras, empezamos. ▶️',
+      'Estoy para ayudarte a sacar el máximo de tu nómina. ✨',
+      'Toca una categoría y pregúntame lo que necesites. 👇'
+    ];
+  }
+
+  var f = [];
+  f.push('Llevas ' + fDur(totalMins) + ' trabajadas este mes. 💪');
+  f.push(
+    'Vas en el ' +
+      pct +
+      '% de tu meta' +
+      (pct >= 100 ? ' — ¡lo lograste! 🎉' : ' — ¡buen ritmo! 📈')
+  );
+  f.push('Has sumado ' + fCOP(totalCOP) + ' hasta hoy. ✨');
+  if (extraMins > 0) f.push('Llevas ' + fDur(extraMins) + ' en horas extra. ⚡');
+  if (festMins > 0) f.push('Has trabajado festivos este mes — eso pesa. 🗓️');
+  f.push('Cada turno cuenta. Aquí estoy si necesitas algo. 🙌');
+  return f;
+}
+
 // ═══════════════════════════════════════════════════════════════
 //  TARJETA DE COMPOSICIÓN DE CORREO (inline en el chat)
 // ═══════════════════════════════════════════════════════════════
@@ -292,8 +332,13 @@ function AsistenteTab(props) {
   var cs = useState(null);
   var openCat = cs[0],
     setOpenCat = cs[1];
+  var hi = useState(0);
+  var heroIdx = hi[0],
+    setHeroIdx = hi[1];
   var endRef = useRef(null);
   var inputRef = useRef(null);
+
+  var tieneConversacion = msgs.length > 0;
 
   // Recargar el historial al cambiar de usuario
   useEffect(
@@ -332,6 +377,22 @@ function AsistenteTab(props) {
       }
     },
     [input]
+  );
+
+  // Rotación de la frase del hero (cada 7 s, solo sin conversación)
+  useEffect(
+    function () {
+      if (tieneConversacion) return;
+      var t = setInterval(function () {
+        setHeroIdx(function (n) {
+          return n + 1;
+        });
+      }, 7000);
+      return function () {
+        clearInterval(t);
+      };
+    },
+    [tieneConversacion]
   );
 
   var clearChat = useCallback(
@@ -463,7 +524,7 @@ function AsistenteTab(props) {
     }
   ];
 
-  var tieneConversacion = msgs.length > 0;
+  var phrases = _aiHeroPhrases(props);
 
   return h(
     'div',
@@ -481,17 +542,7 @@ function AsistenteTab(props) {
           h('div', { className: 'asistente-orb-symbol' }, '✦')
         ),
         h('h1', { className: 'asistente-greeting' }, saludo + '.'),
-        h(
-          'p',
-          { className: 'asistente-intro' },
-          'Soy tu asistente. Conozco tus turnos, recargos y movimientos del mes.',
-          h('br'),
-          h(
-            'span',
-            { className: 'asistente-intro-soft' },
-            'Pregúntame en tus palabras, o explora las categorías.'
-          )
-        )
+        h('div', { className: 'asistente-phrase', key: heroIdx }, phrases[heroIdx % phrases.length])
       ),
 
     // ═══ CATEGORÍAS EXPANDIBLES (solo sin conversación) ═══
@@ -546,6 +597,15 @@ function AsistenteTab(props) {
               )
           );
         })
+      ),
+
+    // ═══ DESCRIPCIÓN FIJA (solo sin conversación) ═══
+    !tieneConversacion &&
+      h(
+        'p',
+        { className: 'asistente-about' },
+        'Soy tu asistente. Conozco tus turnos, recargos y movimientos del mes — ' +
+          'pregúntame en tus palabras o explora las categorías.'
       ),
 
     // ═══ CONVERSACIÓN ═══
