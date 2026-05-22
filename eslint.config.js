@@ -134,9 +134,19 @@ const projectGlobals = {
   buildContext: 'readonly',
   supaUpsertPerfil: 'readonly', // New
 
-  // utils/sync-queue.js (New)
+  // tabs/sync-queue.js
   queueAction: 'readonly',
   processQueue: 'readonly',
+  clearSyncQueue: 'readonly',
+
+  // services/session-sync.js
+  startSessionSync: 'readonly',
+  stopSessionSync: 'readonly',
+  verificarSesion: 'readonly',
+
+  // tabs/assistant.js
+  _aiClearHistory: 'readonly',
+
   deleteError: 'readonly',
   aiAnswer: 'readonly',
   calcCats: 'readonly',

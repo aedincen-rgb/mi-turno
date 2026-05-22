@@ -6,6 +6,9 @@ desktop.ini
 # Editor
 .vscode/
 
+# Dependencias
+node_modules/
+
 # Logs y temporales
 *.log
 *.tmp

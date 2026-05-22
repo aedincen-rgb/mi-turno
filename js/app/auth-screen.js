@@ -98,6 +98,15 @@ function AuthScreen(props) {
   var st = useState('');
   var statusMsg = st[0],
     setStatusMsg = st[1];
+  // Aviso dejado por root.js cuando la sesión se cerró desde otro dispositivo.
+  var av = useState(function () {
+    return leer('mt_aviso', null);
+  });
+  var aviso = av[0];
+
+  useEffect(function () {
+    if (aviso) borrarKey('mt_aviso');
+  }, []);
 
   useEffect(function () {
     var alive = true;
@@ -356,7 +365,7 @@ function AuthScreen(props) {
                   break;
                 }
               }
-            } catch (e) { }
+            } catch (e) {}
           }
         }
         if (offlineSuccess) {
@@ -481,43 +490,43 @@ function AuthScreen(props) {
         { className: 'auth-card' },
         pinAsignado
           ? h(
-            'div',
-            { style: { textAlign: 'center', marginBottom: 18 } },
-            h(
               'div',
-              {
-                style: {
-                  fontSize: 11,
-                  fontWeight: 700,
-                  color: 'var(--muted)',
-                  letterSpacing: '0.1em',
-                  textTransform: 'uppercase',
-                  marginBottom: 10
-                }
-              },
-              'Tu PIN asignado'
-            ),
-            h(
-              'div',
-              {
-                style: {
-                  fontSize: 46,
-                  fontWeight: 900,
-                  color: 'var(--accent)',
-                  fontVariantNumeric: 'tabular-nums',
-                  letterSpacing: '8px',
-                  fontFamily: 'ui-monospace,monospace',
-                  marginBottom: 8
-                }
-              },
-              pinAsignado
-            ),
-            h(
-              'div',
-              { style: { fontSize: 12, color: 'var(--muted)', lineHeight: 1.5 } },
-              'Guárdalo. Podrás usarlo tras confirmar tu correo.'
+              { style: { textAlign: 'center', marginBottom: 18 } },
+              h(
+                'div',
+                {
+                  style: {
+                    fontSize: 11,
+                    fontWeight: 700,
+                    color: 'var(--muted)',
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
+                    marginBottom: 10
+                  }
+                },
+                'Tu PIN asignado'
+              ),
+              h(
+                'div',
+                {
+                  style: {
+                    fontSize: 46,
+                    fontWeight: 900,
+                    color: 'var(--accent)',
+                    fontVariantNumeric: 'tabular-nums',
+                    letterSpacing: '8px',
+                    fontFamily: 'ui-monospace,monospace',
+                    marginBottom: 8
+                  }
+                },
+                pinAsignado
+              ),
+              h(
+                'div',
+                { style: { fontSize: 12, color: 'var(--muted)', lineHeight: 1.5 } },
+                'Guárdalo. Podrás usarlo tras confirmar tu correo.'
+              )
             )
-          )
           : null,
         h(
           'div',
@@ -564,7 +573,10 @@ function AuthScreen(props) {
       { className: 'auth-hero' },
       h(
         'div',
-        { className: 'auth-logo-box', style: { width: '86px', height: '86px', marginBottom: '18px', borderRadius: '24px' } },
+        {
+          className: 'auth-logo-box',
+          style: { width: '86px', height: '86px', marginBottom: '18px', borderRadius: '24px' }
+        },
         h('img', {
           src: 'img/logo-mark.svg',
           alt: 'Mi Turno',
@@ -590,42 +602,66 @@ function AuthScreen(props) {
       { className: 'auth-card' },
       h('div', { className: 'auth-ttl' }, modo === 'login' ? 'Iniciar sesión' : 'Crear cuenta'),
 
+      aviso && aviso.tipo === 'remote_signout'
+        ? h(
+            'div',
+            {
+              style: {
+                background: 'var(--accent-dim)',
+                color: 'var(--accent)',
+                padding: '10px 12px',
+                borderRadius: 'var(--radius-sm)',
+                fontSize: 12,
+                marginBottom: 12,
+                lineHeight: 1.45,
+                border: '1px solid color-mix(in srgb, var(--accent) 28%, transparent)'
+              }
+            },
+            h('div', { style: { fontWeight: 700, marginBottom: 2 } }, 'ℹ Sesión cerrada'),
+            h(
+              'div',
+              { style: { opacity: 0.9, fontSize: 11.5 } },
+              'Se cerró sesión desde otro dispositivo. Inicia sesión de nuevo para continuar.'
+            )
+          )
+        : null,
+
       !cloudOk && cloudErr
         ? h(
-          'div',
-          {
-            style: {
-              background: 'var(--danger-dim)',
-              color: 'var(--danger)',
-              padding: '10px 12px',
-              borderRadius: 'var(--radius-sm)',
-              fontSize: 12,
-              marginBottom: 12,
-              lineHeight: 1.45,
-              border: '1px solid color-mix(in srgb, var(--danger) 22%, transparent)'
-            }
-          },
-          h('div', { style: { fontWeight: 700, marginBottom: 2 } }, '⚠ Nube no disponible'),
-          h('div', { style: { opacity: 0.9, fontSize: 11.5 } }, 'Puedes usar modo local.')
-        )
+            'div',
+            {
+              style: {
+                background: 'var(--danger-dim)',
+                color: 'var(--danger)',
+                padding: '10px 12px',
+                borderRadius: 'var(--radius-sm)',
+                fontSize: 12,
+                marginBottom: 12,
+                lineHeight: 1.45,
+                border: '1px solid color-mix(in srgb, var(--danger) 22%, transparent)'
+              }
+            },
+            h('div', { style: { fontWeight: 700, marginBottom: 2 } }, '⚠ Nube no disponible'),
+            h('div', { style: { opacity: 0.9, fontSize: 11.5 } }, 'Puedes usar modo local.')
+          )
         : null,
 
       // Campo email / PIN
       !email && modo === 'login'
         ? h(
-          'div',
-          {
-            style: {
-              display: 'block',
-              fontSize: '12.5px',
-              fontWeight: 600,
-              color: 'var(--accent)',
-              marginBottom: 6,
-              textAlign: 'center'
-            }
-          },
-          'Ingresa correo • PIN'
-        )
+            'div',
+            {
+              style: {
+                display: 'block',
+                fontSize: '12.5px',
+                fontWeight: 600,
+                color: 'var(--accent)',
+                marginBottom: 6,
+                textAlign: 'center'
+              }
+            },
+            'Ingresa correo • PIN'
+          )
         : null,
       h(
         'div',
@@ -654,19 +690,19 @@ function AuthScreen(props) {
       // Campo contraseña
       !pass
         ? h(
-          'div',
-          {
-            style: {
-              display: 'block',
-              fontSize: '12.5px',
-              fontWeight: 600,
-              color: 'var(--accent)',
-              marginBottom: 6,
-              textAlign: 'center'
-            }
-          },
-          'Contraseña'
-        )
+            'div',
+            {
+              style: {
+                display: 'block',
+                fontSize: '12.5px',
+                fontWeight: 600,
+                color: 'var(--accent)',
+                marginBottom: 6,
+                textAlign: 'center'
+              }
+            },
+            'Contraseña'
+          )
         : null,
       h(
         'div',
@@ -693,24 +729,24 @@ function AuthScreen(props) {
 
       load && statusMsg
         ? h(
-          'div',
-          {
-            style: {
-              padding: '14px 16px',
-              marginBottom: 12,
-              borderRadius: 'var(--radius-sm)',
-              background: 'var(--accent-dim)',
-              border: '1px solid color-mix(in srgb, var(--accent) 35%, transparent)',
-              color: 'var(--accent)',
-              fontSize: 13.5,
-              fontWeight: 700,
-              textAlign: 'center',
-              letterSpacing: '-0.1px',
-              lineHeight: 1.5
-            }
-          },
-          statusMsg
-        )
+            'div',
+            {
+              style: {
+                padding: '14px 16px',
+                marginBottom: 12,
+                borderRadius: 'var(--radius-sm)',
+                background: 'var(--accent-dim)',
+                border: '1px solid color-mix(in srgb, var(--accent) 35%, transparent)',
+                color: 'var(--accent)',
+                fontSize: 13.5,
+                fontWeight: 700,
+                textAlign: 'center',
+                letterSpacing: '-0.1px',
+                lineHeight: 1.5
+              }
+            },
+            statusMsg
+          )
         : null,
 
       h(
@@ -743,66 +779,69 @@ function AuthScreen(props) {
 
       modo === 'login'
         ? h(
-          React.Fragment,
-          null,
-          // Botón "Reanudar sesión" si hay sesión guardada
-          (function () {
-            var savedSession = leer(SKEY, null);
-            if (savedSession && savedSession.uid && !savedSession.guest) {
-              return h(
-                'button',
-                {
-                  className: 'auth-guest',
-                  style: {
-                    width: '100%',
-                    marginTop: 14,
-                    background: 'color-mix(in srgb, var(--accent) 12%, transparent)',
-                    borderColor: 'color-mix(in srgb, var(--accent) 30%, transparent)'
+            React.Fragment,
+            null,
+            // Botón "Reanudar sesión" si hay sesión guardada
+            (function () {
+              var savedSession = leer(SKEY, null);
+              if (savedSession && savedSession.uid && !savedSession.guest) {
+                return h(
+                  'button',
+                  {
+                    className: 'auth-guest',
+                    style: {
+                      width: '100%',
+                      marginTop: 14,
+                      background: 'color-mix(in srgb, var(--accent) 12%, transparent)',
+                      borderColor: 'color-mix(in srgb, var(--accent) 30%, transparent)'
+                    },
+                    onClick: function () {
+                      haptic();
+                      props.onAuth({
+                        uid: savedSession.uid,
+                        email: savedSession.email || 'offline@local',
+                        guest: false,
+                        cloud: savedSession.cloud || false,
+                        isAdmin: !!savedSession.isAdmin,
+                        pin: savedSession.pin || null
+                      });
+                    },
+                    disabled: load
                   },
-                  onClick: function () {
-                    haptic();
-                    props.onAuth({
-                      uid: savedSession.uid,
-                      email: savedSession.email || 'offline@local',
-                      guest: false,
-                      cloud: savedSession.cloud || false,
-                      isAdmin: !!savedSession.isAdmin,
-                      pin: savedSession.pin || null
-                    });
-                  },
-                  disabled: load
+                  '🔄 Reanudar sesión anterior'
+                );
+              }
+              return null;
+            })(),
+            h(
+              'button',
+              {
+                className: 'auth-guest',
+                style: { width: '100%', marginTop: 8 },
+                onClick: function () {
+                  haptic();
+                  var gid =
+                    'guest_' +
+                    Date.now().toString(36) +
+                    '_' +
+                    Math.random().toString(36).slice(2, 8);
+                  var guestSession = {
+                    uid: gid,
+                    email: 'invitado@local',
+                    guest: true,
+                    cloud: false,
+                    pinOnly: false
+                  };
+                  // Guardar sesión invitada en localStorage
+                  grabar(SKEY, guestSession);
+                  props.onAuth(guestSession);
                 },
-                '🔄 Reanudar sesión anterior'
-              );
-            }
-            return null;
-          })(),
-          h(
-            'button',
-            {
-              className: 'auth-guest',
-              style: { width: '100%', marginTop: 8 },
-              onClick: function () {
-                haptic();
-                var gid =
-                  'guest_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
-                var guestSession = {
-                  uid: gid,
-                  email: 'invitado@local',
-                  guest: true,
-                  cloud: false,
-                  pinOnly: false
-                };
-                // Guardar sesión invitada en localStorage
-                grabar(SKEY, guestSession);
-                props.onAuth(guestSession);
+                disabled: load
               },
-              disabled: load
-            },
-            '👤 Continuar como invitado (sin cuenta)'
+              '👤 Continuar como invitado (sin cuenta)'
+            )
           )
-        )
-        : null,
+        : null
     ),
     h(
       'div',

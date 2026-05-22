@@ -6,7 +6,7 @@ Refactorización máxima en archivos pequeños para facilitar pruebas en móvile
 
 ## 📊 Estadísticas
 
-- **77 archivos** (38 CSS + 39 JS)
+- **78 archivos** (38 CSS + 40 JS)
 - Tamaño promedio: ~50-80 líneas por archivo
 - Mantiene **100% de la funcionalidad** original
 - Sin build tools, funciona con HTML/JS/CSS puro
@@ -78,7 +78,7 @@ mi-turno-BETA/
 │   └── animations/         · 1 archivo
 │       └── keyframes.css       · Todos los @keyframes
 │
-└── js/                     · 39 archivos
+└── js/                     · 40 archivos
     ├── config.js               · Credenciales Supabase
     ├── theme-boot.js           · Tema inicial
     │
@@ -99,9 +99,10 @@ mi-turno-BETA/
     │   ├── validation.js       · Validación de datos
     │   └── otp.js              · OTP local y PINs
     │
-    ├── services/           · 7 archivos
+    ├── services/           · 8 archivos
     │   ├── supabase.js         · Helpers CRUD Supabase
     │   ├── supabase-init.js    · Inicialización cliente
+    │   ├── session-sync.js     · Cierre de sesión sincronizado entre dispositivos
     │   ├── calculator.js       · Motor de cálculo turnos
     │   ├── data.js             · CRUD local/nube
     │   ├── ai.js               · Asistente IA
@@ -151,18 +152,19 @@ Como no hay build tools, cada archivo se carga secuencialmente con `<script src=
 
 6. services/supabase.js     → primero los helpers CRUD
 7. services/supabase-init.js → luego la inicialización
-8. services/calculator.js   → motor de cálculo
-9. services/data.js, ai.js, export-*.js
+8. services/session-sync.js → vigilancia de sesión entre dispositivos
+9. services/calculator.js   → motor de cálculo
+10. services/data.js, ai.js, export-*.js
 
-10. tabs/*.js               → 5 pestañas principales
+11. tabs/*.js               → 5 pestañas principales
 
-11. modals/*.js             → 7 modales
+12. modals/*.js             → 7 modales
 
-12. app/auth-screen.js      → pantalla auth
-13. app/app-main.js         → App principal
-14. app/root.js             → Root container
-15. app/sw-register.js      → registrar SW
-16. app/init.js             → ¡renderizar!
+13. app/auth-screen.js      → pantalla auth
+14. app/app-main.js         → App principal
+15. app/root.js             → Root container
+16. app/sw-register.js      → registrar SW
+17. app/init.js             → ¡renderizar!
 ```
 
 **El orden importa** porque cada archivo usa funciones definidas en archivos anteriores.
