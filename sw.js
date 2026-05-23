@@ -1,7 +1,7 @@
 // ════════════════════════════════════════════════════════════════
 //  MI TURNO · SERVICE WORKER
 //  Cache de librerías CDN para arranque rápido offline-first
-const CACHE = 'mt-v18'; // Ajustes ampliados: auxilio, prestaciones y modo quincenal
+const CACHE = 'mt-v19'; // Auto-update agresivo + network-first del shell
 const CDN = [
   'https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js',
@@ -17,6 +17,7 @@ const appResources = [
   './index.html',
   './manifest.json',
   './sw.js',
+  './version.json',
   './icon-180.png',
   './icon-192.png',
   './icon-512.png',
@@ -112,7 +113,11 @@ self.addEventListener('install', function (e) {
   var all = CDN.concat(appResources);
   e.waitUntil(caches.open(CACHE).then(function (c) {
     return Promise.allSettled(all.map(function (u) {
-      var opts = u.indexOf('http') === 0 ? { mode: 'cors' } : {};
+      // `cache: 'reload'` evita que el HTTP cache (Vercel/disco) sirva versiones viejas
+      // durante el precache — clave porque /css/* y /js/* son `immutable` por 1 año.
+      var opts = u.indexOf('http') === 0
+        ? { mode: 'cors', cache: 'reload' }
+        : { cache: 'reload' };
       return fetch(u, opts).then(function (r) { if (r.ok) return c.put(u, r); });
     }));
   }).then(function () { return self.skipWaiting(); }));
@@ -134,17 +139,45 @@ self.addEventListener('fetch', function (e) {
   if (e.request.method !== 'GET') return;
   if (u.hostname.indexOf('supabase') >= 0) return;
 
-  // Cachear CDNs y también los archivos locales de la app (77 archivos fragmentados)
-  var isStatic = u.hostname === self.location.hostname ||
-    u.hostname.indexOf('cdnjs') >= 0 || u.hostname.indexOf('jsdelivr') >= 0 || u.hostname.indexOf('fonts.g') >= 0;
+  var sameHost = u.hostname === self.location.hostname;
+  var isCDN = u.hostname.indexOf('cdnjs') >= 0 || u.hostname.indexOf('jsdelivr') >= 0 || u.hostname.indexOf('fonts.g') >= 0;
+  var isStatic = sameHost || isCDN;
+  if (!isStatic) return;
 
-  if (isStatic) {
-    e.respondWith(caches.match(e.request).then(function (cached) {
-      if (cached) return cached;
-      return fetch(e.request).then(function (r) {
-        if (r.ok) { var clone = r.clone(); caches.open(CACHE).then(function (c) { c.put(e.request, clone); }); }
-        return r;
-      }).catch(function () { return cached; });
-    }));
+  // ── Shell crítico (HTML / sw.js / version.json) → network-first ──
+  // Garantiza que la entrada esté siempre fresca para detectar nueva versión.
+  // Si la red falla, cae al caché para mantener offline-first.
+  var path = u.pathname;
+  var isShell = sameHost && (
+    path === '/' ||
+    path.endsWith('/index.html') ||
+    path.endsWith('/sw.js') ||
+    path.endsWith('/version.json') ||
+    path.endsWith('/manifest.json')
+  );
+
+  if (isShell) {
+    e.respondWith(
+      fetch(e.request, { cache: 'no-store' })
+        .then(function (r) {
+          if (r && r.ok) {
+            var clone = r.clone();
+            caches.open(CACHE).then(function (c) { c.put(e.request, clone); });
+          }
+          return r;
+        })
+        .catch(function () { return caches.match(e.request); })
+    );
+    return;
   }
+
+  // ── Resto de assets (JS/CSS/img/CDN) → cache-first ──
+  // El SW invalida vía `CACHE = mt-vNN` al instalar la nueva versión.
+  e.respondWith(caches.match(e.request).then(function (cached) {
+    if (cached) return cached;
+    return fetch(e.request).then(function (r) {
+      if (r.ok) { var clone = r.clone(); caches.open(CACHE).then(function (c) { c.put(e.request, clone); }); }
+      return r;
+    }).catch(function () { return cached; });
+  }));
 });
