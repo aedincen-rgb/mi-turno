@@ -8,18 +8,37 @@
 // CLOUD_MODE, ManageAccountModal.
 // ═══════════════════════════════════════════════════════════════
 
-function ConfigTab(props){
-  var salario = props.salario, vh = props.valorHora, session = props.session;
+function ConfigTab(props) {
+  var salario = props.salario,
+    vh = props.valorHora,
+    session = props.session;
 
-  var es = useState(false); var editSal = es[0], setEditSal = es[1];
-  var st = useState('');    var tempSal = st[0], setTempSal = st[1];
-  var gs = useState(false); var showMgtAcct = gs[0], setShowMgtAcct = gs[1];
-  var rs = useState(false); var openRec = rs[0], setOpenRec = rs[1];
-  var su = useState(false); var showUsuarios = su[0], setShowUsuarios = su[1];
-  var sp = useState(false); var showPins = sp[0], setShowPins = sp[1];
-  var sd = useState(false); var showDiag = sd[0], setShowDiag = sd[1];
+  var es = useState(false);
+  var editSal = es[0],
+    setEditSal = es[1];
+  var st = useState('');
+  var tempSal = st[0],
+    setTempSal = st[1];
+  var gs = useState(false);
+  var showMgtAcct = gs[0],
+    setShowMgtAcct = gs[1];
+  var rs = useState(false);
+  var openRec = rs[0],
+    setOpenRec = rs[1];
+  var su = useState(false);
+  var showUsuarios = su[0],
+    setShowUsuarios = su[1];
+  var sp = useState(false);
+  var showPins = sp[0],
+    setShowPins = sp[1];
+  var sd = useState(false);
+  var showDiag = sd[0],
+    setShowDiag = sd[1];
+  var sv = useState(false);
+  var showErrorViewer = sv[0],
+    setShowErrorViewer = sv[1];
 
-  function guardarSalario(){
+  function guardarSalario() {
     haptic();
     var v = parseFloat(tempSal) || SMIN;
     props.onSalario(v);
@@ -28,273 +47,425 @@ function ConfigTab(props){
 
   // Datos de identidad
   var isGuest = !session || session.guest;
-  var emailMostrar = isGuest ? 'Modo invitado'
-                   : (session.email || 'Usuario');
-  var inicial = isGuest ? '?'
-              : (session.email ? session.email[0].toUpperCase() : 'U');
-  var estado = isGuest ? 'Datos en este dispositivo'
-             : (typeof CLOUD_MODE !== 'undefined' && CLOUD_MODE
-                  ? 'Sincronizado en la nube'
-                  : 'Datos locales');
+  var emailMostrar = isGuest ? 'Modo invitado' : session.email || 'Usuario';
+  var inicial = isGuest ? '?' : session.email ? session.email[0].toUpperCase() : 'U';
+  var estado = isGuest
+    ? 'Datos en este dispositivo'
+    : typeof CLOUD_MODE !== 'undefined' && CLOUD_MODE
+      ? 'Sincronizado en la nube'
+      : 'Datos locales';
 
-  return h('div', {className:'fadeUp ajustes-wrap'},
+  return h(
+    'div',
+    { className: 'fadeUp ajustes-wrap' },
 
     // ══════ HERO IDENTIDAD ══════
-    h('div', {className:'ajustes-hero'},
-      h('div', {className:'ajustes-hero-av'},
-        h('div', {className:'ajustes-hero-av-glow'}),
+    h(
+      'div',
+      { className: 'ajustes-hero' },
+      h(
+        'div',
+        { className: 'ajustes-hero-av' },
+        h('div', { className: 'ajustes-hero-av-glow' }),
         inicial
       ),
-      h('div', {className:'ajustes-hero-nm'}, emailMostrar),
-      h('div', {className:'ajustes-hero-est'},
-        h('span', {className:'ajustes-hero-dot' + (isGuest ? ' off' : '')}),
+      h('div', { className: 'ajustes-hero-nm' }, emailMostrar),
+      h(
+        'div',
+        { className: 'ajustes-hero-est' },
+        h('span', { className: 'ajustes-hero-dot' + (isGuest ? ' off' : '') }),
         estado
       )
     ),
 
     // ══════ APARIENCIA ══════
-    h('div', {className:'ajustes-section'},
-      h('div', {className:'ajustes-section-ttl'}, 'Apariencia'),
-      h('div', {className:'ajustes-list'},
-        h('div', {className:'ajustes-row'},
-          h('div', {className:'ajustes-row-ico'},
-            props.theme === 'dark' ? '☾' : '☀'),
-          h('div', {className:'ajustes-row-mid'},
-            h('div', {className:'ajustes-row-ttl'},
-              props.theme === 'dark' ? 'Modo oscuro' : 'Modo claro'),
-            h('div', {className:'ajustes-row-sub'},
-              'Cambia el aspecto de la app')
+    h(
+      'div',
+      { className: 'ajustes-section' },
+      h('div', { className: 'ajustes-section-ttl' }, 'Apariencia'),
+      h(
+        'div',
+        { className: 'ajustes-list' },
+        h(
+          'div',
+          { className: 'ajustes-row' },
+          h('div', { className: 'ajustes-row-ico' }, props.theme === 'dark' ? '☾' : '☀'),
+          h(
+            'div',
+            { className: 'ajustes-row-mid' },
+            h(
+              'div',
+              { className: 'ajustes-row-ttl' },
+              props.theme === 'dark' ? 'Modo oscuro' : 'Modo claro'
+            ),
+            h('div', { className: 'ajustes-row-sub' }, 'Cambia el aspecto de la app')
           ),
-          h('label', {className:'ajustes-switch'},
+          h(
+            'label',
+            { className: 'ajustes-switch' },
             h('input', {
-              type:'checkbox',
+              type: 'checkbox',
               checked: props.theme === 'dark',
-              onChange: function(){
+              onChange: function () {
                 haptic();
                 props.onThemeChange(props.theme === 'dark' ? 'light' : 'dark');
               }
             }),
-            h('span', {className:'ajustes-switch-track'})
+            h('span', { className: 'ajustes-switch-track' })
           )
         )
       )
     ),
 
     // ══════ NÓMINA ══════
-    h('div', {className:'ajustes-section'},
-      h('div', {className:'ajustes-section-ttl'}, 'Nómina'),
-      h('div', {className:'ajustes-list'},
+    h(
+      'div',
+      { className: 'ajustes-section' },
+      h('div', { className: 'ajustes-section-ttl' }, 'Nómina'),
+      h(
+        'div',
+        { className: 'ajustes-list' },
 
         // Salario base (fila expandible inline)
-        h('div', {className:'ajustes-row-group' + (editSal ? ' open' : '')},
-          h('button', {
-            className:'ajustes-row ajustes-row-tap',
-            onClick: function(){
-              if(editSal){
-                setEditSal(false);
-              } else {
-                haptic();
-                setTempSal(String(salario));
-                setEditSal(true);
+        h(
+          'div',
+          { className: 'ajustes-row-group' + (editSal ? ' open' : '') },
+          h(
+            'button',
+            {
+              className: 'ajustes-row ajustes-row-tap',
+              onClick: function () {
+                if (editSal) {
+                  setEditSal(false);
+                } else {
+                  haptic();
+                  setTempSal(String(salario));
+                  setEditSal(true);
+                }
               }
-            }
-          },
-            h('div', {className:'ajustes-row-ico'}, '$'),
-            h('div', {className:'ajustes-row-mid'},
-              h('div', {className:'ajustes-row-ttl'}, 'Salario base mensual'),
-              h('div', {className:'ajustes-row-sub'}, fCOP(salario))
+            },
+            h('div', { className: 'ajustes-row-ico' }, '$'),
+            h(
+              'div',
+              { className: 'ajustes-row-mid' },
+              h('div', { className: 'ajustes-row-ttl' }, 'Salario base mensual'),
+              h('div', { className: 'ajustes-row-sub' }, fCOP(salario))
             ),
-            h('div', {className:'ajustes-row-chev'},
-              editSal ? '−' : '✎')
+            h('div', { className: 'ajustes-row-chev' }, editSal ? '−' : '✎')
           ),
-          editSal && h('div', {className:'ajustes-row-body'},
-            h('div', {className:'ajustes-edit'},
-              h('span', {className:'ajustes-edit-prefix'}, '$'),
-              h('input', {
-                type:'number',
-                inputMode:'numeric',
-                className:'ajustes-edit-input',
-                value: tempSal,
-                onChange: function(e){ setTempSal(e.target.value); },
-                autoFocus: true,
-                placeholder:'1.300.000'
-              }),
-              h('button', {
-                className:'ajustes-edit-save',
-                onClick: guardarSalario,
-                'aria-label':'Guardar'
-              }, '✓')
-            ),
-            h('p', {className:'ajustes-edit-hint'},
-              'Se usa para calcular tu valor hora y todos los recargos.')
-          )
+          editSal &&
+            h(
+              'div',
+              { className: 'ajustes-row-body' },
+              h(
+                'div',
+                { className: 'ajustes-edit' },
+                h('span', { className: 'ajustes-edit-prefix' }, '$'),
+                h('input', {
+                  type: 'number',
+                  inputMode: 'numeric',
+                  className: 'ajustes-edit-input',
+                  value: tempSal,
+                  onChange: function (e) {
+                    setTempSal(e.target.value);
+                  },
+                  autoFocus: true,
+                  placeholder: '1.300.000'
+                }),
+                h(
+                  'button',
+                  {
+                    className: 'ajustes-edit-save',
+                    onClick: guardarSalario,
+                    'aria-label': 'Guardar'
+                  },
+                  '✓'
+                )
+              ),
+              h(
+                'p',
+                { className: 'ajustes-edit-hint' },
+                'Se usa para calcular tu valor hora y todos los recargos.'
+              )
+            )
         ),
 
         // Valor hora (read-only)
-        h('div', {className:'ajustes-row ajustes-row-static'},
-          h('div', {className:'ajustes-row-ico soft'}, '◷'),
-          h('div', {className:'ajustes-row-mid'},
-            h('div', {className:'ajustes-row-ttl'}, 'Valor hora base'),
-            h('div', {className:'ajustes-row-sub'},
-              'Se calcula automáticamente')
+        h(
+          'div',
+          { className: 'ajustes-row ajustes-row-static' },
+          h('div', { className: 'ajustes-row-ico soft' }, '◷'),
+          h(
+            'div',
+            { className: 'ajustes-row-mid' },
+            h('div', { className: 'ajustes-row-ttl' }, 'Valor hora base'),
+            h('div', { className: 'ajustes-row-sub' }, 'Se calcula automáticamente')
           ),
-          h('div', {className:'ajustes-row-val'}, fCOP(vh))
+          h('div', { className: 'ajustes-row-val' }, fCOP(vh))
         )
-
       )
     ),
 
     // ══════ CUENTA ══════
-    h('div', {className:'ajustes-section'},
-      h('div', {className:'ajustes-section-ttl'}, 'Cuenta'),
-      h('div', {className:'ajustes-list'},
-        h('button', {
-          className:'ajustes-row ajustes-row-tap',
-          onClick: function(){ haptic(); setShowMgtAcct(true); }
-        },
-          h('div', {className:'ajustes-row-ico'}, '⚙'),
-          h('div', {className:'ajustes-row-mid'},
-            h('div', {className:'ajustes-row-ttl'}, 'Gestionar cuenta'),
-            h('div', {className:'ajustes-row-sub'},
-              'PIN, correo y contraseña')
+    h(
+      'div',
+      { className: 'ajustes-section' },
+      h('div', { className: 'ajustes-section-ttl' }, 'Cuenta'),
+      h(
+        'div',
+        { className: 'ajustes-list' },
+        h(
+          'button',
+          {
+            className: 'ajustes-row ajustes-row-tap',
+            onClick: function () {
+              haptic();
+              setShowMgtAcct(true);
+            }
+          },
+          h('div', { className: 'ajustes-row-ico' }, '⚙'),
+          h(
+            'div',
+            { className: 'ajustes-row-mid' },
+            h('div', { className: 'ajustes-row-ttl' }, 'Gestionar cuenta'),
+            h('div', { className: 'ajustes-row-sub' }, 'PIN, correo y contraseña')
           ),
-          h('div', {className:'ajustes-row-chev'}, '›')
+          h('div', { className: 'ajustes-row-chev' }, '›')
         ),
-        h('button', {
-          className:'ajustes-row ajustes-row-tap danger',
-          onClick: function(){ haptic(); props.onSignOut(); }
-        },
-          h('div', {className:'ajustes-row-ico danger'}, '↩'),
-          h('div', {className:'ajustes-row-mid'},
-            h('div', {className:'ajustes-row-ttl danger'}, 'Cerrar sesión'),
-            h('div', {className:'ajustes-row-sub'},
-              'Volverás a la pantalla de entrada')
+        h(
+          'button',
+          {
+            className: 'ajustes-row ajustes-row-tap danger',
+            onClick: function () {
+              haptic();
+              props.onSignOut();
+            }
+          },
+          h('div', { className: 'ajustes-row-ico danger' }, '↩'),
+          h(
+            'div',
+            { className: 'ajustes-row-mid' },
+            h('div', { className: 'ajustes-row-ttl danger' }, 'Cerrar sesión'),
+            h('div', { className: 'ajustes-row-sub' }, 'Volverás a la pantalla de entrada')
           ),
-          h('div', {className:'ajustes-row-chev'}, '›')
+          h('div', { className: 'ajustes-row-chev' }, '›')
         )
       )
     ),
 
     // ══════ PANEL ADMINISTRADOR ══════
-    session && session.isAdmin && h('div', {className:'ajustes-section'},
-      h('div', {className:'ajustes-section-ttl'}, 'Administrador'),
-      h('div', {className:'ajustes-list'},
+    session &&
+      session.isAdmin &&
+      h(
+        'div',
+        { className: 'ajustes-section' },
+        h('div', { className: 'ajustes-section-ttl' }, 'Administrador'),
+        h(
+          'div',
+          { className: 'ajustes-list' },
 
-        h('button', {
-          className:'ajustes-row ajustes-row-tap',
-          onClick: function(){ haptic(); setShowUsuarios(true); }
-        },
-          h('div', {className:'ajustes-row-ico'}, '👥'),
-          h('div', {className:'ajustes-row-mid'},
-            h('div', {className:'ajustes-row-ttl'}, 'Usuarios'),
-            h('div', {className:'ajustes-row-sub'}, 'Ver y gestionar todos los usuarios')
+          h(
+            'button',
+            {
+              className: 'ajustes-row ajustes-row-tap',
+              onClick: function () {
+                haptic();
+                setShowUsuarios(true);
+              }
+            },
+            h('div', { className: 'ajustes-row-ico' }, '👥'),
+            h(
+              'div',
+              { className: 'ajustes-row-mid' },
+              h('div', { className: 'ajustes-row-ttl' }, 'Usuarios'),
+              h('div', { className: 'ajustes-row-sub' }, 'Ver y gestionar todos los usuarios')
+            ),
+            h('div', { className: 'ajustes-row-chev' }, '›')
           ),
-          h('div', {className:'ajustes-row-chev'}, '›')
-        ),
 
-        h('button', {
-          className:'ajustes-row ajustes-row-tap',
-          onClick: function(){ haptic(); setShowPins(true); }
-        },
-          h('div', {className:'ajustes-row-ico'}, '🔑'),
-          h('div', {className:'ajustes-row-mid'},
-            h('div', {className:'ajustes-row-ttl'}, 'Asignar PINs'),
-            h('div', {className:'ajustes-row-sub'}, 'Gestionar PINs de acceso')
+          h(
+            'button',
+            {
+              className: 'ajustes-row ajustes-row-tap',
+              onClick: function () {
+                haptic();
+                setShowPins(true);
+              }
+            },
+            h('div', { className: 'ajustes-row-ico' }, '🔑'),
+            h(
+              'div',
+              { className: 'ajustes-row-mid' },
+              h('div', { className: 'ajustes-row-ttl' }, 'Asignar PINs'),
+              h('div', { className: 'ajustes-row-sub' }, 'Gestionar PINs de acceso')
+            ),
+            h('div', { className: 'ajustes-row-chev' }, '›')
           ),
-          h('div', {className:'ajustes-row-chev'}, '›')
-        ),
 
-        h('button', {
-          className:'ajustes-row ajustes-row-tap',
-          onClick: function(){ haptic(); setShowDiag(true); }
-        },
-          h('div', {className:'ajustes-row-ico'}, '🛠'),
-          h('div', {className:'ajustes-row-mid'},
-            h('div', {className:'ajustes-row-ttl'}, 'Diagnóstico'),
-            h('div', {className:'ajustes-row-sub'}, 'Estado de sesiones y datos')
+          h(
+            'button',
+            {
+              className: 'ajustes-row ajustes-row-tap',
+              onClick: function () {
+                haptic();
+                setShowDiag(true);
+              }
+            },
+            h('div', { className: 'ajustes-row-ico' }, '🛠'),
+            h(
+              'div',
+              { className: 'ajustes-row-mid' },
+              h('div', { className: 'ajustes-row-ttl' }, 'Diagnóstico'),
+              h('div', { className: 'ajustes-row-sub' }, 'Estado de sesiones y datos')
+            ),
+            h('div', { className: 'ajustes-row-chev' }, '›')
           ),
-          h('div', {className:'ajustes-row-chev'}, '›')
+
+          h(
+            'button',
+            {
+              className: 'ajustes-row ajustes-row-tap',
+              onClick: function () {
+                haptic();
+                setShowErrorViewer(true);
+              }
+            },
+            h('div', { className: 'ajustes-row-ico danger' }, '🐞'),
+            h(
+              'div',
+              { className: 'ajustes-row-mid' },
+              h('div', { className: 'ajustes-row-ttl' }, 'Consola Dev'),
+              h('div', { className: 'ajustes-row-sub' }, 'Registro de errores y depuración')
+            ),
+            h('div', { className: 'ajustes-row-chev' }, '›')
+          )
         )
-      )
-    ),
+      ),
 
     // ══════ CÓMO SE CALCULA TU PAGO (acordeón con recargos) ══════
-    h('div', {className:'ajustes-section'},
-      h('div', {className:'ajustes-section-ttl'},
-        'Cómo se calcula tu pago'),
-      h('div', {className:'ajustes-list'},
-        h('div', {className:'ajustes-row-group' + (openRec ? ' open' : '')},
-          h('button', {
-            className:'ajustes-row ajustes-row-tap',
-            onClick: function(){ haptic(); setOpenRec(!openRec); }
-          },
-            h('div', {className:'ajustes-row-ico'}, '✦'),
-            h('div', {className:'ajustes-row-mid'},
-              h('div', {className:'ajustes-row-ttl'},
-                'Tabla de recargos'),
-              h('div', {className:'ajustes-row-sub'},
-                'Ley 2101/2021 · Toca para ver')
+    h(
+      'div',
+      { className: 'ajustes-section' },
+      h('div', { className: 'ajustes-section-ttl' }, 'Cómo se calcula tu pago'),
+      h(
+        'div',
+        { className: 'ajustes-list' },
+        h(
+          'div',
+          { className: 'ajustes-row-group' + (openRec ? ' open' : '') },
+          h(
+            'button',
+            {
+              className: 'ajustes-row ajustes-row-tap',
+              onClick: function () {
+                haptic();
+                setOpenRec(!openRec);
+              }
+            },
+            h('div', { className: 'ajustes-row-ico' }, '✦'),
+            h(
+              'div',
+              { className: 'ajustes-row-mid' },
+              h('div', { className: 'ajustes-row-ttl' }, 'Tabla de recargos'),
+              h('div', { className: 'ajustes-row-sub' }, 'Ley 2101/2021 · Toca para ver')
             ),
-            h('div', {className:'ajustes-row-chev'},
-              openRec ? '−' : '+')
+            h('div', { className: 'ajustes-row-chev' }, openRec ? '−' : '+')
           ),
-          openRec && h('div', {className:'ajustes-row-body'},
-            h('div', {className:'ajustes-recargos'},
-              Object.keys(RC).map(function(k){
-                var r = RC[k];
-                return h('div', {key:k, className:'ajustes-recargo'},
-                  h('span', {
-                    className:'ajustes-recargo-chip',
-                    style:{ background:r.bg, border:'1px solid '+r.bd, color:r.color }
-                  }, r.icon),
-                  h('span', {className:'ajustes-recargo-lbl'}, r.label),
-                  h('span', {
-                    className:'ajustes-recargo-pct',
-                    style:{ color:r.color }
-                  }, '+' + Math.round((r.factor - 1) * 100) + '%')
-                );
-              })
-            ),
-            h('p', {className:'ajustes-legal'},
-              'CST Arts. 168–171 · Calculados sobre el valor hora base.'
+          openRec &&
+            h(
+              'div',
+              { className: 'ajustes-row-body' },
+              h(
+                'div',
+                { className: 'ajustes-recargos' },
+                Object.keys(RC).map(function (k) {
+                  var r = RC[k];
+                  return h(
+                    'div',
+                    { key: k, className: 'ajustes-recargo' },
+                    h(
+                      'span',
+                      {
+                        className: 'ajustes-recargo-chip',
+                        style: { background: r.bg, border: '1px solid ' + r.bd, color: r.color }
+                      },
+                      r.icon
+                    ),
+                    h('span', { className: 'ajustes-recargo-lbl' }, r.label),
+                    h(
+                      'span',
+                      {
+                        className: 'ajustes-recargo-pct',
+                        style: { color: r.color }
+                      },
+                      '+' + Math.round((r.factor - 1) * 100) + '%'
+                    )
+                  );
+                })
+              ),
+              h(
+                'p',
+                { className: 'ajustes-legal' },
+                'CST Arts. 168–171 · Calculados sobre el valor hora base.'
+              )
             )
-          )
         )
       )
     ),
 
     // ══════ FOOTER ══════
-    h('div', {className:'ajustes-footer'},
-      h('div', {className:'ajustes-footer-brand'}, 'Mi Turno'),
-      h('div', {className:'ajustes-footer-sub'},
-        'Colombia · Nómina inteligente')
+    h(
+      'div',
+      { className: 'ajustes-footer' },
+      h('div', { className: 'ajustes-footer-brand' }, 'Mi Turno'),
+      h('div', { className: 'ajustes-footer-sub' }, 'Colombia · Nómina inteligente')
     ),
 
     // Modal Gestionar cuenta
-    showMgtAcct && typeof ManageAccountModal !== 'undefined'
-      && h(ManageAccountModal, {
-          session: session,
-          onClose: function(){ setShowMgtAcct(false); }
-        }),
+    showMgtAcct &&
+      typeof ManageAccountModal !== 'undefined' &&
+      h(ManageAccountModal, {
+        session: session,
+        onClose: function () {
+          setShowMgtAcct(false);
+        }
+      }),
 
     // Modales admin
-    showUsuarios && typeof UsuariosModal !== 'undefined'
-      && h(UsuariosModal, {
-          session: session,
-          onClose: function(){ setShowUsuarios(false); }
-        }),
+    showUsuarios &&
+      typeof UsuariosModal !== 'undefined' &&
+      h(UsuariosModal, {
+        session: session,
+        onClose: function () {
+          setShowUsuarios(false);
+        }
+      }),
 
-    showPins && typeof AsignarPINsModal !== 'undefined'
-      && h(AsignarPINsModal, {
-          session: session,
-          onClose: function(){ setShowPins(false); }
-        }),
+    showPins &&
+      typeof AsignarPINsModal !== 'undefined' &&
+      h(AsignarPINsModal, {
+        session: session,
+        onClose: function () {
+          setShowPins(false);
+        }
+      }),
 
-    showDiag && typeof DiagnosticoModal !== 'undefined'
-      && h(DiagnosticoModal, {
-          session: session,
-          onClose: function(){ setShowDiag(false); }
-        })
+    showDiag &&
+      typeof DiagnosticoModal !== 'undefined' &&
+      h(DiagnosticoModal, {
+        session: session,
+        onClose: function () {
+          setShowDiag(false);
+        }
+      }),
 
+    showErrorViewer &&
+      typeof ErrorViewerModal !== 'undefined' &&
+      h(ErrorViewerModal, {
+        session: session,
+        onClose: function () {
+          setShowErrorViewer(false);
+        }
+      })
   );
 }

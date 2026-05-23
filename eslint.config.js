@@ -173,6 +173,7 @@ const projectGlobals = {
   ExportReportModal: 'readonly',
   PinSetup: 'readonly',
   DiagnosticoModal: 'readonly',
+  ErrorViewerModal: 'readonly',
 
   // Tab components
   HomeTab: 'readonly',
