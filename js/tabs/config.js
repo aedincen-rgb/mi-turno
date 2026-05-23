@@ -38,6 +38,16 @@ function ConfigTab(props) {
   var showErrorViewer = sv[0],
     setShowErrorViewer = sv[1];
 
+  // Estado del acordeón del modo quincenal
+  var oq = useState(false);
+  var openQuincena = oq[0],
+    setOpenQuincena = oq[1];
+
+  var prefs = props.prefs || (typeof QUINCENA_PREFS_DEFAULT !== 'undefined' ? QUINCENA_PREFS_DEFAULT : { auxTransp: false, prestaciones: false, quincenaMode: false, q1Day: 1, q2Day: 16 });
+  function patchPrefs(p) {
+    if (props.onPrefsChange) props.onPrefsChange(p);
+  }
+
   function guardarSalario() {
     haptic();
     var v = parseFloat(tempSal) || SMIN;
@@ -202,6 +212,204 @@ function ConfigTab(props) {
             h('div', { className: 'ajustes-row-sub' }, 'Se calcula automáticamente')
           ),
           h('div', { className: 'ajustes-row-val' }, fCOP(vh))
+        )
+      )
+    ),
+
+    // ══════ ESTIMACIÓN AVANZADA ══════
+    h(
+      'div',
+      { className: 'ajustes-section' },
+      h('div', { className: 'ajustes-section-ttl' }, 'Estimación avanzada'),
+      h(
+        'div',
+        { className: 'ajustes-list' },
+
+        // Toggle: auxilio de transporte
+        h(
+          'div',
+          { className: 'ajustes-row' },
+          h('div', { className: 'ajustes-row-ico' }, '🚌'),
+          h(
+            'div',
+            { className: 'ajustes-row-mid' },
+            h('div', { className: 'ajustes-row-ttl' }, 'Auxilio de transporte'),
+            h(
+              'div',
+              { className: 'ajustes-row-sub' },
+              'Suma ' + fCOP(AUX_TRANSPORTE_2026) + ' al estimado (fijo 2026)'
+            )
+          ),
+          h(
+            'label',
+            { className: 'ajustes-switch' },
+            h('input', {
+              type: 'checkbox',
+              checked: !!prefs.auxTransp,
+              onChange: function () {
+                haptic();
+                patchPrefs({ auxTransp: !prefs.auxTransp });
+              }
+            }),
+            h('span', { className: 'ajustes-switch-track' })
+          )
+        ),
+
+        // Toggle: prestaciones aproximadas
+        h(
+          'div',
+          { className: 'ajustes-row' },
+          h('div', { className: 'ajustes-row-ico' }, '✦'),
+          h(
+            'div',
+            { className: 'ajustes-row-mid' },
+            h('div', { className: 'ajustes-row-ttl' }, 'Prestaciones aproximadas'),
+            h(
+              'div',
+              { className: 'ajustes-row-sub' },
+              'Cesantías, prima y vacaciones (~' + Math.round(PRESTACIONES_PCT * 100) + '% del salario)'
+            )
+          ),
+          h(
+            'label',
+            { className: 'ajustes-switch' },
+            h('input', {
+              type: 'checkbox',
+              checked: !!prefs.prestaciones,
+              onChange: function () {
+                haptic();
+                patchPrefs({ prestaciones: !prefs.prestaciones });
+              }
+            }),
+            h('span', { className: 'ajustes-switch-track' })
+          )
+        )
+      ),
+      h(
+        'p',
+        { className: 'ajustes-legal', style: { padding: '0 4px' } },
+        'Son valores estimados. Pueden variar según tu empleador y las deducciones legales.'
+      )
+    ),
+
+    // ══════ MODO QUINCENAL ══════
+    h(
+      'div',
+      { className: 'ajustes-section' },
+      h('div', { className: 'ajustes-section-ttl' }, 'Modo quincenal'),
+      h(
+        'div',
+        { className: 'ajustes-list' },
+
+        // Toggle quincena
+        h(
+          'div',
+          { className: 'ajustes-row' },
+          h('div', { className: 'ajustes-row-ico' }, '◑'),
+          h(
+            'div',
+            { className: 'ajustes-row-mid' },
+            h('div', { className: 'ajustes-row-ttl' }, 'Calcular por quincena'),
+            h(
+              'div',
+              { className: 'ajustes-row-sub' },
+              'Separa el estimado en Q1 y Q2 según tus fechas de pago'
+            )
+          ),
+          h(
+            'label',
+            { className: 'ajustes-switch' },
+            h('input', {
+              type: 'checkbox',
+              checked: !!prefs.quincenaMode,
+              onChange: function () {
+                haptic();
+                var next = !prefs.quincenaMode;
+                patchPrefs({ quincenaMode: next });
+                if (next) setOpenQuincena(true);
+              }
+            }),
+            h('span', { className: 'ajustes-switch-track' })
+          )
+        ),
+
+        // Acordeón: días de quincena
+        h(
+          'div',
+          { className: 'ajustes-row-group' + (openQuincena ? ' open' : '') },
+          h(
+            'button',
+            {
+              className: 'ajustes-row ajustes-row-tap',
+              disabled: !prefs.quincenaMode,
+              onClick: function () {
+                haptic();
+                setOpenQuincena(!openQuincena);
+              },
+              style: prefs.quincenaMode ? null : { opacity: 0.55, cursor: 'not-allowed' }
+            },
+            h('div', { className: 'ajustes-row-ico soft' }, '📅'),
+            h(
+              'div',
+              { className: 'ajustes-row-mid' },
+              h('div', { className: 'ajustes-row-ttl' }, 'Días de inicio'),
+              h(
+                'div',
+                { className: 'ajustes-row-sub' },
+                'Q1: día ' + prefs.q1Day + '  ·  Q2: día ' + prefs.q2Day
+              )
+            ),
+            h('div', { className: 'ajustes-row-chev' }, openQuincena ? '−' : '+')
+          ),
+          openQuincena && prefs.quincenaMode
+            ? h(
+                'div',
+                { className: 'ajustes-row-body' },
+                h(
+                  'div',
+                  { className: 'ajustes-quincena-grid' },
+                  h(
+                    'label',
+                    { className: 'ajustes-quincena-fld' },
+                    h('span', { className: 'ajustes-quincena-lbl' }, 'Inicio Q1'),
+                    h('input', {
+                      type: 'number',
+                      inputMode: 'numeric',
+                      min: 1,
+                      max: 28,
+                      className: 'ajustes-edit-input',
+                      value: prefs.q1Day,
+                      onChange: function (e) {
+                        var v = parseInt(e.target.value, 10);
+                        if (!isNaN(v)) patchPrefs({ q1Day: v });
+                      }
+                    })
+                  ),
+                  h(
+                    'label',
+                    { className: 'ajustes-quincena-fld' },
+                    h('span', { className: 'ajustes-quincena-lbl' }, 'Inicio Q2'),
+                    h('input', {
+                      type: 'number',
+                      inputMode: 'numeric',
+                      min: 2,
+                      max: 28,
+                      className: 'ajustes-edit-input',
+                      value: prefs.q2Day,
+                      onChange: function (e) {
+                        var v = parseInt(e.target.value, 10);
+                        if (!isNaN(v)) patchPrefs({ q2Day: v });
+                      }
+                    })
+                  )
+                ),
+                h(
+                  'p',
+                  { className: 'ajustes-edit-hint' },
+                  'Q1 va desde el día indicado hasta el inicio de Q2. El estimado se filtra automáticamente por la quincena activa.'
+                )
+              )
+            : null
         )
       )
     ),

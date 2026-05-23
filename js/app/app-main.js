@@ -55,6 +55,11 @@ function App(props) {
   var showPinSetup = pss[0],
     setShowPinSetup = pss[1];
 
+  // Preferencias avanzadas (auxilio, prestaciones, quincena manual)
+  var pf = useState(normalizePrefs(null));
+  var prefs = pf[0],
+    setPrefs = pf[1];
+
   // Detección de estado de internet
   var on = useState(isOnline());
   var isOnlineStatus = on[0], setIsOnline = on[1];
@@ -152,6 +157,7 @@ function App(props) {
           setTurnos(data.turnos || []);
           setActivo(data.activo || null);
           setSalario(data.salario || SMIN);
+          setPrefs(normalizePrefs(leer(dk(uid, 'prefs'), null)));
           // Exponer estado global para el Mood Bar
           window.__miTurnoState = {
             turnos: data.turnos || [],
@@ -229,6 +235,19 @@ function App(props) {
     },
     [salario, uid]
   );
+  useEffect(
+    function () {
+      if (!loadedRef.current) return;
+      grabar(dk(uid, 'prefs'), prefs);
+    },
+    [prefs, uid]
+  );
+
+  function onPrefsChange(patch) {
+    setPrefs(function (p) {
+      return normalizePrefs(Object.assign({}, p, patch));
+    });
+  }
 
   var activoRef = useRef(activo);
   activoRef.current = activo;
@@ -378,6 +397,49 @@ function App(props) {
       return doCalc(turnosMes, activo, ahoraDateCalc, vh);
     },
     [turnosMes, activo, ahoraMin, vh]
+  );
+
+  // ── Cálculo por quincena (solo si el modo está activo) ───────
+  var quincena = useMemo(
+    function () {
+      if (!prefs.quincenaMode) return null;
+      var rango = getQuincenaRange(ahoraDate, prefs);
+      var tQ = filterTurnosRango(turnos, rango);
+      // El activo se incluye en la quincena si su inicio cae dentro
+      var activoEnRango =
+        activo &&
+        new Date(activo.inicio) >= rango.ini &&
+        new Date(activo.inicio) < rango.fin
+          ? activo
+          : null;
+      var calcQ = doCalc(tQ, activoEnRango, ahoraDateCalc, vh);
+      return { rango: rango, turnos: tQ, calc: calcQ };
+    },
+    [prefs, turnos, activo, ahoraMin, vh, ahoraDate.getDate(), ahoraDate.getMonth()]
+  );
+
+  var quincenasMes = useMemo(
+    function () {
+      if (!prefs.quincenaMode) return null;
+      var qs = getQuincenasMes(ahoraDate, prefs);
+      var t1 = filterTurnosRango(turnos, qs.q1);
+      var t2 = filterTurnosRango(turnos, qs.q2);
+      var aEnQ1 = activo && new Date(activo.inicio) >= qs.q1.ini && new Date(activo.inicio) < qs.q1.fin ? activo : null;
+      var aEnQ2 = activo && new Date(activo.inicio) >= qs.q2.ini && new Date(activo.inicio) < qs.q2.fin ? activo : null;
+      return {
+        q1: {
+          rango: qs.q1,
+          turnos: t1,
+          calc: doCalc(t1, aEnQ1, ahoraDateCalc, vh)
+        },
+        q2: {
+          rango: qs.q2,
+          turnos: t2,
+          calc: doCalc(t2, aEnQ2, ahoraDateCalc, vh)
+        }
+      };
+    },
+    [prefs, turnos, activo, ahoraMin, vh, ahoraDate.getMonth()]
   );
 
   var durActual = activo ? Math.round((ahora - new Date(activo.inicio)) / 60000) : 0;
@@ -614,6 +676,8 @@ function App(props) {
           salario: salario,
           vh: vh,
           turnos: turnos,
+          prefs: prefs,
+          quincena: quincena,
           onIni: onIni,
           onFin: onFin,
           onOpenAssistant: function () {
@@ -632,7 +696,9 @@ function App(props) {
             salario: salario,
             vh: vh,
             ahora: ahoraDate,
-            themeKey: theme
+            themeKey: theme,
+            prefs: prefs,
+            quincenasMes: quincenasMes
           })
           : tab === 'ai'
             ? h(AsistenteTab, {
@@ -660,7 +726,9 @@ function App(props) {
                 onSalario: onSalario,
                 onSignOut: props.onSignOut,
                 theme: theme,
-                onThemeChange: setTheme
+                onThemeChange: setTheme,
+                prefs: prefs,
+                onPrefsChange: onPrefsChange
               })
     ),
 

@@ -306,6 +306,31 @@
   opacity:0.85;
 }
 
+/* ─── Modo quincenal (inputs gemelos) ─── */
+.ajustes-quincena-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-top:14px;
+}
+.ajustes-quincena-fld{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+.ajustes-quincena-lbl{
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  padding-left:2px;
+}
+.ajustes-quincena-fld .ajustes-edit-input{
+  text-align:center;
+  padding:12px 8px;
+}
+
 /* ─── iOS Switch ─── */
 .ajustes-switch{
   position:relative;

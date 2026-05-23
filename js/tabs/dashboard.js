@@ -8,6 +8,8 @@ function DashboardTab(props) {
     salario = props.salario,
     vh = props.vh,
     ahora = props.ahora;
+  var prefs = props.prefs || { auxTransp: false, prestaciones: false, quincenaMode: false };
+  var modoQuincena = !!prefs.quincenaMode && props.quincenasMes;
   var canvasRef = useRef(null);
   var chartRef = useRef(null);
 
@@ -190,9 +192,47 @@ function DashboardTab(props) {
   );
   var CH = 124;
 
+  // Q1 / Q2 cards (solo cuando el modo quincenal está activo)
+  var quincenaBlock = null;
+  if (modoQuincena) {
+    var qs = props.quincenasMes;
+    var extQ = typeof calcularExtras === 'function' ? calcularExtras(salario, prefs, 0.5) : { total: 0 };
+    var ahoraMs = ahora.getTime();
+    function qStatus(q) {
+      if (ahoraMs < q.rango.ini.getTime()) return 'Próxima';
+      if (ahoraMs >= q.rango.fin.getTime()) return 'Cerrada';
+      return 'En curso';
+    }
+    quincenaBlock = h(
+      'div',
+      { className: 'dash-kpi-grid', style: { marginBottom: '16px' } },
+      [qs.q1, qs.q2].map(function (q) {
+        var total = q.calc.totalCOP + extQ.total;
+        return h(
+          'div',
+          { key: q.rango.label, className: 'kpi-card' },
+          h(
+            'div',
+            { className: 'kpi-label' },
+            q.rango.label + ' · ' + qStatus(q)
+          ),
+          h('div', { className: 'kpi-val accent' }, fCOP(total)),
+          h(
+            'div',
+            { className: 'kpi-sub' },
+            formatRangoCorto(q.rango) +
+              ' · ' +
+              fDur(q.calc.totalMins)
+          )
+        );
+      })
+    );
+  }
+
   return h(
     'div',
     { className: 'fadeUp' },
+    quincenaBlock,
     h(
       'div',
       { className: 'dash-hero' },
