@@ -43,6 +43,55 @@ function ConfigTab(props) {
   var openQuincena = oq[0],
     setOpenQuincena = oq[1];
 
+  // Estado del chequeo manual de actualización
+  // updStatus: 'idle' | 'checking' | 'uptodate' | 'available' | 'error'
+  var us = useState({ status: 'idle', remote: null, checkedAt: null });
+  var updState = us[0],
+    setUpdState = us[1];
+
+  function checkVersionNow() {
+    haptic();
+    setUpdState({ status: 'checking', remote: null, checkedAt: null });
+    var local = typeof MT_APP_VERSION !== 'undefined' ? MT_APP_VERSION : '';
+    fetch('version.json?t=' + Date.now(), { cache: 'no-store' })
+      .then(function (r) {
+        if (!r || !r.ok) throw new Error('http ' + (r && r.status));
+        return r.json();
+      })
+      .then(function (j) {
+        var remote = j && j.v ? String(j.v) : null;
+        if (!remote) throw new Error('formato inválido');
+        var ts = new Date().toLocaleTimeString('es-CO', {
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+        if (remote === local) {
+          setUpdState({ status: 'uptodate', remote: remote, checkedAt: ts });
+        } else {
+          setUpdState({ status: 'available', remote: remote, checkedAt: ts });
+          // Pedimos al SW que se actualice en segundo plano para que el
+          // botón "Actualizar ahora" sea instantáneo cuando lo toquen.
+          try {
+            if (window._mtCheckUpdate) window._mtCheckUpdate(false);
+          } catch (_) {}
+        }
+      })
+      .catch(function () {
+        setUpdState({ status: 'error', remote: null, checkedAt: null });
+      });
+  }
+
+  function applyUpdateNow() {
+    haptic();
+    try {
+      if (window._mtCheckUpdate) {
+        window._mtCheckUpdate(true);
+        return;
+      }
+    } catch (_) {}
+    window.location.reload();
+  }
+
   var prefs = props.prefs || (typeof QUINCENA_PREFS_DEFAULT !== 'undefined' ? QUINCENA_PREFS_DEFAULT : { auxTransp: false, prestaciones: false, quincenaMode: false, q1Day: 1, q2Day: 16 });
   function patchPrefs(p) {
     if (props.onPrefsChange) props.onPrefsChange(p);
@@ -622,61 +671,113 @@ function ConfigTab(props) {
     ),
 
     // ══════ ACERCA DE / VERSIÓN ══════
-    h(
-      'div',
-      { className: 'ajustes-section' },
-      h('div', { className: 'ajustes-section-ttl' }, 'Acerca de'),
-      h(
+    (function () {
+      var localV = typeof MT_APP_VERSION !== 'undefined' ? MT_APP_VERSION : 'desconocida';
+
+      // Construcción dinámica de la fila del botón según estado del check
+      var btnIcon, btnTtl, btnSub, btnCls, btnIcoCls, btnDisabled, btnOnClick;
+      if (updState.status === 'checking') {
+        btnIcon = '⟳';
+        btnTtl = 'Buscando…';
+        btnSub = 'Consultando el servidor';
+        btnCls = 'ajustes-row';
+        btnIcoCls = 'ajustes-row-ico';
+        btnDisabled = true;
+        btnOnClick = function () {};
+      } else if (updState.status === 'uptodate') {
+        btnIcon = '✓';
+        btnTtl = 'Ya estás al día';
+        btnSub = 'Última versión (' + updState.remote + ') · ' + updState.checkedAt;
+        btnCls = 'ajustes-row ajustes-row-tap';
+        btnIcoCls = 'ajustes-row-ico';
+        btnDisabled = false;
+        btnOnClick = checkVersionNow;
+      } else if (updState.status === 'available') {
+        btnIcon = '↑';
+        btnTtl = 'Nueva versión ' + updState.remote;
+        btnSub = 'Tocá para actualizar (estás en ' + localV + ')';
+        btnCls = 'ajustes-row ajustes-row-tap';
+        btnIcoCls = 'ajustes-row-ico';
+        btnDisabled = false;
+        btnOnClick = applyUpdateNow;
+      } else if (updState.status === 'error') {
+        btnIcon = '!';
+        btnTtl = 'No se pudo verificar';
+        btnSub = 'Revisá tu conexión y tocá de nuevo';
+        btnCls = 'ajustes-row ajustes-row-tap';
+        btnIcoCls = 'ajustes-row-ico danger';
+        btnDisabled = false;
+        btnOnClick = checkVersionNow;
+      } else {
+        btnIcon = '⟳';
+        btnTtl = 'Buscar actualización';
+        btnSub = 'Verifica si hay una versión más reciente';
+        btnCls = 'ajustes-row ajustes-row-tap';
+        btnIcoCls = 'ajustes-row-ico';
+        btnDisabled = false;
+        btnOnClick = checkVersionNow;
+      }
+
+      return h(
         'div',
-        { className: 'ajustes-list' },
+        { className: 'ajustes-section' },
+        h('div', { className: 'ajustes-section-ttl' }, 'Acerca de'),
         h(
           'div',
-          { className: 'ajustes-row ajustes-row-static' },
-          h('div', { className: 'ajustes-row-ico soft' }, 'ⓘ'),
+          { className: 'ajustes-list' },
+          // Versión instalada (estática)
           h(
             'div',
-            { className: 'ajustes-row-mid' },
-            h('div', { className: 'ajustes-row-ttl' }, 'Versión instalada'),
+            { className: 'ajustes-row ajustes-row-static' },
+            h('div', { className: 'ajustes-row-ico soft' }, 'ⓘ'),
             h(
               'div',
-              { className: 'ajustes-row-sub' },
-              typeof MT_APP_VERSION !== 'undefined' ? MT_APP_VERSION : 'desconocida'
-            )
+              { className: 'ajustes-row-mid' },
+              h('div', { className: 'ajustes-row-ttl' }, 'Versión instalada'),
+              h('div', { className: 'ajustes-row-sub' }, localV)
+            ),
+            h('div', { className: 'ajustes-row-val' }, 'PWA')
           ),
-          h('div', { className: 'ajustes-row-val' }, 'PWA')
-        ),
-        h(
-          'button',
-          {
-            className: 'ajustes-row ajustes-row-tap',
-            onClick: function () {
-              haptic();
-              try {
-                if (window._mtCheckUpdate) {
-                  window._mtCheckUpdate(true);
-                } else {
-                  window.location.reload();
-                }
-              } catch (_) {
-                window.location.reload();
-              }
-            }
-          },
-          h('div', { className: 'ajustes-row-ico' }, '⟳'),
+          // Botón de chequeo dinámico
           h(
-            'div',
-            { className: 'ajustes-row-mid' },
-            h('div', { className: 'ajustes-row-ttl' }, 'Buscar actualización'),
+            'button',
+            {
+              className: btnCls,
+              disabled: btnDisabled,
+              onClick: btnOnClick,
+              style: btnDisabled ? { opacity: 0.6, cursor: 'wait' } : null
+            },
             h(
               'div',
-              { className: 'ajustes-row-sub' },
-              'Forzar revisión inmediata de nueva versión'
-            )
-          ),
-          h('div', { className: 'ajustes-row-chev' }, '›')
+              {
+                className: btnIcoCls,
+                style:
+                  updState.status === 'checking'
+                    ? { animation: 'spin 1s linear infinite' }
+                    : null
+              },
+              btnIcon
+            ),
+            h(
+              'div',
+              { className: 'ajustes-row-mid' },
+              h('div', { className: 'ajustes-row-ttl' }, btnTtl),
+              h('div', { className: 'ajustes-row-sub' }, btnSub)
+            ),
+            updState.status === 'available'
+              ? h(
+                  'div',
+                  {
+                    className: 'ajustes-row-val',
+                    style: { color: 'var(--accent)', fontSize: '13px' }
+                  },
+                  'Actualizar'
+                )
+              : h('div', { className: 'ajustes-row-chev' }, '›')
+          )
         )
-      )
-    ),
+      );
+    })(),
 
     // ══════ FOOTER ══════
     h(
