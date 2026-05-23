@@ -80,9 +80,14 @@ function supaDeleteAllTurnos(uid) {
 
 function supaSetSalario(uid, salario) {
   if (!SUPA) return Promise.resolve({ success: false, error: 'Supabase no inicializado' });
+  // UPSERT (no UPDATE): si la fila no existe la crea, si existe la actualiza.
+  // Antes usábamos .update() y si el perfil no estaba creado, fallaba en
+  // silencio — la app marcaba "sincronizado" pero el valor nunca llegaba.
   return SUPA.from('perfiles')
-    .update({ salario_base: salario, updated_at: new Date().toISOString() })
-    .eq('id', uid)
+    .upsert(
+      { id: uid, salario_base: salario, updated_at: new Date().toISOString() },
+      { onConflict: 'id' }
+    )
     .then(function (res) { return { success: !res.error, error: res.error }; })
     .catch(function (e) { return { success: false, error: e }; });
 }

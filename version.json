@@ -1,4 +1,4 @@
 {
-  "v": "v26",
-  "label": "Hard reset nuclear + detección de reload fantasma"
+  "v": "v27",
+  "label": "Fix sync salario: UPSERT + local como fuente de verdad"
 }

@@ -32,8 +32,40 @@ function cargarDatos(uid, pinOnly) {
       grabar(dk(uid, 't'), merged);
       if (remote.activo) grabar(dk(uid, 'a'), remote.activo);
       else borrarKey(dk(uid, 'a'));
-      grabar(dk(uid, 's'), remote.salario);
-      return { turnos: merged, activo: remote.activo, salario: remote.salario };
+
+      // ── Resolución de conflictos para SALARIO ──
+      // Si el usuario marcó su salario como configurado localmente
+      // (flag 'sc'), local es la fuente de verdad — no dejamos que
+      // un cloud desactualizado lo arrastre hacia atrás.
+      // Esto resuelve el bug donde editar el salario en Ajustes no
+      // se aplicaba al estimado tras un reload: cargarDatos pulía
+      // siempre el valor remoto sobre el local recién guardado.
+      var localSalario = leer(dk(uid, 's'), null);
+      var localConfigured = leer(dk(uid, 'sc'), false) === true;
+      var finalSalario = remote.salario;
+      var pushBackToCloud = false;
+
+      if (localConfigured && localSalario && Number(localSalario) > 0) {
+        // Local manda — y si difiere del remoto, programamos un push
+        if (Number(localSalario) !== Number(remote.salario)) {
+          finalSalario = Number(localSalario);
+          pushBackToCloud = true;
+        } else {
+          finalSalario = Number(localSalario);
+        }
+      }
+      grabar(dk(uid, 's'), finalSalario);
+
+      if (pushBackToCloud) {
+        // Fire-and-forget: no bloqueamos la carga
+        try {
+          if (typeof supaSetSalario === 'function') {
+            supaSetSalario(uid, finalSalario).catch(function () {});
+          }
+        } catch (_) {}
+      }
+
+      return { turnos: merged, activo: remote.activo, salario: finalSalario };
     })
     .catch(function (e) {
       console.warn('[MT] fallback local:', e.message);
