@@ -1,7 +1,7 @@
 // ════════════════════════════════════════════════════════════════
 //  MI TURNO · SERVICE WORKER
 //  Cache de librerías CDN para arranque rápido offline-first
-const CACHE = 'mt-v11'; // indicador tipo hora en home + admin restaurado
+const CACHE = 'mt-v12'; // micro-reconocimiento psicológico + banner actualización PWA
 const CDN = [
   'https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js',
@@ -46,7 +46,6 @@ const appResources = [
   './css/components/dashboard-kpis.css',
   './css/components/dashboard-chart.css',
   './css/components/dashboard-tip.css',
-  './css/components/mood-bar.css',
   './css/components/assistant-chat.css',
   './css/components/history-list.css',
   './css/components/auth-screen.css',
@@ -123,6 +122,12 @@ self.addEventListener('activate', function (e) {
     return Promise.all(keys.filter(function (k) { return k !== CACHE; }).map(function (k) { return caches.delete(k); }));
   }).then(function () { return self.clients.claim(); }));
 });
+self.addEventListener('message', function (e) {
+  if (e.data && (e.data === 'skipWaiting' || e.data.type === 'SKIP_WAITING')) {
+    self.skipWaiting();
+  }
+});
+
 self.addEventListener('fetch', function (e) {
   var u = new URL(e.request.url);
   if (e.request.method !== 'GET') return;
