@@ -120,6 +120,7 @@ function UsuariosModal(props) {
       return false;
     if (filter === 'nopin' && u.pin) return false;
     if (filter === 'conpin' && !u.pin) return false;
+
     if (!q) return true;
     return (
       (u.user_email || '').toLowerCase().indexOf(q) >= 0 || String(u.pin || '').indexOf(q) >= 0
@@ -147,6 +148,107 @@ function UsuariosModal(props) {
       return !u.pin;
     }).length
   };
+
+  // ── Funciones de gestión admin en vista detalle ──
+  function eliminarUsuarioCompleto(user) {
+    if (!SUPA || !CLOUD_MODE) {
+      setFeedback({ type: "err", msg: "Sin conexión a la nube" });
+      return;
+    }
+    if (!confirm("¿Estás seguro de eliminar a " + user.user_email + "?\n\nSe eliminarán todos sus datos (PIN, turnos, perfil).\n\nNota: El usuario de Auth debe eliminarse manualmente en Supabase Studio.")) return;
+    setBusy(true);
+    setFeedback(null);
+    var uid = user.user_id;
+    Promise.all([
+      SUPA.from("pin_lookup").delete().eq("user_id", uid),
+      SUPA.from("perfiles").delete().eq("id", uid),
+      SUPA.from("turnos").delete().eq("user_id", uid),
+      SUPA.from("turno_activo").delete().eq("user_id", uid)
+    ])
+      .then(function (results) {
+        var errors = results.filter(function (r) { return r && r.error; });
+        if (errors.length > 0) throw new Error("Error al eliminar datos");
+        setFeedback({ type: "ok", msg: "✓ Usuario eliminado correctamente" });
+        setDetail(null);
+        cargar();
+        setTimeout(function () { setFeedback(null); }, 3000);
+      })
+      .catch(function (e) {
+        setFeedback({ type: "err", msg: traducirError(e) || "Error al eliminar usuario" });
+      })
+      .finally(function () { setBusy(false); });
+  }
+
+  function actualizarPINAdmin(user) {
+    if (!SUPA || !CLOUD_MODE) {
+      setFeedback({ type: "err", msg: "Sin conexión a la nube" });
+      return;
+    }
+    var nuevoPIN = prompt("Ingresa el nuevo PIN de 4 dígitos para " + user.user_email + ":");
+    if (!nuevoPIN) return;
+    nuevoPIN = nuevoPIN.replace(/\D/g, "").slice(0, 4);
+    if (nuevoPIN.length !== 4) {
+      setFeedback({ type: "err", msg: "El PIN debe tener exactamente 4 dígitos" });
+      return;
+    }
+    if (nuevoPIN === "9999" && user.user_email !== "admin@miturno.com") {
+      setFeedback({ type: "err", msg: "PIN 9999 reservado para admin" });
+      return;
+    }
+    setBusy(true);
+    setFeedback(null);
+    SUPA.from("pin_lookup")
+      .upsert({
+        user_id: user.user_id,
+        user_email: user.user_email,
+        pin: nuevoPIN,
+        updated_at: new Date().toISOString()
+      }, { onConflict: "user_id" })
+      .then(function (res) {
+        if (res && res.error) throw res.error;
+        setFeedback({ type: "ok", msg: "✓ PIN actualizado a " + nuevoPIN });
+        setDetail(null);
+        setTimeout(function () { setFeedback(null); }, 3000);
+      })
+      .catch(function (e) {
+        setFeedback({ type: "err", msg: traducirError(e) || "Error al actualizar PIN" });
+      })
+      .finally(function () { setBusy(false); });
+  }
+
+  function actualizarEmailAdmin(user) {
+    if (!SUPA || !CLOUD_MODE) {
+      setFeedback({ type: "err", msg: "Sin conexión a la nube" });
+      return;
+    }
+    var nuevoEmail = prompt("Ingresa el nuevo correo para " + user.user_email + ":");
+    if (!nuevoEmail) return;
+    nuevoEmail = nuevoEmail.trim().toLowerCase();
+    if (!nuevoEmail.includes("@")) {
+      setFeedback({ type: "err", msg: "Ingresa un correo válido" });
+      return;
+    }
+    setBusy(true);
+    setFeedback(null);
+    SUPA.from("pin_lookup")
+      .update({
+        user_email: nuevoEmail,
+        updated_at: new Date().toISOString()
+      })
+      .eq("user_id", user.user_id)
+      .then(function (res) {
+        if (res && res.error) throw res.error;
+        setFeedback({ type: "ok", msg: "✓ Correo actualizado en pin_lookup. El cambio en Auth debe hacerlo el usuario." });
+        setDetail(null);
+        setTimeout(function () { setFeedback(null); }, 4000);
+      })
+      .catch(function (e) {
+        setFeedback({ type: "err", msg: traducirError(e) || "Error al actualizar correo" });
+      })
+      .finally(function () { setBusy(false); });
+  }
+
+
 
   // Vista detalle
   if (detail) {
@@ -500,6 +602,85 @@ function UsuariosModal(props) {
               },
               h('span', { style: { fontSize: 18 } }, '🔑'),
               h('span', null, 'Resetear contraseña (email)')
+            ),
+            // -- Nuevas acciones de admin --
+            h(
+              'button',
+              {
+                onClick: function () {
+                  actualizarPINAdmin(detail);
+                },
+                disabled: esAdm,
+                style: {
+                  padding: '12px',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--accent)',
+                  background: 'var(--accent-dim)',
+                  color: esAdm ? 'var(--muted)' : 'var(--accent)',
+                  fontWeight: 600,
+                  fontSize: 13,
+                  cursor: esAdm ? 'not-allowed' : 'pointer',
+                  textAlign: 'left',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  opacity: esAdm ? 0.5 : 1
+                }
+              },
+              h('span', { style: { fontSize: 18 } }, '🔑'),
+              h('span', null, 'Modificar PIN')
+            ),
+            h(
+              'button',
+              {
+                onClick: function () {
+                  actualizarEmailAdmin(detail);
+                },
+                disabled: esAdm,
+                style: {
+                  padding: '12px',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--accent)',
+                  background: 'var(--accent-dim)',
+                  color: esAdm ? 'var(--muted)' : 'var(--accent)',
+                  fontWeight: 600,
+                  fontSize: 13,
+                  cursor: esAdm ? 'not-allowed' : 'pointer',
+                  textAlign: 'left',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  opacity: esAdm ? 0.5 : 1
+                }
+              },
+              h('span', { style: { fontSize: 18 } }, '✉'),
+              h('span', null, 'Modificar correo')
+            ),
+            h(
+              'button',
+              {
+                onClick: function () {
+                  eliminarUsuarioCompleto(detail);
+                },
+                disabled: esAdm || busy,
+                style: {
+                  padding: '12px',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--danger)',
+                  background: 'var(--danger-dim)',
+                  color: esAdm ? 'var(--muted)' : 'var(--danger)',
+                  fontWeight: 600,
+                  fontSize: 13,
+                  cursor: esAdm ? 'not-allowed' : 'pointer',
+                  textAlign: 'left',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  opacity: esAdm ? 0.5 : 1
+                }
+              },
+              h('span', { style: { fontSize: 18 } }, '🗑'),
+              h('span', null, 'Borrar usuario')
             )
           )
         : null,

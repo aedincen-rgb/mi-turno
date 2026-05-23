@@ -2,11 +2,43 @@
 //  MI TURNO · tabs/home.js
 //  Tab Inicio: turno activo y controles
 // ════════════════════════════════════════════════════════════════
+
+// ── Helper: tipo de hora actual ──────────────────────────────
+function getTipoHoraActual(ahora, calc, turnos) {
+  var isNight = ahora.getHours() >= 21 || ahora.getHours() < 6;
+  var isHoliday = esFest(ahora);
+
+  // Calcular minutos ordinarios usados esta semana hasta ahora
+  var lun = semLun(ahora);
+  var mOrdUsados = 0;
+  if (calc && turnos) {
+    turnos.forEach(function (t) {
+      var ini = new Date(t.inicio);
+      var fin = t.fin ? new Date(t.fin) : ahora;
+      if (ini >= lun) {
+        var cats = calcCats(ini, fin, HSEM * 60);
+        mOrdUsados += cats.diurnaOrd + cats.noctOrd + cats.diurnaFest + cats.noctFest;
+      }
+    });
+  }
+
+  var isExtra = mOrdUsados >= HSEM * 60;
+
+  if (isHoliday) {
+    if (isExtra) return isNight ? RC.extraFestNoct : RC.extraFestDiur;
+    return isNight ? RC.noctFest : RC.diurnaFest;
+  } else {
+    if (isExtra) return isNight ? RC.extraNoct : RC.extraDiurna;
+    return isNight ? RC.noctOrd : RC.diurnaOrd;
+  }
+}
+
 function HomeTab(props) {
   var calc = props.calc,
     activo = props.activo,
     ahora = props.ahora,
-    vh = props.vh;
+    vh = props.vh,
+    turnos = props.turnos;
 
   // Frase IA rotativa (misma fuente y ritmo que el hero del Asistente)
   var moodPhrases = _aiHeroPhrases(props);
@@ -135,8 +167,17 @@ function HomeTab(props) {
             h(
               'div',
               { className: 'active-tag' },
-              h('div', { className: 'active-dot' }),
-              'En turno'
+              (function() {
+                var tipo = getTipoHoraActual(ahora, calc, turnos);
+                return h(
+                  'span',
+                  {
+                    className: 'active-tipo',
+                    style: { color: tipo.color }
+                  },
+                  tipo.icon + ' ' + tipo.label
+                );
+              })()
             ),
             h(
               'div',

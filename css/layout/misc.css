@@ -88,6 +88,14 @@
   animation: spin 2.4s linear infinite;
 }
 
+/* Indicador de tipo de hora activo */
+.active-tipo {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 2px 0;
+}
+
 .active-timer {
   font-family: var(--font-sans);
   font-size: 54px;

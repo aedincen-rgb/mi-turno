@@ -603,6 +603,7 @@ function App(props) {
           ahora: ahoraDate,
           salario: salario,
           vh: vh,
+          turnos: turnos,
           onIni: onIni,
           onFin: onFin,
           onOpenAssistant: function () {
