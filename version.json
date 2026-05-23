@@ -1,4 +1,4 @@
 {
-  "v": "v21",
-  "label": "Chequeo manual de actualizaciones con feedback visible"
+  "v": "v22",
+  "label": "Fix: error boundary en ConfigTab + guards de globals"
 }
