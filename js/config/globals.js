@@ -18,7 +18,7 @@ function getHSEM(fecha) {
   return 48;
 }
 var HSEM = getHSEM(new Date()); // límite de la semana actual (referencia)
-var SMIN = 1423500; // Salario mínimo Colombia 2025
+var SMIN = 1750905; // Salario mínimo Colombia 2026 (Decretos 1469-1470 dic 2025)
 var U12H = 12 * 3600000; // 12 horas en milisegundos
 var SKEY = 'mt_session'; // Clave para la sesión en localStorage
 var FEST_CACHE = {}; // Caché para festivos colombianos
