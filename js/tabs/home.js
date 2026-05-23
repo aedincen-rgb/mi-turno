@@ -8,7 +8,7 @@
 // antes de contar el turno activo. Usa la misma lógica min(8h, semanal).
 function _semOrdRestante(ahora, turnos) {
   var lun = semLun(ahora);
-  var semOrd = HSEM * 60;
+  var semOrd = getHSEM(lun) * 60;
   if (!turnos) return semOrd;
   var ts = turnos
     .filter(function (t) { return t.fin && new Date(t.inicio) >= lun; })

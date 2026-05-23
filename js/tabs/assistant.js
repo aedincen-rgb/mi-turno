@@ -146,10 +146,11 @@ function _aiHeroPhrases(props) {
   }
 
   // ── Horas semanales acumuladas (reconocimiento del progreso real)
-  if (horasSemana >= 46) {
-    f.push(Math.round(horasSemana) + 'h esta semana — completaste la jornada legal. Todo lo que sumes es extra.');
-  } else if (horasSemana >= 35) {
-    f.push('Llevas ' + Math.round(horasSemana) + 'h esta semana. Casi en las 46h — buen ritmo constante.');
+  var hsemActual = getHSEM(ahora);
+  if (horasSemana >= hsemActual) {
+    f.push(Math.round(horasSemana) + 'h esta semana — completaste las ' + hsemActual + 'h legales. Todo lo que sumes es extra.');
+  } else if (horasSemana >= hsemActual - 11) {
+    f.push('Llevas ' + Math.round(horasSemana) + 'h esta semana. Casi en las ' + hsemActual + 'h — buen ritmo constante.');
   } else if (horasSemana >= 20) {
     f.push(Math.round(horasSemana) + 'h acumuladas esta semana — superaste la mitad del camino.');
   } else if (horasSemana >= 10) {

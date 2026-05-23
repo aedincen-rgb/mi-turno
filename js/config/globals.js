@@ -8,7 +8,16 @@ var CLOUD_MODE = false;
 var CLOUD_ERROR = null;
 
 // Constantes de la app
-var HSEM = 46; // Horas máximas por semana antes de extras
+// Ley 2101/2021 — reducción gradual de jornada laboral colombiana
+function getHSEM(fecha) {
+  var d = fecha instanceof Date ? fecha : new Date(fecha);
+  if (d >= new Date(2026, 6, 15)) return 44;
+  if (d >= new Date(2025, 6, 15)) return 45;
+  if (d >= new Date(2024, 6, 15)) return 46;
+  if (d >= new Date(2023, 6, 15)) return 47;
+  return 48;
+}
+var HSEM = getHSEM(new Date()); // límite de la semana actual (referencia)
 var SMIN = 1423500; // Salario mínimo Colombia 2025
 var U12H = 12 * 3600000; // 12 horas en milisegundos
 var SKEY = 'mt_session'; // Clave para la sesión en localStorage

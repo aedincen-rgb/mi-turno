@@ -73,7 +73,7 @@ function doCalc(turnos, activo, ahoraRef, vh) {
     var ts = semMap[kS].sort(function (a, b) {
       return new Date(a.inicio) - new Date(b.inicio);
     });
-    var semOrd = HSEM * 60; // saldo semanal (2760 min = 46h)
+    var semOrd = getHSEM(new Date(kS)) * 60; // saldo semanal según Ley 2101/2021
     ts.forEach(function (t) {
       var ini = new Date(t.inicio),
         fin = new Date(t.fin || ahoraRef);
@@ -112,7 +112,7 @@ function calcPorDia(turnos, vh) {
     var ts = semMap[kS].sort(function (a, b) {
       return new Date(a.inicio) - new Date(b.inicio);
     });
-    var semOrd = HSEM * 60;
+    var semOrd = getHSEM(new Date(kS)) * 60;
     ts.forEach(function (t) {
       var ini = new Date(t.inicio),
         fin = new Date(t.fin);
