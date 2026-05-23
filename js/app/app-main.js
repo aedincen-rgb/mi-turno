@@ -398,8 +398,18 @@ function App(props) {
   function onFin() {
     if (!activo) return;
     haptic();
-    var fin = new Date().toISOString();
-    var turnoCerrado = { id: activo.id, inicio: activo.inicio, fin: fin, userId: uid };
+    var fin = new Date();
+    var durSeg = (fin - new Date(activo.inicio)) / 1000;
+    // Descartar turnos menores a 60 s — evita basura por doble-toque accidental
+    if (durSeg < 60) {
+      setActivo(null);
+      setShowOlv(false);
+      queueAction(uid, 'setActivo', null);
+      showToast('Turno muy corto — no registrado');
+      return;
+    }
+    var finISO = fin.toISOString();
+    var turnoCerrado = { id: activo.id, inicio: activo.inicio, fin: finISO, userId: uid };
     setTurnos(function (p) {
       return [turnoCerrado].concat(p);
     });
@@ -609,6 +619,10 @@ function App(props) {
           onOpenAssistant: function () {
             haptic();
             setTab('ai');
+          },
+          onOpenConfig: function () {
+            haptic();
+            setTab('config');
           }
         })
         : tab === 'dashboard'

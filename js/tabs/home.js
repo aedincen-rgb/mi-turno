@@ -87,9 +87,67 @@ function HomeTab(props) {
     return calc.bd[k].mins > 0;
   });
 
+  // Aviso si el salario nunca fue configurado (sigue en el mínimo por defecto)
+  var salarioSinConfig = props.salario <= SMIN;
+
   return h(
     'div',
     { className: 'fadeUp' },
+    // Aviso de salario no configurado
+    salarioSinConfig
+      ? h(
+          'div',
+          {
+            className: 'card',
+            style: {
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              background: 'var(--warn-dim)',
+              border: '1.5px solid var(--warn)',
+              borderRadius: '18px',
+              padding: '14px 16px',
+              marginBottom: '4px'
+            }
+          },
+          h('span', { style: { fontSize: '20px', flexShrink: 0 } }, '⚠️'),
+          h(
+            'div',
+            { style: { flex: 1 } },
+            h(
+              'div',
+              { style: { fontWeight: 700, fontSize: '13.5px', color: 'var(--warn)', marginBottom: '2px' } },
+              'Salario no configurado'
+            ),
+            h(
+              'div',
+              { style: { fontSize: '12.5px', color: 'var(--text-2)' } },
+              'Estás usando el salario mínimo legal. El estimado podría estar muy por debajo de tu salario real.'
+            )
+          ),
+          h(
+            'button',
+            {
+              style: {
+                flexShrink: 0,
+                background: 'var(--warn)',
+                border: 'none',
+                color: '#fff',
+                borderRadius: '10px',
+                padding: '6px 12px',
+                fontWeight: 700,
+                fontSize: '12px',
+                cursor: 'pointer'
+              },
+              onClick: function () {
+                haptic();
+                if (props.onOpenConfig) props.onOpenConfig();
+              }
+            },
+            'Ajustar'
+          )
+        )
+      : null,
     // Tarjeta 1: Estimado del Mes
     h(
       'div',

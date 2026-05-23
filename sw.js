@@ -1,7 +1,7 @@
 // ════════════════════════════════════════════════════════════════
 //  MI TURNO · SERVICE WORKER
 //  Cache de librerías CDN para arranque rápido offline-first
-const CACHE = 'mt-v15'; // auditoría normativa: HSEM dinámico Ley2101/2021 (45h en 2026, 44h en jul-2026)
+const CACHE = 'mt-v16'; // blindajes: descartar turnos <60s + aviso salario sin configurar
 const CDN = [
   'https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js',
