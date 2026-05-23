@@ -15,6 +15,9 @@ function ConfigTab(props){
   var st = useState('');    var tempSal = st[0], setTempSal = st[1];
   var gs = useState(false); var showMgtAcct = gs[0], setShowMgtAcct = gs[1];
   var rs = useState(false); var openRec = rs[0], setOpenRec = rs[1];
+  var su = useState(false); var showUsuarios = su[0], setShowUsuarios = su[1];
+  var sp = useState(false); var showPins = sp[0], setShowPins = sp[1];
+  var sd = useState(false); var showDiag = sd[0], setShowDiag = sd[1];
 
   function guardarSalario(){
     haptic();
@@ -172,6 +175,49 @@ function ConfigTab(props){
       )
     ),
 
+    // ══════ PANEL ADMINISTRADOR ══════
+    session && session.isAdmin && h('div', {className:'ajustes-section'},
+      h('div', {className:'ajustes-section-ttl'}, 'Administrador'),
+      h('div', {className:'ajustes-list'},
+
+        h('button', {
+          className:'ajustes-row ajustes-row-tap',
+          onClick: function(){ haptic(); setShowUsuarios(true); }
+        },
+          h('div', {className:'ajustes-row-ico'}, '👥'),
+          h('div', {className:'ajustes-row-mid'},
+            h('div', {className:'ajustes-row-ttl'}, 'Usuarios'),
+            h('div', {className:'ajustes-row-sub'}, 'Ver y gestionar todos los usuarios')
+          ),
+          h('div', {className:'ajustes-row-chev'}, '›')
+        ),
+
+        h('button', {
+          className:'ajustes-row ajustes-row-tap',
+          onClick: function(){ haptic(); setShowPins(true); }
+        },
+          h('div', {className:'ajustes-row-ico'}, '🔑'),
+          h('div', {className:'ajustes-row-mid'},
+            h('div', {className:'ajustes-row-ttl'}, 'Asignar PINs'),
+            h('div', {className:'ajustes-row-sub'}, 'Gestionar PINs de acceso')
+          ),
+          h('div', {className:'ajustes-row-chev'}, '›')
+        ),
+
+        h('button', {
+          className:'ajustes-row ajustes-row-tap',
+          onClick: function(){ haptic(); setShowDiag(true); }
+        },
+          h('div', {className:'ajustes-row-ico'}, '🛠'),
+          h('div', {className:'ajustes-row-mid'},
+            h('div', {className:'ajustes-row-ttl'}, 'Diagnóstico'),
+            h('div', {className:'ajustes-row-sub'}, 'Estado de sesiones y datos')
+          ),
+          h('div', {className:'ajustes-row-chev'}, '›')
+        )
+      )
+    ),
+
     // ══════ CÓMO SE CALCULA TU PAGO (acordeón con recargos) ══════
     h('div', {className:'ajustes-section'},
       h('div', {className:'ajustes-section-ttl'},
@@ -224,11 +270,30 @@ function ConfigTab(props){
         'Colombia · Nómina inteligente')
     ),
 
-    // Modal Gestionar cuenta (mantiene tu lógica actual)
+    // Modal Gestionar cuenta
     showMgtAcct && typeof ManageAccountModal !== 'undefined'
       && h(ManageAccountModal, {
           session: session,
           onClose: function(){ setShowMgtAcct(false); }
+        }),
+
+    // Modales admin
+    showUsuarios && typeof UsuariosModal !== 'undefined'
+      && h(UsuariosModal, {
+          session: session,
+          onClose: function(){ setShowUsuarios(false); }
+        }),
+
+    showPins && typeof AsignarPINsModal !== 'undefined'
+      && h(AsignarPINsModal, {
+          session: session,
+          onClose: function(){ setShowPins(false); }
+        }),
+
+    showDiag && typeof DiagnosticoModal !== 'undefined'
+      && h(DiagnosticoModal, {
+          session: session,
+          onClose: function(){ setShowDiag(false); }
         })
 
   );

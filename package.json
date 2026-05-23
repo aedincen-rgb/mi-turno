@@ -4,7 +4,7 @@
   "description": "PWA de gestión de turnos y nómina para Colombia",
   "type": "module",
   "scripts": {
-    "dev": "python -m http.server 8000",
+    "dev": "python3 -m http.server 8000 --bind 0.0.0.0",
     "serve": "npx http-server -p 8000 -c-1",
     "deploy": "echo 'Deploy to Vercel/Netlify manually or via CI'",
     "lint": "eslint 'js/**/*.js'",
