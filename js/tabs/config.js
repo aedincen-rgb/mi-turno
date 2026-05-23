@@ -112,6 +112,16 @@ function ConfigTabInner(props) {
   var openQuincena = oq[0],
     setOpenQuincena = oq[1];
 
+  // Estado local de texto para los inputs Q1/Q2 — permite vaciar el
+  // campo y reescribir sin que React lo fuerce a su valor previo.
+  // Se sincroniza con prefs solo cuando el texto es un número válido.
+  var q1t = useState('');
+  var q1Text = q1t[0],
+    setQ1Text = q1t[1];
+  var q2t = useState('');
+  var q2Text = q2t[0],
+    setQ2Text = q2t[1];
+
   // Estado del chequeo manual de actualización
   // updStatus: 'idle' | 'checking' | 'uptodate' | 'available' | 'error'
   var us = useState({ status: 'idle', remote: null, checkedAt: null });
@@ -169,6 +179,41 @@ function ConfigTabInner(props) {
   // Constantes con fallback por si globals.js está en versión vieja en caché
   var AUX_VAL = typeof AUX_TRANSPORTE_2026 !== 'undefined' ? AUX_TRANSPORTE_2026 : 249095;
   var PRES_PCT = typeof PRESTACIONES_PCT !== 'undefined' ? PRESTACIONES_PCT : 0.218;
+
+  // Sincroniza el texto local con los días reales de las prefs cuando
+  // cambian desde fuera (carga inicial, preset, etc.)
+  useEffect(function () {
+    setQ1Text(String(prefs.q1Day));
+  }, [prefs.q1Day]);
+  useEffect(function () {
+    setQ2Text(String(prefs.q2Day));
+  }, [prefs.q2Day]);
+
+  // Acepta texto libre; solo commitea cuando es un entero válido 1..28.
+  function onDayTextChange(which, txt) {
+    if (which === 'q1') setQ1Text(txt);
+    else setQ2Text(txt);
+    if (txt === '') return; // permite borrar sin forzar nada
+    var v = parseInt(txt, 10);
+    if (isNaN(v)) return;
+    if (v < 1 || v > 28) return;
+    if (which === 'q1') patchPrefs({ q1Day: v });
+    else patchPrefs({ q2Day: v });
+  }
+  // Al perder el foco, si quedó vacío o inválido, snap al último valor válido.
+  function onDayBlur(which) {
+    if (which === 'q1') {
+      var v1 = parseInt(q1Text, 10);
+      if (isNaN(v1) || v1 < 1 || v1 > 28) setQ1Text(String(prefs.q1Day));
+    } else {
+      var v2 = parseInt(q2Text, 10);
+      if (isNaN(v2) || v2 < 1 || v2 > 28) setQ2Text(String(prefs.q2Day));
+    }
+  }
+  function applyPreset(a, b) {
+    haptic();
+    patchPrefs({ q1Day: a, q2Day: b });
+  }
 
   function guardarSalario() {
     haptic();
@@ -497,14 +542,16 @@ function ConfigTabInner(props) {
                     h('input', {
                       type: 'number',
                       inputMode: 'numeric',
+                      pattern: '[0-9]*',
                       min: 1,
                       max: 28,
                       className: 'ajustes-edit-input',
-                      value: prefs.q1Day,
+                      value: q1Text,
+                      onFocus: function (e) { e.target.select(); },
                       onChange: function (e) {
-                        var v = parseInt(e.target.value, 10);
-                        if (!isNaN(v)) patchPrefs({ q1Day: v });
-                      }
+                        onDayTextChange('q1', e.target.value);
+                      },
+                      onBlur: function () { onDayBlur('q1'); }
                     })
                   ),
                   h(
@@ -514,16 +561,36 @@ function ConfigTabInner(props) {
                     h('input', {
                       type: 'number',
                       inputMode: 'numeric',
-                      min: 2,
+                      pattern: '[0-9]*',
+                      min: 1,
                       max: 28,
                       className: 'ajustes-edit-input',
-                      value: prefs.q2Day,
+                      value: q2Text,
+                      onFocus: function (e) { e.target.select(); },
                       onChange: function (e) {
-                        var v = parseInt(e.target.value, 10);
-                        if (!isNaN(v)) patchPrefs({ q2Day: v });
-                      }
+                        onDayTextChange('q2', e.target.value);
+                      },
+                      onBlur: function () { onDayBlur('q2'); }
                     })
                   )
+                ),
+                // Presets de pago más comunes en Colombia
+                h(
+                  'div',
+                  { className: 'ajustes-quincena-presets' },
+                  h('span', { className: 'ajustes-quincena-presets-lbl' }, 'Presets:'),
+                  [[1, 16], [10, 25], [15, 30]].map(function (p) {
+                    var active = prefs.q1Day === p[0] && prefs.q2Day === p[1];
+                    return h(
+                      'button',
+                      {
+                        key: p[0] + '-' + p[1],
+                        className: 'ajustes-quincena-preset' + (active ? ' on' : ''),
+                        onClick: function () { applyPreset(p[0], p[1]); }
+                      },
+                      p[0] + ' / ' + p[1]
+                    );
+                  })
                 ),
                 h(
                   'p',
