@@ -45,11 +45,28 @@
       .catch(function () {});
   }
 
-  function checkForUpdate() {
-    if (!swReg) return;
+  function checkForUpdate(force) {
+    if (!swReg) {
+      if (force) window.location.reload();
+      return;
+    }
     swReg.update().catch(function () {});
     pollVersion();
+    if (force) {
+      try { _flashToast('Buscando nueva versión…'); } catch (_) {}
+      // Si tras 2.5s no llegó controllerchange (es decir, no hay update),
+      // damos un reload duro para garantizar que se traiga lo último.
+      setTimeout(function () {
+        if (!refreshing) {
+          refreshing = true;
+          window.location.reload();
+        }
+      }, 2500);
+    }
   }
+
+  // Expuesto para el botón "Buscar actualización" del tab Ajustes
+  window._mtCheckUpdate = checkForUpdate;
 
   // ── Registro ──
   window.addEventListener('load', function () {

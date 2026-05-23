@@ -621,12 +621,74 @@ function ConfigTab(props) {
       )
     ),
 
+    // ══════ ACERCA DE / VERSIÓN ══════
+    h(
+      'div',
+      { className: 'ajustes-section' },
+      h('div', { className: 'ajustes-section-ttl' }, 'Acerca de'),
+      h(
+        'div',
+        { className: 'ajustes-list' },
+        h(
+          'div',
+          { className: 'ajustes-row ajustes-row-static' },
+          h('div', { className: 'ajustes-row-ico soft' }, 'ⓘ'),
+          h(
+            'div',
+            { className: 'ajustes-row-mid' },
+            h('div', { className: 'ajustes-row-ttl' }, 'Versión instalada'),
+            h(
+              'div',
+              { className: 'ajustes-row-sub' },
+              typeof MT_APP_VERSION !== 'undefined' ? MT_APP_VERSION : 'desconocida'
+            )
+          ),
+          h('div', { className: 'ajustes-row-val' }, 'PWA')
+        ),
+        h(
+          'button',
+          {
+            className: 'ajustes-row ajustes-row-tap',
+            onClick: function () {
+              haptic();
+              try {
+                if (window._mtCheckUpdate) {
+                  window._mtCheckUpdate(true);
+                } else {
+                  window.location.reload();
+                }
+              } catch (_) {
+                window.location.reload();
+              }
+            }
+          },
+          h('div', { className: 'ajustes-row-ico' }, '⟳'),
+          h(
+            'div',
+            { className: 'ajustes-row-mid' },
+            h('div', { className: 'ajustes-row-ttl' }, 'Buscar actualización'),
+            h(
+              'div',
+              { className: 'ajustes-row-sub' },
+              'Forzar revisión inmediata de nueva versión'
+            )
+          ),
+          h('div', { className: 'ajustes-row-chev' }, '›')
+        )
+      )
+    ),
+
     // ══════ FOOTER ══════
     h(
       'div',
       { className: 'ajustes-footer' },
       h('div', { className: 'ajustes-footer-brand' }, 'Mi Turno'),
-      h('div', { className: 'ajustes-footer-sub' }, 'Colombia · Nómina inteligente')
+      h(
+        'div',
+        { className: 'ajustes-footer-sub' },
+        'Colombia · Nómina inteligente · ' +
+          (typeof MT_APP_VERSION !== 'undefined' ? MT_APP_VERSION : '')
+      )
     ),
 
     // Modal Gestionar cuenta

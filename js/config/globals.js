@@ -2,6 +2,10 @@
 //  MI TURNO · config/globals.js
 //  Variables globales Supabase + constantes
 // ════════════════════════════════════════════════════════════════
+// Versión visible de la app (mostrada en Ajustes → Acerca de).
+// Mantener sincronizada con CACHE en sw.js y "v" en version.json.
+var MT_APP_VERSION = 'v20';
+
 // Variables globales de Supabase
 var SUPA = null;
 var CLOUD_MODE = false;
