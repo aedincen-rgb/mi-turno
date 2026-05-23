@@ -3,12 +3,33 @@
 //  Tab Inicio: turno activo y controles
 // ════════════════════════════════════════════════════════════════
 
+// ── Saldo ordinario semanal restante (turnos cerrados) ───────
+// Devuelve los minutos ordinarios que quedan en la semana actual
+// antes de contar el turno activo. Usa la misma lógica min(8h, semanal).
+function _semOrdRestante(ahora, turnos) {
+  var lun = semLun(ahora);
+  var semOrd = HSEM * 60;
+  if (!turnos) return semOrd;
+  var ts = turnos
+    .filter(function (t) { return t.fin && new Date(t.inicio) >= lun; })
+    .sort(function (a, b) { return new Date(a.inicio) - new Date(b.inicio); });
+  ts.forEach(function (t) {
+    var ini = new Date(t.inicio), fin = new Date(t.fin);
+    if (isNaN(ini.getTime()) || isNaN(fin.getTime())) return;
+    var mOrd = Math.min(8 * 60, semOrd);
+    var cats = calcCats(ini, fin, mOrd);
+    var ord = cats.diurnaOrd + cats.noctOrd + cats.diurnaFest + cats.noctFest;
+    semOrd = Math.max(0, semOrd - ord);
+  });
+  return semOrd;
+}
+
 // ── Helper: tipo de hora actual ──────────────────────────────
-function getTipoHoraActual(ahora, activo) {
+// limiteT = min(8h del día, saldo semanal restante) calculado en HomeTab
+function getTipoHoraActual(ahora, durMins, limiteT) {
   var isNight = ahora.getHours() >= 21 || ahora.getHours() < 6;
   var isHoliday = esFest(ahora);
-  var durMins = activo ? Math.round((ahora - new Date(activo.inicio)) / 60000) : 0;
-  var isExtra = durMins >= 480; // extra a partir de la hora 9 del mismo turno
+  var isExtra = durMins >= limiteT;
 
   if (isHoliday) {
     if (isExtra) return isNight ? RC.extraFestNoct : RC.extraFestDiur;
@@ -43,6 +64,8 @@ function HomeTab(props) {
   }, []);
 
   var durActual = activo ? Math.round((ahora - new Date(activo.inicio)) / 60000) : 0;
+  // Límite ordinario del turno activo: el menor entre 8h diarias y el saldo semanal de 46h
+  var limiteActivo = Math.min(8 * 60, _semOrdRestante(ahora, turnos));
   var liveDelta = 0;
   if (activo && vh) {
     var nowMs = ahora.getTime();
@@ -50,7 +73,7 @@ function HomeTab(props) {
     var fracSec = (nowMs - minuteStart) / 1000;
     var isNight = ahora.getHours() >= 21 || ahora.getHours() < 6;
     var isHoliday = esFest(ahora);
-    var isExtra = durActual >= 480;
+    var isExtra = durActual >= limiteActivo;
     // Matriz completa: noche × festivo × extra
     var factor = isExtra
       ? (isHoliday ? (isNight ? 2.5 : 2.0) : (isNight ? 1.75 : 1.25))
@@ -157,7 +180,7 @@ function HomeTab(props) {
               'div',
               { className: 'active-tag' },
               (function() {
-                var tipo = getTipoHoraActual(ahora, activo);
+                var tipo = getTipoHoraActual(ahora, durActual, limiteActivo);
                 return h(
                   'span',
                   {
