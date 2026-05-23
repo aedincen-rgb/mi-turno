@@ -1,4 +1,4 @@
 {
-  "v": "v25",
-  "label": "LED header verde/rojo según conexión a Supabase"
+  "v": "v26",
+  "label": "Hard reset nuclear + detección de reload fantasma"
 }
