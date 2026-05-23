@@ -41,8 +41,12 @@ function getTipoHoraActual(ahora, durMins, limiteT) {
 }
 
 function HomeTab(props) {
-  var calc = props.calc,
-    activo = props.activo,
+  var prefs = props.prefs || (typeof QUINCENA_PREFS_DEFAULT !== 'undefined' ? QUINCENA_PREFS_DEFAULT : { auxTransp: false, prestaciones: false, quincenaMode: false });
+  var modoQuincena = !!prefs.quincenaMode && props.quincena;
+  // Si el modo quincenal está activo usamos el cálculo filtrado al rango,
+  // si no, el cálculo mensual estándar.
+  var calc = modoQuincena ? props.quincena.calc : props.calc;
+  var activo = props.activo,
     ahora = props.ahora,
     vh = props.vh,
     turnos = props.turnos;
@@ -81,8 +85,23 @@ function HomeTab(props) {
     var perSec = (vh / 3600) * factor;
     liveDelta = perSec * fracSec;
   }
-  var displayAmount = calc.totalCOP + liveDelta;
-  var pctMes = Math.min(100, (displayAmount / props.salario) * 100);
+  // El "tick" en vivo se cuenta solo si el turno activo cae dentro de la quincena
+  var aplicaLive = true;
+  if (modoQuincena && activo) {
+    var iniAct = new Date(activo.inicio);
+    aplicaLive = iniAct >= props.quincena.rango.ini && iniAct < props.quincena.rango.fin;
+  }
+  var subTotal = calc.totalCOP + (aplicaLive ? liveDelta : 0);
+  // Proporción para los extras: en modo quincenal sumamos la mitad
+  var propExtras = modoQuincena ? 0.5 : 1;
+  var extras =
+    typeof calcularExtras === 'function'
+      ? calcularExtras(props.salario, prefs, propExtras)
+      : { aux: 0, prest: 0, total: 0 };
+  var displayAmount = subTotal + extras.total;
+  // Meta: salario completo o medio salario en modo quincena
+  var metaSalario = modoQuincena ? props.salario / 2 : props.salario;
+  var pctMes = metaSalario > 0 ? Math.min(100, (displayAmount / metaSalario) * 100) : 0;
   var tipos = Object.keys(calc.bd).filter(function (k) {
     return calc.bd[k].mins > 0;
   });
@@ -148,17 +167,26 @@ function HomeTab(props) {
           )
         )
       : null,
-    // Tarjeta 1: Estimado del Mes
+    // Tarjeta 1: Estimado (mes o quincena)
     h(
       'div',
       { className: 'card', style: { textAlign: 'center', borderRadius: '32px' } },
-      h('div', { className: 'hero-eyebrow' }, 'Estimado este mes'),
+      h(
+        'div',
+        { className: 'hero-eyebrow' },
+        modoQuincena
+          ? 'Estimado ' +
+              props.quincena.rango.label +
+              ' · ' +
+              formatRangoCorto(props.quincena.rango)
+          : 'Estimado este mes'
+      ),
       h(
         'div',
         { style: { display: 'flex', justifyContent: 'center', margin: '12px 0 16px' } },
         h(
           'div',
-          { className: 'num-glass-card' + (activo ? ' hero-amount-live' : '') },
+          { className: 'num-glass-card' + (activo && aplicaLive ? ' hero-amount-live' : '') },
           h('div', { className: 'hero-amount' }, fCOP(displayAmount))
         )
       ),
@@ -167,8 +195,21 @@ function HomeTab(props) {
         { className: 'hero-sub' },
         h('span', null, fDur(calc.totalMins) + ' registradas'),
         h('span', { className: 'hero-sub-dot' }),
-        h('span', null, 'meta ' + fCOP(props.salario))
-      )
+        h('span', null, 'meta ' + fCOP(metaSalario))
+      ),
+      extras.total > 0
+        ? h(
+            'div',
+            {
+              className: 'hero-sub',
+              style: { marginTop: '6px', fontSize: '11.5px', opacity: 0.78 }
+            },
+            'Incluye ',
+            extras.aux > 0 ? h('span', null, 'aux. transporte ' + fCOP(extras.aux)) : null,
+            extras.aux > 0 && extras.prest > 0 ? h('span', { className: 'hero-sub-dot' }) : null,
+            extras.prest > 0 ? h('span', null, 'prestaciones ' + fCOP(extras.prest)) : null
+          )
+        : null
     ),
 
     // Frase IA · texto limpio, rota cada 7 s, abre el Asistente al tocar
@@ -285,7 +326,11 @@ function HomeTab(props) {
       h(
         'div',
         { className: 'prog-row' },
-        h('span', { className: 'prog-lbl' }, 'Avance del salario base'),
+        h(
+          'span',
+          { className: 'prog-lbl' },
+          modoQuincena ? 'Avance de la quincena' : 'Avance del salario base'
+        ),
         h(
           'span',
           {

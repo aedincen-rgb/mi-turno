@@ -38,6 +38,65 @@ function ConfigTab(props) {
   var showErrorViewer = sv[0],
     setShowErrorViewer = sv[1];
 
+  // Estado del acordeón del modo quincenal
+  var oq = useState(false);
+  var openQuincena = oq[0],
+    setOpenQuincena = oq[1];
+
+  // Estado del chequeo manual de actualización
+  // updStatus: 'idle' | 'checking' | 'uptodate' | 'available' | 'error'
+  var us = useState({ status: 'idle', remote: null, checkedAt: null });
+  var updState = us[0],
+    setUpdState = us[1];
+
+  function checkVersionNow() {
+    haptic();
+    setUpdState({ status: 'checking', remote: null, checkedAt: null });
+    var local = typeof MT_APP_VERSION !== 'undefined' ? MT_APP_VERSION : '';
+    fetch('version.json?t=' + Date.now(), { cache: 'no-store' })
+      .then(function (r) {
+        if (!r || !r.ok) throw new Error('http ' + (r && r.status));
+        return r.json();
+      })
+      .then(function (j) {
+        var remote = j && j.v ? String(j.v) : null;
+        if (!remote) throw new Error('formato inválido');
+        var ts = new Date().toLocaleTimeString('es-CO', {
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+        if (remote === local) {
+          setUpdState({ status: 'uptodate', remote: remote, checkedAt: ts });
+        } else {
+          setUpdState({ status: 'available', remote: remote, checkedAt: ts });
+          // Pedimos al SW que se actualice en segundo plano para que el
+          // botón "Actualizar ahora" sea instantáneo cuando lo toquen.
+          try {
+            if (window._mtCheckUpdate) window._mtCheckUpdate(false);
+          } catch (_) {}
+        }
+      })
+      .catch(function () {
+        setUpdState({ status: 'error', remote: null, checkedAt: null });
+      });
+  }
+
+  function applyUpdateNow() {
+    haptic();
+    try {
+      if (window._mtCheckUpdate) {
+        window._mtCheckUpdate(true);
+        return;
+      }
+    } catch (_) {}
+    window.location.reload();
+  }
+
+  var prefs = props.prefs || (typeof QUINCENA_PREFS_DEFAULT !== 'undefined' ? QUINCENA_PREFS_DEFAULT : { auxTransp: false, prestaciones: false, quincenaMode: false, q1Day: 1, q2Day: 16 });
+  function patchPrefs(p) {
+    if (props.onPrefsChange) props.onPrefsChange(p);
+  }
+
   function guardarSalario() {
     haptic();
     var v = parseFloat(tempSal) || SMIN;
@@ -202,6 +261,204 @@ function ConfigTab(props) {
             h('div', { className: 'ajustes-row-sub' }, 'Se calcula automáticamente')
           ),
           h('div', { className: 'ajustes-row-val' }, fCOP(vh))
+        )
+      )
+    ),
+
+    // ══════ ESTIMACIÓN AVANZADA ══════
+    h(
+      'div',
+      { className: 'ajustes-section' },
+      h('div', { className: 'ajustes-section-ttl' }, 'Estimación avanzada'),
+      h(
+        'div',
+        { className: 'ajustes-list' },
+
+        // Toggle: auxilio de transporte
+        h(
+          'div',
+          { className: 'ajustes-row' },
+          h('div', { className: 'ajustes-row-ico' }, '🚌'),
+          h(
+            'div',
+            { className: 'ajustes-row-mid' },
+            h('div', { className: 'ajustes-row-ttl' }, 'Auxilio de transporte'),
+            h(
+              'div',
+              { className: 'ajustes-row-sub' },
+              'Suma ' + fCOP(AUX_TRANSPORTE_2026) + ' al estimado (fijo 2026)'
+            )
+          ),
+          h(
+            'label',
+            { className: 'ajustes-switch' },
+            h('input', {
+              type: 'checkbox',
+              checked: !!prefs.auxTransp,
+              onChange: function () {
+                haptic();
+                patchPrefs({ auxTransp: !prefs.auxTransp });
+              }
+            }),
+            h('span', { className: 'ajustes-switch-track' })
+          )
+        ),
+
+        // Toggle: prestaciones aproximadas
+        h(
+          'div',
+          { className: 'ajustes-row' },
+          h('div', { className: 'ajustes-row-ico' }, '✦'),
+          h(
+            'div',
+            { className: 'ajustes-row-mid' },
+            h('div', { className: 'ajustes-row-ttl' }, 'Prestaciones aproximadas'),
+            h(
+              'div',
+              { className: 'ajustes-row-sub' },
+              'Cesantías, prima y vacaciones (~' + Math.round(PRESTACIONES_PCT * 100) + '% del salario)'
+            )
+          ),
+          h(
+            'label',
+            { className: 'ajustes-switch' },
+            h('input', {
+              type: 'checkbox',
+              checked: !!prefs.prestaciones,
+              onChange: function () {
+                haptic();
+                patchPrefs({ prestaciones: !prefs.prestaciones });
+              }
+            }),
+            h('span', { className: 'ajustes-switch-track' })
+          )
+        )
+      ),
+      h(
+        'p',
+        { className: 'ajustes-legal', style: { padding: '0 4px' } },
+        'Son valores estimados. Pueden variar según tu empleador y las deducciones legales.'
+      )
+    ),
+
+    // ══════ MODO QUINCENAL ══════
+    h(
+      'div',
+      { className: 'ajustes-section' },
+      h('div', { className: 'ajustes-section-ttl' }, 'Modo quincenal'),
+      h(
+        'div',
+        { className: 'ajustes-list' },
+
+        // Toggle quincena
+        h(
+          'div',
+          { className: 'ajustes-row' },
+          h('div', { className: 'ajustes-row-ico' }, '◑'),
+          h(
+            'div',
+            { className: 'ajustes-row-mid' },
+            h('div', { className: 'ajustes-row-ttl' }, 'Calcular por quincena'),
+            h(
+              'div',
+              { className: 'ajustes-row-sub' },
+              'Separa el estimado en Q1 y Q2 según tus fechas de pago'
+            )
+          ),
+          h(
+            'label',
+            { className: 'ajustes-switch' },
+            h('input', {
+              type: 'checkbox',
+              checked: !!prefs.quincenaMode,
+              onChange: function () {
+                haptic();
+                var next = !prefs.quincenaMode;
+                patchPrefs({ quincenaMode: next });
+                if (next) setOpenQuincena(true);
+              }
+            }),
+            h('span', { className: 'ajustes-switch-track' })
+          )
+        ),
+
+        // Acordeón: días de quincena
+        h(
+          'div',
+          { className: 'ajustes-row-group' + (openQuincena ? ' open' : '') },
+          h(
+            'button',
+            {
+              className: 'ajustes-row ajustes-row-tap',
+              disabled: !prefs.quincenaMode,
+              onClick: function () {
+                haptic();
+                setOpenQuincena(!openQuincena);
+              },
+              style: prefs.quincenaMode ? null : { opacity: 0.55, cursor: 'not-allowed' }
+            },
+            h('div', { className: 'ajustes-row-ico soft' }, '📅'),
+            h(
+              'div',
+              { className: 'ajustes-row-mid' },
+              h('div', { className: 'ajustes-row-ttl' }, 'Días de inicio'),
+              h(
+                'div',
+                { className: 'ajustes-row-sub' },
+                'Q1: día ' + prefs.q1Day + '  ·  Q2: día ' + prefs.q2Day
+              )
+            ),
+            h('div', { className: 'ajustes-row-chev' }, openQuincena ? '−' : '+')
+          ),
+          openQuincena && prefs.quincenaMode
+            ? h(
+                'div',
+                { className: 'ajustes-row-body' },
+                h(
+                  'div',
+                  { className: 'ajustes-quincena-grid' },
+                  h(
+                    'label',
+                    { className: 'ajustes-quincena-fld' },
+                    h('span', { className: 'ajustes-quincena-lbl' }, 'Inicio Q1'),
+                    h('input', {
+                      type: 'number',
+                      inputMode: 'numeric',
+                      min: 1,
+                      max: 28,
+                      className: 'ajustes-edit-input',
+                      value: prefs.q1Day,
+                      onChange: function (e) {
+                        var v = parseInt(e.target.value, 10);
+                        if (!isNaN(v)) patchPrefs({ q1Day: v });
+                      }
+                    })
+                  ),
+                  h(
+                    'label',
+                    { className: 'ajustes-quincena-fld' },
+                    h('span', { className: 'ajustes-quincena-lbl' }, 'Inicio Q2'),
+                    h('input', {
+                      type: 'number',
+                      inputMode: 'numeric',
+                      min: 2,
+                      max: 28,
+                      className: 'ajustes-edit-input',
+                      value: prefs.q2Day,
+                      onChange: function (e) {
+                        var v = parseInt(e.target.value, 10);
+                        if (!isNaN(v)) patchPrefs({ q2Day: v });
+                      }
+                    })
+                  )
+                ),
+                h(
+                  'p',
+                  { className: 'ajustes-edit-hint' },
+                  'Q1 va desde el día indicado hasta el inicio de Q2. El estimado se filtra automáticamente por la quincena activa.'
+                )
+              )
+            : null
         )
       )
     ),
@@ -413,12 +670,126 @@ function ConfigTab(props) {
       )
     ),
 
+    // ══════ ACERCA DE / VERSIÓN ══════
+    (function () {
+      var localV = typeof MT_APP_VERSION !== 'undefined' ? MT_APP_VERSION : 'desconocida';
+
+      // Construcción dinámica de la fila del botón según estado del check
+      var btnIcon, btnTtl, btnSub, btnCls, btnIcoCls, btnDisabled, btnOnClick;
+      if (updState.status === 'checking') {
+        btnIcon = '⟳';
+        btnTtl = 'Buscando…';
+        btnSub = 'Consultando el servidor';
+        btnCls = 'ajustes-row';
+        btnIcoCls = 'ajustes-row-ico';
+        btnDisabled = true;
+        btnOnClick = function () {};
+      } else if (updState.status === 'uptodate') {
+        btnIcon = '✓';
+        btnTtl = 'Ya estás al día';
+        btnSub = 'Última versión (' + updState.remote + ') · ' + updState.checkedAt;
+        btnCls = 'ajustes-row ajustes-row-tap';
+        btnIcoCls = 'ajustes-row-ico';
+        btnDisabled = false;
+        btnOnClick = checkVersionNow;
+      } else if (updState.status === 'available') {
+        btnIcon = '↑';
+        btnTtl = 'Nueva versión ' + updState.remote;
+        btnSub = 'Tocá para actualizar (estás en ' + localV + ')';
+        btnCls = 'ajustes-row ajustes-row-tap';
+        btnIcoCls = 'ajustes-row-ico';
+        btnDisabled = false;
+        btnOnClick = applyUpdateNow;
+      } else if (updState.status === 'error') {
+        btnIcon = '!';
+        btnTtl = 'No se pudo verificar';
+        btnSub = 'Revisá tu conexión y tocá de nuevo';
+        btnCls = 'ajustes-row ajustes-row-tap';
+        btnIcoCls = 'ajustes-row-ico danger';
+        btnDisabled = false;
+        btnOnClick = checkVersionNow;
+      } else {
+        btnIcon = '⟳';
+        btnTtl = 'Buscar actualización';
+        btnSub = 'Verifica si hay una versión más reciente';
+        btnCls = 'ajustes-row ajustes-row-tap';
+        btnIcoCls = 'ajustes-row-ico';
+        btnDisabled = false;
+        btnOnClick = checkVersionNow;
+      }
+
+      return h(
+        'div',
+        { className: 'ajustes-section' },
+        h('div', { className: 'ajustes-section-ttl' }, 'Acerca de'),
+        h(
+          'div',
+          { className: 'ajustes-list' },
+          // Versión instalada (estática)
+          h(
+            'div',
+            { className: 'ajustes-row ajustes-row-static' },
+            h('div', { className: 'ajustes-row-ico soft' }, 'ⓘ'),
+            h(
+              'div',
+              { className: 'ajustes-row-mid' },
+              h('div', { className: 'ajustes-row-ttl' }, 'Versión instalada'),
+              h('div', { className: 'ajustes-row-sub' }, localV)
+            ),
+            h('div', { className: 'ajustes-row-val' }, 'PWA')
+          ),
+          // Botón de chequeo dinámico
+          h(
+            'button',
+            {
+              className: btnCls,
+              disabled: btnDisabled,
+              onClick: btnOnClick,
+              style: btnDisabled ? { opacity: 0.6, cursor: 'wait' } : null
+            },
+            h(
+              'div',
+              {
+                className: btnIcoCls,
+                style:
+                  updState.status === 'checking'
+                    ? { animation: 'spin 1s linear infinite' }
+                    : null
+              },
+              btnIcon
+            ),
+            h(
+              'div',
+              { className: 'ajustes-row-mid' },
+              h('div', { className: 'ajustes-row-ttl' }, btnTtl),
+              h('div', { className: 'ajustes-row-sub' }, btnSub)
+            ),
+            updState.status === 'available'
+              ? h(
+                  'div',
+                  {
+                    className: 'ajustes-row-val',
+                    style: { color: 'var(--accent)', fontSize: '13px' }
+                  },
+                  'Actualizar'
+                )
+              : h('div', { className: 'ajustes-row-chev' }, '›')
+          )
+        )
+      );
+    })(),
+
     // ══════ FOOTER ══════
     h(
       'div',
       { className: 'ajustes-footer' },
       h('div', { className: 'ajustes-footer-brand' }, 'Mi Turno'),
-      h('div', { className: 'ajustes-footer-sub' }, 'Colombia · Nómina inteligente')
+      h(
+        'div',
+        { className: 'ajustes-footer-sub' },
+        'Colombia · Nómina inteligente · ' +
+          (typeof MT_APP_VERSION !== 'undefined' ? MT_APP_VERSION : '')
+      )
     ),
 
     // Modal Gestionar cuenta

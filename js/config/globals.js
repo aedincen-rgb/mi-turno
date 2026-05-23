@@ -2,6 +2,10 @@
 //  MI TURNO · config/globals.js
 //  Variables globales Supabase + constantes
 // ════════════════════════════════════════════════════════════════
+// Versión visible de la app (mostrada en Ajustes → Acerca de).
+// Mantener sincronizada con CACHE en sw.js y "v" en version.json.
+var MT_APP_VERSION = 'v21';
+
 // Variables globales de Supabase
 var SUPA = null;
 var CLOUD_MODE = false;
@@ -19,6 +23,8 @@ function getHSEM(fecha) {
 }
 var HSEM = getHSEM(new Date()); // límite de la semana actual (referencia)
 var SMIN = 1750905; // Salario mínimo Colombia 2026 (Decretos 1469-1470 dic 2025)
+var AUX_TRANSPORTE_2026 = 249095; // Auxilio de transporte fijo 2026 (Decreto 1470 dic 2025)
+var PRESTACIONES_PCT = 0.218; // Aproximado: cesantías (8.33%) + prima (8.33%) + vacaciones (4.17%) + intereses cesantías (~1%)
 var U12H = 12 * 3600000; // 12 horas en milisegundos
 var SKEY = 'mt_session'; // Clave para la sesión en localStorage
 var FEST_CACHE = {}; // Caché para festivos colombianos
