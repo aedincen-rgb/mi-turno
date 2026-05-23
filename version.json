@@ -1,4 +1,4 @@
 {
-  "v": "v23",
-  "label": "Inputs Q1/Q2 editables libremente + presets de quincena"
+  "v": "v24",
+  "label": "Fix salario no se aplica: parseo flexible + flag salarioConfigured"
 }

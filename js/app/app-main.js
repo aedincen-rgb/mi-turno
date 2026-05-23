@@ -33,6 +33,10 @@ function App(props) {
   var s3 = useState(SMIN);
   var salario = s3[0],
     setSalario = s3[1];
+  // Flag explícito: el usuario confirmó su salario en Ajustes al menos una vez
+  var sc = useState(false);
+  var salarioConfigured = sc[0],
+    setSalarioConfigured = sc[1];
   var s4 = useState(Date.now());
   var ahora = s4[0],
     setAhora = s4[1];
@@ -156,7 +160,15 @@ function App(props) {
           }
           setTurnos(data.turnos || []);
           setActivo(data.activo || null);
-          setSalario(data.salario || SMIN);
+          var salCarga = data.salario || SMIN;
+          setSalario(salCarga);
+          // Migración: usuarios anteriores a v24 sin flag explícito.
+          // Si tienen salario por encima del mínimo legal, asumimos que
+          // lo configuraron y marcamos el flag para que no les aparezca
+          // el banner de "Ajustá tu salario".
+          var savedFlag = leer(dk(uid, 'sc'), null);
+          var inferred = savedFlag === true || (savedFlag === null && salCarga > SMIN);
+          setSalarioConfigured(inferred);
           setPrefs(normalizePrefs(leer(dk(uid, 'prefs'), null)));
           // Exponer estado global para el Mood Bar
           window.__miTurnoState = {
@@ -234,6 +246,13 @@ function App(props) {
       grabar(dk(uid, 's'), salario);
     },
     [salario, uid]
+  );
+  useEffect(
+    function () {
+      if (!loadedRef.current) return;
+      grabar(dk(uid, 'sc'), salarioConfigured);
+    },
+    [salarioConfigured, uid]
   );
   useEffect(
     function () {
@@ -499,6 +518,9 @@ function App(props) {
   function onSalario(v) {
     haptic();
     setSalario(v);
+    // Cualquier guardado explícito marca el salario como configurado,
+    // incluso si coincide con el mínimo legal (caso válido).
+    setSalarioConfigured(true);
     showToast('Salario actualizado');
     queueAction(uid, 'setSalario', { salario: v });
   }
@@ -674,6 +696,7 @@ function App(props) {
           activo: activo,
           ahora: ahoraDate,
           salario: salario,
+          salarioConfigured: salarioConfigured,
           vh: vh,
           turnos: turnos,
           prefs: prefs,
