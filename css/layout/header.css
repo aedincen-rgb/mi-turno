@@ -61,11 +61,22 @@
 .hdr-led {
   width: 8px;
   height: 8px;
-  background: #FF9500; /* Color naranja Micrófono iOS */
+  background: #FF9500; /* fallback */
   border-radius: 50%;
   animation: ledPulse 2s ease-in-out infinite;
   flex-shrink: 0;
   box-shadow: 0 0 6px rgba(255, 149, 0, 0.4);
+  transition: background 0.3s var(--ease), box-shadow 0.3s var(--ease);
+}
+/* Conectado a Supabase / internet ok */
+.hdr-led.on {
+  background: #34C759; /* verde sistema iOS */
+  box-shadow: 0 0 6px rgba(52, 199, 89, 0.55);
+}
+/* Sin conexión */
+.hdr-led.off {
+  background: #FF3B30; /* rojo sistema iOS */
+  box-shadow: 0 0 6px rgba(255, 59, 48, 0.55);
 }
 
 @keyframes ledPulse {

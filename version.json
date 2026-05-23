@@ -1,4 +1,4 @@
 {
-  "v": "v24",
-  "label": "Fix salario no se aplica: parseo flexible + flag salarioConfigured"
+  "v": "v25",
+  "label": "LED header verde/rojo según conexión a Supabase"
 }
