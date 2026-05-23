@@ -609,7 +609,26 @@ function App(props) {
       h(
         'div',
         { className: 'hdr-l' },
-        isOnlineStatus ? h('div', { className: 'hdr-led' }) : null,
+        (function () {
+          // Verde: hay internet y (es usuario local que no necesita cloud,
+          //         o el cliente Supabase está activo).
+          // Rojo: sin internet, o usuario en la nube sin CLOUD_MODE.
+          var esLocal = !session || session.guest || session.pinOnly;
+          var cloudOk = typeof CLOUD_MODE !== 'undefined' && CLOUD_MODE;
+          var conectado = isOnlineStatus && (esLocal || cloudOk);
+          var titulo = !isOnlineStatus
+            ? 'Sin conexión a internet'
+            : esLocal
+              ? 'Conectado (modo local)'
+              : cloudOk
+                ? 'Conectado a la nube'
+                : 'Sin conexión a la nube';
+          return h('div', {
+            className: 'hdr-led ' + (conectado ? 'on' : 'off'),
+            title: titulo,
+            'aria-label': titulo
+          });
+        })(),
         h('img', {
           src: 'img/logo-mark.svg',
           width: 24,
