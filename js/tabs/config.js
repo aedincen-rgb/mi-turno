@@ -8,7 +8,76 @@
 // CLOUD_MODE, ManageAccountModal.
 // ═══════════════════════════════════════════════════════════════
 
+// Wrapper a prueba de fallos: si ConfigTabInner crashea por cualquier
+// motivo (versión vieja de globals.js en caché, etc.) mostramos un
+// estado mínimo y un botón para forzar recarga, en vez de pantalla blanca.
 function ConfigTab(props) {
+  try {
+    return ConfigTabInner(props);
+  } catch (err) {
+    console.error('[MT] ConfigTab render error:', err);
+    return h(
+      'div',
+      { className: 'fadeUp', style: { padding: '24px' } },
+      h(
+        'div',
+        {
+          className: 'card',
+          style: {
+            padding: '20px',
+            borderRadius: '20px',
+            background: 'var(--warn-dim)',
+            border: '1.5px solid var(--warn)'
+          }
+        },
+        h(
+          'div',
+          { style: { fontSize: '15px', fontWeight: 700, marginBottom: '8px' } },
+          '⚠ Ajustes no pudo cargar correctamente'
+        ),
+        h(
+          'div',
+          { style: { fontSize: '13px', color: 'var(--text-2)', marginBottom: '14px', lineHeight: 1.45 } },
+          'Tu app tiene una versión mezclada en caché. Tocá el botón para descargar la última versión completa.'
+        ),
+        h(
+          'button',
+          {
+            style: {
+              background: 'var(--accent)',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '12px',
+              padding: '12px 18px',
+              fontSize: '14px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              width: '100%'
+            },
+            onClick: function () {
+              try {
+                if (window._mtCheckUpdate) {
+                  window._mtCheckUpdate(true);
+                  return;
+                }
+              } catch (_) {}
+              // Hard reload de respaldo
+              window.location.reload();
+            }
+          },
+          'Forzar actualización'
+        ),
+        h(
+          'div',
+          { style: { fontSize: '11px', color: 'var(--muted)', marginTop: '12px', textAlign: 'center' } },
+          'Versión: ' + (typeof MT_APP_VERSION !== 'undefined' ? MT_APP_VERSION : 'desconocida')
+        )
+      )
+    );
+  }
+}
+
+function ConfigTabInner(props) {
   var salario = props.salario,
     vh = props.valorHora,
     session = props.session;
@@ -96,6 +165,10 @@ function ConfigTab(props) {
   function patchPrefs(p) {
     if (props.onPrefsChange) props.onPrefsChange(p);
   }
+
+  // Constantes con fallback por si globals.js está en versión vieja en caché
+  var AUX_VAL = typeof AUX_TRANSPORTE_2026 !== 'undefined' ? AUX_TRANSPORTE_2026 : 249095;
+  var PRES_PCT = typeof PRESTACIONES_PCT !== 'undefined' ? PRESTACIONES_PCT : 0.218;
 
   function guardarSalario() {
     haptic();
@@ -286,7 +359,7 @@ function ConfigTab(props) {
             h(
               'div',
               { className: 'ajustes-row-sub' },
-              'Suma ' + fCOP(AUX_TRANSPORTE_2026) + ' al estimado (fijo 2026)'
+              'Suma ' + fCOP(AUX_VAL) + ' al estimado (fijo 2026)'
             )
           ),
           h(
@@ -316,7 +389,7 @@ function ConfigTab(props) {
             h(
               'div',
               { className: 'ajustes-row-sub' },
-              'Cesantías, prima y vacaciones (~' + Math.round(PRESTACIONES_PCT * 100) + '% del salario)'
+              'Cesantías, prima y vacaciones (~' + Math.round(PRES_PCT * 100) + '% del salario)'
             )
           ),
           h(
