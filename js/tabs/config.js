@@ -56,16 +56,19 @@ function ConfigTab(props) {
             },
             onClick: function () {
               try {
+                if (window._mtHardReset) {
+                  window._mtHardReset('Reiniciando app…');
+                  return;
+                }
                 if (window._mtCheckUpdate) {
                   window._mtCheckUpdate(true);
                   return;
                 }
               } catch (_) {}
-              // Hard reload de respaldo
               window.location.reload();
             }
           },
-          'Forzar actualización'
+          'Reiniciar y aplicar última versión'
         ),
         h(
           'div',
@@ -922,6 +925,39 @@ function ConfigTabInner(props) {
                   'Actualizar'
                 )
               : h('div', { className: 'ajustes-row-chev' }, '›')
+          ),
+          // Reinicio completo (limpia cache + SW) — fallback nuclear
+          h(
+            'button',
+            {
+              className: 'ajustes-row ajustes-row-tap',
+              onClick: function () {
+                haptic();
+                if (!window.confirm(
+                  'Esto borrará el caché de la app y la recargará desde cero. ' +
+                  'Tus turnos y configuración NO se pierden. ¿Continuar?'
+                )) return;
+                try {
+                  if (window._mtHardReset) {
+                    window._mtHardReset('Reiniciando app…');
+                    return;
+                  }
+                } catch (_) {}
+                window.location.reload();
+              }
+            },
+            h('div', { className: 'ajustes-row-ico danger' }, '⟲'),
+            h(
+              'div',
+              { className: 'ajustes-row-mid' },
+              h('div', { className: 'ajustes-row-ttl' }, 'Reiniciar app'),
+              h(
+                'div',
+                { className: 'ajustes-row-sub' },
+                'Borra el caché y descarga todo desde cero (no pierde datos)'
+              )
+            ),
+            h('div', { className: 'ajustes-row-chev' }, '›')
           )
         )
       );
