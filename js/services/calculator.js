@@ -24,8 +24,9 @@ function calcCats(inicio, fin, minsOrd) {
     if (current.getHours() < 6) nextBoundary.setHours(6, 0, 0, 0);
     else if (current.getHours() < 21) nextBoundary.setHours(21, 0, 0, 0);
     else {
+      // Corte en medianoche para re-evaluar estado festivo del nuevo día
       nextBoundary.setDate(nextBoundary.getDate() + 1);
-      nextBoundary.setHours(6, 0, 0, 0);
+      nextBoundary.setHours(0, 0, 0, 0);
     }
     var chunkEnd = new Date(Math.min(nextBoundary.getTime(), fin.getTime()));
     var minsInChunk = (chunkEnd - current) / 60000;
@@ -52,42 +53,28 @@ function doCalc(turnos, activo, ahoraRef, vh) {
   var todos = activo
     ? turnos.concat([{ id: activo.id, inicio: activo.inicio, fin: ahoraRef.toISOString() }])
     : turnos.slice();
-  var semMap = {};
-  todos.forEach(function (t) {
-    var ini = new Date(t.inicio);
-    if (isNaN(ini.getTime())) return;
-    var k = semLun(ini).toISOString().slice(0, 10);
-    if (!semMap[k]) semMap[k] = [];
-    semMap[k].push(t);
-  });
   var tMins = 0,
     tCOP = 0,
     bd = {};
   Object.keys(RC).forEach(function (k) {
     bd[k] = { mins: 0, cop: 0 };
   });
-  Object.keys(semMap).forEach(function (kS) {
-    var ts = semMap[kS].sort(function (a, b) {
-      return new Date(a.inicio) - new Date(b.inicio);
-    });
-    var mOrd = HSEM * 60;
-    ts.forEach(function (t) {
-      var ini = new Date(t.inicio),
-        fin = new Date(t.fin || ahoraRef);
-      if (isNaN(ini.getTime()) || isNaN(fin.getTime()) || fin <= ini) return;
-      var cats = calcCats(ini, fin, mOrd);
-      Object.keys(cats).forEach(function (rk) {
-        var m = cats[rk];
-        if (m > 0) {
-          var c = (m / 60) * vh * RC[rk].factor;
-          bd[rk].mins += m;
-          bd[rk].cop += c;
-          tMins += m;
-          tCOP += c;
-        }
-      });
-      var ord = cats.diurnaOrd + cats.noctOrd + cats.diurnaFest + cats.noctFest;
-      mOrd = Math.max(0, mOrd - ord);
+  // Cada turno tiene su propio límite diario de 8 h (480 min)
+  // Por ley colombiana (CST Art. 159), el extra comienza a partir de la hora 9 del mismo turno
+  todos.forEach(function (t) {
+    var ini = new Date(t.inicio),
+      fin = new Date(t.fin || ahoraRef);
+    if (isNaN(ini.getTime()) || isNaN(fin.getTime()) || fin <= ini) return;
+    var cats = calcCats(ini, fin, 8 * 60);
+    Object.keys(cats).forEach(function (rk) {
+      var m = cats[rk];
+      if (m > 0) {
+        var c = (m / 60) * vh * RC[rk].factor;
+        bd[rk].mins += m;
+        bd[rk].cop += c;
+        tMins += m;
+        tCOP += c;
+      }
     });
   });
   return { totalMins: tMins, totalCOP: tCOP, bd: bd };
@@ -107,7 +94,7 @@ function calcPorDia(turnos, vh) {
       String(ini.getDate()).padStart(2, '0');
     if (!dias[k])
       dias[k] = { fecha: k, mins: 0, cop: 0, fest: esFest(ini), noct: esNoct(ini), turnos: 0 };
-    var cats = calcCats(ini, fin, HSEM * 60);
+    var cats = calcCats(ini, fin, 8 * 60);
     Object.keys(cats).forEach(function (rk) {
       var m = cats[rk];
       if (m > 0) {

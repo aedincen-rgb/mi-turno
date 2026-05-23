@@ -4,25 +4,11 @@
 // ════════════════════════════════════════════════════════════════
 
 // ── Helper: tipo de hora actual ──────────────────────────────
-function getTipoHoraActual(ahora, calc, turnos) {
+function getTipoHoraActual(ahora, activo) {
   var isNight = ahora.getHours() >= 21 || ahora.getHours() < 6;
   var isHoliday = esFest(ahora);
-
-  // Calcular minutos ordinarios usados esta semana hasta ahora
-  var lun = semLun(ahora);
-  var mOrdUsados = 0;
-  if (calc && turnos) {
-    turnos.forEach(function (t) {
-      var ini = new Date(t.inicio);
-      var fin = t.fin ? new Date(t.fin) : ahora;
-      if (ini >= lun) {
-        var cats = calcCats(ini, fin, HSEM * 60);
-        mOrdUsados += cats.diurnaOrd + cats.noctOrd + cats.diurnaFest + cats.noctFest;
-      }
-    });
-  }
-
-  var isExtra = mOrdUsados >= HSEM * 60;
+  var durMins = activo ? Math.round((ahora - new Date(activo.inicio)) / 60000) : 0;
+  var isExtra = durMins >= 480; // extra a partir de la hora 9 del mismo turno
 
   if (isHoliday) {
     if (isExtra) return isNight ? RC.extraFestNoct : RC.extraFestDiur;
@@ -56,6 +42,7 @@ function HomeTab(props) {
     };
   }, []);
 
+  var durActual = activo ? Math.round((ahora - new Date(activo.inicio)) / 60000) : 0;
   var liveDelta = 0;
   if (activo && vh) {
     var nowMs = ahora.getTime();
@@ -63,13 +50,15 @@ function HomeTab(props) {
     var fracSec = (nowMs - minuteStart) / 1000;
     var isNight = ahora.getHours() >= 21 || ahora.getHours() < 6;
     var isHoliday = esFest(ahora);
-    var factor = isHoliday ? (isNight ? 2.1 : 1.75) : isNight ? 1.35 : 1.0;
+    var isExtra = durActual >= 480;
+    // Matriz completa: noche × festivo × extra
+    var factor = isExtra
+      ? (isHoliday ? (isNight ? 2.5 : 2.0) : (isNight ? 1.75 : 1.25))
+      : (isHoliday ? (isNight ? 2.1 : 1.75) : (isNight ? 1.35 : 1.0));
     var perSec = (vh / 3600) * factor;
     liveDelta = perSec * fracSec;
   }
   var displayAmount = calc.totalCOP + liveDelta;
-
-  var durActual = activo ? Math.round((ahora - new Date(activo.inicio)) / 60000) : 0;
   var pctMes = Math.min(100, (displayAmount / props.salario) * 100);
   var tipos = Object.keys(calc.bd).filter(function (k) {
     return calc.bd[k].mins > 0;
@@ -168,7 +157,7 @@ function HomeTab(props) {
               'div',
               { className: 'active-tag' },
               (function() {
-                var tipo = getTipoHoraActual(ahora, calc, turnos);
+                var tipo = getTipoHoraActual(ahora, activo);
                 return h(
                   'span',
                   {
