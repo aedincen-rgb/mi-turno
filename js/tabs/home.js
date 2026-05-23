@@ -106,8 +106,12 @@ function HomeTab(props) {
     return calc.bd[k].mins > 0;
   });
 
-  // Aviso si el salario nunca fue configurado (sigue en el mínimo por defecto)
-  var salarioSinConfig = props.salario <= SMIN;
+  // Aviso si el usuario nunca confirmó su salario en Ajustes.
+  // Si props.salarioConfigured no viene (app-main viejo en caché),
+  // caemos al heurístico viejo (<= SMIN) para compatibilidad.
+  var salarioSinConfig = typeof props.salarioConfigured === 'boolean'
+    ? !props.salarioConfigured
+    : props.salario <= SMIN;
 
   return h(
     'div',

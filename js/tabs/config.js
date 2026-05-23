@@ -217,7 +217,11 @@ function ConfigTabInner(props) {
 
   function guardarSalario() {
     haptic();
-    var v = parseFloat(tempSal) || SMIN;
+    // Limpia formato colombiano "1.750.905" o "1,750,905" o "$ 1.750.905"
+    // antes de parsear. Sin esto, parseFloat("1.750.905") devuelve 1.75.
+    var raw = String(tempSal == null ? '' : tempSal).replace(/[^\d]/g, '');
+    var v = parseInt(raw, 10);
+    if (isNaN(v) || v <= 0) v = SMIN;
     props.onSalario(v);
     setEditSal(false);
   }
@@ -339,12 +343,16 @@ function ConfigTabInner(props) {
                 { className: 'ajustes-edit' },
                 h('span', { className: 'ajustes-edit-prefix' }, '$'),
                 h('input', {
-                  type: 'number',
+                  type: 'text',
                   inputMode: 'numeric',
+                  pattern: '[0-9.,$ ]*',
                   className: 'ajustes-edit-input',
                   value: tempSal,
                   onChange: function (e) {
                     setTempSal(e.target.value);
+                  },
+                  onKeyDown: function (e) {
+                    if (e.key === 'Enter') guardarSalario();
                   },
                   autoFocus: true,
                   placeholder: '1.300.000'

@@ -1,7 +1,7 @@
 // ════════════════════════════════════════════════════════════════
 //  MI TURNO · SERVICE WORKER
 //  Cache de librerías CDN para arranque rápido offline-first
-const CACHE = 'mt-v23'; // Inputs Q1/Q2 editables + presets 1/16, 10/25, 15/30
+const CACHE = 'mt-v24'; // Fix salario: parseo flexible + flag explícito de configurado
 const CDN = [
   'https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js',
