@@ -35,6 +35,7 @@ var FILES = [
   'js/utils/time.js',
   'js/utils/festivos.js',
   'js/utils/validation.js',
+  'js/utils/password-hash.js',
   'js/services/quincena.js',
   // Desde v48, _saludoHora vive en su propio archivo (junto con
   // _aiNombrePersonal y _aiHeroPhrases). ai-greeting.js no toca
@@ -73,7 +74,13 @@ var sandbox = {
   isNaN: isNaN,
   parseInt: parseInt,
   parseFloat: parseFloat,
+  Uint8Array: Uint8Array,
   Uint32Array: Uint32Array,
+  TextEncoder: TextEncoder,
+  TextDecoder: TextDecoder,
+  atob: atob,
+  btoa: btoa,
+  crypto: globalThis.crypto, // Web Crypto API (node 19+)
   localStorage: localStorageStub
 };
 sandbox.window = sandbox;
@@ -176,8 +183,40 @@ var pBase = w.normalizePrefs(null);
 truthy(pBase && typeof pBase === 'object', 'null devuelve objeto');
 truthy(typeof pBase.quincenaMode === 'boolean', 'tiene quincenaMode booleano');
 
-// ── Resumen ──────────────────────────────────────────────────────
-console.log('\n═══════════════════════════════════════');
-console.log('  ' + PASS + ' OK · ' + FAIL + ' fallos');
-console.log('═══════════════════════════════════════');
-process.exit(FAIL > 0 ? 1 : 0);
+// ── hashPassword / verifyPassword (PBKDF2 + salt, v49) ──────────
+group('password-hash (PBKDF2 con salt)');
+(async function () {
+  try {
+    var blob = await w.hashPassword('miPassword123');
+    var parsed = JSON.parse(blob);
+    truthy(parsed.v === 1, 'schema v1');
+    truthy(parsed.s && parsed.h, 'tiene salt + hash');
+    truthy(parsed.s !== parsed.h, 'salt y hash distintos');
+
+    var ok1 = await w.verifyPassword('miPassword123', blob);
+    truthy(ok1.ok && !ok1.legacy, 'password correcta verifica OK (no legacy)');
+
+    var ok2 = await w.verifyPassword('otraPass', blob);
+    truthy(!ok2.ok, 'password incorrecta no verifica');
+
+    // Verificación legacy (formato plaintext pre-v49)
+    var ok3 = await w.verifyPassword('viejaPlain', 'viejaPlain');
+    truthy(ok3.ok && ok3.legacy, 'legacy plaintext matchea con flag legacy=true');
+
+    var ok4 = await w.verifyPassword('viejaPlain', 'otraPlain');
+    truthy(!ok4.ok, 'legacy plaintext NO matchea contra otro valor');
+
+    // Salt random: dos hashes del mismo password DEBEN diferir
+    var blob2 = await w.hashPassword('miPassword123');
+    truthy(blob !== blob2, 'dos hashes del mismo password difieren (salt random)');
+  } catch (e) {
+    FAIL++;
+    console.error('  ✗ password-hash threw:', e.message);
+  }
+
+  // ── Resumen ─────────────────────────────────────────────────
+  console.log('\n═══════════════════════════════════════');
+  console.log('  ' + PASS + ' OK · ' + FAIL + ' fallos');
+  console.log('═══════════════════════════════════════');
+  process.exit(FAIL > 0 ? 1 : 0);
+})();
