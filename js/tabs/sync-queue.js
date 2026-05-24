@@ -73,6 +73,12 @@ async function processQueue(uid) {
         case 'setSalario':
           result = await supaSetSalario(uid, action.payload.salario);
           break;
+        case 'updatePinLookup':
+          result = await supaUpdatePinLookup(uid, action.payload);
+          break;
+        case 'propagateEmail':
+          result = await supaPropagateEmail(uid, action.payload);
+          break;
         default:
           console.warn('[SyncQueue] Tipo de acción desconocido:', action.actionType);
           result = { success: true }; // Para eliminar acciones desconocidas
@@ -80,6 +86,21 @@ async function processQueue(uid) {
       if (result && result.success) {
         successfulActions.push(action.id);
         console.log('[SyncQueue] Acción sincronizada con éxito:', action.actionType);
+      } else if (result && result.permanent) {
+        // Errores permanentes (ej. PIN duplicado): descartar la acción
+        // para no reintentarla eternamente. El usuario verá un toast
+        // y deberá elegir otro PIN desde la UI.
+        successfulActions.push(action.id);
+        console.warn('[SyncQueue] Acción descartada (error permanente):', action.actionType, result.error);
+        try {
+          var msg = action.actionType === 'updatePinLookup'
+            ? 'Tu PIN nuevo ya estaba en uso por otra cuenta. Configurá otro desde Ajustes.'
+            : 'Cambio rechazado por el servidor.';
+          // Toast diferido para no chocar con otras notificaciones
+          setTimeout(function () {
+            if (typeof window.showToast === 'function') window.showToast(msg);
+          }, 600);
+        } catch (_) {}
       } else {
         console.warn('[SyncQueue] Fallo al sincronizar acción:', action.actionType, result.error || 'Error desconocido');
         // Si falla, no la eliminamos de la cola para reintentar más tarde

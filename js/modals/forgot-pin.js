@@ -198,7 +198,20 @@ function ForgotPinModal(props) {
     }
 
     if (CLOUD_MODE && SUPA && lastUser.email) {
-      // Mismo onConflict que en ManageAccount v36
+      // El recovery por su naturaleza arranca online (validamos password
+      // contra Supabase en el paso 1), así que aquí casi siempre habrá
+      // red. Igual usamos isOnline() como cinturón y, si falla por red,
+      // encolamos para reintentar al volver — pero NO bloqueamos la UX.
+      var online = typeof isOnline === 'function' ? isOnline() : true;
+      if (!online) {
+        applyLocalAndAuth();
+        if (typeof queueAction === 'function') {
+          queueAction(lastUser.uid, 'updatePinLookup', {
+            pin: newPin, user_email: lastUser.email
+          });
+        }
+        return;
+      }
       SUPA.from('pin_lookup')
         .upsert(
           {
@@ -222,16 +235,26 @@ function ForgotPinModal(props) {
               setBusy(false);
               return;
             }
-            setFeedback('No se pudo guardar en la nube. Probá de nuevo.');
-            setBusy(false);
+            // Error transitorio (red, timeout) → encolar y seguir
+            if (typeof queueAction === 'function') {
+              queueAction(lastUser.uid, 'updatePinLookup', {
+                pin: newPin, user_email: lastUser.email
+              });
+            }
+            applyLocalAndAuth();
             return;
           }
           applyLocalAndAuth();
         })
         .catch(function () {
           if (!mountedRef.current) return;
-          setFeedback('Sin conexión. Probá más tarde.');
-          setBusy(false);
+          // Excepción de red → aplicamos local y encolamos
+          if (typeof queueAction === 'function') {
+            queueAction(lastUser.uid, 'updatePinLookup', {
+              pin: newPin, user_email: lastUser.email
+            });
+          }
+          applyLocalAndAuth();
         });
     } else {
       applyLocalAndAuth();

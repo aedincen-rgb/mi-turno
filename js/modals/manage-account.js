@@ -318,13 +318,23 @@ function ManageAccountModal(props) {
         setPinVal('');
       }
       if (!isPinOnly && CLOUD_MODE && SUPA && session.email) {
-        // onConflict: 'user_id' — la tabla tiene PK en `pin` y UNIQUE
-        // en `user_id`. Sin onConflict el upsert intenta INSERT por PK
-        // y falla por la unique de user_id (cada usuario solo tiene
-        // una fila). Con onConflict='user_id' Postgres hace UPDATE
-        // de la fila existente cambiando el PK (pin). Si el nuevo
-        // PIN ya pertenece a otro usuario, sigue tirando 23505 (PK
-        // duplicada), que mapeamos a "Ese PIN ya está en uso".
+        // Estrategia offline-first:
+        //   1) Aplicamos siempre el cambio local primero (UX inmediato)
+        //   2) Si hay red → intento la escritura a Supabase
+        //   3) Si no hay red, o si falla por red → encolo la acción
+        //      para reintentar al volver a conectarme
+        //   onConflict: 'user_id' del v36 sigue evitando duplicados.
+        applyLocal();
+        var online = typeof isOnline === 'function' ? isOnline() : true;
+        if (!online) {
+          if (typeof queueAction === 'function') {
+            queueAction(uid, 'updatePinLookup', { pin: val, user_email: session.email });
+          }
+          // Devuelve OK al modal — el OTP local no debe trabar al
+          // usuario por red intermitente. Si después al sincronizar
+          // el PIN está duplicado, la cola muestra un toast.
+          return Promise.resolve();
+        }
         return SUPA.from('pin_lookup')
           .upsert(
             {
@@ -340,11 +350,23 @@ function ManageAccountModal(props) {
               var c = String(res.error.code || '');
               var m = String(res.error.message || '').toLowerCase();
               if (c === '23505' || m.indexOf('duplicate') >= 0 || m.indexOf('unique') >= 0) {
+                // Error semántico → revertimos local y avisamos
                 throw new Error('Ese PIN ya está en uso. Elegí otro.');
               }
-              throw new Error(pinCloudErr(res.error));
+              // Cualquier otro error → tratamos como red y encolamos
+              if (typeof queueAction === 'function') {
+                queueAction(uid, 'updatePinLookup', { pin: val, user_email: session.email });
+              }
+              console.warn('[MT] PIN encolado por error transitorio:', res.error);
+              return; // OK al modal
             }
-            applyLocal();
+          })
+          .catch(function (e) {
+            // Error de red — encolar y resolver OK
+            if (typeof queueAction === 'function') {
+              queueAction(uid, 'updatePinLookup', { pin: val, user_email: session.email });
+            }
+            console.warn('[MT] PIN encolado por excepción de red:', e);
           });
       }
       applyLocal();
@@ -366,6 +388,13 @@ function ManageAccountModal(props) {
       setFeedback('Ese ya es tu correo actual');
       return;
     }
+    // El cambio de correo modifica auth.users, que es la fuente de
+    // verdad y SOLO puede actualizarse online. Si no hay red, no
+    // podemos validarlo: aborta con un mensaje claro.
+    if (typeof isOnline === 'function' && !isOnline()) {
+      setFeedback('Cambiar el correo necesita conexión. Probá cuando vuelvas a estar online.');
+      return;
+    }
     initiateVerification(function () {
       // 1) Cambia el correo en auth.users (Supabase puede pedir
       //    confirmación por mail al nuevo destino — eso depende del
@@ -375,31 +404,29 @@ function ManageAccountModal(props) {
           if (res && res.error) {
             throw new Error(traducirError(res.error) || 'No se pudo actualizar el correo.');
           }
-          // 2) Propaga el correo a las tablas dependientes para que
-          //    los lookups por email no queden desincronizados.
-          //    Hacemos ambos updates en paralelo y los toleramos si
-          //    fallan individualmente (el correo principal ya cambió).
-          var jobs = [
-            SUPA.from('pin_lookup')
-              .update({ user_email: val, updated_at: new Date().toISOString() })
-              .eq('user_id', uid)
-              .then(function (r) {
-                if (r && r.error) console.warn('[MT] pin_lookup.user_email no se pudo actualizar:', r.error);
-              }),
-            SUPA.from('perfiles')
-              .update({ email: val, updated_at: new Date().toISOString() })
-              .eq('id', uid)
-              .then(function (r) {
-                if (r && r.error) console.warn('[MT] perfiles.email no se pudo actualizar:', r.error);
-              })
-          ];
-          return Promise.all(jobs).then(function () {
-            // 3) Actualiza sesión local + state de React
+          // 2) Propaga el correo a las tablas dependientes. Si alguna
+          //    falla, encolamos la propagación para reintentar.
+          return supaPropagateEmail(uid, { email: val }).then(function (r) {
+            if (!r.success) {
+              if (typeof queueAction === 'function') {
+                queueAction(uid, 'propagateEmail', { email: val });
+                console.warn('[MT] propagación de email encolada:', r.error);
+              }
+            }
+            // 3) Actualiza sesión local + state de React siempre,
+            //    porque auth.users.email ya cambió (o queda pendiente
+            //    de confirmación, según config del proyecto).
             var cur = leer(SKEY, {});
             if (cur) {
               cur.email = val;
               grabar(SKEY, cur);
             }
+            try {
+              var lu = leer('mt_last_user', null);
+              if (lu && lu.uid === uid) {
+                grabar('mt_last_user', { uid: uid, email: val });
+              }
+            } catch (_) {}
             if (props.onSessionPatch) props.onSessionPatch({ email: val });
             setEmailVal('');
           });
@@ -414,6 +441,13 @@ function ManageAccountModal(props) {
     }
     if (!CLOUD_MODE || !SUPA) {
       setFeedback('Requiere conexión a nube');
+      return;
+    }
+    // La contraseña solo puede cambiarse online: la auth.users es
+    // la fuente de verdad y no podemos encolarla sin exponer un
+    // hash que rompería el modelo de Supabase Auth.
+    if (typeof isOnline === 'function' && !isOnline()) {
+      setFeedback('Cambiar la contraseña necesita conexión. Probá cuando vuelvas a estar online.');
       return;
     }
     var val = passVal;

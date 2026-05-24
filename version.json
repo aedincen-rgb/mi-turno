@@ -1,4 +1,4 @@
 {
-  "v": "v37",
-  "label": "Fast PIN login para device conocido + ForgotPin con OTP local"
+  "v": "v38",
+  "label": "Sync offline-first para PIN + propagación de email + acciones coherentes"
 }
