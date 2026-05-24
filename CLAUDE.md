@@ -53,7 +53,7 @@ Tres archivos tienen que decir lo mismo en cada release:
 | Sesión actual | `mt_sess` | — | Limpia en logout (preserva PIN+offline cache) |
 | Marcador "device conocido" | `mt_last_user` | — | Habilita FastPinScreen (v37) |
 | Sesión offline cacheada | `mt_offline_<base64(email)>` | — | Para login sin red |
-| Password offline | `mt_pass_<base64(email)>` | — | ⚠️ plaintext (deuda de seguridad, marcada para refactor) |
+| Password offline | `mt_pass_<base64(email)>` | — | PBKDF2-SHA256 + salt random (v49). Schema `{v,s,h}`. Verificación legacy plaintext para migración suave |
 
 ## Flujo de sync (offline-first)
 
