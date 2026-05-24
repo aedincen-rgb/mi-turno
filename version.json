@@ -1,4 +1,4 @@
 {
-  "v": "v49",
-  "label": "Password offline: PBKDF2+salt en vez de plaintext"
+  "v": "v50",
+  "label": "Re-habilitar WebKit móvil en E2E (motor de Safari iOS)"
 }
