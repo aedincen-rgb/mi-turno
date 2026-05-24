@@ -1,7 +1,7 @@
 // ════════════════════════════════════════════════════════════════
 //  MI TURNO · SERVICE WORKER
 //  Cache de librerías CDN para arranque rápido offline-first
-const CACHE = 'mt-v40'; // CRÍTICO: flush inmediato de cola + IN_FLIGHT guard + listener leak fix
+const CACHE = 'mt-v41'; // CRÍTICO: flush inmediato de cola + IN_FLIGHT guard + listener leak fix
 const CDN = [
   'https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js',
@@ -86,6 +86,7 @@ const appResources = [
   './js/services/calculator.js',
   './js/services/quincena.js',
   './js/services/data.js',
+  './js/services/session-sync.js',
   './js/services/ai.js',
   './js/services/export-files.js',
   './js/services/export-email.js',
@@ -96,6 +97,7 @@ const appResources = [
   './js/tabs/config.js',
   './js/tabs/sync-queue.js',
   './js/modals/error-viewer.js',
+  './js/modals/splash.js',
   './js/modals/forgot-password.js',
   './js/modals/forgot-pin.js',
   './js/modals/pin-setup.js',

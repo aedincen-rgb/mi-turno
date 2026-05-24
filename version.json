@@ -1,4 +1,4 @@
 {
-  "v": "v40",
-  "label": "CRÍTICO: cola sync flushea inmediato + IN_FLIGHT guard + fix leak listener"
+  "v": "v41",
+  "label": "Tooling agente: CLAUDE.md + bump.sh + check.sh + 2 fixes precache"
 }
