@@ -369,7 +369,10 @@ function App(props) {
       vh: vh,
       session: session
     };
-  }, [turnos, calc, salario, vh, session]);
+    // Flag leída por sw-register.js para diferir el reload de
+    // actualización si hay un turno en curso (no interrumpir el cronómetro).
+    window.__mtTurnoActivo = !!activo;
+  }, [turnos, calc, salario, vh, session, activo]);
 
   // ── Iniciar/detener rotación Mood Bar según pestaña ──
   useEffect(function () {

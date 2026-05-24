@@ -91,7 +91,9 @@ async function processQueue(uid) {
   }
 
   // Eliminar solo las acciones que fueron exitosas
-  var newQueue = queue.filter(a => !successfulActions.includes(a.id));
+  var newQueue = queue.filter(function (a) {
+    return successfulActions.indexOf(a.id) === -1;
+  });
   _saveSyncQueue(uid, newQueue);
   if (newQueue.length < queue.length) {
     console.log('[SyncQueue] Cola actualizada. Acciones restantes:', newQueue.length);
