@@ -1,4 +1,4 @@
 {
-  "v": "v50",
-  "label": "Re-habilitar WebKit móvil en E2E (motor de Safari iOS)"
+  "v": "v51",
+  "label": "Fix CRÍTICO: manifest.json start_url + scope para Vercel (root /)"
 }
