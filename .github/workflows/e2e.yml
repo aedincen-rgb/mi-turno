@@ -1,0 +1,57 @@
+name: E2E tests
+
+on:
+  pull_request:
+    branches: [master]
+  push:
+    branches: [master]
+
+# Cancelar runs viejos del mismo branch cuando se pushean cambios nuevos
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  smoke-and-e2e:
+    name: Smoke + E2E (Chromium + WebKit móvil)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install npm deps
+        run: npm ci --no-audit --no-fund
+
+      # ─── Smoke tests (puros, sin browser) ───
+      # Si fallan abortamos antes de gastar minutos en Playwright.
+      - name: Smoke tests
+        run: npm run test:smoke
+
+      # ─── Setup Playwright + browsers ───
+      # --with-deps trae las libs de sistema (libx11, libnss, etc.)
+      # Cacheado por la action; en runs siguientes es instantáneo.
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium webkit
+
+      # ─── E2E ───
+      # El server local lo arranca solo Playwright (config webServer)
+      - name: Run E2E tests
+        run: npm run test:e2e
+
+      # Si algo falla, subimos los videos/screenshots/traces para
+      # poder ver QUÉ vio el navegador en el momento del bug.
+      - name: Upload test artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7

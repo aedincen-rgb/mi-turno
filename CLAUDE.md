@@ -113,11 +113,16 @@ El código nunca sale del dispositivo. Si necesitás replicarlo, los estilos est
 | v37→v39→v40 | "Iniciar turno" en device A no aparecía en device B | `queueAction` solo guardaba en localStorage, nunca llamaba `processQueue` | El sync queue debe flushear inmediato (debounced), no solo en boot/online |
 | v34 | Arrow function en `sync-queue.js` | Inconsistencia con el codebase ES5 | `function(){}` siempre |
 
-## Cómo testear cambios (mientras no haya Playwright)
+## Cómo testear cambios
 
-1. `scripts/check.sh` — parse + version drift check (corre solo en pre-commit si está configurado).
-2. Probar en consola del navegador mirando `[SyncQueue]` logs.
-3. Para sync entre devices: abrir Chrome + Safari con la **misma cuenta**, hacer la acción, esperar < 1 s.
+1. `scripts/check.sh` — parse + version drift + smoke + verificación de precache.
+2. `npm run test:smoke` — solo el smoke (más rápido).
+3. `npm run test:e2e` — Playwright en Chromium + WebKit móvil (motor de iOS Safari).
+   - Local requiere `npx playwright install --with-deps chromium webkit` la primera vez.
+   - En CI corre automático en cada PR vía `.github/workflows/e2e.yml`.
+4. Para sync cross-device real: abrir Chrome + Safari con la **misma cuenta**, hacer la acción, esperar < 1 s.
+
+Si CI falla, los artifacts (videos del navegador en el momento del bug) están en la pestaña "Artifacts" del workflow run en GitHub Actions.
 
 ## Helpers útiles
 
