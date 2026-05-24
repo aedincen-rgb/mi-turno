@@ -1,4 +1,4 @@
 {
-  "v": "v44",
-  "label": "E2E tests más conservadores tras primer falla"
+  "v": "v45",
+  "label": "E2E mínimo (1 test, 1 browser) + sanity-check server"
 }
