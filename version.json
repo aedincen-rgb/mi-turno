@@ -1,0 +1,4 @@
+{
+  "v": "v27",
+  "label": "Fix sync salario: UPSERT + local como fuente de verdad"
+}

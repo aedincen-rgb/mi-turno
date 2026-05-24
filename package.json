@@ -1,0 +1,51 @@
+{
+  "name": "mi-turno",
+  "version": "1.0.0",
+  "description": "PWA de gestión de turnos y nómina para Colombia",
+  "type": "module",
+  "scripts": {
+    "dev": "python3 -m http.server 8000 --bind 0.0.0.0",
+    "serve": "npx http-server -p 8000 -c-1",
+    "deploy": "echo 'Deploy to Vercel/Netlify manually or via CI'",
+    "lint": "eslint 'js/**/*.js'",
+    "lint:fix": "eslint 'js/**/*.js' --fix",
+    "format": "prettier --write 'js/**/*.js' 'css/**/*.css' 'supabase/**/*.ts'",
+    "format:check": "prettier --check 'js/**/*.js' 'css/**/*.css' 'supabase/**/*.ts'",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "js/**/*.js": [
+      "prettier --write",
+      "eslint --fix"
+    ],
+    "css/**/*.css": [
+      "prettier --write"
+    ],
+    "supabase/**/*.ts": [
+      "prettier --write"
+    ]
+  },
+  "keywords": [
+    "turnos",
+    "nomina",
+    "colombia",
+    "pwa",
+    "trabajo",
+    "recargos",
+    "horas-extras"
+  ],
+  "author": "Tu Nombre",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tu-usuario/mi-turno.git"
+  },
+  "devDependencies": {
+    "eslint": "^9.39.4",
+    "eslint-config-prettier": "^10.1.8",
+    "http-server": "^14.1.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.5",
+    "prettier": "^3.8.3"
+  }
+}

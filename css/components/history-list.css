@@ -1,0 +1,26 @@
+/* ════════════════════════════════════════════════════════════════
+   MI TURNO · components/history-list.css
+   iOS 26 Liquid Glass – filas historial y desglose
+   ════════════════════════════════════════════════════════════════ */
+
+.brk-row,
+.hist-row {
+  background: var(--glass-mid);
+  backdrop-filter: var(--blur-md);
+  -webkit-backdrop-filter: var(--blur-md);
+  border: 1px solid var(--glass-border-sm);
+  box-shadow:
+    inset 0 1px 0 var(--spec-top),
+    inset 0 -0.5px 0 var(--spec-bot),
+    0 4px 14px rgba(20, 30, 80, 0.06);
+}
+
+[data-theme='dark'] .brk-row,
+[data-theme='dark'] .hist-row {
+  background: var(--glass-thin);
+  border-color: var(--glass-border-sm);
+  box-shadow:
+    inset 0 1px 0 var(--spec-top),
+    inset 0 -0.5px 0 var(--spec-bot),
+    0 4px 14px rgba(0, 0, 0, 0.3);
+}

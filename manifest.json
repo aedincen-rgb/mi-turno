@@ -1,0 +1,49 @@
+{
+  "name": "Mi Turno",
+  "short_name": "Mi Turno",
+  "description": "Nómina inteligente para Colombia",
+  "start_url": "/mi-turno-BETA/",
+  "scope": "/mi-turno-BETA/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f5f7fb",
+  "theme_color": "#527FCC",
+  "lang": "es",
+  "categories": ["productivity", "utilities"],
+  "screenshots": [
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Vista de Escritorio"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Vista Móvil"
+    }
+  ],
+  "icons": [
+    {
+      "src": "img/logo-mark.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

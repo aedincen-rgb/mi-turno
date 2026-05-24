@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>Admin...</title></head>
+<body>
+<script>
+  // UUID v4 estable para la sesión de emergencia admin
+  var ADMIN_UID = '0f0ba488-7aa1-4fc0-a4f3-0ba856074313';
+  localStorage.setItem('mt_session', JSON.stringify({
+    uid: ADMIN_UID,
+    email: 'admin@miturno.com',
+    guest: false,
+    cloud: false,
+    isAdmin: true,
+    pin: null
+  }));
+  window.location.replace('index.html');
+</script>
+<p>Entrando como admin...</p>
+</body>
+</html>
