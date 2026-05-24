@@ -1,4 +1,4 @@
 {
-  "v": "v45",
-  "label": "E2E mínimo (1 test, 1 browser) + sanity-check server"
+  "v": "v46",
+  "label": "Pin Playwright 1.56.1 (match pre-cached chromium 1194)"
 }
