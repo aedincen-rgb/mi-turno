@@ -100,3 +100,61 @@ function supaUpsertPerfil(uid, data) {
     .then(function (res) { return { success: !res.error, error: res.error }; })
     .catch(function (e) { return { success: false, error: e }; });
 }
+
+// ── Cambio de PIN (lookup) — usado por sync-queue ────────────────
+// Upsert en pin_lookup con onConflict en user_id (UNIQUE), así
+// permite cambiar el PIN (PK) sin crear filas duplicadas. Si el
+// nuevo PIN ya está tomado por otro usuario, Postgres devuelve
+// 23505 que mapeamos a un mensaje claro.
+function supaUpdatePinLookup(uid, payload) {
+  if (!SUPA) return Promise.resolve({ success: false, error: 'Supabase no inicializado' });
+  return SUPA.from('pin_lookup')
+    .upsert(
+      {
+        pin: payload.pin,
+        user_email: payload.user_email,
+        user_id: uid,
+        updated_at: new Date().toISOString()
+      },
+      { onConflict: 'user_id' }
+    )
+    .then(function (res) {
+      if (res && res.error) {
+        var c = String(res.error.code || '');
+        var m = String(res.error.message || '').toLowerCase();
+        // 23505 = unique_violation. Si es la PK pin, el PIN está usado.
+        // Esto NO debe reintentarse en la cola (el usuario debe elegir
+        // otro), pero la cola lo descartará al recibir success:false con
+        // un marcador especial — ver processQueue.
+        if (c === '23505' || m.indexOf('duplicate') >= 0) {
+          return { success: false, error: res.error, permanent: true };
+        }
+        return { success: false, error: res.error };
+      }
+      return { success: true };
+    })
+    .catch(function (e) { return { success: false, error: e }; });
+}
+
+// ── Propagar cambio de email a pin_lookup + perfiles ─────────────
+// auth.users.email es la fuente de verdad pero estas dos tablas
+// guardan el email para lookups rápidos. Las actualizamos en
+// paralelo; cualquiera puede fallar y reintentarse.
+function supaPropagateEmail(uid, payload) {
+  if (!SUPA) return Promise.resolve({ success: false, error: 'Supabase no inicializado' });
+  var ts = new Date().toISOString();
+  return Promise.all([
+    SUPA.from('pin_lookup')
+      .update({ user_email: payload.email, updated_at: ts })
+      .eq('user_id', uid),
+    SUPA.from('perfiles')
+      .update({ email: payload.email, updated_at: ts })
+      .eq('id', uid)
+  ])
+    .then(function (results) {
+      var anyError = results.find(function (r) { return r && r.error; });
+      if (anyError) return { success: false, error: anyError.error };
+      return { success: true };
+    })
+    .catch(function (e) { return { success: false, error: e }; });
+}

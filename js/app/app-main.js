@@ -116,6 +116,12 @@ function App(props) {
       setToast(null);
     }, 2400);
   }
+  // Exponemos showToast a la cola de sync para que pueda avisar
+  // errores permanentes (ej. PIN duplicado al sincronizar offline).
+  useEffect(function () {
+    window.showToast = showToast;
+    return function () { if (window.showToast === showToast) window.showToast = null; };
+  }, []);
 
   useEffect(function () {
     var rafId = null;
