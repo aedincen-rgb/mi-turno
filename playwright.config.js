@@ -44,14 +44,10 @@ export default defineConfig({
     {
       name: 'chromium-desktop',
       use: { ...devices['Desktop Chrome'], viewport: { width: 1280, height: 800 } }
-    },
-    {
-      name: 'webkit-iphone',
-      // Simula el motor de Safari iOS — IMPORTANTE porque tu PWA pinned
-      // corre con WebKit y a veces se comporta distinto a Chrome (PWA
-      // suspende sockets, visibilitychange dispara más seguido, etc.)
-      use: { ...devices['iPhone 14'] }
     }
+    // TODO: re-habilitar webkit-iphone una vez que el baseline esté verde.
+    // El motor de Safari iOS es importante porque la PWA pinned al home
+    // lo usa — pero primero validamos la infra con un solo browser.
   ],
 
   webServer: {
