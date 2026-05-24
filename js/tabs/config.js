@@ -1192,6 +1192,7 @@ function ConfigTabInner(props) {
       typeof ManageAccountModal !== 'undefined' &&
       h(ManageAccountModal, {
         session: session,
+        onSessionPatch: props.onSessionPatch,
         onClose: function () {
           setShowMgtAcct(false);
         }

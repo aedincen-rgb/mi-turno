@@ -145,8 +145,11 @@ function Root() {
       setSession(ses);
 
       if (u.email) {
+        // Lookup por user_id (estable) en vez de user_email (mutable):
+        // si el usuario cambia su correo, el lookup por email queda
+        // desincronizado un rato. El user_id nunca cambia.
         withTimeout(
-          SUPA.from('pin_lookup').select('pin').eq('user_email', u.email).maybeSingle(),
+          SUPA.from('pin_lookup').select('pin').eq('user_id', u.id).maybeSingle(),
           6000,
           'PIN lookup en aplicar'
         )
