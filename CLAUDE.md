@@ -40,16 +40,16 @@ Tres archivos tienen que decir lo mismo en cada release:
 
 | Dato | Local | Nube | Notas |
 |---|---|---|---|
-| Turnos cerrados | `mt_<uid>_t` | `public.turnos` | Realtime ✓ |
-| Turno activo | `mt_<uid>_a` | `public.turno_activo` | Realtime ✓ (v39) |
-| Salario base | `mt_<uid>_s` | `public.perfiles.salario_base` | Local manda si `sc=true` (v27) |
-| Flag salario configurado | `mt_<uid>_sc` | — | Local-only por device |
+| Turnos cerrados | `mt_t_<uid>` *(via `dk(uid,"t")`)* | `public.turnos` | Realtime ✓ |
+| Turno activo | `mt_a_<uid>` *(via `dk(uid,"a")`)* | `public.turno_activo` | Realtime ✓ (v39) |
+| Salario base | `mt_s_<uid>` *(via `dk(uid,"s")`)* | `public.perfiles.salario_base` | Local manda si `sc=true` (v27) |
+| Flag salario configurado | `mt_sc_<uid>` *(via `dk(uid,"sc")`)* | — | Local-only por device |
 | PIN | `mt_pin_<uid>` | `public.pin_lookup` | PK=pin, UNIQUE(user_id). **Upsert SIEMPRE con `{onConflict:'user_id'}`** (v36) |
 | Email | — | `auth.users.email` + `pin_lookup.user_email` + `perfiles.email` | Cambiar email requiere update en cascada (v36) |
 | Password | — | `auth.users` | Solo online |
-| Profile name (alias "pipe") | `mt_<uid>_pname` | — | Local-only por device (v30) |
-| Profile photo | `mt_<uid>_photo` | — | Local-only, JPEG 240×240 base64 (v30) |
-| Prefs (quincenaMode, etc.) | `mt_<uid>_prefs` | — | Local-only |
+| Profile name (alias "pipe") | `mt_pname_<uid>` *(via `dk(uid,"pname")`)* | — | Local-only por device (v30) |
+| Profile photo | `mt_photo_<uid>` *(via `dk(uid,"photo")`)* | — | Local-only, JPEG 240×240 base64 (v30) |
+| Prefs (quincenaMode, etc.) | `mt_prefs_<uid>` *(via `dk(uid,"prefs")`)* | — | Local-only |
 | Sesión actual | `mt_sess` | — | Limpia en logout (preserva PIN+offline cache) |
 | Marcador "device conocido" | `mt_last_user` | — | Habilita FastPinScreen (v37) |
 | Sesión offline cacheada | `mt_offline_<base64(email)>` | — | Para login sin red |
@@ -122,7 +122,7 @@ El código nunca sale del dispositivo. Si necesitás replicarlo, los estilos est
 ## Helpers útiles
 
 - `leer(key, fallback)` / `grabar(key, val)` / `borrarKey(key)` — wrappers de localStorage con try/catch
-- `dk(uid, suffix)` → `'mt_' + uid + '_' + suffix`
+- `dk(uid, suffix)` → `'mt_' + suffix + '_' + uid` ⚠️ **key primero, uid último** (no invertir)
 - `haptic()` — feedback táctil iOS
 - `fCOP(n)` — formato moneda colombiana
 - `fDur(mins)` — `"2h 30m"` desde minutos
