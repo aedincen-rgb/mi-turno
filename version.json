@@ -1,4 +1,4 @@
 {
-  "v": "v27",
-  "label": "Fix sync salario: UPSERT + local como fuente de verdad"
+  "v": "v28",
+  "label": "Fix init.js + sync versiones + reload menos agresivo"
 }

@@ -1,15 +1,17 @@
 // ════════════════════════════════════════════════════════════════
 //  MI TURNO · app/sw-register.js
-//  Estrategia de actualización agresiva con recuperación nuclear:
+//  Estrategia de actualización agresiva PERO respetuosa (v28):
 //   1. Network-first del shell (en sw.js)
-//   2. reg.update() periódico cada 5 min + al volver al foreground
-//   3. Polling de /version.json para detectar releases
-//   4. controllerchange → recarga con cache-buster (?_=ts)
-//   5. Detección de "reload fantasma": si pedimos actualizar y al
-//      bootear la versión sigue siendo la vieja, escalamos al modo
-//      nuclear (borrar caches + unregister SW + reload con timestamp)
-//   6. Modo nuclear expuesto en window._mtHardReset() para recovery
-//      manual desde Ajustes o desde el error boundary.
+//   2. reg.update() periódico cada 15 min (antes 5) + al volver
+//      al foreground SI estuvo oculto > 60 s
+//   3. Throttle global: nunca dos checks en menos de 60 s
+//   4. Polling de /version.json para detectar releases
+//   5. controllerchange → softReload con cache-buster (?_=ts)
+//      pero DIFERIDO hasta 30 s si hay turno activo
+//   6. Detección de "reload fantasma": si tras 2 intentos
+//      consecutivos no cambia la versión, mostramos error en vez
+//      de seguir nukeando
+//   7. Modo nuclear expuesto en window._mtHardReset()
 //  Los datos del turno activo viven en localStorage y NO se borran,
 //  ni siquiera en el modo nuclear.
 // ════════════════════════════════════════════════════════════════
@@ -17,82 +19,100 @@
 (function () {
   if (!('serviceWorker' in navigator)) return;
 
-  var POLL_MS = 5 * 60 * 1000;
+  var POLL_MS = 15 * 60 * 1000;     // 15 min (antes 5)
+  var MIN_CHECK_GAP_MS = 60 * 1000; // mínimo 60 s entre checks
+  var HIDE_THRESHOLD_MS = 60 * 1000; // visibilitychange solo si estuvo oculto > 60 s
+  var ACTIVE_TURN_DEFER_MS = 30 * 1000; // si hay turno activo, espera 30 s antes de reload
+
   var localVersion = null;
   var refreshing = false;
   var swReg = null;
+  var lastCheckAt = 0;
+  var hiddenSince = 0;
 
-  // ── Claves de estado de actualización ──
-  var PENDING_KEY = 'mt_pending_update'; // sessionStorage flag
-  var TARGET_KEY = 'mt_pending_target';  // versión esperada tras el reload
+  // ── Claves de estado ──
+  var PENDING_KEY = 'mt_pending_update';
+  var TARGET_KEY = 'mt_pending_target';
+  var ATTEMPT_KEY = 'mt_pending_attempts'; // contador para cortar el loop
 
-  // ── Boot: detectar reload fantasma ──
-  // Si el ciclo anterior intentó actualizar a una versión X y al cargar
-  // la versión local sigue siendo distinta a X, el SW de iOS quedó zombi.
-  // Disparamos modo nuclear.
+  // ── Boot: detectar reload fantasma con tope de intentos ──
   (function detectStaleReload() {
     try {
       var pending = sessionStorage.getItem(PENDING_KEY);
       var target = sessionStorage.getItem(TARGET_KEY);
+      var attempts = parseInt(sessionStorage.getItem(ATTEMPT_KEY) || '0', 10);
       var current = typeof MT_APP_VERSION !== 'undefined' ? MT_APP_VERSION : null;
 
-      // Fallback: si no tenemos versión, intentamos cargarla desde version.json
-      if (!current) {
-        try {
-          var xhr = new XMLHttpRequest();
-          xhr.open('GET', 'version.json?t=' + Date.now(), false);
-          xhr.send();
-          if (xhr.status === 200) {
-            var data = JSON.parse(xhr.responseText);
-            current = data.v;
-            window.MT_APP_VERSION = current;
-          }
-        } catch(_) {}
-      }
+      if (!pending || pending !== '1') return;
 
-      if (pending === '1' && target && current && target !== current) {
-        // El reload pasado NO trajo la versión nueva → escalamos
-        console.warn('[MT] reload fantasma detectado, esperaba', target, 'pero estoy en', current);
-        sessionStorage.removeItem(PENDING_KEY);
-        sessionStorage.removeItem(TARGET_KEY);
-        // Diferimos al próximo tick para que la app pueda mostrar al menos
-        // el splash, evitando un loop nuclear ciego.
+      if (target && current && target !== current) {
+        // Mismatch → escalar, pero solo si no superamos el tope
+        if (attempts >= 2) {
+          // 2 intentos sin éxito: probablemente el servidor no tiene la
+          // nueva versión todavía. Limpiamos y abortamos el ciclo.
+          console.warn('[MT] abortando ciclo de actualización tras 2 intentos fallidos');
+          sessionStorage.removeItem(PENDING_KEY);
+          sessionStorage.removeItem(TARGET_KEY);
+          sessionStorage.removeItem(ATTEMPT_KEY);
+          return;
+        }
+        sessionStorage.setItem(ATTEMPT_KEY, String(attempts + 1));
+        console.warn('[MT] reload fantasma (intento', attempts + 1, '): esperaba', target, 'estoy en', current);
         setTimeout(function () { hardReset('Aplicando actualización…'); }, 600);
-      } else if (pending === '1') {
-        // Llegó la versión esperada — limpieza
+      } else {
+        // Match o sin target: limpieza normal
         sessionStorage.removeItem(PENDING_KEY);
         sessionStorage.removeItem(TARGET_KEY);
+        sessionStorage.removeItem(ATTEMPT_KEY);
       }
     } catch (_) {}
   })();
 
-  // ── Reload "normal" con cache-buster ──
+  // ── ¿Hay turno activo? Defer el reload para no interrumpirlo ──
+  function hayTurnoActivo() {
+    try {
+      // El app expone __mtTurnoActivo = true/false; cae a false si no está
+      return !!window.__mtTurnoActivo;
+    } catch (_) { return false; }
+  }
+
+  // ── Reload "normal" con cache-buster y defer si turno activo ──
   function softReload(targetVersion) {
     if (refreshing) return;
     refreshing = true;
-    try {
-      sessionStorage.setItem(PENDING_KEY, '1');
-      if (targetVersion) sessionStorage.setItem(TARGET_KEY, targetVersion);
-    } catch (_) {}
-    try { _flashToast('Actualizando a la última versión…'); } catch (_) {}
-    setTimeout(function () {
-      // location.replace evita que la página vieja quede en el history,
-      // y el query string fuerza una navegación nueva (no "back-forward cache").
+    var doReload = function () {
+      try {
+        sessionStorage.setItem(PENDING_KEY, '1');
+        if (targetVersion) sessionStorage.setItem(TARGET_KEY, targetVersion);
+      } catch (_) {}
       var url = window.location.pathname + '?_=' + Date.now() + window.location.hash;
       window.location.replace(url);
-    }, 400);
+    };
+    if (hayTurnoActivo()) {
+      // No interrumpimos un turno activo: mostramos aviso y esperamos
+      try { _flashToast('Actualización lista — se aplicará al finalizar el turno', 5000); } catch (_) {}
+      setTimeout(function () {
+        if (hayTurnoActivo()) {
+          // Sigue activo: reintenta después
+          refreshing = false;
+          setTimeout(function () { softReload(targetVersion); }, ACTIVE_TURN_DEFER_MS);
+        } else {
+          doReload();
+        }
+      }, ACTIVE_TURN_DEFER_MS);
+      return;
+    }
+    try { _flashToast('Actualizando a la última versión…'); } catch (_) {}
+    setTimeout(doReload, 400);
   }
 
-  // ── Modo nuclear: borrar todo y recargar ──
-  // Usado cuando el reload normal no aplicó la nueva versión (iOS zombi)
-  // o cuando el usuario lo pide manualmente desde Ajustes.
+  // ── Modo nuclear ──
   function hardReset(toastMsg) {
     if (refreshing) return;
     refreshing = true;
     try { _flashToast(toastMsg || 'Reiniciando app…'); } catch (_) {}
 
     var jobs = [];
-    // 1. Borrar TODOS los caches del SW
     if (window.caches && caches.keys) {
       jobs.push(
         caches.keys().then(function (keys) {
@@ -100,7 +120,6 @@
         }).catch(function () {})
       );
     }
-    // 2. Desregistrar TODOS los SW
     if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
       jobs.push(
         navigator.serviceWorker.getRegistrations().then(function (regs) {
@@ -112,7 +131,6 @@
     }
 
     Promise.all(jobs).then(function () {
-      // 3. Reload con timestamp único — iOS no puede ignorar esto
       var url = window.location.pathname + '?nuke=' + Date.now() + window.location.hash;
       window.location.replace(url);
     }).catch(function () {
@@ -121,16 +139,22 @@
   }
   window._mtHardReset = hardReset;
 
-  // ── Recarga única cuando un nuevo SW toma control ──
+  // ── Recarga cuando un nuevo SW toma control ──
   navigator.serviceWorker.addEventListener('controllerchange', function () {
     softReload(localVersion);
   });
 
-  // ── Consulta /version.json ──
+  // ── Polling de /version.json ──
   function pollVersion() {
     if (!swReg) return;
     fetch('version.json?t=' + Date.now(), { cache: 'no-store' })
-      .then(function (r) { return r && r.ok ? r.json() : null; })
+      .then(function (r) {
+        if (!r || !r.ok) {
+          if (r) console.warn('[MT] version.json HTTP', r.status);
+          return null;
+        }
+        return r.json();
+      })
       .then(function (j) {
         if (!j || !j.v) return;
         if (localVersion === null) { localVersion = j.v; return; }
@@ -143,6 +167,9 @@
   }
 
   function checkForUpdate(force) {
+    var now = Date.now();
+    if (!force && now - lastCheckAt < MIN_CHECK_GAP_MS) return;
+    lastCheckAt = now;
     if (!swReg) {
       if (force) softReload(localVersion);
       return;
@@ -151,9 +178,6 @@
     pollVersion();
     if (force) {
       try { _flashToast('Buscando nueva versión…'); } catch (_) {}
-      // Si en 2.5s no hubo controllerchange, hacemos soft reload de respaldo.
-      // Si tras ese soft reload todavía no aplica, la detección de boot
-      // escalará al modo nuclear automáticamente.
       setTimeout(function () {
         if (!refreshing) softReload(localVersion);
       }, 2500);
@@ -184,7 +208,7 @@
           reg.waiting.postMessage({ type: 'SKIP_WAITING' });
         }
 
-        setInterval(checkForUpdate, POLL_MS);
+        setInterval(function () { checkForUpdate(false); }, POLL_MS);
       })
       .catch(function (err) {
         if (window.location.protocol === 'http:' && window.location.hostname !== 'localhost') {
@@ -195,19 +219,32 @@
       });
   });
 
+  // ── visibilitychange: SOLO si estuvo oculto > HIDE_THRESHOLD_MS ──
+  // Antes disparábamos en CADA cambio de visibilidad, que en iOS pasa
+  // muy seguido (teclado, sheets del sistema, etc.) y eso saturaba el
+  // ciclo de updates.
   document.addEventListener('visibilitychange', function () {
-    if (document.visibilityState === 'visible') checkForUpdate();
+    if (document.visibilityState === 'hidden') {
+      hiddenSince = Date.now();
+    } else if (document.visibilityState === 'visible') {
+      var hiddenFor = hiddenSince ? Date.now() - hiddenSince : 0;
+      if (hiddenFor >= HIDE_THRESHOLD_MS) {
+        checkForUpdate(false);
+      }
+      hiddenSince = 0;
+    }
   }, { passive: true });
-  window.addEventListener('focus', checkForUpdate, { passive: true });
 
-  function _flashToast(msg) {
+  // ── Toast (no depende de React) ──
+  function _flashToast(msg, durationMs) {
     if (document.getElementById('mt-upd-flash')) return;
     if (!document.getElementById('mt-upd-flash-style')) {
       var s = document.createElement('style');
       s.id = 'mt-upd-flash-style';
       s.textContent =
         '@keyframes mtUpdFlashIn{from{opacity:0;transform:translateX(-50%) translateY(12px)}' +
-        'to{opacity:1;transform:translateX(-50%) translateY(0)}}';
+        'to{opacity:1;transform:translateX(-50%) translateY(0)}}' +
+        '@keyframes mtUpdFlashOut{to{opacity:0;transform:translateX(-50%) translateY(12px)}}';
       document.head.appendChild(s);
     }
     var t = document.createElement('div');
@@ -218,7 +255,16 @@
       'background:var(--accent,#5b86e5);color:#fff;font-family:inherit;' +
       'font-size:13px;font-weight:600;padding:10px 16px;border-radius:18px;' +
       'box-shadow:0 4px 24px rgba(91,134,229,0.4);z-index:99999;' +
-      'animation:mtUpdFlashIn .28s ease both');
+      'animation:mtUpdFlashIn .28s ease both;max-width:calc(100vw - 40px);' +
+      'text-align:center');
     document.body.appendChild(t);
+    if (durationMs) {
+      setTimeout(function () {
+        if (t.parentNode) {
+          t.style.animation = 'mtUpdFlashOut .25s ease forwards';
+          setTimeout(function () { if (t.parentNode) t.remove(); }, 260);
+        }
+      }, durationMs);
+    }
   }
 })();
