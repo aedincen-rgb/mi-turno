@@ -1,4 +1,4 @@
 {
-  "v": "v35",
-  "label": "OTP local offline: 15s de espera + código revelado en pantalla"
+  "v": "v36",
+  "label": "Fix sync Supabase: PIN onConflict + email cascade + lookup por user_id"
 }

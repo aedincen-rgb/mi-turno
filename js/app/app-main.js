@@ -774,6 +774,7 @@ function App(props) {
                 session: session,
                 onSalario: onSalario,
                 onSignOut: props.onSignOut,
+                onSessionPatch: onSessionPatch,
                 theme: theme,
                 onThemeChange: setTheme,
                 prefs: prefs,

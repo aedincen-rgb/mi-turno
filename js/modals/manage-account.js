@@ -314,20 +314,34 @@ function ManageAccountModal(props) {
           cur.pin = val;
           grabar(SKEY, cur);
         }
+        if (props.onSessionPatch) props.onSessionPatch({ pin: val });
         setPinVal('');
       }
       if (!isPinOnly && CLOUD_MODE && SUPA && session.email) {
+        // onConflict: 'user_id' — la tabla tiene PK en `pin` y UNIQUE
+        // en `user_id`. Sin onConflict el upsert intenta INSERT por PK
+        // y falla por la unique de user_id (cada usuario solo tiene
+        // una fila). Con onConflict='user_id' Postgres hace UPDATE
+        // de la fila existente cambiando el PK (pin). Si el nuevo
+        // PIN ya pertenece a otro usuario, sigue tirando 23505 (PK
+        // duplicada), que mapeamos a "Ese PIN ya está en uso".
         return SUPA.from('pin_lookup')
-          .upsert({
-            pin: val,
-            user_email: session.email,
-            user_id: uid,
-            updated_at: new Date().toISOString()
-          })
+          .upsert(
+            {
+              pin: val,
+              user_email: session.email,
+              user_id: uid,
+              updated_at: new Date().toISOString()
+            },
+            { onConflict: 'user_id' }
+          )
           .then(function (res) {
             if (res && res.error) {
               var c = String(res.error.code || '');
-              if (c === '23505') throw new Error('Ese PIN ya está en uso.');
+              var m = String(res.error.message || '').toLowerCase();
+              if (c === '23505' || m.indexOf('duplicate') >= 0 || m.indexOf('unique') >= 0) {
+                throw new Error('Ese PIN ya está en uso. Elegí otro.');
+              }
               throw new Error(pinCloudErr(res.error));
             }
             applyLocal();
@@ -347,12 +361,49 @@ function ManageAccountModal(props) {
       setFeedback('Requiere conexión a nube');
       return;
     }
-    var val = emailVal;
+    var val = emailVal.trim().toLowerCase();
+    if (val === String(session.email || '').toLowerCase()) {
+      setFeedback('Ese ya es tu correo actual');
+      return;
+    }
     initiateVerification(function () {
-      return SUPA.auth.updateUser({ email: val }).then(function (res) {
-        if (res && res.error) throw new Error(traducirError(res.error) || 'No se pudo actualizar.');
-        setEmailVal('');
-      });
+      // 1) Cambia el correo en auth.users (Supabase puede pedir
+      //    confirmación por mail al nuevo destino — eso depende del
+      //    setting del proyecto y queda fuera de nuestro control).
+      return SUPA.auth.updateUser({ email: val })
+        .then(function (res) {
+          if (res && res.error) {
+            throw new Error(traducirError(res.error) || 'No se pudo actualizar el correo.');
+          }
+          // 2) Propaga el correo a las tablas dependientes para que
+          //    los lookups por email no queden desincronizados.
+          //    Hacemos ambos updates en paralelo y los toleramos si
+          //    fallan individualmente (el correo principal ya cambió).
+          var jobs = [
+            SUPA.from('pin_lookup')
+              .update({ user_email: val, updated_at: new Date().toISOString() })
+              .eq('user_id', uid)
+              .then(function (r) {
+                if (r && r.error) console.warn('[MT] pin_lookup.user_email no se pudo actualizar:', r.error);
+              }),
+            SUPA.from('perfiles')
+              .update({ email: val, updated_at: new Date().toISOString() })
+              .eq('id', uid)
+              .then(function (r) {
+                if (r && r.error) console.warn('[MT] perfiles.email no se pudo actualizar:', r.error);
+              })
+          ];
+          return Promise.all(jobs).then(function () {
+            // 3) Actualiza sesión local + state de React
+            var cur = leer(SKEY, {});
+            if (cur) {
+              cur.email = val;
+              grabar(SKEY, cur);
+            }
+            if (props.onSessionPatch) props.onSessionPatch({ email: val });
+            setEmailVal('');
+          });
+        });
     });
   }
 
