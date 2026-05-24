@@ -1,7 +1,7 @@
 // ════════════════════════════════════════════════════════════════
 //  MI TURNO · SERVICE WORKER
 //  Cache de librerías CDN para arranque rápido offline-first
-const CACHE = 'mt-v32'; // Empatía nivel pro: anti-burnout + anti-culpa + récord personal + soledad nocturna
+const CACHE = 'mt-v33'; // Historial con hero estilo IA + segmented PDF/Excel + CTA elegante
 const CDN = [
   'https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js',
