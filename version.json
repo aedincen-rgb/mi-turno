@@ -1,4 +1,4 @@
 {
-  "v": "v42",
-  "label": "Smoke tests + git hooks + fix layout dk (key primero)"
+  "v": "v43",
+  "label": "E2E: Playwright + GitHub Actions"
 }

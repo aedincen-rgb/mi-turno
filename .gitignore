@@ -14,3 +14,8 @@ node_modules/
 *.tmp
 .vercel
 .env*.local
+
+# Playwright (E2E)
+test-results/
+playwright-report/
+playwright/.cache/
