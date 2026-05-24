@@ -1,4 +1,4 @@
 {
-  "v": "v39",
-  "label": "Realtime cross-device: turno activo y turnos en vivo entre devices"
+  "v": "v40",
+  "label": "CRÍTICO: cola sync flushea inmediato + IN_FLIGHT guard + fix leak listener"
 }
