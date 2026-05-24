@@ -1,4 +1,4 @@
 {
-  "v": "v42",
-  "label": "Smoke tests + git hooks + fix layout dk (key primero)"
+  "v": "v45",
+  "label": "E2E mínimo (1 test, 1 browser) + sanity-check server"
 }

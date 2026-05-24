@@ -11,6 +11,10 @@
     "lint:fix": "eslint 'js/**/*.js' --fix",
     "format": "prettier --write 'js/**/*.js' 'css/**/*.css' 'supabase/**/*.ts'",
     "format:check": "prettier --check 'js/**/*.js' 'css/**/*.css' 'supabase/**/*.ts'",
+    "test:smoke": "node tests/smoke.cjs",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test": "npm run test:smoke && npm run test:e2e",
     "prepare": "husky"
   },
   "lint-staged": {
@@ -41,6 +45,7 @@
     "url": "https://github.com/tu-usuario/mi-turno.git"
   },
   "devDependencies": {
+    "@playwright/test": "^1.60.0",
     "eslint": "^9.39.4",
     "eslint-config-prettier": "^10.1.8",
     "http-server": "^14.1.1",
