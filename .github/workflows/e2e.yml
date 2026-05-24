@@ -34,10 +34,10 @@ jobs:
         run: npm run test:smoke
 
       # ─── Setup Playwright + browsers ───
-      # Solo chromium por ahora (baseline). Webkit lo agregamos cuando
-      # el primer test verde confirme que la infra del workflow anda.
-      - name: Install Playwright (chromium)
-        run: npx playwright install --with-deps chromium
+      # Chromium (desktop) + WebKit (motor de Safari iOS, el mismo que
+      # usa tu PWA pinned al home). Re-habilitado en v50.
+      - name: Install Playwright (chromium + webkit)
+        run: npx playwright install --with-deps chromium webkit
 
       # ─── Debug: verificar que python sirve el index ANTES de Playwright ───
       # Ayuda a distinguir "server no arranca" de "test falla".
