@@ -101,7 +101,38 @@ function supaUpsertPerfil(uid, data) {
     .catch(function (e) { return { success: false, error: e }; });
 }
 
-// ── Cambio de PIN (lookup) — usado por sync-queue ────────────────
+// ── Suscripción Realtime por usuario ──────────────────────────────
+// Escucha cambios en turno_activo y turnos filtrados por user_id y
+// dispara onChange(table, payload) por cada evento (INSERT/UPDATE/
+// DELETE). Devuelve una función de limpieza. Tolera entornos donde
+// SUPA no expone channel() (fallback silencioso).
+function supaSubscribeUser(uid, onChange) {
+  if (!SUPA || !uid || typeof SUPA.channel !== 'function') return function () {};
+  var ch;
+  try {
+    ch = SUPA.channel('mt-user-' + uid)
+      .on('postgres_changes', {
+        event: '*', schema: 'public', table: 'turno_activo',
+        filter: 'user_id=eq.' + uid
+      }, function (payload) { try { onChange('turno_activo', payload); } catch (_) {} })
+      .on('postgres_changes', {
+        event: '*', schema: 'public', table: 'turnos',
+        filter: 'user_id=eq.' + uid
+      }, function (payload) { try { onChange('turnos', payload); } catch (_) {} })
+      .subscribe(function (status) {
+        if (status === 'SUBSCRIBED') console.log('[MT] Realtime suscrito para', uid);
+        else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          console.warn('[MT] Realtime status:', status);
+        }
+      });
+  } catch (e) {
+    console.warn('[MT] No se pudo iniciar realtime:', e);
+    return function () {};
+  }
+  return function () {
+    try { if (ch && SUPA.removeChannel) SUPA.removeChannel(ch); } catch (_) {}
+  };
+}
 // Upsert en pin_lookup con onConflict en user_id (UNIQUE), así
 // permite cambiar el PIN (PK) sin crear filas duplicadas. Si el
 // nuevo PIN ya está tomado por otro usuario, Postgres devuelve
