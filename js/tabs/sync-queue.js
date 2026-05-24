@@ -1,9 +1,19 @@
 // ════════════════════════════════════════════════════════════════
 //  MI TURNO · services/sync-queue.js
 //  Cola de sincronización offline-first para Supabase
+//
+//  Patrón (web research 2026, ver "JS PWAs at Scale: Offline Sync"):
+//   1. queueAction()  → encola Y dispara _scheduleFlush (debounced)
+//   2. _scheduleFlush → setTimeout 250 ms para coalescer ráfagas
+//                       (ej. parar turno = insertTurno + setActivo null)
+//   3. processQueue   → IN_FLIGHT guard para evitar runs concurrentes
+//   4. onOnline       → re-flush cuando la red vuelve
+//   5. Errores permanentes (23505) se descartan; transitorios reintentan
 // ════════════════════════════════════════════════════════════════
 
 var _SYNC_QUEUE_KEY = 'mt_sync_queue';
+var _flushTimers = {};      // uid → timeout id (debounce)
+var _processingFlags = {};  // uid → bool (IN_FLIGHT)
 
 // Carga la cola de sincronización para un UID específico
 function _loadSyncQueue(uid) {
@@ -27,7 +37,10 @@ function _saveSyncQueue(uid, queue) {
   }
 }
 
-// Añade una acción a la cola
+// Añade una acción a la cola Y dispara un flush inmediato (debounced
+// 250 ms) para que el dato llegue a Supabase ahora — no en el próximo
+// reload. Sin esto las acciones quedaban estancadas en localStorage
+// y los otros devices nunca veían el cambio (causa raíz de v39).
 function queueAction(uid, actionType, payload) {
   if (!uid) {
     console.warn('[SyncQueue] UID no proporcionado para queueAction. Acción ignorada.');
@@ -37,6 +50,19 @@ function queueAction(uid, actionType, payload) {
   queue.push({ id: generateUUID(), timestamp: Date.now(), actionType, payload });
   _saveSyncQueue(uid, queue);
   console.log('[SyncQueue] Acción encolada:', actionType, payload);
+  _scheduleFlush(uid);
+}
+
+// Debounce per-uid: si vienen varias acciones en menos de 250 ms (caso
+// típico: parar turno encola insertTurno + setActivo null casi juntos)
+// se procesan en una sola pasada.
+function _scheduleFlush(uid) {
+  if (!uid) return;
+  if (_flushTimers[uid]) return; // ya hay uno agendado
+  _flushTimers[uid] = setTimeout(function () {
+    _flushTimers[uid] = null;
+    processQueue(uid);
+  }, 250);
 }
 
 // Procesa la cola de sincronización
@@ -44,9 +70,18 @@ async function processQueue(uid) {
   if (!uid || !isOnline() || !CLOUD_MODE || !SUPA) {
     return; // No hay UID, offline, o no hay Supabase
   }
+  // IN_FLIGHT guard: evita que dos invocaciones concurrentes
+  // (boot + queueAction + onOnline en milisegundos) procesen lo
+  // mismo dos veces — fuente clásica de duplicados.
+  if (_processingFlags[uid]) {
+    console.log('[SyncQueue] Ya hay un flush en curso para', uid, '— saltando');
+    return;
+  }
+  _processingFlags[uid] = true;
 
   var queue = _loadSyncQueue(uid);
   if (queue.length === 0) {
+    _processingFlags[uid] = false;
     return; // Cola vacía
   }
 
@@ -118,6 +153,13 @@ async function processQueue(uid) {
   _saveSyncQueue(uid, newQueue);
   if (newQueue.length < queue.length) {
     console.log('[SyncQueue] Cola actualizada. Acciones restantes:', newQueue.length);
+  }
+  _processingFlags[uid] = false;
+  // Si alguna acción falló pero es transitoria, re-agendamos otro
+  // intento en 5 s. Sin esto la cola se quedaba estancada hasta el
+  // próximo reload / cambio de red.
+  if (newQueue.length > 0) {
+    setTimeout(function () { _scheduleFlush(uid); }, 5000);
   }
 }
 

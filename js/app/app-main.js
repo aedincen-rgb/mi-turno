@@ -83,9 +83,13 @@ function App(props) {
     if (isOnlineStatus && uid) {
       processQueue(uid);
     }
-    // Suscribirse a cambios de estado online para reintentar la cola
-    onOnline(function () { processQueue(uid); });
-    return function () { removeOnlineListener(function () { processQueue(uid); }); }; // Limpiar listener
+    // Suscribirse a cambios de estado online para reintentar la cola.
+    // IMPORTANTE: guardamos la misma referencia para el remove. Antes
+    // se creaban dos funciones distintas (add vs remove) y el listener
+    // nunca se desregistraba → leak + duplicados al reabrir el efecto.
+    var onlineListener = function () { processQueue(uid); };
+    onOnline(onlineListener);
+    return function () { removeOnlineListener(onlineListener); };
   }, [isOnlineStatus, uid]);
 
 
