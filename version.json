@@ -1,4 +1,4 @@
 {
-  "v": "v46",
-  "label": "Pin Playwright 1.56.1 (match pre-cached chromium 1194)"
+  "v": "v47",
+  "label": "Tests E2E del flujo invitado (auto-skip local sin CDN)"
 }
