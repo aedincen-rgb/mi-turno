@@ -76,6 +76,17 @@ function Root() {
     cierreManualRef.current = false;
     grabar(SKEY, validated);
     setSession(validated);
+    // Marca este device como "conocido" para el próximo arranque,
+    // así podemos ofrecer login simplificado por PIN. No se borra al
+    // cerrar sesión; el usuario lo limpia con la flecha ← del
+    // FastPinScreen o al ingresar como otro usuario.
+    try {
+      if (validated && validated.uid && validated.email && !validated.guest) {
+        grabar('mt_last_user', { uid: validated.uid, email: validated.email });
+      }
+    } catch (_) {}
+    // Salir del "skip fast" cuando se loguea correctamente
+    setSkipFast(false);
   }
 
   // ── Intro animation (se muestra para TODOS los usuarios) ──────
@@ -143,6 +154,12 @@ function Root() {
 
       grabar(SKEY, ses);
       setSession(ses);
+      // Marca device conocido también cuando Supabase restaura sesión
+      try {
+        if (ses && ses.uid && ses.email) {
+          grabar('mt_last_user', { uid: ses.uid, email: ses.email });
+        }
+      } catch (_) {}
 
       if (u.email) {
         // Lookup por user_id (estable) en vez de user_email (mutable):
@@ -248,9 +265,52 @@ function Root() {
     [esSesionCloud]
   );
 
+  // ── Fast PIN: device "conocido" después de un login completo ─────
+  // Cuando se cierra sesión preservamos credenciales offline (PIN +
+  // sesión cacheada). Aquí detectamos si podemos saltar el login
+  // completo y mostrar solo el ingreso del PIN.
+  var skipFastS = useState(false);
+  var skipFast = skipFastS[0], setSkipFast = skipFastS[1];
+  var showForgotPinS = useState(false);
+  var showForgotPin = showForgotPinS[0], setShowForgotPin = showForgotPinS[1];
+
+  function _fastPinEligible() {
+    if (skipFast) return null;
+    try {
+      var lu = leer('mt_last_user', null);
+      if (!lu || !lu.uid || !lu.email) return null;
+      var pin = leer('mt_pin_' + lu.uid, null);
+      if (!pin || String(pin).length !== 4) return null;
+      return lu;
+    } catch (_) { return null; }
+  }
+
   if (showIntro) return h(SplashScreen, { exit: introExit });
 
   if (!session) {
+    var lastUser = _fastPinEligible();
+    if (lastUser && typeof FastPinScreen === 'function') {
+      return h(
+        'div',
+        null,
+        h(FastPinScreen, {
+          lastUser: lastUser,
+          onAuth: handleAuth,
+          onExitFastMode: function () { setSkipFast(true); },
+          onForgotPin: function () { setShowForgotPin(true); }
+        }),
+        showForgotPin && typeof ForgotPinModal === 'function'
+          ? h(ForgotPinModal, {
+              lastUser: lastUser,
+              onClose: function () { setShowForgotPin(false); },
+              onPinReset: function (ses) {
+                setShowForgotPin(false);
+                handleAuth(ses);
+              }
+            })
+          : null
+      );
+    }
     return h(AuthScreen, { onAuth: handleAuth });
   }
   return h(App, {

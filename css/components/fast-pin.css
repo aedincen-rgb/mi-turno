@@ -1,0 +1,271 @@
+/* ════════════════════════════════════════════════════════════════
+   MI TURNO · components/fast-pin.css
+   FastPinScreen — login simplificado solo PIN para device conocido.
+   Visual estilo banco moderno: celdas grandes arriba, keypad abajo.
+   ════════════════════════════════════════════════════════════════ */
+
+.fastpin-wrap {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: max(48px, env(safe-area-inset-top)) 20px max(20px, var(--sab));
+  background: var(--bg);
+  z-index: 50;
+  overflow: hidden;
+  isolation: isolate;
+  animation: fadeUp 0.45s var(--spring);
+}
+
+/* ─── Flecha de retorno arriba a la izquierda ─── */
+.fastpin-back {
+  position: absolute;
+  top: max(18px, env(safe-area-inset-top));
+  left: 12px;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-size: 24px;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: background 0.18s var(--ease);
+  z-index: 2;
+}
+.fastpin-back:active {
+  background: var(--surface2);
+}
+
+/* ─── Logo en la esquina inferior derecha (sutil) ─── */
+.fastpin-logo {
+  position: absolute;
+  bottom: max(14px, var(--sab));
+  right: 14px;
+  width: 28px;
+  height: 28px;
+  opacity: 0.32;
+  pointer-events: none;
+  z-index: 1;
+}
+.fastpin-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: grayscale(0.4);
+}
+
+/* ─── Header ─── */
+.fastpin-hdr {
+  width: 100%;
+  max-width: 360px;
+  margin-top: 8px;
+  margin-bottom: 28px;
+  text-align: center;
+  animation: fadeUp 0.55s var(--spring);
+}
+.fastpin-ttl {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: var(--text);
+  margin: 0 0 8px;
+  line-height: 1.15;
+  font-family: inherit;
+}
+.fastpin-sub {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+/* ─── 4 celdas centradas ─── */
+.fastpin-cells {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin: 4px 0 18px;
+}
+.fastpin-cells.shake {
+  animation: fastpinShake 0.38s ease-in-out;
+}
+@keyframes fastpinShake {
+  0%, 100% { transform: translateX(0); }
+  20%      { transform: translateX(-9px); }
+  40%      { transform: translateX(8px); }
+  60%      { transform: translateX(-6px); }
+  80%      { transform: translateX(5px); }
+}
+.fastpin-cell {
+  width: 56px;
+  height: 56px;
+  border: 1.6px solid var(--border);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface);
+  transition:
+    border-color 0.22s var(--ease),
+    background 0.22s var(--ease),
+    transform 0.22s var(--spring);
+}
+.fastpin-cell.active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-glow);
+}
+.fastpin-cell.filled {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  transform: scale(1.04);
+}
+.fastpin-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: fastpinDotIn 0.22s var(--spring);
+}
+@keyframes fastpinDotIn {
+  from { transform: scale(0); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+
+/* ─── Pill informativa (ⓘ "No compartas...") ─── */
+.fastpin-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  margin: 0 auto 22px;
+  max-width: calc(100% - 24px);
+  text-align: center;
+}
+.fastpin-pill.err {
+  color: var(--danger);
+  background: var(--danger-dim);
+  border-color: color-mix(in srgb, var(--danger) 30%, transparent);
+}
+.fastpin-pill-ico {
+  font-size: 13px;
+  line-height: 1;
+  opacity: 0.85;
+}
+
+/* ─── Keypad numérico ─── */
+.fastpin-keypad {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px 16px;
+  width: 100%;
+  max-width: 320px;
+  margin: auto auto 14px;
+  padding: 0 4px;
+}
+.fastpin-key {
+  height: 62px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface2);
+  border: none;
+  border-radius: 999px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 25px;
+  font-weight: 500;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background 0.15s var(--ease),
+    transform 0.15s var(--spring);
+}
+.fastpin-key:active {
+  background: var(--border);
+  transform: scale(0.94);
+}
+.fastpin-key-empty {
+  background: transparent !important;
+  cursor: default;
+  pointer-events: none;
+}
+.fastpin-key-del {
+  background: transparent;
+  font-size: 22px;
+  color: var(--muted);
+}
+.fastpin-key-del:active {
+  background: var(--surface2);
+}
+
+/* ─── Botón "Olvidé mi PIN" ─── */
+.fastpin-forgot {
+  width: 100%;
+  max-width: 320px;
+  padding: 14px 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s var(--ease), transform 0.18s var(--spring);
+  margin-top: 6px;
+}
+.fastpin-forgot:active {
+  background: var(--surface2);
+  transform: scale(0.985);
+}
+
+/* ─── Forgot-PIN: variante del keypad para el modal ─── */
+.fp-newpin-card {
+  max-width: 380px;
+}
+.fp-newpin-cells {
+  margin-top: 14px;
+  margin-bottom: 10px;
+}
+.fp-newpin-keypad {
+  margin-top: 10px;
+  max-width: 280px;
+  gap: 12px 14px;
+}
+.fp-newpin-keypad .fastpin-key {
+  height: 54px;
+  font-size: 22px;
+}
+
+/* ─── Dark mode ─── */
+[data-theme='dark'] .fastpin-cell {
+  background: rgba(20, 24, 40, 0.4);
+}
+[data-theme='dark'] .fastpin-cell.filled {
+  background: var(--accent-dim);
+}
+[data-theme='dark'] .fastpin-key {
+  background: rgba(40, 44, 60, 0.55);
+}
+[data-theme='dark'] .fastpin-key:active {
+  background: rgba(60, 64, 80, 0.7);
+}
+[data-theme='dark'] .fastpin-key-del {
+  background: transparent;
+}
+[data-theme='dark'] .fastpin-forgot {
+  background: rgba(30, 34, 50, 0.5);
+}
