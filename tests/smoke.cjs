@@ -36,9 +36,11 @@ var FILES = [
   'js/utils/festivos.js',
   'js/utils/validation.js',
   'js/services/quincena.js',
-  // _saludoHora vive arriba en assistant.js (antes de cualquier h(...));
-  // cargamos solo la cabecera para no traer todo el archivo.
-  '__inline:_saludoHora',
+  // Desde v48, _saludoHora vive en su propio archivo (junto con
+  // _aiNombrePersonal y _aiHeroPhrases). ai-greeting.js no toca
+  // DOM ni React, es seguro cargarlo entero en node.
+  'js/services/ai-history.js',
+  'js/services/ai-greeting.js'
 ];
 
 // ── Stubs del entorno ────────────────────────────────────────────
@@ -81,15 +83,6 @@ sandbox.navigator = { userAgent: 'node-test', onLine: true };
 vm.createContext(sandbox);
 
 function loadFile(rel) {
-  if (rel === '__inline:_saludoHora') {
-    // Extraemos solo el helper que necesitamos sin cargar todo assistant.js
-    // (que arrastraría React y otras dependencias).
-    var src = fs.readFileSync(path.join(ROOT, 'js/tabs/assistant.js'), 'utf8');
-    var m = src.match(/function _saludoHora\([\s\S]*?\n\}/);
-    if (!m) throw new Error('_saludoHora no encontrado en assistant.js');
-    vm.runInContext(m[0], sandbox, { filename: 'js/tabs/assistant.js#_saludoHora' });
-    return;
-  }
   var p = path.join(ROOT, rel);
   vm.runInContext(fs.readFileSync(p, 'utf8'), sandbox, { filename: rel });
 }

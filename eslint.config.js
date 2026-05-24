@@ -144,9 +144,20 @@ const projectGlobals = {
   stopSessionSync: 'readonly',
   verificarSesion: 'readonly',
 
-  // tabs/assistant.js
+  // services/ai-history.js + services/ai-greeting.js
+  // + modals/email-compose-card.js (extraídos de assistant.js en v48)
   _aiClearHistory: 'readonly',
+  _aiLoadHistory: 'readonly',
+  _aiSaveHistory: 'readonly',
+  _aiFormat: 'readonly',
+  _saludoHora: 'readonly',
+  _aiNombrePersonal: 'readonly',
   _aiHeroPhrases: 'readonly',
+  EmailComposeCard: 'readonly',
+
+  // config/globals.js
+  getHSEM: 'readonly',
+  MT_APP_VERSION: 'readonly',
 
   deleteError: 'readonly',
   aiAnswer: 'readonly',
