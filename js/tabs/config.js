@@ -115,6 +115,85 @@ function ConfigTabInner(props) {
   var openQuincena = oq[0],
     setOpenQuincena = oq[1];
 
+  // ── Perfil personal (foto + nombre/apodo) ─────────────────
+  // Guardado por uid en localStorage. Local-only por ahora.
+  var uid = session && session.uid ? session.uid : 'guest';
+  var pp = useState(function () { return leer(dk(uid, 'photo'), null); });
+  var photo = pp[0], setPhoto = pp[1];
+  var pn = useState(function () { return leer(dk(uid, 'pname'), ''); });
+  var pname = pn[0], setPname = pn[1];
+  var ne = useState(false);
+  var editName = ne[0], setEditName = ne[1];
+  var tn = useState('');
+  var tempName = tn[0], setTempName = tn[1];
+  var asp = useState(false);
+  var showPhotoSheet = asp[0], setShowPhotoSheet = asp[1];
+  var fileInputRef = useRef(null);
+
+  function onPickPhoto(file) {
+    if (!file) return;
+    if (file.size > 8 * 1024 * 1024) {
+      alert('La foto es muy grande (máximo 8 MB)');
+      return;
+    }
+    var reader = new FileReader();
+    reader.onload = function (e) {
+      var img = new Image();
+      img.onload = function () {
+        try {
+          var SIZE = 240;
+          var canvas = document.createElement('canvas');
+          canvas.width = SIZE; canvas.height = SIZE;
+          var ctx = canvas.getContext('2d');
+          // Recorte cuadrado centrado (cover)
+          var sw = Math.min(img.width, img.height);
+          var sx = (img.width - sw) / 2;
+          var sy = (img.height - sw) / 2;
+          ctx.drawImage(img, sx, sy, sw, sw, 0, 0, SIZE, SIZE);
+          var dataUrl = canvas.toDataURL('image/jpeg', 0.72);
+          grabar(dk(uid, 'photo'), dataUrl);
+          setPhoto(dataUrl);
+          haptic();
+        } catch (err) {
+          alert('No se pudo procesar la imagen');
+        }
+      };
+      img.onerror = function () { alert('No se pudo leer la imagen'); };
+      img.src = e.target.result;
+    };
+    reader.onerror = function () { alert('No se pudo abrir el archivo'); };
+    reader.readAsDataURL(file);
+  }
+  function eliminarFoto() {
+    haptic();
+    borrarKey(dk(uid, 'photo'));
+    setPhoto(null);
+    setShowPhotoSheet(false);
+  }
+  function abrirGaleria() {
+    setShowPhotoSheet(false);
+    setTimeout(function () {
+      if (fileInputRef.current) fileInputRef.current.click();
+    }, 80);
+  }
+  function abrirEditName() {
+    haptic();
+    setTempName(pname || '');
+    setEditName(true);
+  }
+  function guardarName() {
+    haptic();
+    var clean = String(tempName || '').trim().slice(0, 32);
+    if (clean) {
+      grabar(dk(uid, 'pname'), clean);
+      setPname(clean);
+    } else {
+      borrarKey(dk(uid, 'pname'));
+      setPname('');
+    }
+    setEditName(false);
+  }
+
   // Estado local de texto para los inputs Q1/Q2 — permite vaciar el
   // campo y reescribir sin que React lo fuerce a su valor previo.
   // Se sincroniza con prefs solo cuando el texto es un número válido.
@@ -232,7 +311,15 @@ function ConfigTabInner(props) {
   // Datos de identidad
   var isGuest = !session || session.guest;
   var emailMostrar = isGuest ? 'Modo invitado' : session.email || 'Usuario';
-  var inicial = isGuest ? '?' : session.email ? session.email[0].toUpperCase() : 'U';
+  // El nombre mostrado: prioriza el alias personal, luego email/invitado
+  var displayName = pname || emailMostrar;
+  // Inicial: del nombre personal si existe, si no del email
+  var inicial =
+    pname && pname.length > 0
+      ? pname[0].toUpperCase()
+      : isGuest
+        ? '?'
+        : session.email ? session.email[0].toUpperCase() : 'U';
   var estado = isGuest
     ? 'Datos en este dispositivo'
     : typeof CLOUD_MODE !== 'undefined' && CLOUD_MODE
@@ -247,13 +334,88 @@ function ConfigTabInner(props) {
     h(
       'div',
       { className: 'ajustes-hero' },
+      // Avatar tappable — abre file picker o action sheet si ya hay foto
       h(
-        'div',
-        { className: 'ajustes-hero-av' },
+        'button',
+        {
+          className: 'ajustes-hero-av' + (photo ? ' has-photo' : ''),
+          onClick: function () {
+            haptic();
+            if (photo) setShowPhotoSheet(true);
+            else if (fileInputRef.current) fileInputRef.current.click();
+          },
+          'aria-label': photo ? 'Cambiar o eliminar foto' : 'Elegir foto de perfil'
+        },
         h('div', { className: 'ajustes-hero-av-glow' }),
-        inicial
+        photo
+          ? h('img', {
+              src: photo,
+              alt: '',
+              className: 'ajustes-hero-av-img',
+              draggable: false
+            })
+          : h('span', { className: 'ajustes-hero-av-ini' }, inicial),
+        h('span', { className: 'ajustes-hero-av-edit', 'aria-hidden': 'true' }, '✎')
       ),
-      h('div', { className: 'ajustes-hero-nm' }, emailMostrar),
+      // Input file oculto
+      h('input', {
+        ref: fileInputRef,
+        type: 'file',
+        accept: 'image/*',
+        style: { display: 'none' },
+        onChange: function (e) {
+          var f = e.target.files && e.target.files[0];
+          if (f) onPickPhoto(f);
+          // Permite re-seleccionar la misma foto si se quitó y se vuelve a poner
+          e.target.value = '';
+        }
+      }),
+
+      // Nombre — edición inline
+      editName
+        ? h(
+            'div',
+            { className: 'ajustes-hero-name-edit' },
+            h('input', {
+              type: 'text',
+              inputMode: 'text',
+              maxLength: 32,
+              className: 'ajustes-edit-input',
+              value: tempName,
+              autoFocus: true,
+              placeholder: 'Tu nombre o apodo',
+              onChange: function (e) { setTempName(e.target.value); },
+              onKeyDown: function (e) {
+                if (e.key === 'Enter') guardarName();
+                if (e.key === 'Escape') setEditName(false);
+              }
+            }),
+            h(
+              'button',
+              {
+                className: 'ajustes-edit-save',
+                onClick: guardarName,
+                'aria-label': 'Guardar nombre'
+              },
+              '✓'
+            )
+          )
+        : h(
+            'button',
+            {
+              className: 'ajustes-hero-nm-btn',
+              onClick: abrirEditName,
+              title: 'Tocá para editar tu nombre'
+            },
+            displayName,
+            h('span', { className: 'ajustes-hero-nm-pen', 'aria-hidden': 'true' }, '✎')
+          ),
+
+      // Si el usuario puso alias personalizado, mostramos email en chico debajo
+      !editName && pname && !isGuest && session.email
+        ? h('div', { className: 'ajustes-hero-email' }, session.email)
+        : null,
+
       h(
         'div',
         { className: 'ajustes-hero-est' },
@@ -261,6 +423,55 @@ function ConfigTabInner(props) {
         estado
       )
     ),
+
+    // ══════ ACTION SHEET FOTO (estilo iOS) ══════
+    showPhotoSheet
+      ? h(
+          'div',
+          {
+            className: 'mol-ov',
+            onClick: function (e) {
+              if (e.target === e.currentTarget) setShowPhotoSheet(false);
+            }
+          },
+          h(
+            'div',
+            { className: 'mol-sh ajustes-photo-sheet' },
+            h('div', { className: 'mol-hdl' }),
+            h('div', { className: 'ajustes-photo-sheet-ttl' }, 'Foto de perfil'),
+            h(
+              'div',
+              { className: 'ajustes-photo-sheet-grp' },
+              h(
+                'button',
+                {
+                  className: 'ajustes-photo-sheet-btn',
+                  onClick: abrirGaleria
+                },
+                h('span', { className: 'ajustes-photo-sheet-ico' }, '📷'),
+                'Cambiar foto'
+              ),
+              h(
+                'button',
+                {
+                  className: 'ajustes-photo-sheet-btn danger',
+                  onClick: eliminarFoto
+                },
+                h('span', { className: 'ajustes-photo-sheet-ico' }, '🗑'),
+                'Eliminar foto'
+              )
+            ),
+            h(
+              'button',
+              {
+                className: 'ajustes-photo-sheet-cancel',
+                onClick: function () { setShowPhotoSheet(false); }
+              },
+              'Cancelar'
+            )
+          )
+        )
+      : null,
 
     // ══════ APARIENCIA ══════
     h(
