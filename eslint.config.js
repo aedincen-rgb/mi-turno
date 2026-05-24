@@ -32,6 +32,9 @@ const externalGlobals = {
   Intl: 'readonly',
   atob: 'readonly',
   btoa: 'readonly',
+  TextEncoder: 'readonly',
+  TextDecoder: 'readonly',
+  Uint8Array: 'readonly',
   localStorage: 'readonly',
   sessionStorage: 'readonly',
   alert: 'readonly',
@@ -158,6 +161,10 @@ const projectGlobals = {
   // config/globals.js
   getHSEM: 'readonly',
   MT_APP_VERSION: 'readonly',
+
+  // utils/password-hash.js (v49)
+  hashPassword: 'readonly',
+  verifyPassword: 'readonly',
 
   deleteError: 'readonly',
   aiAnswer: 'readonly',

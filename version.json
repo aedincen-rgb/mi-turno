@@ -1,4 +1,4 @@
 {
-  "v": "v48",
-  "label": "Refactor: assistant.js (1012→407 líneas) en 4 archivos"
+  "v": "v49",
+  "label": "Password offline: PBKDF2+salt en vez de plaintext"
 }
