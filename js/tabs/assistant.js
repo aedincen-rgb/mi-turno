@@ -73,7 +73,7 @@ function _aiNombrePersonal(props) {
     var s = props && props.session;
     var uid = s && s.uid ? s.uid : null;
     if (uid && typeof leer === 'function') {
-      var n = leer(typeof dk === 'function' ? dk(uid, 'pname') : 'mt_' + uid + '_pname', '');
+      var n = leer(typeof dk === 'function' ? dk(uid, 'pname') : 'mt_pname_' + uid, '');
       if (n && String(n).trim()) return String(n).trim();
     }
     if (s && s.email && !s.guest) {

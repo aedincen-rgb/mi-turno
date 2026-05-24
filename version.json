@@ -1,4 +1,4 @@
 {
-  "v": "v41",
-  "label": "Tooling agente: CLAUDE.md + bump.sh + check.sh + 2 fixes precache"
+  "v": "v42",
+  "label": "Smoke tests + git hooks + fix layout dk (key primero)"
 }

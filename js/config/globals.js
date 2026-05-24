@@ -4,7 +4,7 @@
 // ════════════════════════════════════════════════════════════════
 // Versión visible de la app (mostrada en Ajustes → Acerca de).
 // Mantener sincronizada con CACHE en sw.js y "v" en version.json.
-var MT_APP_VERSION = 'v41';
+var MT_APP_VERSION = 'v42';
 
 // Variables globales de Supabase
 var SUPA = null;
@@ -143,7 +143,10 @@ if (typeof window.borrarKey === 'undefined')
   };
 if (typeof window.dk === 'undefined')
   window.dk = function (u, k) {
-    return 'mt_' + u + '_' + k;
+    // Mismo layout que el dk real en js/utils/time.js: 'mt_<key>_<uid>'.
+    // Cualquier inversión rompe los reads del resto de la app (los stubs
+    // a veces se ejecutan antes que el dk real cargue desde time.js).
+    return 'mt_' + k + '_' + u;
   };
 if (typeof window.haptic === 'undefined') window.haptic = function () {};
 if (typeof window.validarSesion === 'undefined')

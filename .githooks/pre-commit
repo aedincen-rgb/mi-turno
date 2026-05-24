@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# ════════════════════════════════════════════════════════════════
+#  .githooks/pre-commit — corre scripts/check.sh antes de cada commit.
+#  Activar con: git config core.hooksPath .githooks
+#               (o usar scripts/setup-hooks.sh)
+#
+#  Skipear puntualmente:  git commit --no-verify
+# ════════════════════════════════════════════════════════════════
+set -e
+
+ROOT="$(git rev-parse --show-toplevel)"
+cd "$ROOT"
+
+if [ -x scripts/check.sh ]; then
+  echo "→ pre-commit: scripts/check.sh"
+  scripts/check.sh
+else
+  echo "(scripts/check.sh no encontrado, salteando)"
+fi

@@ -75,6 +75,19 @@ if [ $MISSING_IN_HTML -eq 0 ] && [ $MISSING_IN_SW -eq 0 ]; then
 fi
 
 echo
+echo "→ Smoke tests (funciones puras)"
+if [ -f tests/smoke.cjs ]; then
+  if node tests/smoke.cjs > /tmp/mt-smoke.log 2>&1; then
+    ok "$(tail -3 /tmp/mt-smoke.log | head -1 | tr -d ' ')"
+  else
+    fail "smoke tests fallaron — ver salida abajo"
+    cat /tmp/mt-smoke.log
+  fi
+else
+  echo "  ⊘ tests/smoke.cjs no existe (skip)"
+fi
+
+echo
 echo "═══════════════════════════════════════"
 echo "  $PASS OK · $FAIL fallos"
 echo "═══════════════════════════════════════"
