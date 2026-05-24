@@ -1,4 +1,4 @@
 {
-  "v": "v43",
-  "label": "E2E: Playwright + GitHub Actions"
+  "v": "v44",
+  "label": "E2E tests más conservadores tras primer falla"
 }
