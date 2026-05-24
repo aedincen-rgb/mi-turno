@@ -1,4 +1,4 @@
 {
-  "v": "v47",
-  "label": "Tests E2E del flujo invitado (auto-skip local sin CDN)"
+  "v": "v48",
+  "label": "Refactor: assistant.js (1012→407 líneas) en 4 archivos"
 }
