@@ -723,6 +723,7 @@ function App(props) {
           turnos: turnos,
           prefs: prefs,
           quincena: quincena,
+          session: session,
           onIni: onIni,
           onFin: onFin,
           onOpenAssistant: function () {
