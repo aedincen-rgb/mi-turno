@@ -1,4 +1,4 @@
 {
-  "v": "v34",
-  "label": "Fix: saludo del historial e IA sincronizados"
+  "v": "v35",
+  "label": "OTP local offline: 15s de espera + código revelado en pantalla"
 }
