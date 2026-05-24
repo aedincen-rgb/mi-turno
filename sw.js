@@ -1,7 +1,7 @@
 // ════════════════════════════════════════════════════════════════
 //  MI TURNO · SERVICE WORKER
 //  Cache de librerías CDN para arranque rápido offline-first
-const CACHE = 'mt-v36'; // Fix sync Supabase: PIN onConflict + email cascade + lookup por user_id
+const CACHE = 'mt-v37'; // Fast PIN login para device conocido + ForgotPin con OTP local
 const CDN = [
   'https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js',
@@ -49,6 +49,7 @@ const appResources = [
   './css/components/dashboard-tip.css',
   './css/components/assistant-chat.css',
   './css/components/history-list.css',
+  './css/components/fast-pin.css',
   './css/components/auth-screen.css',
   './css/components/misc.css',
   './css/components/dark-mode-overrides.css',
@@ -96,6 +97,7 @@ const appResources = [
   './js/tabs/sync-queue.js',
   './js/modals/error-viewer.js',
   './js/modals/forgot-password.js',
+  './js/modals/forgot-pin.js',
   './js/modals/pin-setup.js',
   './js/modals/manage-account.js',
   './js/modals/diagnostico.js',
@@ -103,6 +105,7 @@ const appResources = [
   './js/modals/usuarios.js',
   './js/modals/export-report.js',
   './js/app/auth-screen.js',
+  './js/app/fast-pin-screen.js',
   './js/app/app-main.js',
   './js/app/root.js',
   './js/app/sw-register.js',
