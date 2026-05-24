@@ -236,11 +236,28 @@ function AuthScreen(props) {
     }
 
     // ── LOGIN OFFLINE: verificar credenciales guardadas localmente ──
+    // Acepta el blob nuevo (JSON {v,s,h} con PBKDF2) y el legacy (plain
+    // string). Si fue legacy y matcheó, re-guarda como hash.
     function tryOfflineLogin(identifier, password) {
-      var savedPass = leer('mt_pass_' + btoa(identifier), null);
-      if (savedPass && savedPass === password) {
-        var savedSession = leer('mt_offline_' + btoa(identifier), null);
-        if (savedSession && savedSession.uid) {
+      var key = 'mt_pass_' + btoa(identifier);
+      var savedPass = leer(key, null);
+      if (!savedPass) return Promise.resolve(false);
+      return verifyPassword(password, savedPass)
+        .then(function (res) {
+          if (!res.ok) return false;
+          // Migración silenciosa: si validamos por la rama legacy,
+          // re-hasheamos y reemplazamos antes de proceder.
+          if (res.legacy) {
+            hashPassword(password)
+              .then(function (blob) {
+                grabar(key, blob);
+              })
+              .catch(function () {
+                /* dejamos el legacy si Web Crypto falla */
+              });
+          }
+          var savedSession = leer('mt_offline_' + btoa(identifier), null);
+          if (!savedSession || !savedSession.uid) return false;
           if (props.onAuth)
             props.onAuth({
               uid: savedSession.uid,
@@ -252,9 +269,10 @@ function AuthScreen(props) {
             });
           setLoad(false);
           return true;
-        }
-      }
-      return false;
+        })
+        .catch(function () {
+          return false;
+        });
     }
 
     // ── LOGIN ──
@@ -298,10 +316,12 @@ function AuthScreen(props) {
             setLoad(false);
           })
           .catch(function (e) {
-            // Fallback offline: intentar con credenciales locales
-            if (tryOfflineLogin(rawIn, pass)) return;
-            setErr(traducirError(e) || 'PIN o contraseña incorrectos.');
-            setLoad(false);
+            // Fallback offline: intentar con credenciales locales (async)
+            tryOfflineLogin(rawIn, pass).then(function (ok) {
+              if (ok) return; // tryOfflineLogin ya llamó onAuth + setLoad(false)
+              setErr(traducirError(e) || 'PIN o contraseña incorrectos.');
+              setLoad(false);
+            });
           });
         return;
       }
@@ -318,8 +338,24 @@ function AuthScreen(props) {
               adminSes.isAdmin = true;
               grabar(SKEY, adminSes);
             }
-            // Guardar credenciales para login offline futuro
-            grabar('mt_pass_' + btoa(e2), pass);
+            // Guardar credenciales para login offline futuro.
+            // Hasheamos antes de persistir (PBKDF2 con salt random).
+            // Fire-and-forget: no bloqueamos el login si el hash tarda
+            // o falla. Si falla → guardamos plaintext como antes (deuda
+            // documentada, mejor que romper login).
+            (function (key, plain) {
+              if (typeof hashPassword === 'function') {
+                hashPassword(plain)
+                  .then(function (blob) {
+                    grabar(key, blob);
+                  })
+                  .catch(function () {
+                    grabar(key, plain);
+                  });
+              } else {
+                grabar(key, plain);
+              }
+            })('mt_pass_' + btoa(e2), pass);
             if (res.data && res.data.user) {
               grabar('mt_offline_' + btoa(e2), {
                 uid: res.data.user.id,
@@ -334,10 +370,12 @@ function AuthScreen(props) {
             setLoad(false);
           })
           .catch(function (e) {
-            // Fallback offline: intentar con credenciales locales
-            if (tryOfflineLogin(e2, pass)) return;
-            setErr(traducirError(e));
-            setLoad(false);
+            // Fallback offline: intentar con credenciales locales (async)
+            tryOfflineLogin(e2, pass).then(function (ok) {
+              if (ok) return;
+              setErr(traducirError(e));
+              setLoad(false);
+            });
           });
         return;
       }
@@ -373,21 +411,26 @@ function AuthScreen(props) {
           return;
         }
       }
-      if (rawIn.includes('@')) {
-        if (tryOfflineLogin(e2, pass)) {
+      // Último recurso encapsulado para poder llamarlo desde el
+      // .then() async de tryOfflineLogin.
+      function tryLastResort() {
+        var anySession = leer(SKEY, null);
+        if (anySession && anySession.uid) {
+          if (props.onAuth) props.onAuth(anySession);
           setLoad(false);
           return;
         }
-      }
-      // Último recurso: si hay sesión guardada en SKEY, usarla
-      var anySession = leer(SKEY, null);
-      if (anySession && anySession.uid) {
-        if (props.onAuth) props.onAuth(anySession);
+        setErr('Sin conexión y sin credenciales guardadas. Usa "Continuar como invitado".');
         setLoad(false);
+      }
+      if (rawIn.includes('@')) {
+        tryOfflineLogin(e2, pass).then(function (ok) {
+          if (ok) return; // ya hizo setLoad(false) y onAuth
+          tryLastResort();
+        });
         return;
       }
-      setErr('Sin conexión y sin credenciales guardadas. Usa "Continuar como invitado".');
-      setLoad(false);
+      tryLastResort();
       return;
     }
 
