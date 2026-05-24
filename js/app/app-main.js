@@ -231,6 +231,52 @@ function App(props) {
     [uid, session.pinOnly]
   );
 
+  // ── Sync entre dispositivos (Realtime) ────────────────────────
+  // Cuando otro device del mismo usuario inicia/para un turno o
+  // edita el historial, recibimos un evento de Postgres-Realtime y
+  // refrescamos el estado local. Debounced 400 ms para coalescer
+  // ráfagas (ej. parar turno = DELETE en turno_activo + INSERT en
+  // turnos casi simultáneos). También refresca al volver al
+  // foreground (catch-all si la conexión Realtime se cae).
+  useEffect(
+    function () {
+      if (!CLOUD_MODE || !SUPA || !uid || session.pinOnly || session.guest) return;
+      if (typeof supaSubscribeUser !== 'function') return;
+
+      var pendingT = null;
+      var disposed = false;
+      function resyncDebounced() {
+        if (pendingT) clearTimeout(pendingT);
+        pendingT = setTimeout(function () {
+          pendingT = null;
+          if (disposed) return;
+          cargarDatos(uid, session.pinOnly).then(function (data) {
+            if (disposed || !data) return;
+            setTurnos(data.turnos || []);
+            setActivo(data.activo || null);
+          }).catch(function () {});
+        }, 400);
+      }
+
+      var unsub = supaSubscribeUser(uid, function () { resyncDebounced(); });
+
+      function onVis() {
+        if (document.visibilityState === 'visible') resyncDebounced();
+      }
+      document.addEventListener('visibilitychange', onVis);
+      window.addEventListener('focus', onVis);
+
+      return function () {
+        disposed = true;
+        if (pendingT) clearTimeout(pendingT);
+        document.removeEventListener('visibilitychange', onVis);
+        window.removeEventListener('focus', onVis);
+        if (unsub) unsub();
+      };
+    },
+    [uid, session.pinOnly, session.guest]
+  );
+
   useEffect(
     function () {
       if (!loadedRef.current) return;
