@@ -88,7 +88,13 @@ public.turno_activo  (user_id PK)          id, inicio
 
 **Lookups por `user_id` siempre, NUNCA por `user_email`** — el email es mutable. Hubo un bug donde el lookup por email durante una transición de email regeneraba el PIN encima del real (v36 fix).
 
-**RLS pendiente** (advisory de Supabase): `public.config` y `public.Empleados` tienen RLS deshabilitado. No aplicar enable sin definir policies primero (bloquearía todo acceso).
+**RLS aplicado (v46)**: `public.config`, `public.Empleados` y `public.user_config` son tablas legacy huérfanas (sin referencias en el código). Tienen RLS habilitado con deny-all (sin policies). Si necesitás resucitar alguna, agregar policy explícita. NO eliminar la RLS.
+
+**Hardening adicional aplicado (v46)**:
+- `cleanup_old_pin_for_user` y `update_pin_lookup_updated_at`: `SET search_path = pg_catalog, public` (previene hijacking de funciones por usuarios con permisos en otros esquemas)
+- `handle_new_user`: revocado `EXECUTE` para `anon, authenticated, public` — sigue ejecutándose como trigger pero no es callable vía REST RPC
+
+**Pendiente (toggle dashboard, no SQL)**: `auth_leaked_password_protection` desactivado. Activar en Auth Settings → Password Strength si se desea bloquear passwords filtradas (HaveIBeenPwned).
 
 ## Patrón OTP local (v35)
 
