@@ -143,6 +143,44 @@ function _aiHeroPhrases(props) {
   });
   var diasTrab = Object.keys(diasSet).length;
 
+  // ── Racha consecutiva de días trabajados (anti-burnout) ──
+  // Cuenta hacia atrás desde ayer (o hoy si ya hubo turno) cuántos
+  // días seguidos hay un turno cerrado, hasta que aparezca un día vacío.
+  function _diaKey(d) {
+    return d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate();
+  }
+  var rachaSeguidos = 0;
+  var cursor = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate());
+  while (true) {
+    if (diasSet[_diaKey(cursor)]) {
+      rachaSeguidos++;
+      cursor.setDate(cursor.getDate() - 1);
+      if (rachaSeguidos > 30) break; // tope de seguridad
+    } else {
+      break;
+    }
+  }
+
+  // ── Mejor día del mes (récord personal de COP en un día) ──
+  // Solo lo calculamos si hay calcPorDia disponible globalmente.
+  var mejorDiaCOP = 0;
+  var mejorDiaEsHoy = false;
+  try {
+    if (typeof calcPorDia === 'function') {
+      var vh = props.vh || (salario ? salario / 240 : 0);
+      var dxd = calcPorDia(turnos, vh) || [];
+      var hoyKey = ahora.getFullYear() + '-' +
+        String(ahora.getMonth() + 1).padStart(2, '0') + '-' +
+        String(ahora.getDate()).padStart(2, '0');
+      dxd.forEach(function (d) {
+        if (d.cop > mejorDiaCOP) {
+          mejorDiaCOP = d.cop;
+          mejorDiaEsHoy = d.fecha === hoyKey;
+        }
+      });
+    }
+  } catch (_) {}
+
   // ── Sin datos aún → frases de arranque
   if (totalMins <= 0 && !activo) {
     if (nm) {
@@ -273,6 +311,60 @@ function _aiHeroPhrases(props) {
     f.push((nm ? nm + ', ' : '') + diasTrab + ' días trabajados este mes. Constancia que se ve.');
   } else if (diasTrab >= 10) {
     f.push((nm ? nm + ', ' : '') + 'llevás ' + diasTrab + ' días trabajados. Vas firme.');
+  }
+
+  // ══════ 9-A. ANTI-BURNOUT (racha de días seguidos) ══════
+  if (rachaSeguidos >= 12) {
+    f.push((nm ? nm + ', ' : '') + rachaSeguidos + ' días seguidos. Sos una máquina — pero las máquinas también descansan. Buscá un día libre pronto. 🙏');
+  } else if (rachaSeguidos >= 7) {
+    f.push((nm ? nm + ', ' : '') + rachaSeguidos + ' días seguidos trabajando. Una pausa esta semana te haría bien.');
+  } else if (rachaSeguidos >= 5) {
+    f.push('Llevás ' + rachaSeguidos + ' días seguidos' + (nm ? ', ' + nm.toLowerCase() : '') + ' — muy buena constancia.');
+  }
+
+  // ══════ 9-B. ANTI-CULPA (semanas/días bajos) ══════
+  if (totalMins > 0 && horasSemana > 0 && horasSemana < 20 && diaSemana >= 5) {
+    f.push((nm ? nm + ', ' : '') + 'una semana más liviana no define tu mes. Lo que viene sigue siendo tuyo.');
+  }
+  if (diasTrab > 0 && diasTrab < 5 && ahora.getDate() > 20) {
+    f.push((nm ? nm + ', ' : '') + 'tu ritmo es tuyo. Cada turno cuenta — no hace falta comparar.');
+  }
+
+  // ══════ 9-C. SOLEDAD A HORAS RARAS (compañía emocional) ══════
+  if (isMadrugada && activo && durActualMins >= 60) {
+    f.push((nm ? nm + ', ' : '') + 'a esta hora hay pocos despiertos. Yo estoy acá, no estás solo en este turno. 🌙');
+  }
+  if (hora >= 23 && activo) {
+    f.push((nm ? nm + ', ' : '') + 'la noche se hace más corta cuando alguien la registra con vos.');
+  }
+
+  // ══════ 9-D. RÉCORD PERSONAL DEL MES ══════
+  if (mejorDiaEsHoy && totalMins > 60) {
+    f.push((nm ? '¡' + nm + ', ' : '¡') + 'hoy es tu mejor día del mes! ' + fCOP(mejorDiaCOP) + ' — récord personal. 🏆');
+  } else if (mejorDiaCOP > 0 && totalMins > 60 && hora >= 14) {
+    var hoyCOP = 0;
+    try {
+      if (typeof calcPorDia === 'function') {
+        var vhh = props.vh || (salario ? salario / 240 : 0);
+        var dxdh = calcPorDia(turnos, vhh) || [];
+        var hkey = ahora.getFullYear() + '-' +
+          String(ahora.getMonth() + 1).padStart(2, '0') + '-' +
+          String(ahora.getDate()).padStart(2, '0');
+        for (var i = 0; i < dxdh.length; i++) {
+          if (dxdh[i].fecha === hkey) { hoyCOP = dxdh[i].cop; break; }
+        }
+      }
+    } catch (_) {}
+    if (hoyCOP > 0 && hoyCOP > mejorDiaCOP * 0.85 && !mejorDiaEsHoy) {
+      f.push((nm ? nm + ', ' : '') + 'vas muy cerca de tu mejor día del mes. Si seguís así, lo rompés.');
+    }
+  }
+
+  // ══════ 9-E. NUDGES SUAVES DE SALUD (sin ser moralista) ══════
+  if (activo && durActualMins >= 300 && durActualMins < 360) {
+    f.push((nm ? nm + ', ' : '') + 'llevás 5h. ¿Tomaste agua hace rato? Es un buen momento.');
+  } else if (activo && durActualMins >= 420 && durActualMins < 480) {
+    f.push((nm ? nm + ', ' : '') + 'si podés estirar un poco antes de seguir, tu espalda lo va a notar.');
   }
 
   // ══════ 9. MENSAJES CÁLIDOS DE CIERRE / TRANSICIÓN ══════
