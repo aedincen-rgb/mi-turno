@@ -24,7 +24,7 @@ function FastPinScreen(props) {
   // Saludo personalizado: alias guardado en v30, fallback al email
   var saludoNombre = '';
   try {
-    var dkFn = typeof dk === 'function' ? dk : function (u, k) { return 'mt_' + u + '_' + k; };
+    var dkFn = typeof dk === 'function' ? dk : function (u, k) { return 'mt_' + k + '_' + u; };
     var nm = leer(dkFn(lastUser.uid, 'pname'), '');
     if (nm) saludoNombre = String(nm).trim();
     else if (lastUser.email) {
