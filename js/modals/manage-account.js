@@ -26,7 +26,10 @@ function ManageAccountModal(props) {
   var feedback = fbS[0],
     setFeedback = fbS[1];
 
-  // vfStep: null | 'confirm' | 'sending' | 'entercode'
+  // vfStep: null | 'confirm' | 'preparando' | 'codigo'
+  // - confirm:   pide credenciales actuales (email + PIN o password)
+  // - preparando: cuenta 15 s con barra de progreso; sin código aún
+  // - codigo:    revela el código local + input para reescribirlo
   var vfS = useState(null);
   var vfStep = vfS[0],
     setVfStep = vfS[1];
@@ -44,12 +47,29 @@ function ManageAccountModal(props) {
   var codeInput = codeInputS[0],
     setCodeInput = codeInputS[1];
 
+  // ── OTP local (offline) ──
+  var generatedOtpRef = useRef(null);
+  var prepIntervalRef = useRef(null);
+  var prS = useState(15);
+  var prepSec = prS[0], setPrepSec = prS[1];
+
   var mountedRef = useRef(true);
   useEffect(function () {
     return function () {
       mountedRef.current = false;
+      if (prepIntervalRef.current) {
+        clearInterval(prepIntervalRef.current);
+        prepIntervalRef.current = null;
+      }
     };
   }, []);
+
+  function _clearPrep() {
+    if (prepIntervalRef.current) {
+      clearInterval(prepIntervalRef.current);
+      prepIntervalRef.current = null;
+    }
+  }
 
   var storedPin = session.pin || leer('mt_pin_' + uid, null) || leer('mt_pin_app_' + uid, null);
   var hasPassword = !isPinOnly && CLOUD_MODE && SUPA && !!session.email;
@@ -64,6 +84,8 @@ function ManageAccountModal(props) {
   }
 
   function resetVf() {
+    _clearPrep();
+    generatedOtpRef.current = null;
     setVfStep(null);
     setConfirmPin('');
     setConfirmPass('');
@@ -71,6 +93,7 @@ function ManageAccountModal(props) {
     setCodeInput('');
     setFeedback(null);
     setBusy(false);
+    setPrepSec(15);
     pendingFnRef.current = null;
   }
 
@@ -85,36 +108,38 @@ function ManageAccountModal(props) {
     setVfStep('confirm');
   }
 
-  function doSendOTP() {
-    setBusy(true);
+  // Genera un código de 6 dígitos LOCAL (sin internet) y lo guarda
+  // en un ref. Arranca el paso 'preparando' con cuenta regresiva de
+  // 15 s; al terminar revela el código en pantalla para que el usuario
+  // lo reescriba en el input.
+  function _startLocalOtp() {
+    _clearPrep();
+    var arr = (window.crypto && window.crypto.getRandomValues)
+      ? window.crypto.getRandomValues(new Uint32Array(1))
+      : [Math.floor(Math.random() * 1e9)];
+    var code = String(100000 + (arr[0] % 900000));
+    generatedOtpRef.current = code;
+    setCodeInput('');
     setFeedback(null);
-    setVfStep('sending');
-    SUPA.auth
-      .signInWithOtp({
-        email: session.email,
-        options: { shouldCreateUser: false }
-      })
-      .then(function (res) {
-        if (!mountedRef.current) return;
-        if (res && res.error) throw res.error;
-        setBusy(false);
-        setCodeInput('');
-        setVfStep('entercode');
-      })
-      .catch(function (e) {
-        if (!mountedRef.current) return;
-        var msg = traducirError(e) || 'No se pudo enviar el código';
-        if (
-          String(e.message || '')
-            .toLowerCase()
-            .includes('rate')
-        ) {
-          msg = 'Demasiados intentos. Espera unos minutos e inténtalo de nuevo.';
+    setBusy(false);
+    setPrepSec(15);
+    setVfStep('preparando');
+    prepIntervalRef.current = setInterval(function () {
+      if (!mountedRef.current) {
+        _clearPrep();
+        return;
+      }
+      setPrepSec(function (s) {
+        if (s <= 1) {
+          _clearPrep();
+          // Pequeño haptic al revelar
+          try { haptic && haptic(); } catch (_) {}
+          setVfStep('codigo');
+          return 0;
         }
-        setFeedback(msg);
-        setBusy(false);
-        setVfStep('confirm');
+        return s - 1;
       });
+    }, 1000);
   }
 
   // ── Confirmar identidad ──
@@ -145,20 +170,23 @@ function ManageAccountModal(props) {
       SUPA.auth
         .signInWithPassword({ email: session.email, password: confirmPass })
         .then(function (res) {
+          if (!mountedRef.current) return;
           if (res && res.error) {
             setFeedback('Contraseña incorrecta.');
             setBusy(false);
             return;
           }
-          setBusy(false);
-          doSendOTP();
+          // Credenciales OK → arranca el OTP local con espera de 15 s
+          _startLocalOtp();
         })
         .catch(function (e) {
+          if (!mountedRef.current) return;
           setFeedback(traducirError(e));
           setBusy(false);
         });
     } else {
-      // Modo local: solo PIN
+      // Modo PIN-only (offline-first): validamos PIN local y arrancamos
+      // igualmente el flujo de OTP local con su espera de 15 s.
       if (!storedPin) {
         setFeedback('No hay credenciales para confirmar. Reinicia la sesión.');
         setBusy(false);
@@ -169,136 +197,75 @@ function ManageAccountModal(props) {
         setBusy(false);
         return;
       }
-      // Local: ejecutar directamente sin OTP
-      var fn = pendingFnRef.current;
-      if (!fn) {
-        setBusy(false);
-        setVfStep(null);
-        setFeedback('✓ Cambio aplicado');
-        setTimeout(function () {
-          setFeedback(null);
-        }, 3000);
-        return;
-      }
-      try {
-        var out = fn();
-        if (out && typeof out.then === 'function') {
-          out
-            .then(function () {
-              setBusy(false);
-              setVfStep(null);
-              setFeedback('✓ Cambio aplicado correctamente');
-              setTimeout(function () {
-                setFeedback(null);
-              }, 3500);
-            })
-            .catch(function (e) {
-              setBusy(false);
-              setVfStep(null);
-              setFeedback('Error: ' + (e && e.message ? e.message : 'inténtalo de nuevo'));
-            });
-          return;
-        }
-        setBusy(false);
-        setVfStep(null);
-        setFeedback('✓ Cambio aplicado correctamente');
-        setTimeout(function () {
-          setFeedback(null);
-        }, 3500);
-      } catch (e) {
-        setBusy(false);
-        setVfStep(null);
-        setFeedback('Error: ' + (e && e.message ? e.message : 'inténtalo de nuevo'));
-      }
+      _startLocalOtp();
     }
   }
 
-  // ── Verificar OTP recibido por email ──
+  // ── Verificar OTP local (sin internet) ──
+  // Comparación directa contra el código generado en memoria. Si
+  // coincide, ejecuta la acción pendiente (puede ser async, ej. PIN
+  // a la nube).
   function doVerify() {
     if (busy) return;
     haptic();
     var code = codeInput.replace(/\D/g, '');
     if (code.length < 6) {
-      setFeedback('Ingresa los 6 dígitos del código.');
+      setFeedback('Ingresá los 6 dígitos.');
+      return;
+    }
+    if (code !== generatedOtpRef.current) {
+      setFeedback('El código no coincide. Revisalo y volvé a intentar.');
       return;
     }
     setBusy(true);
     setFeedback(null);
 
     function finishOk() {
-      setFeedback('✓ Verificado correctamente');
+      generatedOtpRef.current = null;
+      setFeedback('✓ Cambio aplicado correctamente');
       setVfStep(null);
       setBusy(false);
       pendingFnRef.current = null;
       setTimeout(function () {
-        setFeedback(null);
+        if (mountedRef.current) setFeedback(null);
       }, 3500);
     }
     function finishErr(msg) {
+      generatedOtpRef.current = null;
       setFeedback(msg);
       setVfStep(null);
       setBusy(false);
       pendingFnRef.current = null;
       setTimeout(function () {
-        setFeedback(null);
+        if (mountedRef.current) setFeedback(null);
       }, 5200);
     }
 
-    SUPA.auth
-      .verifyOtp({
-        email: session.email,
-        token: code,
-        type: 'email'
-      })
-      .then(function (res) {
-        if (!mountedRef.current) return;
-        if (res && res.error) throw res.error;
-        var fn = pendingFnRef.current;
-        if (!fn) {
-          finishOk();
-          return;
-        }
-        try {
-          var out = fn();
-          if (out && typeof out.then === 'function') {
-            out
-              .then(function () {
-                if (mountedRef.current) finishOk();
-              })
-              .catch(function (e) {
-                if (mountedRef.current)
-                  finishErr(
-                    'Error al guardar: ' + (e && e.message ? e.message : 'inténtalo de nuevo')
-                  );
-              });
-            return;
-          }
-          finishOk();
-        } catch (e) {
-          finishErr('Error: ' + (e && e.message ? e.message : 'inténtalo de nuevo'));
-        }
-      })
-      .catch(function (e) {
-        if (!mountedRef.current) return;
-        var msg = traducirError(e) || 'Código incorrecto o expirado';
-        if (
-          String(e.message || '')
-            .toLowerCase()
-            .includes('expired') ||
-          String(e.message || '')
-            .toLowerCase()
-            .includes('expirado')
-        ) {
-          msg = 'Código expirado. Solicita uno nuevo.';
-        }
-        setFeedback(msg);
-        setBusy(false);
-      });
+    var fn = pendingFnRef.current;
+    if (!fn) {
+      finishOk();
+      return;
+    }
+    try {
+      var out = fn();
+      if (out && typeof out.then === 'function') {
+        out
+          .then(function () { if (mountedRef.current) finishOk(); })
+          .catch(function (e) {
+            if (mountedRef.current)
+              finishErr('Error al guardar: ' + (e && e.message ? e.message : 'inténtalo de nuevo'));
+          });
+        return;
+      }
+      finishOk();
+    } catch (e) {
+      finishErr('Error: ' + (e && e.message ? e.message : 'inténtalo de nuevo'));
+    }
   }
 
   function StepBar(props2) {
-    var steps = ['confirm', 'sending', 'entercode'];
-    var labels = ['Identidad', 'Enviando', 'Código'];
+    var steps = ['confirm', 'preparando', 'codigo'];
+    var labels = ['Identidad', 'Preparando', 'Código'];
     var cur = steps.indexOf(props2.current);
     if (cur < 0) cur = 0;
     return h(
@@ -412,7 +379,7 @@ function ManageAccountModal(props) {
     return h(
       'div',
       { className: 'modal-card' },
-      hasPassword ? h(StepBar, { current: 'confirm' }) : null,
+      h(StepBar, { current: 'confirm' }),
       h(
         'div',
         { className: 'vf-step' },
@@ -575,26 +542,36 @@ function ManageAccountModal(props) {
     );
   }
 
-  // ═══ RENDER: ENVIANDO OTP ═══
-  if (vfStep === 'sending') {
+  // ═══ RENDER: PREPARANDO CÓDIGO (espera 15 s, offline) ═══
+  if (vfStep === 'preparando') {
+    var totalSec = 15;
+    var pct = Math.max(0, Math.min(100, ((totalSec - prepSec) / totalSec) * 100));
     return h(
       'div',
       { className: 'modal-card' },
-      hasPassword ? h(StepBar, { current: 'sending' }) : null,
+      h(StepBar, { current: 'preparando' }),
       h(
         'div',
-        { className: 'vf-step', style: { textAlign: 'center', padding: '20px 0' } },
-        h('span', {
-          className: 'sp-in',
-          style: { fontSize: 28, width: 28, height: 28, borderWidth: 3 }
-        }),
-        h('div', { className: 'vf-title', style: { marginTop: 18 } }, 'Enviando código'),
+        { className: 'vf-step otp-prep' },
+        h(
+          'div',
+          { className: 'otp-prep-shield' },
+          h('div', { className: 'otp-prep-shield-glow' }),
+          h('div', { className: 'otp-prep-shield-icon' }, '✦')
+        ),
+        h('div', { className: 'vf-title' }, 'Preparando tu código'),
         h(
           'div',
           { className: 'vf-desc' },
-          'Enviando un código de verificación a ',
-          h('strong', null, session.email),
-          '...'
+          'Por seguridad, tomamos unos segundos antes de mostrarte el código.'
+        ),
+        h(
+          'div',
+          { className: 'otp-prep-bar-wrap' },
+          h('div', { className: 'otp-prep-bar' },
+            h('div', { className: 'otp-prep-bar-fill', style: { width: pct + '%' } })
+          ),
+          h('div', { className: 'otp-prep-sec' }, prepSec + 's')
         )
       ),
       h(
@@ -605,28 +582,37 @@ function ManageAccountModal(props) {
     );
   }
 
-  // ═══ RENDER: INGRESAR CÓDIGO OTP ═══
-  if (vfStep === 'entercode') {
+  // ═══ RENDER: CÓDIGO REVELADO + INPUT ═══
+  if (vfStep === 'codigo') {
+    var revealed = generatedOtpRef.current || '';
     return h(
       'div',
       { className: 'modal-card' },
-      hasPassword ? h(StepBar, { current: 'entercode' }) : null,
+      h(StepBar, { current: 'codigo' }),
       h(
         'div',
         { className: 'vf-step' },
-        h('span', { className: 'vf-icon' }, '✉'),
-        h('div', { className: 'vf-title' }, 'Revisa tu email'),
+        h('div', { className: 'vf-title' }, 'Tu código de confirmación'),
         h(
           'div',
           { className: 'vf-desc' },
-          'Ingresa el código de 6 dígitos que enviamos a ',
-          h('strong', null, session.email)
+          'Escribilo abajo para aplicar el cambio.'
         )
       ),
 
+      // Código revelado (display prominente, estilo Apple verification)
       h(
         'div',
-        { className: 'code-grid', style: { marginTop: 8, marginBottom: 4 } },
+        { className: 'otp-reveal' },
+        revealed.split('').map(function (d, i) {
+          return h('span', { key: i, className: 'otp-reveal-digit' }, d);
+        })
+      ),
+
+      // Input de 6 celdas para reescribirlo
+      h(
+        'div',
+        { className: 'code-grid', style: { marginTop: 14, marginBottom: 4 } },
         Array.from({ length: 6 }).map(function (_, i) {
           return h('input', {
             key: i,
@@ -659,28 +645,6 @@ function ManageAccountModal(props) {
         })
       ),
 
-      h(
-        'div',
-        { style: { textAlign: 'center', marginBottom: 14 } },
-        h(
-          'button',
-          {
-            style: {
-              background: 'none',
-              border: 'none',
-              fontSize: 11.5,
-              color: 'var(--accent)',
-              fontWeight: 600,
-              cursor: 'pointer',
-              padding: '6px'
-            },
-            onClick: doSendOTP,
-            disabled: busy
-          },
-          '¿No llegó? Reenviar código'
-        )
-      ),
-
       feedback
         ? h(
             'div',
@@ -691,7 +655,8 @@ function ManageAccountModal(props) {
                 background: feedback[0] === '✓' ? 'var(--success-dim)' : 'var(--danger-dim)',
                 padding: '8px 12px',
                 borderRadius: 'var(--radius-sm)',
-                marginBottom: 8
+                marginTop: 8,
+                marginBottom: 4
               }
             },
             feedback
@@ -704,9 +669,9 @@ function ManageAccountModal(props) {
           className: 'btn btn-accent btn-block',
           onClick: doVerify,
           disabled: busy || codeInput.replace(/\D/g, '').length < 6,
-          style: { marginBottom: 8 }
+          style: { marginTop: 10, marginBottom: 8 }
         },
-        busy ? h('span', { className: 'sp-in' }) : 'Verificar código'
+        busy ? h('span', { className: 'sp-in' }) : 'Confirmar cambio'
       ),
       h('button', { className: 'btn btn-ghost btn-block', onClick: resetVf }, 'Cancelar')
     );
