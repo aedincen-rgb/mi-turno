@@ -67,12 +67,7 @@ async function getActivoFromStorage(page) {
   });
 }
 
-// TODO: re-habilitar cuando podamos ver el log del CI (el container del
-// agente no puede acceder a artifacts privados de GitHub sin auth).
-// Localmente se skipean por la network policy que bloquea cdnjs.
-// El test fallaba en CI con razón desconocida — sospecho timing del boot
-// o algún detalle del Supabase init que no se reproduce localmente.
-test.fixme('iniciar y parar turno actualiza localStorage', async ({ page }) => {
+test('iniciar y parar turno actualiza localStorage', async ({ page }) => {
   await bootAsGuest(page);
 
   // No hay turno activo aún
@@ -81,7 +76,9 @@ test.fixme('iniciar y parar turno actualiza localStorage', async ({ page }) => {
   // Click el botón principal (action-btn). Es el único de su clase.
   const actionBtn = page.locator('button.action-btn');
   await expect(actionBtn).toBeVisible({ timeout: 10_000 });
-  await actionBtn.click();
+  // force: true porque el botón tiene animación CSS continua (pulse/glow)
+  // y Playwright nunca lo considera "estable" para click — pero ES clickable.
+  await actionBtn.click({ force: true });
 
   // Esperamos a que el activo aparezca en localStorage
   await expect.poll(
@@ -95,7 +92,9 @@ test.fixme('iniciar y parar turno actualiza localStorage', async ({ page }) => {
   // Damos 1.5s antes de parar (el código descarta turnos < 60s, pero
   // el cambio de estado en localStorage es lo que importa acá)
   await page.waitForTimeout(1_500);
-  await actionBtn.click();
+  // force: true porque el botón tiene animación CSS continua (pulse/glow)
+  // y Playwright nunca lo considera "estable" para click — pero ES clickable.
+  await actionBtn.click({ force: true });
 
   // Vuelve a estado "iniciar" (sin activo)
   await expect.poll(
@@ -105,12 +104,14 @@ test.fixme('iniciar y parar turno actualiza localStorage', async ({ page }) => {
   await expect(actionBtn).toHaveClass(/action-btn-go/, { timeout: 3_000 });
 });
 
-test.fixme('turno activo persiste a través de un reload', async ({ page }) => {
+test('turno activo persiste a través de un reload', async ({ page }) => {
   await bootAsGuest(page);
 
   const actionBtn = page.locator('button.action-btn');
   await expect(actionBtn).toBeVisible({ timeout: 10_000 });
-  await actionBtn.click();
+  // force: true porque el botón tiene animación CSS continua (pulse/glow)
+  // y Playwright nunca lo considera "estable" para click — pero ES clickable.
+  await actionBtn.click({ force: true });
 
   // Esperar que el activo esté en localStorage
   await expect.poll(
