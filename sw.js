@@ -1,7 +1,7 @@
 // ════════════════════════════════════════════════════════════════
 //  MI TURNO · SERVICE WORKER
 //  Cache de librerías CDN para arranque rápido offline-first
-const CACHE = 'mt-v42'; // CRÍTICO: flush inmediato de cola + IN_FLIGHT guard + listener leak fix
+const CACHE = 'mt-v45'; // CRÍTICO: flush inmediato de cola + IN_FLIGHT guard + listener leak fix
 const CDN = [
   'https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js',
