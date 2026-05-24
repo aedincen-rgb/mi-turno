@@ -36,6 +36,47 @@
   color:var(--accent);
   letter-spacing:-0.5px;
   box-shadow:0 10px 36px var(--accent-glow), inset 0 1px 0 rgba(255,255,255,0.5);
+  /* Convertido a botón tappable */
+  cursor:pointer;
+  padding:0;
+  overflow:hidden;
+  font-family:inherit;
+  transition:transform 0.18s var(--spring);
+}
+.ajustes-hero-av:active{
+  transform:scale(0.94);
+}
+.ajustes-hero-av-img{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  border-radius:50%;
+}
+.ajustes-hero-av-ini{
+  position:relative;
+  z-index:1;
+}
+.ajustes-hero-av-edit{
+  position:absolute;
+  bottom:-2px;
+  right:-2px;
+  width:26px;
+  height:26px;
+  border-radius:50%;
+  background:var(--accent);
+  color:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:12px;
+  border:2px solid var(--surface);
+  box-shadow:0 2px 6px rgba(0,0,0,0.18);
+  z-index:2;
+}
+.ajustes-hero-av.has-photo .ajustes-hero-av-glow{
+  opacity:0.3;
 }
 .ajustes-hero-av-glow{
   position:absolute;
@@ -61,6 +102,138 @@
   margin-left:auto;
   margin-right:auto;
 }
+/* ─── Nombre editable inline ─── */
+.ajustes-hero-nm-btn{
+  background:none;
+  border:none;
+  padding:6px 14px;
+  margin:0 auto 6px;
+  font-family:inherit;
+  font-size:17px;
+  font-weight:600;
+  color:var(--text);
+  letter-spacing:-0.3px;
+  word-break:break-word;
+  max-width:280px;
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  border-radius:10px;
+  cursor:pointer;
+  transition:background 0.18s var(--ease);
+}
+.ajustes-hero-nm-btn:active{
+  background:var(--surface2);
+}
+.ajustes-hero-nm-pen{
+  font-size:11px;
+  color:var(--muted);
+  opacity:0.6;
+  transition:opacity 0.2s var(--ease);
+}
+.ajustes-hero-nm-btn:hover .ajustes-hero-nm-pen{
+  opacity:1;
+}
+.ajustes-hero-name-edit{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  width:100%;
+  max-width:320px;
+  margin:0 auto 10px;
+  padding:0 16px;
+  box-sizing:border-box;
+}
+.ajustes-hero-name-edit .ajustes-edit-input{
+  flex:1;
+  text-align:center;
+  font-size:16px;
+}
+.ajustes-hero-name-edit .ajustes-edit-save{
+  width:42px;
+  height:42px;
+  font-size:16px;
+}
+.ajustes-hero-email{
+  font-size:12px;
+  color:var(--muted);
+  margin-bottom:8px;
+  word-break:break-word;
+  max-width:280px;
+  margin-left:auto;
+  margin-right:auto;
+  opacity:0.85;
+}
+
+/* ─── Action sheet de foto (estilo iOS) ─── */
+.ajustes-photo-sheet{
+  padding-bottom:max(20px, var(--sab));
+}
+.ajustes-photo-sheet-ttl{
+  font-size:13px;
+  font-weight:700;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  text-align:center;
+  margin-bottom:14px;
+}
+.ajustes-photo-sheet-grp{
+  background:var(--surface2);
+  border:1px solid var(--border);
+  border-radius:14px;
+  overflow:hidden;
+  margin-bottom:10px;
+}
+.ajustes-photo-sheet-btn{
+  width:100%;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:16px 18px;
+  background:transparent;
+  border:none;
+  border-top:1px solid var(--border);
+  color:var(--text);
+  font-family:inherit;
+  font-size:16px;
+  font-weight:600;
+  cursor:pointer;
+  text-align:left;
+  transition:background 0.15s var(--ease);
+}
+.ajustes-photo-sheet-btn:first-child{
+  border-top:none;
+}
+.ajustes-photo-sheet-btn:active{
+  background:var(--surface);
+}
+.ajustes-photo-sheet-btn.danger{
+  color:var(--danger);
+}
+.ajustes-photo-sheet-ico{
+  font-size:18px;
+  width:24px;
+  text-align:center;
+  flex-shrink:0;
+}
+.ajustes-photo-sheet-cancel{
+  width:100%;
+  padding:16px;
+  background:var(--surface2);
+  border:1px solid var(--border);
+  border-radius:14px;
+  color:var(--accent);
+  font-family:inherit;
+  font-size:16px;
+  font-weight:700;
+  cursor:pointer;
+  transition:background 0.15s var(--ease);
+}
+.ajustes-photo-sheet-cancel:active{
+  background:var(--surface);
+}
+
 .ajustes-hero-est{
   display:inline-flex;
   align-items:center;
