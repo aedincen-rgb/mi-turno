@@ -54,6 +54,17 @@ function _aiFormat(text) {
     .replace(/\*([^*]+)\*/g, '<em>$1</em>');
 }
 
+// ── Helper compartido: saludo según hora ──
+// Fuente única de verdad usada por el asistente y por el historial,
+// para que ambos digan lo mismo a la misma hora (sin desfases tipo
+// "Buenos días" en uno y "Buenas noches" en el otro a las 3 AM).
+function _saludoHora(d) {
+  var h = (d && typeof d.getHours === 'function' ? d : new Date()).getHours();
+  if (h < 12) return 'Buenos días';
+  if (h < 19) return 'Buenas tardes';
+  return 'Buenas noches';
+}
+
 // ── Helper interno: nombre/apodo personal del usuario ──
 // Lee el alias guardado en localStorage (mt_<uid>_pname); cae al
 // primer nombre del email; finalmente vacío.
@@ -760,9 +771,8 @@ function AsistenteTab(props) {
     [input, busy, props, clearChat]
   );
 
-  // Saludo según la hora del día
-  var hora = new Date().getHours();
-  var saludo = hora < 12 ? 'Buenos días' : hora < 19 ? 'Buenas tardes' : 'Buenas noches';
+  // Saludo según la hora del día (mismo helper que usa el historial)
+  var saludo = _saludoHora(new Date());
 
   // Categorías: lista expandible (una abierta a la vez), nada de botonera
   var categorias = [

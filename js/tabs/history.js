@@ -37,11 +37,8 @@ function HistoryTab(props) {
   var nm = typeof _aiNombrePersonal === 'function'
     ? _aiNombrePersonal({ session: session })
     : '';
-  var hora = ahora.getHours();
-  var saludo =
-    hora >= 5 && hora < 12 ? 'Buenos días' :
-    hora >= 12 && hora < 19 ? 'Buenas tardes' :
-    'Buenas noches';
+  // Mismo helper que el asistente — fuente única de verdad
+  var saludo = typeof _saludoHora === 'function' ? _saludoHora(ahora) : 'Hola';
   var saludoCompleto = nm ? saludo + ', ' + nm : saludo;
 
   // Stats del mes en curso (turnos cerrados de este mes)
