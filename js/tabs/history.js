@@ -13,6 +13,10 @@ function HistoryTab(props) {
   var delId = ds[0],
     setDelId = ds[1];
 
+  // Formato seleccionado del exportador (segmented control estilo iOS)
+  var ff = useState('pdf');
+  var fmt = ff[0], setFmt = ff[1];
+
   function doDel() {
     if (delId !== null) {
       haptic();
@@ -20,6 +24,46 @@ function HistoryTab(props) {
       setDelId(null);
     }
   }
+  function doExport() {
+    haptic();
+    if (fmt === 'pdf') props.onExportPDF();
+    else props.onExportExcel();
+  }
+
+  // ── Datos para el hero (peso visual al estilo IA) ─────────
+  var ahora = props.ahora || new Date();
+  var session = props.session || {};
+  // Nombre personal: mismo helper usado en el asistente
+  var nm = typeof _aiNombrePersonal === 'function'
+    ? _aiNombrePersonal({ session: session })
+    : '';
+  var hora = ahora.getHours();
+  var saludo =
+    hora >= 5 && hora < 12 ? 'Buenos días' :
+    hora >= 12 && hora < 19 ? 'Buenas tardes' :
+    'Buenas noches';
+  var saludoCompleto = nm ? saludo + ', ' + nm : saludo;
+
+  // Stats del mes en curso (turnos cerrados de este mes)
+  var mesActual = ahora.getMonth();
+  var anioActual = ahora.getFullYear();
+  var minsMes = 0;
+  var turnosMes = 0;
+  var diasSetMes = {};
+  turnos.forEach(function (t) {
+    if (!t.fin) return;
+    var ini = new Date(t.inicio);
+    if (ini.getMonth() === mesActual && ini.getFullYear() === anioActual) {
+      var fin = new Date(t.fin);
+      minsMes += (fin - ini) / 60000;
+      turnosMes++;
+      diasSetMes[ini.getDate()] = true;
+    }
+  });
+  var diasMes = Object.keys(diasSetMes).length;
+  var horasMes = Math.round(minsMes / 60);
+  var nombreMes = ahora.toLocaleDateString('es-CO', { month: 'long' });
+  nombreMes = nombreMes.charAt(0).toUpperCase() + nombreMes.slice(1);
 
   return h(
     'div',
@@ -75,6 +119,38 @@ function HistoryTab(props) {
         )
       : null,
 
+    // ═══ HERO con peso visual (estilo IA) ═══
+    h(
+      'div',
+      { className: 'hist-hero' },
+      h('div', { className: 'hist-hero-eyebrow' }, nombreMes + ' · resumen'),
+      h('h1', { className: 'hist-hero-greeting' }, saludoCompleto + '.'),
+      h(
+        'div',
+        { className: 'hist-hero-stats' },
+        h(
+          'div',
+          { className: 'hist-hero-stat' },
+          h('div', { className: 'hist-hero-stat-num' }, turnosMes),
+          h('div', { className: 'hist-hero-stat-lbl' }, turnosMes === 1 ? 'turno' : 'turnos')
+        ),
+        h('div', { className: 'hist-hero-sep' }),
+        h(
+          'div',
+          { className: 'hist-hero-stat' },
+          h('div', { className: 'hist-hero-stat-num' }, horasMes),
+          h('div', { className: 'hist-hero-stat-lbl' }, horasMes === 1 ? 'hora' : 'horas')
+        ),
+        h('div', { className: 'hist-hero-sep' }),
+        h(
+          'div',
+          { className: 'hist-hero-stat' },
+          h('div', { className: 'hist-hero-stat-num' }, diasMes),
+          h('div', { className: 'hist-hero-stat-lbl' }, diasMes === 1 ? 'día' : 'días')
+        )
+      )
+    ),
+
     activo
       ? h(
           'div',
@@ -111,32 +187,48 @@ function HistoryTab(props) {
     turnos.length > 0
       ? h(
           'div',
-          { className: 'card', style: { padding: 14 } },
-          h('div', { className: 'card-ttl', style: { marginBottom: 10 } }, 'Exportar este mes'),
+          { className: 'hist-export' },
+          h('div', { className: 'hist-export-ttl' }, 'Exportar ' + nombreMes),
+          // ── Segmented control estilo iOS ──
           h(
             'div',
-            { className: 'export-row' },
+            { className: 'hist-fmt-seg', role: 'tablist' },
             h(
               'button',
               {
-                className: 'btn-glass glass-pdf',
-                onClick: function () {
-                  haptic();
-                  props.onExportPDF();
-                }
+                className: 'hist-fmt-opt' + (fmt === 'pdf' ? ' active' : ''),
+                role: 'tab',
+                'aria-selected': fmt === 'pdf',
+                onClick: function () { haptic(); setFmt('pdf'); }
               },
-              '📄 PDF'
+              h('span', { className: 'hist-fmt-ico' }, '📄'),
+              'PDF'
             ),
             h(
               'button',
               {
-                className: 'btn-glass glass-excel',
-                onClick: function () {
-                  haptic();
-                  props.onExportExcel();
-                }
+                className: 'hist-fmt-opt' + (fmt === 'excel' ? ' active' : ''),
+                role: 'tab',
+                'aria-selected': fmt === 'excel',
+                onClick: function () { haptic(); setFmt('excel'); }
               },
-              '📊 Excel'
+              h('span', { className: 'hist-fmt-ico' }, '📊'),
+              'Excel'
+            )
+          ),
+          // ── CTA de exportación ──
+          h(
+            'button',
+            {
+              className: 'hist-export-cta',
+              onClick: doExport,
+              'aria-label': 'Exportar como ' + (fmt === 'pdf' ? 'PDF' : 'Excel')
+            },
+            h('span', { className: 'hist-export-cta-ico' }, '↓'),
+            h(
+              'span',
+              { className: 'hist-export-cta-txt' },
+              'Descargar ' + (fmt === 'pdf' ? 'PDF' : 'Excel')
             )
           )
         )
