@@ -11,10 +11,15 @@ function _semOrdRestante(ahora, turnos) {
   var semOrd = getHSEM(lun) * 60;
   if (!turnos) return semOrd;
   var ts = turnos
-    .filter(function (t) { return t.fin && new Date(t.inicio) >= lun; })
-    .sort(function (a, b) { return new Date(a.inicio) - new Date(b.inicio); });
+    .filter(function (t) {
+      return t.fin && new Date(t.inicio) >= lun;
+    })
+    .sort(function (a, b) {
+      return new Date(a.inicio) - new Date(b.inicio);
+    });
   ts.forEach(function (t) {
-    var ini = new Date(t.inicio), fin = new Date(t.fin);
+    var ini = new Date(t.inicio),
+      fin = new Date(t.fin);
     if (isNaN(ini.getTime()) || isNaN(fin.getTime())) return;
     var mOrd = Math.min(8 * 60, semOrd);
     var cats = calcCats(ini, fin, mOrd);
@@ -41,7 +46,11 @@ function getTipoHoraActual(ahora, durMins, limiteT) {
 }
 
 function HomeTab(props) {
-  var prefs = props.prefs || (typeof QUINCENA_PREFS_DEFAULT !== 'undefined' ? QUINCENA_PREFS_DEFAULT : { auxTransp: false, prestaciones: false, quincenaMode: false });
+  var prefs =
+    props.prefs ||
+    (typeof QUINCENA_PREFS_DEFAULT !== 'undefined'
+      ? QUINCENA_PREFS_DEFAULT
+      : { auxTransp: false, prestaciones: false, quincenaMode: false });
   var modoQuincena = !!prefs.quincenaMode && props.quincena;
   // Si el modo quincenal está activo usamos el cálculo filtrado al rango,
   // si no, el cálculo mensual estándar.
@@ -80,8 +89,20 @@ function HomeTab(props) {
     var isExtra = durActual >= limiteActivo;
     // Matriz completa: noche × festivo × extra
     var factor = isExtra
-      ? (isHoliday ? (isNight ? 2.5 : 2.0) : (isNight ? 1.75 : 1.25))
-      : (isHoliday ? (isNight ? 2.1 : 1.75) : (isNight ? 1.35 : 1.0));
+      ? isHoliday
+        ? isNight
+          ? 2.5
+          : 2.0
+        : isNight
+          ? 1.75
+          : 1.25
+      : isHoliday
+        ? isNight
+          ? 2.1
+          : 1.75
+        : isNight
+          ? 1.35
+          : 1.0;
     var perSec = (vh / 3600) * factor;
     liveDelta = perSec * fracSec;
   }
@@ -109,9 +130,8 @@ function HomeTab(props) {
   // Aviso si el usuario nunca confirmó su salario en Ajustes.
   // Si props.salarioConfigured no viene (app-main viejo en caché),
   // caemos al heurístico viejo (<= SMIN) para compatibilidad.
-  var salarioSinConfig = typeof props.salarioConfigured === 'boolean'
-    ? !props.salarioConfigured
-    : props.salario <= SMIN;
+  var salarioSinConfig =
+    typeof props.salarioConfigured === 'boolean' ? !props.salarioConfigured : props.salario <= SMIN;
 
   return h(
     'div',
@@ -139,7 +159,14 @@ function HomeTab(props) {
             { style: { flex: 1 } },
             h(
               'div',
-              { style: { fontWeight: 700, fontSize: '13.5px', color: 'var(--warn)', marginBottom: '2px' } },
+              {
+                style: {
+                  fontWeight: 700,
+                  fontSize: '13.5px',
+                  color: 'var(--warn)',
+                  marginBottom: '2px'
+                }
+              },
               'Salario no configurado'
             ),
             h(
@@ -197,7 +224,20 @@ function HomeTab(props) {
       h(
         'div',
         { className: 'hero-sub' },
-        h('span', null, fDur(calc.totalMins) + ' registradas'),
+        // Mensaje amable cuando la quincena recién arranca y no hay turnos
+        // todavía: evita el susto de leer "0h 00m registradas" como si la
+        // app hubiera perdido datos. Solo aplica en modo quincenal.
+        modoQuincena && calc.totalMins === 0
+          ? h(
+              'span',
+              null,
+              'Sin turnos en ' +
+                (props.quincena && props.quincena.rango && props.quincena.rango.label
+                  ? props.quincena.rango.label
+                  : 'esta quincena') +
+                ' todavía'
+            )
+          : h('span', null, fDur(calc.totalMins) + ' registradas'),
         h('span', { className: 'hero-sub-dot' }),
         h('span', null, 'meta ' + fCOP(metaSalario))
       ),
@@ -282,7 +322,7 @@ function HomeTab(props) {
             h(
               'div',
               { className: 'active-tag' },
-              (function() {
+              (function () {
                 var tipo = getTipoHoraActual(ahora, durActual, limiteActivo);
                 return h(
                   'span',
