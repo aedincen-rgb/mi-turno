@@ -65,7 +65,17 @@ function cargarDatos(uid, pinOnly) {
         } catch (_) {}
       }
 
-      return { turnos: merged, activo: remote.activo, salario: finalSalario };
+      return {
+        turnos: merged,
+        activo: remote.activo,
+        salario: finalSalario,
+        // El flag remoto solo es útil si local NO está marcado todavía:
+        // el usuario puede haber pulsado en este device → local manda.
+        // Pero si local nunca fue tocado en este device, el flag remoto
+        // nos dice si fue configurado desde OTRO device (incluyendo
+        // dominios distintos como github.io vs vercel.app).
+        salarioConfigured: remote.salarioConfigured === true
+      };
     })
     .catch(function (e) {
       console.warn('[MT] fallback local:', e.message);
