@@ -171,6 +171,18 @@ function Root() {
           'PIN lookup en aplicar'
         )
           .then(function (res) {
+            // CRÍTICO (v53): si la query devolvió error (RLS, timeout sin
+            // throw, etc.) NO tocar el PIN local. Antes el código asumía
+            // 'primer login' y generaba un PIN aleatorio nuevo, pisando
+            // el real del usuario → FastPinScreen mostraba 'PIN incorrecto'.
+            if (res && res.error) {
+              console.warn(
+                '[MT] PIN lookup devolvió error — preservando PIN local:',
+                res.error.message || res.error
+              );
+              applying = false;
+              return;
+            }
             if (res.data && res.data.pin) {
               var updated = Object.assign({}, ses);
               updated.pin = res.data.pin;
@@ -179,23 +191,41 @@ function Root() {
               grabar(SKEY, updated);
               setSession(updated);
               applying = false;
-            } else {
-              // Primer login: el PIN no se pudo guardar durante el registro
-              // (sin sesión activa). Ahora que hay sesión, se genera y guarda.
-              generarPINUnico(u.id)
-                .then(function (pin) {
-                  return guardarPINEnNube(u.id, u.email, pin).then(function (result) {
-                    if (result.success) {
-                      var updated = Object.assign({}, ses, { pin: pin });
-                      grabar('mt_pin_' + u.id, pin);
-                      grabar(SKEY, updated);
-                      setSession(updated);
-                    }
-                    applying = false;
-                  });
-                })
-                .catch(function () { applying = false; });
+              return;
             }
+            // res.data === null y sin error → genuinamente no hay PIN en
+            // pin_lookup. ANTES de generar uno nuevo random, revisar si
+            // hay uno local de una sesión anterior — si lo hay, subirlo
+            // en vez de generar otro (evita pérdida de PIN del usuario).
+            var pinLocal = leer('mt_pin_' + u.id, null);
+            if (pinLocal && /^\d{4}$/.test(String(pinLocal))) {
+              guardarPINEnNube(u.id, u.email, pinLocal)
+                .then(function () {
+                  applying = false;
+                })
+                .catch(function () {
+                  applying = false;
+                });
+              return;
+            }
+            // Primer login real: el PIN no se pudo guardar durante el
+            // registro (sin sesión activa). Ahora que hay sesión, se
+            // genera y guarda.
+            generarPINUnico(u.id)
+              .then(function (pin) {
+                return guardarPINEnNube(u.id, u.email, pin).then(function (result) {
+                  if (result.success) {
+                    var updated = Object.assign({}, ses, { pin: pin });
+                    grabar('mt_pin_' + u.id, pin);
+                    grabar(SKEY, updated);
+                    setSession(updated);
+                  }
+                  applying = false;
+                });
+              })
+              .catch(function () {
+                applying = false;
+              });
           })
           .catch(function (e) {
             console.warn('[MT] PIN lookup falló (no crítico):', e.message || e);
@@ -270,9 +300,11 @@ function Root() {
   // sesión cacheada). Aquí detectamos si podemos saltar el login
   // completo y mostrar solo el ingreso del PIN.
   var skipFastS = useState(false);
-  var skipFast = skipFastS[0], setSkipFast = skipFastS[1];
+  var skipFast = skipFastS[0],
+    setSkipFast = skipFastS[1];
   var showForgotPinS = useState(false);
-  var showForgotPin = showForgotPinS[0], setShowForgotPin = showForgotPinS[1];
+  var showForgotPin = showForgotPinS[0],
+    setShowForgotPin = showForgotPinS[1];
 
   function _fastPinEligible() {
     if (skipFast) return null;
@@ -282,7 +314,9 @@ function Root() {
       var pin = leer('mt_pin_' + lu.uid, null);
       if (!pin || String(pin).length !== 4) return null;
       return lu;
-    } catch (_) { return null; }
+    } catch (_) {
+      return null;
+    }
   }
 
   if (showIntro) return h(SplashScreen, { exit: introExit });
@@ -296,13 +330,19 @@ function Root() {
         h(FastPinScreen, {
           lastUser: lastUser,
           onAuth: handleAuth,
-          onExitFastMode: function () { setSkipFast(true); },
-          onForgotPin: function () { setShowForgotPin(true); }
+          onExitFastMode: function () {
+            setSkipFast(true);
+          },
+          onForgotPin: function () {
+            setShowForgotPin(true);
+          }
         }),
         showForgotPin && typeof ForgotPinModal === 'function'
           ? h(ForgotPinModal, {
               lastUser: lastUser,
-              onClose: function () { setShowForgotPin(false); },
+              onClose: function () {
+                setShowForgotPin(false);
+              },
               onPinReset: function (ses) {
                 setShowForgotPin(false);
                 handleAuth(ses);
