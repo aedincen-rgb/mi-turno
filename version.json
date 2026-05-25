@@ -1,4 +1,4 @@
 {
-  "v": "v52",
-  "label": "Fix: banner 'salario no configurado' respeta flag remoto de Supabase"
+  "v": "v53",
+  "label": "Fix CRÍTICO: PIN local sobrescrito por regeneración fantasma en boot"
 }
