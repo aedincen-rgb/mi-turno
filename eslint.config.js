@@ -139,6 +139,7 @@ const projectGlobals = {
   supaSubscribeUser: 'readonly', // v39 realtime
 
   // services/quincena.js
+  QUINCENA_PREFS_DEFAULT: 'readonly',
   normalizePrefs: 'readonly',
   getQuincenaRange: 'readonly',
   getQuincenasMes: 'readonly',
