@@ -136,6 +136,23 @@ const projectGlobals = {
   supaSyncDown: 'readonly',
   buildContext: 'readonly',
   supaUpsertPerfil: 'readonly', // New
+  supaSubscribeUser: 'readonly', // v39 realtime
+
+  // services/quincena.js
+  normalizePrefs: 'readonly',
+  getQuincenaRange: 'readonly',
+  getQuincenasMes: 'readonly',
+  filterTurnosRango: 'readonly',
+  calcularExtras: 'readonly',
+  formatRangoCorto: 'readonly',
+
+  // utils/network.js
+  isOnline: 'readonly',
+  onOnline: 'readonly',
+  removeOnlineListener: 'readonly',
+
+  // utils/icons.js
+  tabIcon: 'readonly',
 
   // tabs/sync-queue.js
   queueAction: 'readonly',
