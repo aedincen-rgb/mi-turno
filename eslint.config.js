@@ -154,6 +154,10 @@ const projectGlobals = {
   // utils/icons.js
   tabIcon: 'readonly',
 
+  // app/fast-pin-screen.js + modals/forgot-pin.js
+  FastPinScreen: 'readonly',
+  ForgotPinModal: 'readonly',
+
   // tabs/sync-queue.js
   queueAction: 'readonly',
   processQueue: 'readonly',
