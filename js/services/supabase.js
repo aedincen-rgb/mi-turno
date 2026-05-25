@@ -22,8 +22,20 @@ function supaSyncDown(uid) {
       });
       var activoRaw = results[2].data;
       var activo = activoRaw ? { id: activoRaw.id, inicio: activoRaw.inicio, userId: uid } : null;
-      var salario = perfil && perfil.salario_base ? Number(perfil.salario_base) : SMIN;
-      return { turnos: turnos, activo: activo, salario: salario };
+      // Distinguimos "configurado" de "default": si perfil.salario_base
+      // es un número > 0, el usuario lo guardó explícitamente alguna vez
+      // (aunque coincida con SMIN actual por casualidad). Esto evita que
+      // el banner de "Salario no configurado" aparezca para siempre cuando
+      // el SMIN del año sube hasta el valor que el usuario ya tenía.
+      var rawSalario = perfil && perfil.salario_base;
+      var salarioConfigured = rawSalario != null && Number(rawSalario) > 0;
+      var salario = salarioConfigured ? Number(rawSalario) : SMIN;
+      return {
+        turnos: turnos,
+        activo: activo,
+        salario: salario,
+        salarioConfigured: salarioConfigured
+      };
     })
     .catch(function (e) {
       console.warn('[Supa] error:', e);
@@ -37,26 +49,41 @@ function supaSetActivo(uid, activo) {
     return SUPA.from('turno_activo')
       .delete()
       .eq('user_id', uid)
-      .then(function (res) { return { success: !res.error, error: res.error }; })
-      .catch(function (e) { return { success: false, error: e }; });
+      .then(function (res) {
+        return { success: !res.error, error: res.error };
+      })
+      .catch(function (e) {
+        return { success: false, error: e };
+      });
   }
   return SUPA.from('turno_activo')
-    .upsert({
-      user_id: uid,
-      id: activo.id,
-      inicio: activo.inicio,
-      updated_at: new Date().toISOString()
-    }, { onConflict: 'user_id' }) // Upsert para manejar si ya existe un activo
-    .then(function (res) { return { success: !res.error, error: res.error }; })
-    .catch(function (e) { return { success: false, error: e }; });
+    .upsert(
+      {
+        user_id: uid,
+        id: activo.id,
+        inicio: activo.inicio,
+        updated_at: new Date().toISOString()
+      },
+      { onConflict: 'user_id' }
+    ) // Upsert para manejar si ya existe un activo
+    .then(function (res) {
+      return { success: !res.error, error: res.error };
+    })
+    .catch(function (e) {
+      return { success: false, error: e };
+    });
 }
 
 function supaInsertTurno(uid, turno) {
   if (!SUPA) return Promise.resolve({ success: false, error: 'Supabase no inicializado' });
   return SUPA.from('turnos')
     .insert({ id: turno.id, user_id: uid, inicio: turno.inicio, fin: turno.fin })
-    .then(function (res) { return { success: !res.error, error: res.error }; })
-    .catch(function (e) { return { success: false, error: e }; });
+    .then(function (res) {
+      return { success: !res.error, error: res.error };
+    })
+    .catch(function (e) {
+      return { success: false, error: e };
+    });
 }
 
 function supaDeleteTurno(uid, id) {
@@ -65,8 +92,12 @@ function supaDeleteTurno(uid, id) {
     .delete()
     .eq('user_id', uid)
     .eq('id', id)
-    .then(function (res) { return { success: !res.error, error: res.error }; })
-    .catch(function (e) { return { success: false, error: e }; });
+    .then(function (res) {
+      return { success: !res.error, error: res.error };
+    })
+    .catch(function (e) {
+      return { success: false, error: e };
+    });
 }
 
 function supaDeleteAllTurnos(uid) {
@@ -74,8 +105,12 @@ function supaDeleteAllTurnos(uid) {
   return SUPA.from('turnos')
     .delete()
     .eq('user_id', uid)
-    .then(function (res) { return { success: !res.error, error: res.error }; })
-    .catch(function (e) { return { success: false, error: e }; });
+    .then(function (res) {
+      return { success: !res.error, error: res.error };
+    })
+    .catch(function (e) {
+      return { success: false, error: e };
+    });
 }
 
 function supaSetSalario(uid, salario) {
@@ -88,8 +123,12 @@ function supaSetSalario(uid, salario) {
       { id: uid, salario_base: salario, updated_at: new Date().toISOString() },
       { onConflict: 'id' }
     )
-    .then(function (res) { return { success: !res.error, error: res.error }; })
-    .catch(function (e) { return { success: false, error: e }; });
+    .then(function (res) {
+      return { success: !res.error, error: res.error };
+    })
+    .catch(function (e) {
+      return { success: false, error: e };
+    });
 }
 
 // Nueva función para upsert de perfil (usada en sync-queue)
@@ -97,8 +136,12 @@ function supaUpsertPerfil(uid, data) {
   if (!SUPA) return Promise.resolve({ success: false, error: 'Supabase no inicializado' });
   return SUPA.from('perfiles')
     .upsert({ id: uid, ...data }, { onConflict: 'id' })
-    .then(function (res) { return { success: !res.error, error: res.error }; })
-    .catch(function (e) { return { success: false, error: e }; });
+    .then(function (res) {
+      return { success: !res.error, error: res.error };
+    })
+    .catch(function (e) {
+      return { success: false, error: e };
+    });
 }
 
 // ── Suscripción Realtime por usuario ──────────────────────────────
@@ -111,14 +154,34 @@ function supaSubscribeUser(uid, onChange) {
   var ch;
   try {
     ch = SUPA.channel('mt-user-' + uid)
-      .on('postgres_changes', {
-        event: '*', schema: 'public', table: 'turno_activo',
-        filter: 'user_id=eq.' + uid
-      }, function (payload) { try { onChange('turno_activo', payload); } catch (_) {} })
-      .on('postgres_changes', {
-        event: '*', schema: 'public', table: 'turnos',
-        filter: 'user_id=eq.' + uid
-      }, function (payload) { try { onChange('turnos', payload); } catch (_) {} })
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'turno_activo',
+          filter: 'user_id=eq.' + uid
+        },
+        function (payload) {
+          try {
+            onChange('turno_activo', payload);
+          } catch (_) {}
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'turnos',
+          filter: 'user_id=eq.' + uid
+        },
+        function (payload) {
+          try {
+            onChange('turnos', payload);
+          } catch (_) {}
+        }
+      )
       .subscribe(function (status) {
         if (status === 'SUBSCRIBED') console.log('[MT] Realtime suscrito para', uid);
         else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
@@ -130,7 +193,9 @@ function supaSubscribeUser(uid, onChange) {
     return function () {};
   }
   return function () {
-    try { if (ch && SUPA.removeChannel) SUPA.removeChannel(ch); } catch (_) {}
+    try {
+      if (ch && SUPA.removeChannel) SUPA.removeChannel(ch);
+    } catch (_) {}
   };
 }
 // Upsert en pin_lookup con onConflict en user_id (UNIQUE), así
@@ -164,7 +229,9 @@ function supaUpdatePinLookup(uid, payload) {
       }
       return { success: true };
     })
-    .catch(function (e) { return { success: false, error: e }; });
+    .catch(function (e) {
+      return { success: false, error: e };
+    });
 }
 
 // ── Propagar cambio de email a pin_lookup + perfiles ─────────────
@@ -178,14 +245,16 @@ function supaPropagateEmail(uid, payload) {
     SUPA.from('pin_lookup')
       .update({ user_email: payload.email, updated_at: ts })
       .eq('user_id', uid),
-    SUPA.from('perfiles')
-      .update({ email: payload.email, updated_at: ts })
-      .eq('id', uid)
+    SUPA.from('perfiles').update({ email: payload.email, updated_at: ts }).eq('id', uid)
   ])
     .then(function (results) {
-      var anyError = results.find(function (r) { return r && r.error; });
+      var anyError = results.find(function (r) {
+        return r && r.error;
+      });
       if (anyError) return { success: false, error: anyError.error };
       return { success: true };
     })
-    .catch(function (e) { return { success: false, error: e }; });
+    .catch(function (e) {
+      return { success: false, error: e };
+    });
 }

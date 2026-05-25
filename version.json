@@ -1,4 +1,4 @@
 {
-  "v": "v51",
-  "label": "Fix CRÍTICO: manifest.json start_url + scope para Vercel (root /)"
+  "v": "v52",
+  "label": "Fix: banner 'salario no configurado' respeta flag remoto de Supabase"
 }

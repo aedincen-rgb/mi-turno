@@ -66,10 +66,13 @@ function App(props) {
 
   // Detección de estado de internet
   var on = useState(isOnline());
-  var isOnlineStatus = on[0], setIsOnline = on[1];
+  var isOnlineStatus = on[0],
+    setIsOnline = on[1];
 
   useEffect(function () {
-    function updateNet() { setIsOnline(navigator.onLine); }
+    function updateNet() {
+      setIsOnline(navigator.onLine);
+    }
     window.addEventListener('online', updateNet);
     window.addEventListener('offline', updateNet);
     return function () {
@@ -79,19 +82,25 @@ function App(props) {
   }, []);
 
   // Efecto para procesar la cola de sincronización cuando el estado online cambia
-  useEffect(function () {
-    if (isOnlineStatus && uid) {
-      processQueue(uid);
-    }
-    // Suscribirse a cambios de estado online para reintentar la cola.
-    // IMPORTANTE: guardamos la misma referencia para el remove. Antes
-    // se creaban dos funciones distintas (add vs remove) y el listener
-    // nunca se desregistraba → leak + duplicados al reabrir el efecto.
-    var onlineListener = function () { processQueue(uid); };
-    onOnline(onlineListener);
-    return function () { removeOnlineListener(onlineListener); };
-  }, [isOnlineStatus, uid]);
-
+  useEffect(
+    function () {
+      if (isOnlineStatus && uid) {
+        processQueue(uid);
+      }
+      // Suscribirse a cambios de estado online para reintentar la cola.
+      // IMPORTANTE: guardamos la misma referencia para el remove. Antes
+      // se creaban dos funciones distintas (add vs remove) y el listener
+      // nunca se desregistraba → leak + duplicados al reabrir el efecto.
+      var onlineListener = function () {
+        processQueue(uid);
+      };
+      onOnline(onlineListener);
+      return function () {
+        removeOnlineListener(onlineListener);
+      };
+    },
+    [isOnlineStatus, uid]
+  );
 
   var cp = useState(false);
   var compact = cp[0],
@@ -99,18 +108,21 @@ function App(props) {
 
   var scrRef = useRef(null);
 
-  useEffect(function () {
-    var el = scrRef.current;
-    if (!el) return;
-    function handleScroll() {
-      var shouldBeCompact = el.scrollTop > 20;
-      if (shouldBeCompact !== compact) setCompact(shouldBeCompact);
-    }
-    el.addEventListener('scroll', handleScroll, { passive: true });
-    return function () {
-      el.removeEventListener('scroll', handleScroll);
-    };
-  }, [compact]);
+  useEffect(
+    function () {
+      var el = scrRef.current;
+      if (!el) return;
+      function handleScroll() {
+        var shouldBeCompact = el.scrollTop > 20;
+        if (shouldBeCompact !== compact) setCompact(shouldBeCompact);
+      }
+      el.addEventListener('scroll', handleScroll, { passive: true });
+      return function () {
+        el.removeEventListener('scroll', handleScroll);
+      };
+    },
+    [compact]
+  );
 
   var toastRef = useRef(null);
   function showToast(m) {
@@ -124,7 +136,9 @@ function App(props) {
   // errores permanentes (ej. PIN duplicado al sincronizar offline).
   useEffect(function () {
     window.showToast = showToast;
-    return function () { if (window.showToast === showToast) window.showToast = null; };
+    return function () {
+      if (window.showToast === showToast) window.showToast = null;
+    };
   }, []);
 
   useEffect(function () {
@@ -172,12 +186,17 @@ function App(props) {
           setActivo(data.activo || null);
           var salCarga = data.salario || SMIN;
           setSalario(salCarga);
-          // Migración: usuarios anteriores a v24 sin flag explícito.
-          // Si tienen salario por encima del mínimo legal, asumimos que
-          // lo configuraron y marcamos el flag para que no les aparezca
-          // el banner de "Ajustá tu salario".
+          // Inferencia del flag "salario configurado":
+          //   1. Flag local explícito (mt_sc_<uid>) si fue tocado en este device
+          //   2. Flag remoto (v52): si en Supabase perfiles.salario_base no es
+          //      null, el usuario lo configuró desde algún device antes
+          //   3. Heurístico legacy: si salario > SMIN, asumir configurado
+          //      (cubre usuarios pre-v24 que nunca tuvieron flag)
+          // Cualquiera de las 3 condiciones marca el flag → no banner.
           var savedFlag = leer(dk(uid, 'sc'), null);
-          var inferred = savedFlag === true || (savedFlag === null && salCarga > SMIN);
+          var remoteFlag = data && data.salarioConfigured === true;
+          var inferred =
+            savedFlag === true || remoteFlag || (savedFlag === null && salCarga > SMIN);
           setSalarioConfigured(inferred);
           setPrefs(normalizePrefs(leer(dk(uid, 'prefs'), null)));
           // Exponer estado global para el Mood Bar
@@ -254,15 +273,19 @@ function App(props) {
         pendingT = setTimeout(function () {
           pendingT = null;
           if (disposed) return;
-          cargarDatos(uid, session.pinOnly).then(function (data) {
-            if (disposed || !data) return;
-            setTurnos(data.turnos || []);
-            setActivo(data.activo || null);
-          }).catch(function () {});
+          cargarDatos(uid, session.pinOnly)
+            .then(function (data) {
+              if (disposed || !data) return;
+              setTurnos(data.turnos || []);
+              setActivo(data.activo || null);
+            })
+            .catch(function () {});
         }, 400);
       }
 
-      var unsub = supaSubscribeUser(uid, function () { resyncDebounced(); });
+      var unsub = supaSubscribeUser(uid, function () {
+        resyncDebounced();
+      });
 
       function onVis() {
         if (document.visibilityState === 'visible') resyncDebounced();
@@ -395,7 +418,7 @@ function App(props) {
         bat.addEventListener('levelchange', applyState);
         bat.addEventListener('chargingchange', applyState);
       })
-      .catch(function () { });
+      .catch(function () {});
     return function () {
       if (bat) {
         bat.removeEventListener('levelchange', applyState);
@@ -417,27 +440,33 @@ function App(props) {
   }, []);
 
   // ── Mantener estado global para Mood Bar ──────────────
-  useEffect(function () {
-    window.__miTurnoState = {
-      turnos: turnos,
-      calc: calc,
-      salario: salario,
-      vh: vh,
-      session: session
-    };
-    // Flag leída por sw-register.js para diferir el reload de
-    // actualización si hay un turno en curso (no interrumpir el cronómetro).
-    window.__mtTurnoActivo = !!activo;
-  }, [turnos, calc, salario, vh, session, activo]);
+  useEffect(
+    function () {
+      window.__miTurnoState = {
+        turnos: turnos,
+        calc: calc,
+        salario: salario,
+        vh: vh,
+        session: session
+      };
+      // Flag leída por sw-register.js para diferir el reload de
+      // actualización si hay un turno en curso (no interrumpir el cronómetro).
+      window.__mtTurnoActivo = !!activo;
+    },
+    [turnos, calc, salario, vh, session, activo]
+  );
 
   // ── Iniciar/detener rotación Mood Bar según pestaña ──
-  useEffect(function () {
-    if (tab === 'home') {
-      if (window._startMoodRotation) window._startMoodRotation();
-    } else {
-      if (window._stopMoodRotation) window._stopMoodRotation();
-    }
-  }, [tab]);
+  useEffect(
+    function () {
+      if (tab === 'home') {
+        if (window._startMoodRotation) window._startMoodRotation();
+      } else {
+        if (window._stopMoodRotation) window._stopMoodRotation();
+      }
+    },
+    [tab]
+  );
 
   var vh = useMemo(
     function () {
@@ -485,9 +514,7 @@ function App(props) {
       var tQ = filterTurnosRango(turnos, rango);
       // El activo se incluye en la quincena si su inicio cae dentro
       var activoEnRango =
-        activo &&
-        new Date(activo.inicio) >= rango.ini &&
-        new Date(activo.inicio) < rango.fin
+        activo && new Date(activo.inicio) >= rango.ini && new Date(activo.inicio) < rango.fin
           ? activo
           : null;
       var calcQ = doCalc(tQ, activoEnRango, ahoraDateCalc, vh);
@@ -502,8 +529,14 @@ function App(props) {
       var qs = getQuincenasMes(ahoraDate, prefs);
       var t1 = filterTurnosRango(turnos, qs.q1);
       var t2 = filterTurnosRango(turnos, qs.q2);
-      var aEnQ1 = activo && new Date(activo.inicio) >= qs.q1.ini && new Date(activo.inicio) < qs.q1.fin ? activo : null;
-      var aEnQ2 = activo && new Date(activo.inicio) >= qs.q2.ini && new Date(activo.inicio) < qs.q2.fin ? activo : null;
+      var aEnQ1 =
+        activo && new Date(activo.inicio) >= qs.q1.ini && new Date(activo.inicio) < qs.q1.fin
+          ? activo
+          : null;
+      var aEnQ2 =
+        activo && new Date(activo.inicio) >= qs.q2.ini && new Date(activo.inicio) < qs.q2.fin
+          ? activo
+          : null;
       return {
         q1: {
           rango: qs.q1,
@@ -633,32 +666,32 @@ function App(props) {
     { style: { display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' } },
     showPinSetup
       ? h(PinSetup, {
-        session: session,
-        onDone: function (newPin) {
-          haptic();
-          var cur = leer(SKEY, {});
-          if (cur) {
-            cur.pin = newPin;
-            grabar(SKEY, cur);
+          session: session,
+          onDone: function (newPin) {
+            haptic();
+            var cur = leer(SKEY, {});
+            if (cur) {
+              cur.pin = newPin;
+              grabar(SKEY, cur);
+            }
+            if (onSessionPatch) onSessionPatch({ pin: newPin });
+            setShowPinSetup(false);
+            showToast('PIN creado correctamente');
+          },
+          onSkip: function () {
+            haptic();
+            setShowPinSetup(false);
           }
-          if (onSessionPatch) onSessionPatch({ pin: newPin });
-          setShowPinSetup(false);
-          showToast('PIN creado correctamente');
-        },
-        onSkip: function () {
-          haptic();
-          setShowPinSetup(false);
-        }
-      })
+        })
       : null,
     showOlv && activo
       ? h(ModalOlvidado, {
-        inicio: activo.inicio,
-        onGuardar: onOlv,
-        onContinuar: function () {
-          setShowOlv(false);
-        }
-      })
+          inicio: activo.inicio,
+          onGuardar: onOlv,
+          onContinuar: function () {
+            setShowOlv(false);
+          }
+        })
       : null,
     toast ? h('div', { className: 'toast' }, toast) : null,
 
@@ -703,11 +736,15 @@ function App(props) {
           h(
             'div',
             { className: 'hdr-meta' },
-            h('span', { className: 'hdr-date' }, ahoraDate.toLocaleDateString('es-CO', {
-              weekday: 'short',
-              day: 'numeric',
-              month: 'short'
-            }) + (festHoy ? ' · Fest' : '')),
+            h(
+              'span',
+              { className: 'hdr-date' },
+              ahoraDate.toLocaleDateString('es-CO', {
+                weekday: 'short',
+                day: 'numeric',
+                month: 'short'
+              }) + (festHoy ? ' · Fest' : '')
+            ),
             h('span', { className: 'hdr-clock' }, tStr)
           )
         )
@@ -726,41 +763,41 @@ function App(props) {
           },
           theme === 'dark'
             ? h(
-              'svg',
-              {
-                viewBox: '0 0 24 24',
-                width: 18,
-                height: 18,
-                fill: 'none',
-                stroke: 'currentColor',
-                strokeWidth: 2,
-                strokeLinecap: 'round',
-                strokeLinejoin: 'round'
-              },
-              h('circle', { cx: 12, cy: 12, r: 5 }),
-              h('line', { x1: 12, y1: 1, x2: 12, y2: 3 }),
-              h('line', { x1: 12, y1: 21, x2: 12, y2: 23 }),
-              h('line', { x1: 4.22, y1: 4.22, x2: 5.64, y2: 5.64 }),
-              h('line', { x1: 18.36, y1: 18.36, x2: 19.78, y2: 19.78 }),
-              h('line', { x1: 1, y1: 12, x2: 3, y2: 12 }),
-              h('line', { x1: 21, y1: 12, x2: 23, y2: 12 }),
-              h('line', { x1: 4.22, y1: 19.78, x2: 5.64, y2: 18.36 }),
-              h('line', { x1: 18.36, y1: 5.64, x2: 19.78, y2: 4.22 })
-            )
+                'svg',
+                {
+                  viewBox: '0 0 24 24',
+                  width: 18,
+                  height: 18,
+                  fill: 'none',
+                  stroke: 'currentColor',
+                  strokeWidth: 2,
+                  strokeLinecap: 'round',
+                  strokeLinejoin: 'round'
+                },
+                h('circle', { cx: 12, cy: 12, r: 5 }),
+                h('line', { x1: 12, y1: 1, x2: 12, y2: 3 }),
+                h('line', { x1: 12, y1: 21, x2: 12, y2: 23 }),
+                h('line', { x1: 4.22, y1: 4.22, x2: 5.64, y2: 5.64 }),
+                h('line', { x1: 18.36, y1: 18.36, x2: 19.78, y2: 19.78 }),
+                h('line', { x1: 1, y1: 12, x2: 3, y2: 12 }),
+                h('line', { x1: 21, y1: 12, x2: 23, y2: 12 }),
+                h('line', { x1: 4.22, y1: 19.78, x2: 5.64, y2: 18.36 }),
+                h('line', { x1: 18.36, y1: 5.64, x2: 19.78, y2: 4.22 })
+              )
             : h(
-              'svg',
-              {
-                viewBox: '0 0 24 24',
-                width: 18,
-                height: 18,
-                fill: 'none',
-                stroke: 'currentColor',
-                strokeWidth: 2,
-                strokeLinecap: 'round',
-                strokeLinejoin: 'round'
-              },
-              h('path', { d: 'M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z' })
-            )
+                'svg',
+                {
+                  viewBox: '0 0 24 24',
+                  width: 18,
+                  height: 18,
+                  fill: 'none',
+                  stroke: 'currentColor',
+                  strokeWidth: 2,
+                  strokeLinecap: 'round',
+                  strokeLinejoin: 'round'
+                },
+                h('path', { d: 'M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z' })
+              )
         )
       )
     ),
@@ -770,72 +807,72 @@ function App(props) {
       { className: 'scr', ref: scrRef },
       tab === 'home'
         ? h(HomeTab, {
-          calc: calc,
-          activo: activo,
-          ahora: ahoraDate,
-          salario: salario,
-          salarioConfigured: salarioConfigured,
-          vh: vh,
-          turnos: turnos,
-          prefs: prefs,
-          quincena: quincena,
-          session: session,
-          onIni: onIni,
-          onFin: onFin,
-          onOpenAssistant: function () {
-            haptic();
-            setTab('ai');
-          },
-          onOpenConfig: function () {
-            haptic();
-            setTab('config');
-          }
-        })
+            calc: calc,
+            activo: activo,
+            ahora: ahoraDate,
+            salario: salario,
+            salarioConfigured: salarioConfigured,
+            vh: vh,
+            turnos: turnos,
+            prefs: prefs,
+            quincena: quincena,
+            session: session,
+            onIni: onIni,
+            onFin: onFin,
+            onOpenAssistant: function () {
+              haptic();
+              setTab('ai');
+            },
+            onOpenConfig: function () {
+              haptic();
+              setTab('config');
+            }
+          })
         : tab === 'dashboard'
           ? h(DashboardTab, {
-            calc: calc,
-            turnos: turnosMes,
-            salario: salario,
-            vh: vh,
-            ahora: ahoraDate,
-            themeKey: theme,
-            prefs: prefs,
-            quincenasMes: quincenasMes
-          })
-          : tab === 'ai'
-            ? h(AsistenteTab, {
-              turnos: turnosMes,
-              turnosAll: turnos,
               calc: calc,
+              turnos: turnosMes,
               salario: salario,
               vh: vh,
-              session: session
+              ahora: ahoraDate,
+              themeKey: theme,
+              prefs: prefs,
+              quincenasMes: quincenasMes
             })
+          : tab === 'ai'
+            ? h(AsistenteTab, {
+                turnos: turnosMes,
+                turnosAll: turnos,
+                calc: calc,
+                salario: salario,
+                vh: vh,
+                session: session
+              })
             : tab === 'history'
               ? h(HistoryTab, {
-                turnos: turnos,
-                activo: activo,
-                durActual: durActual,
-                session: session,
-                calc: calc,
-                ahora: ahoraDate,
-                onBorrar: onBorrar,
-                onBorrarUno: onBorrarUno,
-                onExportPDF: onExportPDF,
-                onExportExcel: onExportExcel
-              })
+                  turnos: turnos,
+                  activo: activo,
+                  durActual: durActual,
+                  session: session,
+                  calc: calc,
+                  ahora: ahoraDate,
+                  onBorrar: onBorrar,
+                  onBorrarUno: onBorrarUno,
+                  onExportPDF: onExportPDF,
+                  onExportExcel: onExportExcel
+                })
               : h(ConfigTab, {
-                salario: salario,
-                valorHora: vh,
-                session: session,
-                onSalario: onSalario,
-                onSignOut: props.onSignOut,
-                onSessionPatch: onSessionPatch,
-                theme: theme,
-                onThemeChange: setTheme,
-                prefs: prefs,
-                onPrefsChange: onPrefsChange
-              })
+                  salario: salario,
+                  valorHora: vh,
+                  session: session,
+                  onSalario: onSalario,
+                  onSignOut: props.onSignOut,
+                  onSessionPatch: onSessionPatch,
+                  theme: theme,
+                  onThemeChange: setTheme,
+                  prefs: prefs,
+                  onPrefsChange: onPrefsChange
+                })
     ),
 
     h(
@@ -865,24 +902,24 @@ function App(props) {
     // ── Modal Exportar Reporte (PDF/Excel) ──
     exportMode
       ? h(
-        'div',
-        {
-          className: 'ovl',
-          onClick: function (ev) {
-            if (ev.target === ev.currentTarget) setExportMode(null);
-          }
-        },
-        h(ExportReportModal, {
-          format: exportMode,
-          turnos: turnos,
-          calc: calc,
-          salario: salario,
-          session: session,
-          onClose: function () {
-            setExportMode(null);
-          }
-        })
-      )
+          'div',
+          {
+            className: 'ovl',
+            onClick: function (ev) {
+              if (ev.target === ev.currentTarget) setExportMode(null);
+            }
+          },
+          h(ExportReportModal, {
+            format: exportMode,
+            turnos: turnos,
+            calc: calc,
+            salario: salario,
+            session: session,
+            onClose: function () {
+              setExportMode(null);
+            }
+          })
+        )
       : null
   );
 }
