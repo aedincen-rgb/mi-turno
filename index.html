@@ -28,6 +28,30 @@
 
 <title>Mi Turno · Colombia</title>
 
+<!-- SEO + descripción para previews al compartir -->
+<meta name="description" content="Mi Turno · Nómina inteligente para trabajadores por turnos en Colombia. Cálculo automático de recargos nocturnos, festivos, dominicales y horas extra según la Ley 2101/2021.">
+<meta name="author" content="Mi Turno">
+<meta name="keywords" content="nómina, turnos, recargos, Colombia, horas extra, festivos, ley 2101, salario">
+
+<!-- Open Graph (preview al compartir en WhatsApp, Facebook, etc.) -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="Mi Turno · Nómina inteligente">
+<meta property="og:description" content="Calculá tu salario real turno a turno con todos los recargos colombianos. Funciona offline, sin Excel.">
+<meta property="og:image" content="icon-512.png">
+<meta property="og:locale" content="es_CO">
+
+<!-- Twitter Card (preview al compartir en X) -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Mi Turno · Nómina inteligente">
+<meta name="twitter:description" content="Calculá tu salario real turno a turno con todos los recargos colombianos.">
+<meta name="twitter:image" content="icon-512.png">
+
+<!-- Preconnect a CDNs de scripts (React, Supabase, jsPDF, XLSX, Chart.js).
+     Bajar 100-300ms en LCP al adelantar el handshake DNS+TLS antes de la
+     primera <script src=cdnjs...> del bloque CDN. -->
+<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+
 <!-- Preload de archivos críticos para evitar cascada en Vercel -->
 <link rel="preload" href="js/config/globals.js" as="script">
 <link rel="preload" href="js/utils/storage.js" as="script">
