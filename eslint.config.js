@@ -159,6 +159,12 @@ const projectGlobals = {
   FastPinScreen: 'readonly',
   ForgotPinModal: 'readonly',
 
+  // utils/error-logger.js
+  getErrors: 'readonly',
+  addErrorListener: 'readonly',
+  removeErrorListener: 'readonly',
+  clearErrors: 'readonly',
+
   // tabs/sync-queue.js
   queueAction: 'readonly',
   processQueue: 'readonly',

@@ -15,74 +15,88 @@ function ErrorViewerModal(props) {
   var scrollRef = useRef(null);
 
   // Suscribirse a los cambios en el logger de errores
-  useEffect(function() {
-    function updateErrors(newErrors) {
-      setErrors(newErrors);
-      // Si el error seleccionado ya no existe, deseleccionarlo
-      if (selectedError && !newErrors.some(e => e.id === selectedError.id)) {
-        setSelectedError(null);
-        setSourceCode(null);
+  useEffect(
+    function () {
+      function updateErrors(newErrors) {
+        setErrors(newErrors);
+        // Si el error seleccionado ya no existe, deseleccionarlo
+        if (selectedError && !newErrors.some(e => e.id === selectedError.id)) {
+          setSelectedError(null);
+          setSourceCode(null);
+        }
       }
-    }
-    addErrorListener(updateErrors);
-    return function() {
-      removeErrorListener(updateErrors);
-    };
-  }, [selectedError]);
+      addErrorListener(updateErrors);
+      return function () {
+        removeErrorListener(updateErrors);
+      };
+    },
+    [selectedError]
+  );
 
   // Cargar el código fuente cuando se selecciona un error
-  useEffect(function() {
-    if (!selectedError || !selectedError.filename || selectedError.filename === 'Promise Rejection' || selectedError.filename === 'unknown') {
-      setSourceCode(null);
+  useEffect(
+    function () {
+      if (
+        !selectedError ||
+        !selectedError.filename ||
+        selectedError.filename === 'Promise Rejection' ||
+        selectedError.filename === 'unknown'
+      ) {
+        setSourceCode(null);
+        setSourceError(null);
+        return;
+      }
+
+      setLoadingSource(true);
       setSourceError(null);
-      return;
-    }
+      setSourceCode(null);
 
-    setLoadingSource(true);
-    setSourceError(null);
-    setSourceCode(null);
+      // Normalizar la URL del archivo
+      var filename = selectedError.filename;
+      // Eliminar el origen si es local para que fetch funcione correctamente
+      if (filename.startsWith(window.location.origin)) {
+        filename = filename.substring(window.location.origin.length);
+      }
+      // Asegurarse de que la ruta sea relativa y no absoluta si ya lo es
+      if (filename.startsWith('/')) {
+        filename = filename.substring(1);
+      }
 
-    // Normalizar la URL del archivo
-    var filename = selectedError.filename;
-    // Eliminar el origen si es local para que fetch funcione correctamente
-    if (filename.startsWith(window.location.origin)) {
-      filename = filename.substring(window.location.origin.length);
-    }
-    // Asegurarse de que la ruta sea relativa y no absoluta si ya lo es
-    if (filename.startsWith('/')) {
-      filename = filename.substring(1);
-    }
-
-    fetch(filename)
-      .then(function(response) {
-        if (!response.ok) {
-          throw new Error('No se pudo cargar el archivo: ' + response.statusText);
-        }
-        return response.text();
-      })
-      .then(function(text) {
-        setSourceCode(text.split('\n'));
-      })
-      .catch(function(e) {
-        setSourceError('Error al cargar el código fuente: ' + e.message);
-      })
-      .finally(function() {
-        setLoadingSource(false);
-      });
-  }, [selectedError]);
+      fetch(filename)
+        .then(function (response) {
+          if (!response.ok) {
+            throw new Error('No se pudo cargar el archivo: ' + response.statusText);
+          }
+          return response.text();
+        })
+        .then(function (text) {
+          setSourceCode(text.split('\n'));
+        })
+        .catch(function (e) {
+          setSourceError('Error al cargar el código fuente: ' + e.message);
+        })
+        .finally(function () {
+          setLoadingSource(false);
+        });
+    },
+    [selectedError]
+  );
 
   // Scroll al error seleccionado en el código fuente
-  useEffect(function() {
-    if (sourceCode && selectedError && selectedError.lineno > 0 && scrollRef.current) {
-      // Pequeño retraso para asegurar que el DOM se haya renderizado
-      setTimeout(() => {
-        var lineElement = scrollRef.current.querySelector('.code-line-' + selectedError.lineno);
-        if (lineElement) {
-          lineElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-      }, 100);
-    }
-  }, [sourceCode, selectedError]);
+  useEffect(
+    function () {
+      if (sourceCode && selectedError && selectedError.lineno > 0 && scrollRef.current) {
+        // Pequeño retraso para asegurar que el DOM se haya renderizado
+        setTimeout(() => {
+          var lineElement = scrollRef.current.querySelector('.code-line-' + selectedError.lineno);
+          if (lineElement) {
+            lineElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 100);
+      }
+    },
+    [sourceCode, selectedError]
+  );
 
   function handleClearAll() {
     haptic();
@@ -103,8 +117,8 @@ function ErrorViewerModal(props) {
     haptic();
     if (!devQuery.trim()) return;
     // Estado enriquecido para la IA
-    var resp = aiAnswer(devQuery, { 
-      turnos: [], 
+    var resp = aiAnswer(devQuery, {
+      turnos: [],
       calc: { totalMins: 0, totalCOP: 0, bd: {} },
       online: navigator.onLine,
       lastError: selectedError,
@@ -182,9 +196,31 @@ function ErrorViewerModal(props) {
     // Nueva sección: Consultor de Código
     h(
       'div',
-      { style: { background: 'var(--surface2)', padding: 12, borderRadius: 'var(--radius)', marginBottom: 20, border: '1px dashed var(--border)' } },
-      h('div', { style: { fontSize: 11, fontWeight: 700, color: 'var(--accent)', marginBottom: 8, textTransform: 'uppercase' } }, 'Asistente de Arquitectura'),
-      h('div', { style: { display: 'flex', gap: 8 } },
+      {
+        style: {
+          background: 'var(--surface2)',
+          padding: 12,
+          borderRadius: 'var(--radius)',
+          marginBottom: 20,
+          border: '1px dashed var(--border)'
+        }
+      },
+      h(
+        'div',
+        {
+          style: {
+            fontSize: 11,
+            fontWeight: 700,
+            color: 'var(--accent)',
+            marginBottom: 8,
+            textTransform: 'uppercase'
+          }
+        },
+        'Asistente de Arquitectura'
+      ),
+      h(
+        'div',
+        { style: { display: 'flex', gap: 8 } },
         h('input', {
           className: 'input',
           placeholder: 'Ej: ¿Donde cambio el emoji del inicio?',
@@ -193,11 +229,29 @@ function ErrorViewerModal(props) {
           onKeyDown: e => e.key === 'Enter' && handleAskAI(),
           style: { fontSize: 12 }
         }),
-        h('button', { className: 'btn btn-accent', onClick: handleAskAI, style: { padding: '0 12px' } }, 'Preguntar')
+        h(
+          'button',
+          { className: 'btn btn-accent', onClick: handleAskAI, style: { padding: '0 12px' } },
+          'Preguntar'
+        )
       ),
-      aiAdvice && h('div', { 
-        style: { marginTop: 10, fontSize: 11.5, color: 'var(--text)', whiteSpace: 'pre-wrap', background: 'var(--surface)', padding: 10, borderRadius: 'var(--radius-sm)', borderLeft: '3px solid var(--accent)' } 
-      }, aiAdvice)
+      aiAdvice &&
+        h(
+          'div',
+          {
+            style: {
+              marginTop: 10,
+              fontSize: 11.5,
+              color: 'var(--text)',
+              whiteSpace: 'pre-wrap',
+              background: 'var(--surface)',
+              padding: 10,
+              borderRadius: 'var(--radius-sm)',
+              borderLeft: '3px solid var(--accent)'
+            }
+          },
+          aiAdvice
+        )
     ),
 
     selectedError
@@ -221,7 +275,9 @@ function ErrorViewerModal(props) {
           h(
             'div',
             { style: { fontSize: 11.5, color: 'var(--muted)', marginBottom: 12 } },
-            'Tipo: ', selectedError.type, ' · ',
+            'Tipo: ',
+            selectedError.type,
+            ' · ',
             new Date(selectedError.timestamp).toLocaleString('es-CO')
           ),
           h(
@@ -231,8 +287,23 @@ function ErrorViewerModal(props) {
           ),
           h(
             'div',
-            { style: { fontSize: 11, color: 'var(--muted)', fontFamily: 'monospace', marginBottom: 16, background: 'var(--surface2)', padding: '8px 12px', borderRadius: 'var(--radius-sm)', overflowX: 'auto' } },
-            selectedError.filename, ':', selectedError.lineno, ':', selectedError.colno
+            {
+              style: {
+                fontSize: 11,
+                color: 'var(--muted)',
+                fontFamily: 'monospace',
+                marginBottom: 16,
+                background: 'var(--surface2)',
+                padding: '8px 12px',
+                borderRadius: 'var(--radius-sm)',
+                overflowX: 'auto'
+              }
+            },
+            selectedError.filename,
+            ':',
+            selectedError.lineno,
+            ':',
+            selectedError.colno
           ),
 
           loadingSource
@@ -245,7 +316,15 @@ function ErrorViewerModal(props) {
             : sourceError
               ? h(
                   'div',
-                  { style: { padding: 12, background: 'var(--danger-dim)', color: 'var(--danger)', borderRadius: 'var(--radius-sm)', fontSize: 12.5 } },
+                  {
+                    style: {
+                      padding: 12,
+                      background: 'var(--danger-dim)',
+                      color: 'var(--danger)',
+                      borderRadius: 'var(--radius-sm)',
+                      fontSize: 12.5
+                    }
+                  },
                   sourceError
                 )
               : sourceCode
@@ -258,24 +337,53 @@ function ErrorViewerModal(props) {
                       h(
                         'code',
                         null,
-                        sourceCode.map(function(line, idx) {
+                        sourceCode.map(function (line, idx) {
                           var lineNumber = idx + 1;
                           var isErrorLine = lineNumber === selectedError.lineno;
                           return h(
                             'div',
                             {
                               key: idx,
-                              className: 'code-line ' + (isErrorLine ? 'code-line-error code-line-' + lineNumber : 'code-line-' + lineNumber),
+                              className:
+                                'code-line ' +
+                                (isErrorLine
+                                  ? 'code-line-error code-line-' + lineNumber
+                                  : 'code-line-' + lineNumber),
                               style: {
                                 background: isErrorLine ? 'var(--danger-dim)' : 'transparent',
-                                borderLeft: isErrorLine ? '3px solid var(--danger)' : '3px solid transparent',
+                                borderLeft: isErrorLine
+                                  ? '3px solid var(--danger)'
+                                  : '3px solid transparent',
                                 paddingLeft: isErrorLine ? '9px' : '12px',
                                 display: 'flex',
                                 alignItems: 'flex-start'
                               }
                             },
-                            h('span', { style: { color: 'var(--muted)', width: '3em', flexShrink: 0, textAlign: 'right', marginRight: '1em', opacity: 0.7 } }, lineNumber),
-                            h('span', { style: { flexGrow: 1, whiteSpace: 'pre-wrap', wordBreak: 'break-all' } }, line)
+                            h(
+                              'span',
+                              {
+                                style: {
+                                  color: 'var(--muted)',
+                                  width: '3em',
+                                  flexShrink: 0,
+                                  textAlign: 'right',
+                                  marginRight: '1em',
+                                  opacity: 0.7
+                                }
+                              },
+                              lineNumber
+                            ),
+                            h(
+                              'span',
+                              {
+                                style: {
+                                  flexGrow: 1,
+                                  whiteSpace: 'pre-wrap',
+                                  wordBreak: 'break-all'
+                                }
+                              },
+                              line
+                            )
                           );
                         })
                       )
@@ -283,17 +391,44 @@ function ErrorViewerModal(props) {
                   )
                 : h(
                     'div',
-                    { style: { padding: 12, background: 'var(--surface2)', color: 'var(--muted)', borderRadius: 'var(--radius-sm)', fontSize: 12.5 } },
+                    {
+                      style: {
+                        padding: 12,
+                        background: 'var(--surface2)',
+                        color: 'var(--muted)',
+                        borderRadius: 'var(--radius-sm)',
+                        fontSize: 12.5
+                      }
+                    },
                     'No se pudo cargar el código fuente o no es aplicable para este tipo de error.'
                   ),
           h(
             'div',
-            { style: { fontSize: 12, fontWeight: 600, color: 'var(--text)', marginTop: 16, marginBottom: 6 } },
+            {
+              style: {
+                fontSize: 12,
+                fontWeight: 600,
+                color: 'var(--text)',
+                marginTop: 16,
+                marginBottom: 6
+              }
+            },
             'Stack Trace:'
           ),
           h(
             'pre',
-            { style: { fontSize: 10.5, color: 'var(--muted)', fontFamily: 'monospace', background: 'var(--surface2)', padding: '8px 12px', borderRadius: 'var(--radius-sm)', whiteSpace: 'pre-wrap', wordBreak: 'break-all' } },
+            {
+              style: {
+                fontSize: 10.5,
+                color: 'var(--muted)',
+                fontFamily: 'monospace',
+                background: 'var(--surface2)',
+                padding: '8px 12px',
+                borderRadius: 'var(--radius-sm)',
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-all'
+              }
+            },
             selectedError.stack
           )
         )
@@ -306,17 +441,23 @@ function ErrorViewerModal(props) {
                 { style: { textAlign: 'center', padding: '40px 0', color: 'var(--muted)' } },
                 h('span', { style: { fontSize: 38, marginBottom: 10, display: 'block' } }, '✨'),
                 h('div', { style: { fontSize: 14, fontWeight: 600 } }, '¡Todo limpio!'),
-                h('div', { style: { fontSize: 12, marginTop: 4 } }, 'No se han detectado errores de runtime.')
+                h(
+                  'div',
+                  { style: { fontSize: 12, marginTop: 4 } },
+                  'No se han detectado errores de runtime.'
+                )
               )
             : h(
                 'div',
                 { style: { display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 } },
-                errors.map(function(err) {
+                errors.map(function (err) {
                   return h(
                     'div',
                     {
                       key: err.id,
-                      onClick: function() { handleSelectError(err); },
+                      onClick: function () {
+                        handleSelectError(err);
+                      },
                       style: {
                         padding: '12px 14px',
                         background: 'var(--surface)',
@@ -332,39 +473,53 @@ function ErrorViewerModal(props) {
                         position: 'relative'
                       }
                     },
-                    h('button', {
-                      onClick: function(ev) {
-                        ev.stopPropagation();
-                        haptic();
-                        if (typeof deleteError === 'function') deleteError(err.id);
+                    h(
+                      'button',
+                      {
+                        'aria-label': 'Eliminar error',
+                        onClick: function (ev) {
+                          ev.stopPropagation();
+                          haptic();
+                          if (typeof deleteError === 'function') deleteError(err.id);
+                        },
+                        style: {
+                          position: 'absolute',
+                          top: 10,
+                          right: 10,
+                          width: 22,
+                          height: 22,
+                          borderRadius: '50%',
+                          background: 'var(--surface2)',
+                          border: 'none',
+                          color: 'var(--muted)',
+                          fontSize: 15,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                          zIndex: 10
+                        }
                       },
-                      style: {
-                        position: 'absolute',
-                        top: 10,
-                        right: 10,
-                        width: 22,
-                        height: 22,
-                        borderRadius: '50%',
-                        background: 'var(--surface2)',
-                        border: 'none',
-                        color: 'var(--muted)',
-                        fontSize: 15,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: 'pointer',
-                        zIndex: 10
-                      }
-                    }, '×'),
+                      '×'
+                    ),
                     h(
                       'div',
-                      { style: { fontSize: 13, fontWeight: 700, color: 'var(--danger)', paddingRight: 24 } },
+                      {
+                        style: {
+                          fontSize: 13,
+                          fontWeight: 700,
+                          color: 'var(--danger)',
+                          paddingRight: 24
+                        }
+                      },
                       err.message
                     ),
                     h(
                       'div',
                       { style: { fontSize: 10.5, color: 'var(--muted)' } },
-                      err.filename, ':', err.lineno
+                      err.filename,
+                      ':',
+                      err.lineno
                     ),
                     h(
                       'div',
