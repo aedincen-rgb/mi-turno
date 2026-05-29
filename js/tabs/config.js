@@ -37,7 +37,14 @@ function ConfigTab(props) {
         ),
         h(
           'div',
-          { style: { fontSize: '13px', color: 'var(--text-2)', marginBottom: '14px', lineHeight: 1.45 } },
+          {
+            style: {
+              fontSize: '13px',
+              color: 'var(--text-2)',
+              marginBottom: '14px',
+              lineHeight: 1.45
+            }
+          },
           'Tu app tiene una versión mezclada en caché. Tocá el botón para descargar la última versión completa.'
         ),
         h(
@@ -72,7 +79,14 @@ function ConfigTab(props) {
         ),
         h(
           'div',
-          { style: { fontSize: '11px', color: 'var(--muted)', marginTop: '12px', textAlign: 'center' } },
+          {
+            style: {
+              fontSize: '11px',
+              color: 'var(--muted)',
+              marginTop: '12px',
+              textAlign: 'center'
+            }
+          },
           'Versión: ' + (typeof MT_APP_VERSION !== 'undefined' ? MT_APP_VERSION : 'desconocida')
         )
       )
@@ -118,16 +132,25 @@ function ConfigTabInner(props) {
   // ── Perfil personal (foto + nombre/apodo) ─────────────────
   // Guardado por uid en localStorage. Local-only por ahora.
   var uid = session && session.uid ? session.uid : 'guest';
-  var pp = useState(function () { return leer(dk(uid, 'photo'), null); });
-  var photo = pp[0], setPhoto = pp[1];
-  var pn = useState(function () { return leer(dk(uid, 'pname'), ''); });
-  var pname = pn[0], setPname = pn[1];
+  var pp = useState(function () {
+    return leer(dk(uid, 'photo'), null);
+  });
+  var photo = pp[0],
+    setPhoto = pp[1];
+  var pn = useState(function () {
+    return leer(dk(uid, 'pname'), '');
+  });
+  var pname = pn[0],
+    setPname = pn[1];
   var ne = useState(false);
-  var editName = ne[0], setEditName = ne[1];
+  var editName = ne[0],
+    setEditName = ne[1];
   var tn = useState('');
-  var tempName = tn[0], setTempName = tn[1];
+  var tempName = tn[0],
+    setTempName = tn[1];
   var asp = useState(false);
-  var showPhotoSheet = asp[0], setShowPhotoSheet = asp[1];
+  var showPhotoSheet = asp[0],
+    setShowPhotoSheet = asp[1];
   var fileInputRef = useRef(null);
 
   function onPickPhoto(file) {
@@ -143,7 +166,8 @@ function ConfigTabInner(props) {
         try {
           var SIZE = 240;
           var canvas = document.createElement('canvas');
-          canvas.width = SIZE; canvas.height = SIZE;
+          canvas.width = SIZE;
+          canvas.height = SIZE;
           var ctx = canvas.getContext('2d');
           // Recorte cuadrado centrado (cover)
           var sw = Math.min(img.width, img.height);
@@ -151,17 +175,36 @@ function ConfigTabInner(props) {
           var sy = (img.height - sw) / 2;
           ctx.drawImage(img, sx, sy, sw, sw, 0, 0, SIZE, SIZE);
           var dataUrl = canvas.toDataURL('image/jpeg', 0.72);
-          grabar(dk(uid, 'photo'), dataUrl);
+          // Si localStorage está lleno, grabar() devuelve false: avisamos
+          // en vez de fingir que guardó (la UI no debe mostrar una foto
+          // que no persiste tras recargar).
+          var okGuardado = grabar(dk(uid, 'photo'), dataUrl);
+          if (!okGuardado) {
+            // Reintento con más compresión por si fue tema de tamaño.
+            var dataUrlSmall = canvas.toDataURL('image/jpeg', 0.5);
+            okGuardado = grabar(dk(uid, 'photo'), dataUrlSmall);
+            if (okGuardado) dataUrl = dataUrlSmall;
+          }
+          if (!okGuardado) {
+            alert(
+              'No se pudo guardar la foto: almacenamiento del dispositivo lleno. Liberá espacio e intentá de nuevo.'
+            );
+            return;
+          }
           setPhoto(dataUrl);
           haptic();
         } catch (err) {
           alert('No se pudo procesar la imagen');
         }
       };
-      img.onerror = function () { alert('No se pudo leer la imagen'); };
+      img.onerror = function () {
+        alert('No se pudo leer la imagen');
+      };
       img.src = e.target.result;
     };
-    reader.onerror = function () { alert('No se pudo abrir el archivo'); };
+    reader.onerror = function () {
+      alert('No se pudo abrir el archivo');
+    };
     reader.readAsDataURL(file);
   }
   function eliminarFoto() {
@@ -183,9 +226,15 @@ function ConfigTabInner(props) {
   }
   function guardarName() {
     haptic();
-    var clean = String(tempName || '').trim().slice(0, 32);
+    var clean = String(tempName || '')
+      .trim()
+      .slice(0, 32);
     if (clean) {
-      grabar(dk(uid, 'pname'), clean);
+      var okName = grabar(dk(uid, 'pname'), clean);
+      if (!okName) {
+        alert('No se pudo guardar el nombre: almacenamiento lleno.');
+        return;
+      }
       setPname(clean);
     } else {
       borrarKey(dk(uid, 'pname'));
@@ -253,7 +302,11 @@ function ConfigTabInner(props) {
     window.location.reload();
   }
 
-  var prefs = props.prefs || (typeof QUINCENA_PREFS_DEFAULT !== 'undefined' ? QUINCENA_PREFS_DEFAULT : { auxTransp: false, prestaciones: false, quincenaMode: false, q1Day: 1, q2Day: 16 });
+  var prefs =
+    props.prefs ||
+    (typeof QUINCENA_PREFS_DEFAULT !== 'undefined'
+      ? QUINCENA_PREFS_DEFAULT
+      : { auxTransp: false, prestaciones: false, quincenaMode: false, q1Day: 1, q2Day: 16 });
   function patchPrefs(p) {
     if (props.onPrefsChange) props.onPrefsChange(p);
   }
@@ -264,12 +317,18 @@ function ConfigTabInner(props) {
 
   // Sincroniza el texto local con los días reales de las prefs cuando
   // cambian desde fuera (carga inicial, preset, etc.)
-  useEffect(function () {
-    setQ1Text(String(prefs.q1Day));
-  }, [prefs.q1Day]);
-  useEffect(function () {
-    setQ2Text(String(prefs.q2Day));
-  }, [prefs.q2Day]);
+  useEffect(
+    function () {
+      setQ1Text(String(prefs.q1Day));
+    },
+    [prefs.q1Day]
+  );
+  useEffect(
+    function () {
+      setQ2Text(String(prefs.q2Day));
+    },
+    [prefs.q2Day]
+  );
 
   // Acepta texto libre; solo commitea cuando es un entero válido 1..28.
   function onDayTextChange(which, txt) {
@@ -319,7 +378,9 @@ function ConfigTabInner(props) {
       ? pname[0].toUpperCase()
       : isGuest
         ? '?'
-        : session.email ? session.email[0].toUpperCase() : 'U';
+        : session.email
+          ? session.email[0].toUpperCase()
+          : 'U';
   var estado = isGuest
     ? 'Datos en este dispositivo'
     : typeof CLOUD_MODE !== 'undefined' && CLOUD_MODE
@@ -384,7 +445,9 @@ function ConfigTabInner(props) {
               value: tempName,
               autoFocus: true,
               placeholder: 'Tu nombre o apodo',
-              onChange: function (e) { setTempName(e.target.value); },
+              onChange: function (e) {
+                setTempName(e.target.value);
+              },
               onKeyDown: function (e) {
                 if (e.key === 'Enter') guardarName();
                 if (e.key === 'Escape') setEditName(false);
@@ -465,7 +528,9 @@ function ConfigTabInner(props) {
               'button',
               {
                 className: 'ajustes-photo-sheet-cancel',
-                onClick: function () { setShowPhotoSheet(false); }
+                onClick: function () {
+                  setShowPhotoSheet(false);
+                }
               },
               'Cancelar'
             )
@@ -769,11 +834,15 @@ function ConfigTabInner(props) {
                       max: 28,
                       className: 'ajustes-edit-input',
                       value: q1Text,
-                      onFocus: function (e) { e.target.select(); },
+                      onFocus: function (e) {
+                        e.target.select();
+                      },
                       onChange: function (e) {
                         onDayTextChange('q1', e.target.value);
                       },
-                      onBlur: function () { onDayBlur('q1'); }
+                      onBlur: function () {
+                        onDayBlur('q1');
+                      }
                     })
                   ),
                   h(
@@ -788,11 +857,15 @@ function ConfigTabInner(props) {
                       max: 28,
                       className: 'ajustes-edit-input',
                       value: q2Text,
-                      onFocus: function (e) { e.target.select(); },
+                      onFocus: function (e) {
+                        e.target.select();
+                      },
                       onChange: function (e) {
                         onDayTextChange('q2', e.target.value);
                       },
-                      onBlur: function () { onDayBlur('q2'); }
+                      onBlur: function () {
+                        onDayBlur('q2');
+                      }
                     })
                   )
                 ),
@@ -801,14 +874,20 @@ function ConfigTabInner(props) {
                   'div',
                   { className: 'ajustes-quincena-presets' },
                   h('span', { className: 'ajustes-quincena-presets-lbl' }, 'Presets:'),
-                  [[1, 16], [10, 25], [15, 30]].map(function (p) {
+                  [
+                    [1, 16],
+                    [10, 25],
+                    [15, 30]
+                  ].map(function (p) {
                     var active = prefs.q1Day === p[0] && prefs.q2Day === p[1];
                     return h(
                       'button',
                       {
                         key: p[0] + '-' + p[1],
                         className: 'ajustes-quincena-preset' + (active ? ' on' : ''),
-                        onClick: function () { applyPreset(p[0], p[1]); }
+                        onClick: function () {
+                          applyPreset(p[0], p[1]);
+                        }
                       },
                       p[0] + ' / ' + p[1]
                     );
@@ -1114,9 +1193,7 @@ function ConfigTabInner(props) {
               {
                 className: btnIcoCls,
                 style:
-                  updState.status === 'checking'
-                    ? { animation: 'spin 1s linear infinite' }
-                    : null
+                  updState.status === 'checking' ? { animation: 'spin 1s linear infinite' } : null
               },
               btnIcon
             ),
@@ -1144,10 +1221,13 @@ function ConfigTabInner(props) {
               className: 'ajustes-row ajustes-row-tap',
               onClick: function () {
                 haptic();
-                if (!window.confirm(
-                  'Esto borrará el caché de la app y la recargará desde cero. ' +
-                  'Tus turnos y configuración NO se pierden. ¿Continuar?'
-                )) return;
+                if (
+                  !window.confirm(
+                    'Esto borrará el caché de la app y la recargará desde cero. ' +
+                      'Tus turnos y configuración NO se pierden. ¿Continuar?'
+                  )
+                )
+                  return;
                 try {
                   if (window._mtHardReset) {
                     window._mtHardReset('Reiniciando app…');
