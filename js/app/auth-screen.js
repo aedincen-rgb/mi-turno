@@ -156,6 +156,21 @@ function AuthScreen(props) {
           .then(function (res) {
             if (res && res.error) throw res.error;
 
+            // ── Detección de email YA REGISTRADO ──
+            // Con "Confirm email" activado, Supabase NO devuelve error al
+            // hacer signUp de un email existente (anti-enumeración). En su
+            // lugar devuelve un user con `identities: []` (array vacío).
+            // Si no detectamos esto, asignaríamos un PIN nuevo y pisaríamos
+            // el del dueño real en pin_lookup (onConflict user_id). CRÍTICO.
+            var u = res && res.data && res.data.user;
+            if (u && Array.isArray(u.identities) && u.identities.length === 0) {
+              setLoad(false);
+              setStatusMsg('');
+              setErr('Ese correo ya tiene una cuenta. Iniciá sesión o usá "¿Olvidaste tu PIN?".');
+              setModo('login');
+              return;
+            }
+
             function asignarPINConFeedback(uid, email, callback) {
               setStatusMsg('🔐 Asignando tu PIN único...');
               var resuelto = false;
@@ -275,6 +290,90 @@ function AuthScreen(props) {
         });
     }
 
+    // ── LOGIN OFFLINE POR PIN ──
+    // Fallback cuando se ingresa un PIN de 4 dígitos y la nube no responde.
+    // Recorre las claves mt_pin_<uid> guardadas en este device; si alguna
+    // coincide con el PIN, restaura la sesión offline cacheada de ese uid.
+    // (El login por PIN online requiere también la password; offline el
+    // PIN solo es suficiente porque es un device ya conocido por el user.)
+    function tryOfflinePinLogin(pin) {
+      try {
+        var keys = Object.keys(safeStorage);
+        for (var i = 0; i < keys.length; i++) {
+          if (keys[i].indexOf('mt_pin_') !== 0) continue;
+          var stored = leer(keys[i], null);
+          if (String(stored) !== String(pin)) continue;
+          var uid = keys[i].slice('mt_pin_'.length);
+          // Buscamos la sesión cacheada. Está indexada por btoa(email),
+          // así que usamos mt_last_user (que mapea uid→email) o SKEY.
+          var lastUser = leer('mt_last_user', null);
+          var ses = null;
+          if (lastUser && lastUser.uid === uid && lastUser.email) {
+            ses = leer('mt_offline_' + btoa(lastUser.email), null);
+          }
+          if (!ses) {
+            var skSes = leer(SKEY, null);
+            if (skSes && skSes.uid === uid) ses = skSes;
+          }
+          if (ses && ses.uid) {
+            if (props.onAuth)
+              props.onAuth({
+                uid: ses.uid,
+                email: ses.email || (lastUser && lastUser.email) || 'offline@local',
+                cloud: false,
+                guest: false,
+                isAdmin: ses.isAdmin || pin === '9999',
+                pin: pin
+              });
+            setLoad(false);
+            return true;
+          }
+        }
+      } catch (_) {}
+      return false;
+    }
+
+    // ── Cachear credenciales para uso offline futuro + FastPin ──
+    // Se llama tras CUALQUIER login cloud exitoso (por email O por PIN),
+    // así el device queda habilitado para entrar sin red la próxima vez.
+    // Antes solo el login por email cacheaba → quien entraba siempre por
+    // PIN nunca habilitaba offline ni FastPin.
+    function cachearOffline(uid, emailReal, password, isAdmin, pinVal) {
+      var emailLc = String(emailReal || '').toLowerCase();
+      if (!uid || !emailLc) return;
+      // Password hasheada (PBKDF2), fire-and-forget.
+      (function (key, plain) {
+        if (typeof hashPassword === 'function') {
+          hashPassword(plain)
+            .then(function (blob) {
+              grabar(key, blob);
+            })
+            .catch(function () {
+              grabar(key, plain);
+            });
+        } else {
+          grabar(key, plain);
+        }
+      })('mt_pass_' + btoa(emailLc), password);
+      grabar('mt_offline_' + btoa(emailLc), {
+        uid: uid,
+        email: emailLc,
+        cloud: true,
+        guest: false,
+        isAdmin: !!isAdmin,
+        pin: null
+      });
+      // Marca device conocido → habilita FastPinScreen al próximo arranque.
+      try {
+        grabar('mt_last_user', { uid: uid, email: emailLc });
+      } catch (_) {}
+      // Si vino un PIN, lo cacheamos también (login por PIN ya lo tiene,
+      // pero el login por email no — así FastPin funciona en ambos casos).
+      if (pinVal && /^\d{4}$/.test(String(pinVal))) {
+        grabar('mt_pin_' + uid, String(pinVal));
+      }
+    }
+
     // ── LOGIN ──
     setLoad(true);
     setErr(null);
@@ -306,6 +405,8 @@ function AuthScreen(props) {
               adminSes.isAdmin = true;
               grabar(SKEY, adminSes);
             }
+            // Cachear para offline + FastPin (incluye el PIN ingresado).
+            cachearOffline(res.data.user.id, res.data.user.email, pass, rawIn === '9999', rawIn);
             if (props.onAuth)
               props.onAuth({
                 uid: res.data.user.id,
@@ -316,12 +417,12 @@ function AuthScreen(props) {
             setLoad(false);
           })
           .catch(function (e) {
-            // Fallback offline: intentar con credenciales locales (async)
-            tryOfflineLogin(rawIn, pass).then(function (ok) {
-              if (ok) return; // tryOfflineLogin ya llamó onAuth + setLoad(false)
-              setErr(traducirError(e) || 'PIN o contraseña incorrectos.');
-              setLoad(false);
-            });
+            // Fallback offline por PIN: el PIN solo, contra mt_pin_<uid>
+            // local. (Antes llamaba tryOfflineLogin(rawIn) con rawIn=PIN,
+            // que buscaba mt_pass_<btoa(PIN)> y nunca matcheaba.)
+            if (tryOfflinePinLogin(rawIn)) return;
+            setErr(traducirError(e) || 'PIN o contraseña incorrectos.');
+            setLoad(false);
           });
         return;
       }
@@ -338,33 +439,11 @@ function AuthScreen(props) {
               adminSes.isAdmin = true;
               grabar(SKEY, adminSes);
             }
-            // Guardar credenciales para login offline futuro.
-            // Hasheamos antes de persistir (PBKDF2 con salt random).
-            // Fire-and-forget: no bloqueamos el login si el hash tarda
-            // o falla. Si falla → guardamos plaintext como antes (deuda
-            // documentada, mejor que romper login).
-            (function (key, plain) {
-              if (typeof hashPassword === 'function') {
-                hashPassword(plain)
-                  .then(function (blob) {
-                    grabar(key, blob);
-                  })
-                  .catch(function () {
-                    grabar(key, plain);
-                  });
-              } else {
-                grabar(key, plain);
-              }
-            })('mt_pass_' + btoa(e2), pass);
+            // Cachear credenciales para offline + FastPin (mismo helper
+            // que el login por PIN). No pasamos pinVal acá: el PIN se
+            // resuelve en root.js aplicar() vía pin_lookup.
             if (res.data && res.data.user) {
-              grabar('mt_offline_' + btoa(e2), {
-                uid: res.data.user.id,
-                email: e2,
-                cloud: true,
-                guest: false,
-                isAdmin: e2 === 'admin@miturno.com',
-                pin: null
-              });
+              cachearOffline(res.data.user.id, e2, pass, e2 === 'admin@miturno.com', null);
             }
             if (props.onAuth) props.onAuth({ uid: res.data.user.id, email: e2, cloud: true });
             setLoad(false);
@@ -386,30 +465,10 @@ function AuthScreen(props) {
 
     // ── MODO OFFLINE: intentar login local ──
     if (!CLOUD_MODE || !SUPA) {
-      var offlineSuccess = false;
       if (/^\d{4}$/.test(rawIn)) {
-        // Buscar PIN en localStorage como fallback
-        var keys = Object.keys(safeStorage);
-        for (var ki = 0; ki < keys.length; ki++) {
-          if (keys[ki].indexOf('mt_pin_') === 0) {
-            try {
-              var storedPin = JSON.parse(safeStorage.getItem(keys[ki]));
-              if (storedPin === rawIn) {
-                var uidFromPin = keys[ki].replace('mt_pin_', '');
-                var savedSession = leer(SKEY, null);
-                if (savedSession && savedSession.uid === uidFromPin) {
-                  if (props.onAuth) props.onAuth(savedSession);
-                  offlineSuccess = true;
-                  break;
-                }
-              }
-            } catch (e) {}
-          }
-        }
-        if (offlineSuccess) {
-          setLoad(false);
-          return;
-        }
+        // Mismo helper robusto que el fallback online: mira mt_pin_<uid>
+        // + mt_last_user/mt_offline, no solo SKEY (que se limpia en logout).
+        if (tryOfflinePinLogin(rawIn)) return;
       }
       // Último recurso encapsulado para poder llamarlo desde el
       // .then() async de tryOfflineLogin.

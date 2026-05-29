@@ -46,8 +46,12 @@ function leer(k, d) {
 function grabar(k, v) {
   try {
     safeStorage.setItem(k, JSON.stringify(v));
+    return true;
   } catch (e) {
+    // QuotaExceededError u otro fallo. Devolvemos false para que el
+    // caller pueda avisar al usuario en vez de fingir que guardó.
     console.warn('[MT] Storage falló:', e);
+    return false;
   }
 }
 
