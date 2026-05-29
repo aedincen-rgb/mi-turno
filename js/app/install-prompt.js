@@ -29,9 +29,7 @@
 
   if (openCount < 2) return; // primer uso: no molestar
 
-  var isIOS =
-    /iphone|ipad|ipod/i.test(navigator.userAgent) &&
-    !/CriOS|FxiOS|OPiOS/i.test(navigator.userAgent); // Safari únicamente
+  var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
   var isAndroid = /android/i.test(navigator.userAgent);
 
   if (!isIOS && !isAndroid) return; // desktop: no aplica
@@ -393,7 +391,7 @@
       lineHeight: '1.45'
     });
     nota.textContent =
-      'Solo disponible desde Safari. Si abriste esto en Chrome, copiá el link y pegalo en Safari.';
+      'Disponible desde Safari y Chrome en iPhone. Si usás otro navegador, abrí la app en uno de estos dos.';
     body.appendChild(nota);
 
     sheet.appendChild(handle);

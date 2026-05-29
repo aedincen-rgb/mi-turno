@@ -307,53 +307,7 @@ function HomeTab(props) {
     // Control de turno · botón flotante (sin tarjeta que lo encajone)
     h(
       'div',
-      { className: 'action-stage', style: { marginTop: 0, position: 'relative' } },
-      // Tooltip de onboarding — solo primer uso, sin turnos
-      showOb &&
-        h(
-          'div',
-          {
-            style: {
-              position: 'absolute',
-              bottom: 'calc(100% + 18px)',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              zIndex: 200,
-              textAlign: 'center',
-              animation: 'ob-float 2.4s ease-in-out infinite',
-              pointerEvents: 'none'
-            }
-          },
-          // Burbuja
-          h(
-            'div',
-            {
-              style: {
-                background: 'var(--accent)',
-                color: '#fff',
-                borderRadius: '16px',
-                padding: '12px 18px',
-                fontSize: '14px',
-                fontWeight: 600,
-                lineHeight: 1.4,
-                whiteSpace: 'nowrap',
-                boxShadow: '0 4px 20px rgba(79,115,248,0.45)'
-              }
-            },
-            'Tocá para iniciar tu primer turno ⚡'
-          ),
-          // Flecha apuntando hacia abajo al botón
-          h('div', {
-            style: {
-              width: 0,
-              height: 0,
-              margin: '0 auto',
-              borderLeft: '9px solid transparent',
-              borderRight: '9px solid transparent',
-              borderTop: '10px solid var(--accent)'
-            }
-          })
-        ),
+      { className: 'action-stage', style: { marginTop: 0 } },
       h(
         'button',
         {
@@ -472,6 +426,50 @@ function HomeTab(props) {
         })
       )
     ),
+
+    // Tooltip onboarding — debajo del botón, flujo normal, no tapado por el header
+    showOb &&
+      h(
+        'div',
+        {
+          style: {
+            textAlign: 'center',
+            animation: 'ob-float 2.4s ease-in-out infinite',
+            marginBottom: '8px'
+          }
+        },
+        // Flecha apuntando hacia arriba (al botón)
+        h('div', {
+          style: {
+            width: 0,
+            height: 0,
+            margin: '0 auto 6px',
+            borderLeft: '9px solid transparent',
+            borderRight: '9px solid transparent',
+            borderBottom: '10px solid var(--accent)'
+          }
+        }),
+        // Burbuja
+        h(
+          'div',
+          {
+            style: {
+              display: 'inline-block',
+              background: 'var(--accent)',
+              color: '#fff',
+              borderRadius: '16px',
+              padding: '11px 18px',
+              fontSize: '14px',
+              fontWeight: 600,
+              lineHeight: 1.4,
+              boxShadow: '0 4px 20px rgba(79,115,248,0.35)',
+              cursor: 'pointer'
+            },
+            onClick: dismissOb
+          },
+          'Tocá para iniciar tu primer turno ⚡'
+        )
+      ),
 
     tipos.length > 0 ? h('div', { className: 'sec-lbl' }, 'Desglose por tipo') : null,
     tipos.length === 0
