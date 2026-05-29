@@ -3,6 +3,10 @@ Thumbs.db
 desktop.ini
 .DS_Store
 
+# Herramientas de desarrollo local (no deployar)
+*-bypass.html
+home/
+
 # Editor
 .vscode/
 

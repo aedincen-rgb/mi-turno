@@ -38,11 +38,11 @@
     "recargos",
     "horas-extras"
   ],
-  "author": "Tu Nombre",
+  "author": "Mi Turno",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/tu-usuario/mi-turno.git"
+    "url": "https://github.com/aedincen-rgb/mi-turno-BETA.git"
   },
   "devDependencies": {
     "@playwright/test": "1.56.1",
