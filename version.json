@@ -1,4 +1,4 @@
 {
-  "v": "v56",
-  "label": "Hardening auth pre-producción: email duplicado, offline PIN, foto/quota"
+  "v": "v57",
+  "label": "Correo vía admin: reenvío manual"
 }

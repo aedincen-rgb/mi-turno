@@ -77,12 +77,16 @@ function ExportReportModal(props) {
       filename: filename,
       fileBase64: fileBase64
     })
-      .then(function (res) {
+      .then(function () {
         setStep('done');
-        setSuccess(res.message || '✓ Reporte enviado correctamente');
+        setSuccess(
+          'Solicitud recibida. El equipo de Mi Turno te reenviará el reporte a ' +
+            email.trim() +
+            ' en breve.'
+        );
         setTimeout(function () {
           if (props.onClose) props.onClose();
-        }, 2500);
+        }, 3000);
       })
       .catch(function (e) {
         setStep('error');
@@ -99,7 +103,7 @@ function ExportReportModal(props) {
       h(
         'div',
         { style: { fontSize: 17, fontWeight: 800, color: 'var(--text)', marginBottom: 8 } },
-        '¡Listo!'
+        'Solicitud enviada'
       ),
       h(
         'div',
@@ -129,12 +133,12 @@ function ExportReportModal(props) {
       h(
         'div',
         { style: { fontSize: 16, fontWeight: 700, color: 'var(--text)', marginBottom: 6 } },
-        'Enviando reporte...'
+        'Procesando solicitud...'
       ),
       h(
         'div',
         { style: { fontSize: 12.5, color: 'var(--muted)', marginBottom: 18 } },
-        'Esto puede tardar unos segundos'
+        'Un momento...'
       ),
       h(
         'div',
@@ -243,14 +247,14 @@ function ExportReportModal(props) {
               marginBottom: 6
             }
           },
-          'Correo del destinatario'
+          '¿A qué correo querés recibirlo?'
         ),
         h('input', {
           type: 'email',
           inputMode: 'email',
           autoComplete: 'email',
           className: 'inp',
-          placeholder: 'ejemplo@correo.com',
+          placeholder: 'tu@correo.com',
           value: email,
           onChange: function (e) {
             setEmail(e.target.value);
@@ -283,16 +287,16 @@ function ExportReportModal(props) {
         'div',
         {
           style: {
-            fontSize: 11.5,
+            fontSize: 12,
             color: 'var(--muted)',
             background: 'var(--surface2)',
-            padding: '10px 12px',
+            padding: '11px 13px',
             borderRadius: 'var(--radius-sm)',
             marginBottom: 14,
-            lineHeight: 1.5
+            lineHeight: 1.6
           }
         },
-        '🔒 Envío seguro vía Resend. El reporte llegará como archivo adjunto.'
+        'Tu solicitud llegará al equipo de Mi Turno, que te reenviará el reporte a este correo. Normalmente tarda unos minutos.'
       ),
 
       h(
@@ -319,7 +323,7 @@ function ExportReportModal(props) {
             onClick: handleEmail,
             disabled: !email.trim()
           },
-          '📤 Enviar'
+          'Solicitar envío'
         )
       )
     );
