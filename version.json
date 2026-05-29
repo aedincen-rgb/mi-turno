@@ -1,4 +1,4 @@
 {
-  "v": "v58",
-  "label": "Updates silenciosos: split cache + Navigation Preload"
+  "v": "v59",
+  "label": "Fix arrow functions in network.js, scroll effect dep in app-main, double-submit guard in manage-account"
 }

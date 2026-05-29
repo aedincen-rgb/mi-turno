@@ -105,24 +105,23 @@ function App(props) {
   var cp = useState(false);
   var compact = cp[0],
     setCompact = cp[1];
+  var compactRef = useRef(false);
+  compactRef.current = compact;
 
   var scrRef = useRef(null);
 
-  useEffect(
-    function () {
-      var el = scrRef.current;
-      if (!el) return;
-      function handleScroll() {
-        var shouldBeCompact = el.scrollTop > 20;
-        if (shouldBeCompact !== compact) setCompact(shouldBeCompact);
-      }
-      el.addEventListener('scroll', handleScroll, { passive: true });
-      return function () {
-        el.removeEventListener('scroll', handleScroll);
-      };
-    },
-    [compact]
-  );
+  useEffect(function () {
+    var el = scrRef.current;
+    if (!el) return;
+    function handleScroll() {
+      var shouldBeCompact = el.scrollTop > 20;
+      if (shouldBeCompact !== compactRef.current) setCompact(shouldBeCompact);
+    }
+    el.addEventListener('scroll', handleScroll, { passive: true });
+    return function () {
+      el.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
 
   var toastRef = useRef(null);
   function showToast(m) {
