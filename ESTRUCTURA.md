@@ -1,226 +1,232 @@
-# 📁 Mi Turno · Estructura Fragmentada
+# Mi Turno · Estructura del proyecto (v58)
 
-Refactorización máxima en archivos pequeños para facilitar pruebas en móviles empresariales.
-
----
-
-## 📊 Estadísticas
-
-- **78 archivos** (38 CSS + 40 JS)
-- Tamaño promedio: ~50-80 líneas por archivo
-- Mantiene **100% de la funcionalidad** original
-- Sin build tools, funciona con HTML/JS/CSS puro
+PWA de nómina inteligente para trabajadores por turnos en Colombia.
+Sin build tools — vanilla JS ES5, React 18 vía CDN, Supabase como backend.
 
 ---
 
-## 📂 Estructura completa
+## Estadísticas
+
+- **77 archivos** totales: 38 CSS + 39 JS
+- Tamaño promedio JS: ~80–150 líneas por archivo
+- Sin dependencias de build (no Webpack, no Vite, no Babel)
+- Un `<script src="...">` por archivo en `index.html` — orden crítico de carga
+
+---
+
+## Árbol completo
 
 ```
 mi-turno-BETA/
-├── index.html              · Punto de entrada (carga 77 archivos)
-├── manifest.json           · PWA manifest
-├── sw.js                   · Service Worker
-├── icon-*.png              · Iconos PWA
 │
-├── sql/
-│   └── email_logs.sql      · Tabla para Resend
+├── index.html              Punto de entrada — lista todos los scripts y estilos
+├── sw.js                   Service Worker (split cache SHELL/CDN + Navigation Preload)
+├── version.json            { "v": "vNN" } — detectado por SW para updates silenciosos
+├── manifest.json           PWA: nombre, iconos, theme-color, display: standalone
+├── vercel.json             Headers de seguridad + cache headers + rewrite SPA
+│
+├── icon-180.png            Apple Touch Icon
+├── icon-192.png            PWA icon
+├── icon-512.png            PWA icon splash
+├── img/logo-mark.svg       Logo SVG
+│
+├── css/                    38 archivos — una responsabilidad por archivo
+│   │
+│   ├── base/               Fundamentos globales
+│   │   ├── variables.css       Design tokens: colores, radios, sombras, espaciados
+│   │   ├── reset.css           Reset CSS universal + box-sizing
+│   │   ├── typography.css      DM Sans + Nunito; escala tipográfica
+│   │   ├── background.css      Formas decorativas flotantes del fondo
+│   │   ├── media-queries.css   Modo reducido (prefers-reduced-motion) y bajo consumo
+│   │   └── blur-fix.css        Fix backdrop-filter en iOS Safari
+│   │
+│   ├── layout/             Estructura de pantalla
+│   │   ├── header.css          Barra superior flotante con tabs
+│   │   ├── scroll.css          Contenedor principal de scroll con safe-area
+│   │   ├── hero-card.css       Tarjeta principal del turno activo
+│   │   ├── progress-bar.css    Barra de progreso del salario del período
+│   │   ├── action-button.css   Botón grande Iniciar / Finalizar turno
+│   │   ├── shapes.css          Figuras decorativas de fondo
+│   │   ├── fade-animations.css Animaciones de entrada fadeUp
+│   │   ├── misc-animations.css Pulse, shimmer, spin-in y otras
+│   │   └── misc.css            Espaciados y helpers de layout restantes
+│   │
+│   ├── components/         Componentes reutilizables
+│   │   ├── cards.css           Tarjetas .card con glassmorphism
+│   │   ├── buttons.css         .btn, .btn-accent, .btn-danger, .btn-ghost
+│   │   ├── buttons-glass.css   Botones de vidrio para overlays
+│   │   ├── inputs.css          Campos de texto, labels, estados de error
+│   │   ├── switches.css        Toggle tipo iOS
+│   │   ├── config-rows.css     Filas de ajustes (ícono + label + control)
+│   │   ├── dashboard-hero.css  Sección de proyección salarial
+│   │   ├── dashboard-kpis.css  Tarjetas KPI (horas, recargos, total)
+│   │   ├── dashboard-chart.css Gráfico de barras Chart.js
+│   │   ├── dashboard-tip.css   Caja de consejo del asistente
+│   │   ├── assistant-chat.css  Burbujas de chat del asistente IA
+│   │   ├── history-list.css    Lista de turnos cerrados
+│   │   ├── fast-pin.css        Pantalla de acceso rápido por PIN
+│   │   ├── auth-screen.css     Pantalla de login / registro
+│   │   ├── misc.css            Componentes variados (badges, toasts, etc.)
+│   │   └── dark-mode-overrides.css  Ajustes de color para modo oscuro
+│   │
+│   ├── modals/             Capas superpuestas
+│   │   ├── overlay.css         Fondo oscuro semitransparente
+│   │   ├── modal-card.css      Tarjeta modal centrada (desktop + mobile)
+│   │   ├── bottom-sheets.css   Hojas deslizables desde el borde inferior
+│   │   ├── auth-screen.css     Variantes de modal para flujos de auth
+│   │   ├── assistant-chat.css  Chat inline del asistente IA
+│   │   ├── time-picker.css     Selector de hora tipo drum-roll
+│   │   ├── splash.css          Pantalla de carga inicial animada
+│   │   ├── misc.css            OTP, progress-bars de modales, misc
+│   │   └── dark-overrides.css  Overrides de modales en modo oscuro
+│   │
+│   └── animations/
+│       └── keyframes.css       Todos los @keyframes del proyecto centralizados
+│
+├── js/                     39 archivos — todos exponen globales en window.*
+│   │
+│   ├── config.js               Credenciales Supabase (SUPABASE_URL + ANON_KEY)
+│   ├── theme-boot.js           Aplica dark/light-mode antes del primer render
+│   │
+│   ├── config/             Inicialización del entorno
+│   │   ├── react-init.js       Verifica React + aliases (useState, useEffect, useRef...)
+│   │   ├── env.js              Detecta iOS, Safari, standalone mode
+│   │   ├── viewport-fix.js     Corrige --vh en iOS Safari
+│   │   └── globals.js          MT_APP_VERSION, CLOUD_MODE, SUPA global
+│   │
+│   ├── utils/              Utilidades puras (sin efectos de red ni UI)
+│   │   ├── storage.js          leer(), grabar(), borrarKey(), dk() — wrappers localStorage
+│   │   ├── format.js           fCOP(), fDur(), fechaCorta()
+│   │   ├── haptic.js           haptic() — vibración táctil iOS/Android
+│   │   ├── error-logger.js     captura y log de errores en producción
+│   │   ├── network.js          isOnline(), onOnline(), withTimeout(), traducirError()
+│   │   ├── uuid.js             generateUUID(), hashP()
+│   │   ├── icons.js            SVG icons como strings (sin deps de ícono)
+│   │   ├── festivos.js         esFest(date) — festivos colombianos hardcodeados
+│   │   ├── time.js             _saludoHora(), helpers de rangos horarios
+│   │   ├── validation.js       Validadores de email, PIN, contraseña
+│   │   ├── otp.js              Generación y verificación de OTP local (crypto.getRandomValues)
+│   │   └── password-hash.js    PBKDF2-SHA256 + salt — hash de password offline
+│   │
+│   ├── services/           Lógica de negocio y datos
+│   │   ├── supabase.js         Helpers CRUD: supaGetTurnos, supaUpsertTurnoActivo, etc.
+│   │   ├── supabase-init.js    Inicializa el cliente SUPA con sesión persistida
+│   │   ├── session-sync.js     Detecta cierre de sesión desde otro dispositivo (Realtime)
+│   │   ├── calculator.js       doCalc() — motor de cálculo: recargos, extra, festivos
+│   │   ├── quincena.js         Lógica de modo quincena (períodos 1-15 / 16-fin)
+│   │   ├── data.js             cargarDatos(), setTurnos(), setSalario() — fuente de verdad local
+│   │   ├── ai.js               Asistente IA offline: NLP, respuestas, contexto
+│   │   ├── ai-history.js       Persistencia del historial de chat del asistente
+│   │   ├── ai-greeting.js      Saludo personalizado según hora y contexto del turno
+│   │   ├── export-files.js     exportPDF(), exportExcel() — descarga directa
+│   │   └── export-email.js     enviarReportePorEmail(), exportPDFBase64() — vía Edge Function
+│   │
+│   ├── tabs/               Pantallas principales (5 tabs)
+│   │   ├── home.js             Tab Inicio — hero card, botón turno, salario del período
+│   │   ├── dashboard.js        Tab Análisis — KPIs, gráfico, proyección
+│   │   ├── assistant.js        Tab Asistente — chat con IA offline
+│   │   ├── history.js          Tab Historial — lista de turnos cerrados
+│   │   ├── config.js           Tab Ajustes — salario, PIN, cuenta, modo quincena
+│   │   └── sync-queue.js       Cola offline-first: queueAction(), processQueue()
+│   │
+│   ├── modals/             Ventanas modales y bottom-sheets
+│   │   ├── splash.js           Pantalla de carga animada con spinner
+│   │   ├── error-viewer.js     Modal de error con detalle técnico
+│   │   ├── email-compose-card.js  Tarjeta de composición de email (chat del asistente)
+│   │   ├── export-report.js    Modal exportar PDF/Excel + solicitud de reenvío por email
+│   │   ├── forgot-password.js  Flujo recuperar contraseña
+│   │   ├── forgot-pin.js       Flujo recuperar PIN (patrón OTP local de 4 fases)
+│   │   ├── pin-setup.js        Configurar PIN por primera vez
+│   │   ├── manage-account.js   Cambiar PIN / email / contraseña (patrón OTP local)
+│   │   ├── diagnostico.js      Modal de diagnóstico técnico (solo admin)
+│   │   ├── asignar-pins.js     Asignar PINs a usuarios (solo admin)
+│   │   └── usuarios.js         Gestión de usuarios (solo admin)
+│   │
+│   └── app/                Inicialización y shell de la aplicación
+│       ├── auth-screen.js      Pantalla login / registro / recuperación
+│       ├── fast-pin-screen.js  Acceso rápido con PIN (sin email + password)
+│       ├── app-main.js         Componente App principal — router de tabs + modales
+│       ├── root.js             Componente Root — sesión, splash, modo offline
+│       ├── sw-register.js      Registro del SW + updates silenciosos
+│       └── init.js             ReactDOM.createRoot('#root').render(<Root/>)
+│
 ├── supabase/
 │   └── functions/
-│       └── send-report/    · Edge Function
+│       ├── send-report/        Edge Function: reenvía reporte (PDF/Excel) al admin
+│       └── send-pin/           Edge Function: envía PIN por email
 │
-├── css/                    · 38 archivos
-│   ├── base/               · 5 archivos
-│   │   ├── variables.css       · Colores, espaciados, sombras
-│   │   ├── reset.css           · Reset CSS universal
-│   │   ├── typography.css      · Fuentes y body
-│   │   ├── background.css      · Formas de fondo flotantes
-│   │   └── media-queries.css   · Modo reducido y bajo consumo
-│   │
-│   ├── layout/             · 9 archivos
-│   │   ├── header.css          · Barra superior flotante
-│   │   ├── scroll.css          · Contenedor scroll principal
-│   │   ├── hero-card.css       · Tarjeta principal de turno
-│   │   ├── progress-bar.css    · Barra de avance del salario
-│   │   ├── action-button.css   · Botón Iniciar/Finalizar turno
-│   │   ├── shapes.css          · Formas decorativas
-│   │   ├── fade-animations.css · Animaciones fadeUp
-│   │   ├── misc-animations.css · Animaciones varias
-│   │   └── misc.css            · Resto del layout
-│   │
-│   ├── components/         · 15 archivos
-│   │   ├── cards.css           · Tarjetas .card
-│   │   ├── buttons.css         · Botones .btn
-│   │   ├── buttons-glass.css   · Botones glass
-│   │   ├── inputs.css          · Campos de texto
-│   │   ├── switches.css        · Switch tipo iOS
-│   │   ├── config-rows.css     · Filas de configuración
-│   │   ├── dashboard-hero.css  · Análisis: proyección
-│   │   ├── dashboard-kpis.css  · Análisis: tarjetas KPI
-│   │   ├── dashboard-chart.css · Análisis: gráficos
-│   │   ├── dashboard-tip.css   · Análisis: caja de consejo
-│   │   ├── assistant-chat.css  · Estilos chat
-│   │   ├── history-list.css    · Listas del historial
-│   │   ├── auth-screen.css     · Pantalla auth
-│   │   ├── misc.css            · Componentes varios
-│   │   └── dark-mode-overrides.css · Overrides modo oscuro
-│   │
-│   ├── modals/             · 9 archivos
-│   │   ├── overlay.css         · Capa de overlay
-│   │   ├── modal-card.css      · Tarjeta modal principal
-│   │   ├── bottom-sheets.css   · Hojas inferiores
-│   │   ├── auth-screen.css     · Estilos auth
-│   │   ├── assistant-chat.css  · Chat asistente
-│   │   ├── time-picker.css     · Selector de hora
-│   │   ├── splash.css          · Pantalla inicial
-│   │   ├── misc.css            · Misceláneos
-│   │   └── dark-overrides.css  · Overrides modo oscuro
-│   │
-│   └── animations/         · 1 archivo
-│       └── keyframes.css       · Todos los @keyframes
+├── sql/
+│   └── email_logs.sql          Migración: tabla de log de envíos de email
 │
-└── js/                     · 40 archivos
-    ├── config.js               · Credenciales Supabase
-    ├── theme-boot.js           · Tema inicial
-    │
-    ├── config/             · 4 archivos
-    │   ├── react-init.js       · Verificación React + aliases
-    │   ├── env.js              · Detección iOS/Safari
-    │   ├── viewport-fix.js     · Fix viewport iOS
-    │   └── globals.js          · Variables globales
-    │
-    ├── utils/              · 9 archivos
-    │   ├── storage.js          · safeStorage, leer, grabar
-    │   ├── format.js           · fCOP, fDur
-    │   ├── haptic.js           · Vibración
-    │   ├── network.js          · withTimeout, traducirError
-    │   ├── uuid.js             · generateUUID, hashP
-    │   ├── festivos.js         · Festivos colombianos
-    │   ├── time.js             · Helpers temporales
-    │   ├── validation.js       · Validación de datos
-    │   └── otp.js              · OTP local y PINs
-    │
-    ├── services/           · 8 archivos
-    │   ├── supabase.js         · Helpers CRUD Supabase
-    │   ├── supabase-init.js    · Inicialización cliente
-    │   ├── session-sync.js     · Cierre de sesión sincronizado entre dispositivos
-    │   ├── calculator.js       · Motor de cálculo turnos
-    │   ├── data.js             · CRUD local/nube
-    │   ├── ai.js               · Asistente IA
-    │   ├── export-files.js     · Exportar PDF/Excel local
-    │   └── export-email.js     · Exportar y enviar por email
-    │
-    ├── tabs/               · 6 archivos
-    │   ├── home.js             · Tab Inicio
-    │   ├── dashboard.js        · Tab Análisis
-    │   ├── sync-queue.js       · Cola de sincronización offline-first
-    │   ├── assistant.js        · Tab Asistente
-    │   ├── history.js          · Tab Historial
-    │   └── config.js           · Tab Ajustes
-    │
-    ├── modals/             · 7 archivos
-    │   ├── forgot-password.js  · Recuperar contraseña
-    │   ├── pin-setup.js        · Configurar PIN
-    │   ├── manage-account.js   · Gestionar cuenta
-    │   ├── diagnostico.js      · Diagnóstico admin
-    │   ├── asignar-pins.js     · Asignar PINs (admin)
-    │   ├── usuarios.js         · Usuarios (admin)
-    │   └── export-report.js    · Exportar reportes
-    │
-    └── app/                · 5 archivos
-        ├── auth-screen.js      · Pantalla login/registro
-        ├── app-main.js         · Componente App principal
-        ├── root.js             · Componente Root
-        ├── sw-register.js      · Registro Service Worker
-        └── init.js             · Render del Root
+├── tests/
+│   ├── smoke.cjs               Tests de unidad: calculator, format, festivos, OTP
+│   └── e2e/
+│       ├── 01-boot.spec.mjs    E2E: la app carga sin errores
+│       └── 02-flujo-invitado.spec.mjs  E2E: flujo completo sin cuenta
+│
+└── scripts/
+    ├── bump.sh                 Sincroniza globals.js + sw.js + version.json en una sola vez
+    ├── check.sh                Valida sintaxis JS + versiones + precache del SW
+    └── setup-hooks.sh          Instala git hooks de husky
 ```
 
 ---
 
-## ⚙️ Cómo funciona la carga
+## Orden de carga de scripts
 
-Como no hay build tools, cada archivo se carga secuencialmente con `<script src="...">` en el `index.html`.
-
-**Orden crítico de carga JS:**
+El orden en `index.html` es crítico porque no hay módulos ES: cada archivo expone
+globals en `window.*` que los siguientes necesitan.
 
 ```
-1. config/react-init.js     → verifica React + aliases
-2. config/env.js            → detecta iOS
-3. config/viewport-fix.js   → fix viewport
-4. config/globals.js        → variables globales (SUPA, CLOUD_MODE)
+1.  config/react-init.js    → verifica React, crea aliases (useState, h, etc.)
+2.  config/env.js           → detecta iOS / standalone
+3.  config/viewport-fix.js  → fix --vh
+4.  config/globals.js       → MT_APP_VERSION, CLOUD_MODE
 
-5. utils/*.js               → utilidades (orden interno: storage → format → ...)
+5.  utils/*.js              → storage → format → haptic → ... → password-hash
 
-6. services/supabase.js     → primero los helpers CRUD
-7. services/supabase-init.js → luego la inicialización
-8. services/session-sync.js → vigilancia de sesión entre dispositivos
-9. services/calculator.js   → motor de cálculo
-10. services/data.js, ai.js, export-*.js
+6.  services/supabase.js    → helpers CRUD (depende de utils)
+7.  services/supabase-init.js → inicializa SUPA (depende de supabase.js)
+8.  services/session-sync.js  → vigila sesión (depende de supabase-init.js)
+9.  services/calculator.js    → doCalc (depende de utils/festivos, utils/time)
+10. services/quincena.js      → lógica de períodos
+11. services/data.js          → fuente de verdad local
+12. services/ai.js + ai-*.js  → asistente IA
+13. services/export-*.js      → PDF / Excel / email
 
-11. tabs/*.js               → 5 pestañas principales
+14. tabs/*.js               → home, dashboard, assistant, history, config, sync-queue
 
-12. modals/*.js             → 7 modales
+15. modals/*.js             → splash, error-viewer, email-compose, export-report,
+                              forgot-*, pin-setup, manage-account, diagnostico,
+                              asignar-pins, usuarios
 
-13. app/auth-screen.js      → pantalla auth
-14. app/app-main.js         → App principal
-15. app/root.js             → Root container
-16. app/sw-register.js      → registrar SW
-17. app/init.js             → ¡renderizar!
+16. app/auth-screen.js      → pantalla de auth
+17. app/fast-pin-screen.js  → acceso rápido
+18. app/app-main.js         → App principal
+19. app/root.js             → Root container
+20. app/sw-register.js      → SW (no bloquea render)
+21. app/init.js             → ReactDOM.render → ¡app visible!
 ```
-
-**El orden importa** porque cada archivo usa funciones definidas en archivos anteriores.
 
 ---
 
-## ✅ Validación
+## Dónde editar según el síntoma
 
-Todos los archivos JS han sido validados sintácticamente con Node.js.
-La concatenación completa también es válida.
-
----
-
-## 🧪 Cómo testear
-
-### Probar un componente aislado:
-
-1. **Modificar solo un archivo:** Por ejemplo `js/modals/usuarios.js`
-2. **El resto sigue funcionando** porque cada archivo es independiente
-3. **Recargar con Ctrl+Shift+R** para limpiar caché
-4. **Verificar en consola** que solo ese archivo se actualizó
-
-### Identificar qué archivo modificar:
-
-| Si la falla está en... | Edita... |
+| Síntoma | Archivo(s) |
 |---|---|
-| Login / pantalla auth | `js/app/auth-screen.js` |
-| Pestaña Inicio | `js/tabs/home.js` |
-| Pestaña Análisis | `js/tabs/dashboard.js` |
-| Botón "Asignar PINs" | `js/modals/asignar-pins.js` |
-| Cálculo de turnos | `js/services/calculator.js` |
-| Conexión Supabase | `js/services/supabase-init.js` |
-| Exportar PDF | `js/services/export-files.js` |
-| Enviar por correo | `js/services/export-email.js` + `js/modals/export-report.js` |
-| Color de un botón | `css/components/buttons.css` |
-| Estilo del header | `css/layout/header.css` |
-| Barra de avance | `css/layout/progress-bar.css` |
+| Bug en cálculo de recargos | `js/services/calculator.js` |
+| El salario no se guarda / sincroniza | `js/services/data.js` |
+| Sync entre dispositivos roto | `js/tabs/sync-queue.js` · `js/services/supabase.js` |
+| Login / registro no funciona | `js/app/auth-screen.js` · `js/services/supabase-init.js` |
+| PIN no funciona | `js/modals/pin-setup.js` · `js/modals/forgot-pin.js` |
+| Pestaña Inicio visual | `js/tabs/home.js` · `css/layout/hero-card.css` |
+| Pestaña Análisis | `js/tabs/dashboard.js` · `css/components/dashboard-*.css` |
+| Asistente IA responde mal | `js/services/ai.js` |
+| Exportar PDF / Excel | `js/services/export-files.js` |
+| Envío por email | `js/services/export-email.js` · `js/modals/export-report.js` · `supabase/functions/send-report/` |
+| App no se actualiza / bucle de reload | `js/app/sw-register.js` · `sw.js` |
+| Estilos en modo oscuro | `css/components/dark-mode-overrides.css` · `css/modals/dark-overrides.css` |
 
 ---
 
-## 🚀 Cómo desplegar
-
-1. **Sube TODO** este directorio a GitHub
-2. **Vercel** auto-deploya (detecta `index.html`)
-3. Las rutas relativas `css/...` y `js/...` funcionan tal cual
-
----
-
-## 🆘 Si algo falla
-
-1. Abre **DevTools** (F12) → **Console**
-2. Busca el archivo que aparece en el error
-3. Edita SOLO ese archivo
-4. Recarga con Ctrl+Shift+R
-
----
-
-**Sin cambios funcionales.** Misma app, misma lógica, mismo comportamiento.
-Solo organizada en máxima granularidad para facilitar pruebas. ✨
+*Actualizado en v58 — Mayo 2025*
