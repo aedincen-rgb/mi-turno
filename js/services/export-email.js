@@ -101,10 +101,14 @@ async function enviarReportePorEmail(opts) {
     throw new Error('Sin conexión a la nube');
   }
 
-  // Obtener sesión actual
+  // Obtener sesión actual; si expiró, intentar refresh antes de fallar
   var sessionRes = await SUPA.auth.getSession();
   if (!sessionRes.data.session) {
-    throw new Error('Debes iniciar sesión para enviar correos');
+    var refreshRes = await SUPA.auth.refreshSession();
+    if (!refreshRes.data.session) {
+      throw new Error('Tu sesión expiró. Cerrá y volvé a entrar para enviar el reporte.');
+    }
+    sessionRes = refreshRes;
   }
 
   var token = sessionRes.data.session.access_token;
@@ -136,7 +140,11 @@ async function enviarPINPorEmail(opts) {
   }
   var sessionRes = await SUPA.auth.getSession();
   if (!sessionRes.data.session) {
-    throw new Error('Debes iniciar sesión para enviar correos');
+    var refreshRes = await SUPA.auth.refreshSession();
+    if (!refreshRes.data.session) {
+      throw new Error('Tu sesión expiró. Cerrá y volvé a entrar para enviar el reporte.');
+    }
+    sessionRes = refreshRes;
   }
   var token = sessionRes.data.session.access_token;
   var url = window.SUPABASE_CONFIG.url + '/functions/v1/send-pin';
