@@ -1,4 +1,4 @@
 {
-  "v": "v59",
-  "label": "Fix arrow functions in network.js, scroll effect dep in app-main, double-submit guard in manage-account"
+  "v": "v60",
+  "label": "Fix sesión expirada al enviar reporte por email"
 }
