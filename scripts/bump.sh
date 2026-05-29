@@ -30,8 +30,8 @@ cd "$ROOT"
 sed -i.bak "s/var MT_APP_VERSION = 'v[0-9]\+';/var MT_APP_VERSION = 'v${N}';/" js/config/globals.js
 rm -f js/config/globals.js.bak
 
-# 2) sw.js (preserva el comentario después de la línea)
-sed -i.bak "s/^const CACHE = 'mt-v[0-9]\+';/const CACHE = 'mt-v${N}';/" sw.js
+# 2) sw.js — actualiza SHELL_CACHE (CDN_CACHE es independiente, no se toca)
+sed -i.bak "s/^const SHELL_CACHE = 'mt-shell-v[0-9]\+';/const SHELL_CACHE = 'mt-shell-v${N}';/" sw.js
 rm -f sw.js.bak
 
 # 3) version.json
@@ -45,4 +45,4 @@ EOF
 
 echo "✓ Bumpeado a v${N}"
 echo
-grep -E "MT_APP_VERSION|^const CACHE|\"v\":" js/config/globals.js sw.js version.json
+grep -E "MT_APP_VERSION|^const SHELL_CACHE|\"v\":" js/config/globals.js sw.js version.json

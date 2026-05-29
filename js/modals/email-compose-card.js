@@ -87,9 +87,10 @@ function EmailComposeCard(props) {
       h(
         'div',
         { className: 'email-card-msg' },
-        h('strong', null, 'Enviado'),
-        ' a ',
-        h('span', { style: { color: 'var(--accent)' } }, to[0])
+        h('strong', null, 'Solicitud enviada.'),
+        ' El equipo de Mi Turno te reenviará el reporte a ',
+        h('span', { style: { color: 'var(--accent)' } }, to[0]),
+        ' en breve.'
       )
     );
   }
@@ -98,7 +99,7 @@ function EmailComposeCard(props) {
       'div',
       { className: 'email-card email-card-sending' },
       h('span', { className: 'sp-in', style: { fontSize: 18 } }),
-      h('span', { style: { color: 'var(--muted)' } }, 'Enviando reporte...')
+      h('span', { style: { color: 'var(--muted)' } }, 'Procesando solicitud...')
     );
   }
 
@@ -113,7 +114,7 @@ function EmailComposeCard(props) {
         'div',
         { style: { flex: 1 } },
         h('div', { className: 'email-card-ttl' }, 'Nuevo correo'),
-        h('div', { className: 'email-card-sub' }, 'Generado por IA · revisa antes de enviar')
+        h('div', { className: 'email-card-sub' }, 'El equipo de Mi Turno lo reenviará a tu correo')
       )
     ),
 

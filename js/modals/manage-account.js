@@ -51,8 +51,10 @@ function ManageAccountModal(props) {
   var generatedOtpRef = useRef(null);
   var prepIntervalRef = useRef(null);
   var prS = useState(15);
-  var prepSec = prS[0], setPrepSec = prS[1];
+  var prepSec = prS[0],
+    setPrepSec = prS[1];
 
+  var busyRef = useRef(false);
   var mountedRef = useRef(true);
   useEffect(function () {
     return function () {
@@ -114,9 +116,10 @@ function ManageAccountModal(props) {
   // lo reescriba en el input.
   function _startLocalOtp() {
     _clearPrep();
-    var arr = (window.crypto && window.crypto.getRandomValues)
-      ? window.crypto.getRandomValues(new Uint32Array(1))
-      : [Math.floor(Math.random() * 1e9)];
+    var arr =
+      window.crypto && window.crypto.getRandomValues
+        ? window.crypto.getRandomValues(new Uint32Array(1))
+        : [Math.floor(Math.random() * 1e9)];
     var code = String(100000 + (arr[0] % 900000));
     generatedOtpRef.current = code;
     setCodeInput('');
@@ -133,7 +136,9 @@ function ManageAccountModal(props) {
         if (s <= 1) {
           _clearPrep();
           // Pequeño haptic al revelar
-          try { haptic && haptic(); } catch (_) {}
+          try {
+            haptic && haptic();
+          } catch (_) {}
           setVfStep('codigo');
           return 0;
         }
@@ -144,7 +149,8 @@ function ManageAccountModal(props) {
 
   // ── Confirmar identidad ──
   function doConfirm() {
-    if (busy) return;
+    if (busyRef.current) return;
+    busyRef.current = true;
     haptic();
     setBusy(true);
     setFeedback(null);
@@ -154,16 +160,19 @@ function ManageAccountModal(props) {
       var typed = (confirmMail || '').trim().toLowerCase();
       if (!confirmMail || confirmMail.indexOf('@') < 0) {
         setFeedback('Escribe tu correo completo para confirmar identidad.');
+        busyRef.current = false;
         setBusy(false);
         return;
       }
       if (typed !== accEm) {
         setFeedback('El correo no coincide con el de esta sesión.');
+        busyRef.current = false;
         setBusy(false);
         return;
       }
       if (!confirmPass) {
         setFeedback('Ingresa tu contraseña actual.');
+        busyRef.current = false;
         setBusy(false);
         return;
       }
@@ -173,6 +182,7 @@ function ManageAccountModal(props) {
           if (!mountedRef.current) return;
           if (res && res.error) {
             setFeedback('Contraseña incorrecta.');
+            busyRef.current = false;
             setBusy(false);
             return;
           }
@@ -182,6 +192,7 @@ function ManageAccountModal(props) {
         .catch(function (e) {
           if (!mountedRef.current) return;
           setFeedback(traducirError(e));
+          busyRef.current = false;
           setBusy(false);
         });
     } else {
@@ -189,11 +200,13 @@ function ManageAccountModal(props) {
       // igualmente el flujo de OTP local con su espera de 15 s.
       if (!storedPin) {
         setFeedback('No hay credenciales para confirmar. Reinicia la sesión.');
+        busyRef.current = false;
         setBusy(false);
         return;
       }
       if (!confirmPin || confirmPin !== storedPin) {
         setFeedback('PIN incorrecto.');
+        busyRef.current = false;
         setBusy(false);
         return;
       }
@@ -206,7 +219,7 @@ function ManageAccountModal(props) {
   // coincide, ejecuta la acción pendiente (puede ser async, ej. PIN
   // a la nube).
   function doVerify() {
-    if (busy) return;
+    if (busyRef.current) return;
     haptic();
     var code = codeInput.replace(/\D/g, '');
     if (code.length < 6) {
@@ -217,6 +230,7 @@ function ManageAccountModal(props) {
       setFeedback('El código no coincide. Revisalo y volvé a intentar.');
       return;
     }
+    busyRef.current = true;
     setBusy(true);
     setFeedback(null);
 
@@ -224,6 +238,7 @@ function ManageAccountModal(props) {
       generatedOtpRef.current = null;
       setFeedback('✓ Cambio aplicado correctamente');
       setVfStep(null);
+      busyRef.current = false;
       setBusy(false);
       pendingFnRef.current = null;
       setTimeout(function () {
@@ -234,6 +249,7 @@ function ManageAccountModal(props) {
       generatedOtpRef.current = null;
       setFeedback(msg);
       setVfStep(null);
+      busyRef.current = false;
       setBusy(false);
       pendingFnRef.current = null;
       setTimeout(function () {
@@ -250,7 +266,9 @@ function ManageAccountModal(props) {
       var out = fn();
       if (out && typeof out.then === 'function') {
         out
-          .then(function () { if (mountedRef.current) finishOk(); })
+          .then(function () {
+            if (mountedRef.current) finishOk();
+          })
           .catch(function (e) {
             if (mountedRef.current)
               finishErr('Error al guardar: ' + (e && e.message ? e.message : 'inténtalo de nuevo'));
@@ -399,38 +417,37 @@ function ManageAccountModal(props) {
       // 1) Cambia el correo en auth.users (Supabase puede pedir
       //    confirmación por mail al nuevo destino — eso depende del
       //    setting del proyecto y queda fuera de nuestro control).
-      return SUPA.auth.updateUser({ email: val })
-        .then(function (res) {
-          if (res && res.error) {
-            throw new Error(traducirError(res.error) || 'No se pudo actualizar el correo.');
+      return SUPA.auth.updateUser({ email: val }).then(function (res) {
+        if (res && res.error) {
+          throw new Error(traducirError(res.error) || 'No se pudo actualizar el correo.');
+        }
+        // 2) Propaga el correo a las tablas dependientes. Si alguna
+        //    falla, encolamos la propagación para reintentar.
+        return supaPropagateEmail(uid, { email: val }).then(function (r) {
+          if (!r.success) {
+            if (typeof queueAction === 'function') {
+              queueAction(uid, 'propagateEmail', { email: val });
+              console.warn('[MT] propagación de email encolada:', r.error);
+            }
           }
-          // 2) Propaga el correo a las tablas dependientes. Si alguna
-          //    falla, encolamos la propagación para reintentar.
-          return supaPropagateEmail(uid, { email: val }).then(function (r) {
-            if (!r.success) {
-              if (typeof queueAction === 'function') {
-                queueAction(uid, 'propagateEmail', { email: val });
-                console.warn('[MT] propagación de email encolada:', r.error);
-              }
+          // 3) Actualiza sesión local + state de React siempre,
+          //    porque auth.users.email ya cambió (o queda pendiente
+          //    de confirmación, según config del proyecto).
+          var cur = leer(SKEY, {});
+          if (cur) {
+            cur.email = val;
+            grabar(SKEY, cur);
+          }
+          try {
+            var lu = leer('mt_last_user', null);
+            if (lu && lu.uid === uid) {
+              grabar('mt_last_user', { uid: uid, email: val });
             }
-            // 3) Actualiza sesión local + state de React siempre,
-            //    porque auth.users.email ya cambió (o queda pendiente
-            //    de confirmación, según config del proyecto).
-            var cur = leer(SKEY, {});
-            if (cur) {
-              cur.email = val;
-              grabar(SKEY, cur);
-            }
-            try {
-              var lu = leer('mt_last_user', null);
-              if (lu && lu.uid === uid) {
-                grabar('mt_last_user', { uid: uid, email: val });
-              }
-            } catch (_) {}
-            if (props.onSessionPatch) props.onSessionPatch({ email: val });
-            setEmailVal('');
-          });
+          } catch (_) {}
+          if (props.onSessionPatch) props.onSessionPatch({ email: val });
+          setEmailVal('');
         });
+      });
     });
   }
 
@@ -653,7 +670,9 @@ function ManageAccountModal(props) {
         h(
           'div',
           { className: 'otp-prep-bar-wrap' },
-          h('div', { className: 'otp-prep-bar' },
+          h(
+            'div',
+            { className: 'otp-prep-bar' },
             h('div', { className: 'otp-prep-bar-fill', style: { width: pct + '%' } })
           ),
           h('div', { className: 'otp-prep-sec' }, prepSec + 's')
@@ -678,11 +697,7 @@ function ManageAccountModal(props) {
         'div',
         { className: 'vf-step' },
         h('div', { className: 'vf-title' }, 'Tu código de confirmación'),
-        h(
-          'div',
-          { className: 'vf-desc' },
-          'Escribilo abajo para aplicar el cambio.'
-        )
+        h('div', { className: 'vf-desc' }, 'Escribilo abajo para aplicar el cambio.')
       ),
 
       // Código revelado (display prominente, estilo Apple verification)

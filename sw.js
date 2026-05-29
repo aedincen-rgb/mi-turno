@@ -1,7 +1,10 @@
 // ════════════════════════════════════════════════════════════════
 //  MI TURNO · SERVICE WORKER
-//  Cache de librerías CDN para arranque rápido offline-first
-const CACHE = 'mt-v56'; // CRÍTICO: flush inmediato de cola + IN_FLIGHT guard + listener leak fix
+//  Split cache: SHELL_CACHE (archivos de la app, se invalida en cada release)
+//               CDN_CACHE   (librerías externas, sobrevive entre releases)
+const SHELL_CACHE = 'mt-shell-v59'; // bump con scripts/bump.sh
+const CDN_CACHE   = 'mt-cdn-v1';    // solo bump cuando cambien URLs de CDN
+
 const CDN = [
   'https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js',
@@ -118,25 +121,63 @@ const appResources = [
   './js/app/init.js'
 ];
 
+// ── Install: shell siempre fresco, CDN solo si el cache no existe ──
 self.addEventListener('install', function (e) {
-  var all = CDN.concat(appResources);
-  e.waitUntil(caches.open(CACHE).then(function (c) {
-    return Promise.allSettled(all.map(function (u) {
-      // `cache: 'reload'` evita que el HTTP cache (Vercel/disco) sirva versiones viejas
-      // durante el precache — clave porque /css/* y /js/* son `immutable` por 1 año.
-      var opts = u.indexOf('http') === 0
-        ? { mode: 'cors', cache: 'reload' }
-        : { cache: 'reload' };
-      return fetch(u, opts).then(function (r) { if (r.ok) return c.put(u, r); });
-    }));
-  }).then(function () { return self.skipWaiting(); }));
+  e.waitUntil(
+    Promise.all([
+      // Shell: siempre re-fetch con cache:'reload' para invalidar el HTTP cache de Vercel
+      // (los assets tienen headers immutable/1yr, sin esto se sirve la versión vieja)
+      caches.open(SHELL_CACHE).then(function (c) {
+        return Promise.allSettled(appResources.map(function (u) {
+          return fetch(u, { cache: 'reload' }).then(function (r) {
+            if (r && r.ok) return c.put(u, r);
+          });
+        }));
+      }),
+      // CDN: solo descargar si el cache no existe — evita re-fetch de ~1MB en cada deploy
+      caches.has(CDN_CACHE).then(function (exists) {
+        if (exists) return;
+        return caches.open(CDN_CACHE).then(function (c) {
+          return Promise.allSettled(CDN.map(function (u) {
+            return fetch(u, { mode: 'cors', cache: 'reload' }).then(function (r) {
+              if (r && r.ok) return c.put(u, r);
+            });
+          }));
+        });
+      })
+    ]).then(function () { return self.skipWaiting(); })
+  );
 });
 
+// ── Activate: limpiar caches viejos, habilitar Navigation Preload ──
 self.addEventListener('activate', function (e) {
-  e.waitUntil(caches.keys().then(function (keys) {
-    return Promise.all(keys.filter(function (k) { return k !== CACHE; }).map(function (k) { return caches.delete(k); }));
-  }).then(function () { return self.clients.claim(); }));
+  e.waitUntil(
+    caches.keys().then(function (keys) {
+      return Promise.all(
+        keys.filter(function (k) {
+          // Conservar el SHELL_CACHE actual y el CDN_CACHE; borrar todo lo demás
+          return k !== SHELL_CACHE && k !== CDN_CACHE;
+        }).map(function (k) { return caches.delete(k); })
+      );
+    }).then(function () {
+      // Navigation Preload: el browser lanza el fetch de navegación en paralelo
+      // al boot del SW, eliminando ~50-100ms de latencia en cargas de shell.
+      if (self.registration.navigationPreload) {
+        return self.registration.navigationPreload.enable();
+      }
+    }).then(function () {
+      return self.clients.claim();
+    }).then(function () {
+      // Avisar a todos los tabs que el SW se activó (para debug / diagnóstico)
+      return self.clients.matchAll({ type: 'window' }).then(function (clients) {
+        clients.forEach(function (c) {
+          c.postMessage({ type: 'SW_ACTIVATED', version: SHELL_CACHE });
+        });
+      });
+    })
+  );
 });
+
 self.addEventListener('message', function (e) {
   if (e.data && (e.data === 'skipWaiting' || e.data.type === 'SKIP_WAITING')) {
     self.skipWaiting();
@@ -153,9 +194,6 @@ self.addEventListener('fetch', function (e) {
   var isStatic = sameHost || isCDN;
   if (!isStatic) return;
 
-  // ── Shell crítico (HTML / sw.js / version.json) → network-first ──
-  // Garantiza que la entrada esté siempre fresca para detectar nueva versión.
-  // Si la red falla, cae al caché para mantener offline-first.
   var path = u.pathname;
   var isShell = sameHost && (
     path === '/' ||
@@ -165,28 +203,38 @@ self.addEventListener('fetch', function (e) {
     path.endsWith('/manifest.json')
   );
 
+  // ── Shell crítico → network-first con Navigation Preload ──
   if (isShell) {
     e.respondWith(
-      fetch(e.request, { cache: 'no-store' })
-        .then(function (r) {
+      (function () {
+        // e.preloadResponse es la respuesta prefetched en paralelo al boot del SW
+        var networkPromise = Promise.resolve(e.preloadResponse).then(function (preloaded) {
+          return preloaded || fetch(e.request, { cache: 'no-store' });
+        });
+        return networkPromise.then(function (r) {
           if (r && r.ok) {
             var clone = r.clone();
-            caches.open(CACHE).then(function (c) { c.put(e.request, clone); });
+            caches.open(SHELL_CACHE).then(function (c) { c.put(e.request, clone); });
           }
           return r;
-        })
-        .catch(function () { return caches.match(e.request); })
+        }).catch(function () { return caches.match(e.request); });
+      })()
     );
     return;
   }
 
-  // ── Resto de assets (JS/CSS/img/CDN) → cache-first ──
-  // El SW invalida vía `CACHE = mt-vNN` al instalar la nueva versión.
-  e.respondWith(caches.match(e.request).then(function (cached) {
-    if (cached) return cached;
-    return fetch(e.request).then(function (r) {
-      if (r.ok) { var clone = r.clone(); caches.open(CACHE).then(function (c) { c.put(e.request, clone); }); }
-      return r;
-    }).catch(function () { return cached; });
-  }));
+  // ── Assets (JS/CSS/img/CDN) → cache-first, busca en ambos caches ──
+  e.respondWith(
+    caches.match(e.request).then(function (cached) {
+      if (cached) return cached;
+      return fetch(e.request).then(function (r) {
+        if (r && r.ok) {
+          var clone = r.clone();
+          var target = isCDN ? CDN_CACHE : SHELL_CACHE;
+          caches.open(target).then(function (c) { c.put(e.request, clone); });
+        }
+        return r;
+      }).catch(function () { return cached; });
+    })
+  );
 });

@@ -44,7 +44,7 @@ done
 echo
 echo "→ Versión sincronizada en las 3 fuentes"
 V_GLOBALS=$(grep -oE "MT_APP_VERSION = 'v[0-9]+" js/config/globals.js | grep -oE '[0-9]+' || echo "?")
-V_SW=$(grep -oE "CACHE = 'mt-v[0-9]+" sw.js | grep -oE '[0-9]+' || echo "?")
+V_SW=$(grep -oE "SHELL_CACHE = 'mt-shell-v[0-9]+" sw.js | grep -oE '[0-9]+' || echo "?")
 V_JSON=$(python3 -c "import json; print(json.load(open('version.json'))['v'][1:])" 2>/dev/null || echo "?")
 if [ "$V_GLOBALS" = "$V_SW" ] && [ "$V_SW" = "$V_JSON" ]; then
   ok "todas en v${V_GLOBALS}"
