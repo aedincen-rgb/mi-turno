@@ -123,6 +123,9 @@ function ConfigTabInner(props) {
   var sv = useState(false);
   var showErrorViewer = sv[0],
     setShowErrorViewer = sv[1];
+  var si = useState(false);
+  var showInstall = si[0],
+    setShowInstall = si[1];
 
   // Estado del acordeón del modo quincenal
   var oq = useState(false);
@@ -1214,6 +1217,29 @@ function ConfigTabInner(props) {
                 )
               : h('div', { className: 'ajustes-row-chev' }, '›')
           ),
+          // Instalar como app
+          h(
+            'button',
+            {
+              className: 'ajustes-row ajustes-row-tap',
+              onClick: function () {
+                haptic();
+                setShowInstall(true);
+              }
+            },
+            h('div', { className: 'ajustes-row-ico soft' }, '📲'),
+            h(
+              'div',
+              { className: 'ajustes-row-mid' },
+              h('div', { className: 'ajustes-row-ttl' }, 'Agregar a inicio'),
+              h(
+                'div',
+                { className: 'ajustes-row-sub' },
+                'Usala como app nativa · sin abrir el navegador'
+              )
+            ),
+            h('div', { className: 'ajustes-row-chev' }, '›')
+          ),
           // Reinicio completo (limpia cache + SW) — fallback nuclear
           h(
             'button',
@@ -1313,6 +1339,315 @@ function ConfigTabInner(props) {
         onClose: function () {
           setShowErrorViewer(false);
         }
+      }),
+
+    showInstall &&
+      h(InstallGuideModal, {
+        onClose: function () {
+          setShowInstall(false);
+        }
       })
+  );
+}
+
+// ── Modal: guía de instalación PWA ───────────────────────────
+function InstallGuideModal(props) {
+  var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  var isAndroid = /android/i.test(navigator.userAgent);
+  // Si no detectamos móvil mostramos ambas opciones
+  var platform = isIOS ? 'ios' : isAndroid ? 'android' : 'both';
+
+  var tab = useState(platform === 'ios' ? 'ios' : 'android');
+  var activeTab = tab[0],
+    setActiveTab = tab[1];
+
+  function Step(num, icon, text) {
+    return h(
+      'div',
+      { style: { display: 'flex', alignItems: 'flex-start', gap: '14px', marginBottom: '20px' } },
+      h(
+        'div',
+        {
+          style: {
+            minWidth: '32px',
+            height: '32px',
+            borderRadius: '50%',
+            background: 'var(--accent)',
+            color: '#fff',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontWeight: 700,
+            fontSize: '15px',
+            flexShrink: 0
+          }
+        },
+        String(num)
+      ),
+      h(
+        'div',
+        { style: { paddingTop: '5px' } },
+        h('div', { style: { fontSize: '22px', lineHeight: 1, marginBottom: '4px' } }, icon),
+        h('div', { style: { fontSize: '15px', color: 'var(--text-1)', lineHeight: 1.45 } }, text)
+      )
+    );
+  }
+
+  var iosSteps = h(
+    'div',
+    null,
+    Step(1, '🌐', 'Abrí esta página en Safari (el navegador con la brújula naranja)'),
+    Step(
+      2,
+      '⬆️',
+      'Tocá el botón Compartir — es el ícono de la flechita hacia arriba en la barra de abajo'
+    ),
+    Step(3, '➕', 'Deslizá la lista y tocá "Añadir a pantalla de inicio"'),
+    Step(4, '✅', 'Confirmá tocando "Añadir" arriba a la derecha. ¡Listo!'),
+    h(
+      'div',
+      {
+        style: {
+          marginTop: '4px',
+          padding: '14px 16px',
+          borderRadius: '14px',
+          background: 'var(--accent-dim)',
+          border: '1px solid var(--accent)',
+          fontSize: '13px',
+          color: 'var(--accent)',
+          lineHeight: 1.5
+        }
+      },
+      'Solo funciona desde Safari. Chrome en iPhone no tiene esta opción.'
+    )
+  );
+
+  var androidSteps = h(
+    'div',
+    null,
+    Step(1, '🌐', 'Abrí esta página en Chrome (el ícono del círculo de colores)'),
+    Step(2, '⋮', 'Tocá los tres puntos ⋮ en la esquina superior derecha'),
+    Step(3, '➕', 'Tocá "Agregar a pantalla de inicio" o "Instalar app"'),
+    Step(4, '✅', 'Confirmá. El ícono aparece en tu pantalla de inicio.'),
+    h(
+      'div',
+      {
+        style: {
+          marginTop: '4px',
+          padding: '14px 16px',
+          borderRadius: '14px',
+          background: 'var(--accent-dim)',
+          border: '1px solid var(--accent)',
+          fontSize: '13px',
+          color: 'var(--accent)',
+          lineHeight: 1.5
+        }
+      },
+      'En algunos Android, Chrome muestra un banner en la parte de abajo que dice "Instalar". También funciona.'
+    )
+  );
+
+  return h(
+    'div',
+    {
+      style: {
+        position: 'fixed',
+        inset: 0,
+        zIndex: 9000,
+        background: 'var(--bg)',
+        overflowY: 'auto',
+        WebkitOverflowScrolling: 'touch'
+      }
+    },
+    // Header
+    h(
+      'div',
+      {
+        style: {
+          position: 'sticky',
+          top: 0,
+          zIndex: 1,
+          background: 'var(--bg)',
+          borderBottom: '1px solid var(--border)',
+          padding: '16px 20px 14px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px'
+        }
+      },
+      h(
+        'button',
+        {
+          onClick: function () {
+            haptic();
+            props.onClose();
+          },
+          style: {
+            background: 'var(--surface2)',
+            border: 'none',
+            borderRadius: '50%',
+            width: '36px',
+            height: '36px',
+            fontSize: '18px',
+            cursor: 'pointer',
+            color: 'var(--text-1)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0
+          }
+        },
+        '←'
+      ),
+      h(
+        'div',
+        { style: { fontWeight: 700, fontSize: '17px', color: 'var(--text-1)' } },
+        'Agregar a inicio'
+      )
+    ),
+    // Cuerpo
+    h(
+      'div',
+      { style: { padding: '24px 20px 48px', maxWidth: '480px', margin: '0 auto' } },
+      // Hero
+      h(
+        'div',
+        {
+          style: {
+            textAlign: 'center',
+            marginBottom: '28px',
+            padding: '28px 20px 24px',
+            background: 'var(--surface)',
+            borderRadius: '20px',
+            border: '1px solid var(--border)'
+          }
+        },
+        h('div', { style: { fontSize: '52px', marginBottom: '12px', lineHeight: 1 } }, '📲'),
+        h(
+          'div',
+          {
+            style: {
+              fontWeight: 700,
+              fontSize: '20px',
+              color: 'var(--text-1)',
+              marginBottom: '8px'
+            }
+          },
+          'Tené Mi Turno siempre a mano'
+        ),
+        h(
+          'div',
+          { style: { fontSize: '14px', color: 'var(--text-2)', lineHeight: 1.55 } },
+          'Al agregarla a tu pantalla de inicio se abre sin el navegador, ' +
+            'ocupa casi nada, y funciona sin internet. Es igual que instalar una app de la tienda, pero gratis.'
+        )
+      ),
+      // Beneficios
+      h(
+        'div',
+        {
+          style: {
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: '10px',
+            marginBottom: '28px'
+          }
+        },
+        BenefitChip('⚡', 'Abre al instante'),
+        BenefitChip('📴', 'Sin internet'),
+        BenefitChip('🔔', 'Sin distracciones'),
+        BenefitChip('💾', 'Sin espacio extra')
+      ),
+      // Tabs selector (solo si no detectamos plataforma única)
+      platform === 'both' &&
+        h(
+          'div',
+          {
+            style: {
+              display: 'flex',
+              gap: '8px',
+              marginBottom: '24px',
+              background: 'var(--surface2)',
+              borderRadius: '12px',
+              padding: '4px'
+            }
+          },
+          h(
+            'button',
+            {
+              onClick: function () {
+                setActiveTab('android');
+              },
+              style: {
+                flex: 1,
+                padding: '8px',
+                border: 'none',
+                borderRadius: '9px',
+                cursor: 'pointer',
+                fontWeight: activeTab === 'android' ? 700 : 400,
+                fontSize: '14px',
+                background: activeTab === 'android' ? 'var(--bg)' : 'transparent',
+                color: activeTab === 'android' ? 'var(--accent)' : 'var(--text-2)',
+                boxShadow: activeTab === 'android' ? '0 1px 4px rgba(0,0,0,0.10)' : 'none'
+              }
+            },
+            '🤖 Android'
+          ),
+          h(
+            'button',
+            {
+              onClick: function () {
+                setActiveTab('ios');
+              },
+              style: {
+                flex: 1,
+                padding: '8px',
+                border: 'none',
+                borderRadius: '9px',
+                cursor: 'pointer',
+                fontWeight: activeTab === 'ios' ? 700 : 400,
+                fontSize: '14px',
+                background: activeTab === 'ios' ? 'var(--bg)' : 'transparent',
+                color: activeTab === 'ios' ? 'var(--accent)' : 'var(--text-2)',
+                boxShadow: activeTab === 'ios' ? '0 1px 4px rgba(0,0,0,0.10)' : 'none'
+              }
+            },
+            '🍎 iPhone / iPad'
+          )
+        ),
+      // Título de sección
+      h(
+        'div',
+        {
+          style: { fontWeight: 700, fontSize: '16px', color: 'var(--text-1)', marginBottom: '20px' }
+        },
+        platform === 'ios' || (platform === 'both' && activeTab === 'ios')
+          ? '4 pasos en iPhone / iPad'
+          : '4 pasos en Android'
+      ),
+      // Pasos
+      platform === 'ios' || (platform === 'both' && activeTab === 'ios') ? iosSteps : androidSteps
+    )
+  );
+}
+
+function BenefitChip(icon, label) {
+  return h(
+    'div',
+    {
+      style: {
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '6px',
+        padding: '14px 8px',
+        borderRadius: '14px',
+        background: 'var(--surface)',
+        border: '1px solid var(--border)',
+        textAlign: 'center'
+      }
+    },
+    h('div', { style: { fontSize: '24px', lineHeight: 1 } }, icon),
+    h('div', { style: { fontSize: '12px', fontWeight: 600, color: 'var(--text-2)' } }, label)
   );
 }
