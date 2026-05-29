@@ -35,7 +35,8 @@
 }
 
 @keyframes spFloat {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0);
   }
   50% {
@@ -59,6 +60,16 @@
   transform: translateZ(0);
   will-change: transform;
   animation-play-state: running;
+}
+
+@keyframes ob-float {
+  0%,
+  100% {
+    transform: translateX(-50%) translateY(0);
+  }
+  50% {
+    transform: translateX(-50%) translateY(-7px);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

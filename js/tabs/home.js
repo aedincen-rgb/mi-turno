@@ -60,6 +60,36 @@ function HomeTab(props) {
     vh = props.vh,
     turnos = props.turnos;
 
+  // Onboarding del primer turno: tooltip sobre el botón INICIAR.
+  // Se muestra solo cuando no hay turnos ni turno activo, y no fue descartado antes.
+  var ob = useState(function () {
+    if (activo) return false;
+    if (turnos && turnos.length > 0) return false;
+    return !leer('mt_ob_done', false);
+  });
+  var showOb = ob[0],
+    setShowOb = ob[1];
+
+  // Ocultar el tooltip en cuanto el usuario inicia su primer turno
+  useEffect(
+    function () {
+      if (activo && showOb) {
+        grabar('mt_ob_done', true);
+        setShowOb(false);
+      }
+      if (turnos && turnos.length > 0 && showOb) {
+        grabar('mt_ob_done', true);
+        setShowOb(false);
+      }
+    },
+    [activo, turnos]
+  );
+
+  function dismissOb() {
+    grabar('mt_ob_done', true);
+    setShowOb(false);
+  }
+
   // Frase IA rotativa (misma fuente y ritmo que el hero del Asistente)
   var moodPhrases = _aiHeroPhrases(props);
   var mp = useState(0);
@@ -277,7 +307,53 @@ function HomeTab(props) {
     // Control de turno · botón flotante (sin tarjeta que lo encajone)
     h(
       'div',
-      { className: 'action-stage', style: { marginTop: 0 } },
+      { className: 'action-stage', style: { marginTop: 0, position: 'relative' } },
+      // Tooltip de onboarding — solo primer uso, sin turnos
+      showOb &&
+        h(
+          'div',
+          {
+            style: {
+              position: 'absolute',
+              bottom: 'calc(100% + 18px)',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 200,
+              textAlign: 'center',
+              animation: 'ob-float 2.4s ease-in-out infinite',
+              pointerEvents: 'none'
+            }
+          },
+          // Burbuja
+          h(
+            'div',
+            {
+              style: {
+                background: 'var(--accent)',
+                color: '#fff',
+                borderRadius: '16px',
+                padding: '12px 18px',
+                fontSize: '14px',
+                fontWeight: 600,
+                lineHeight: 1.4,
+                whiteSpace: 'nowrap',
+                boxShadow: '0 4px 20px rgba(79,115,248,0.45)'
+              }
+            },
+            'Tocá para iniciar tu primer turno ⚡'
+          ),
+          // Flecha apuntando hacia abajo al botón
+          h('div', {
+            style: {
+              width: 0,
+              height: 0,
+              margin: '0 auto',
+              borderLeft: '9px solid transparent',
+              borderRight: '9px solid transparent',
+              borderTop: '10px solid var(--accent)'
+            }
+          })
+        ),
       h(
         'button',
         {
