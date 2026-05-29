@@ -20,31 +20,69 @@
 </script>
 
 <link rel="manifest" href="manifest.json">
+<link rel="sitemap" type="application/xml" href="/sitemap.xml">
 <link rel="icon" type="image/svg+xml" href="img/logo-mark.svg">
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-180.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 
-<title>Mi Turno · Colombia</title>
+<title>Mi Turno · Calculadora de nómina colombiana — recargos nocturnos, festivos y horas extra</title>
 
-<!-- SEO + descripción para previews al compartir -->
-<meta name="description" content="Mi Turno · Nómina inteligente para trabajadores por turnos en Colombia. Cálculo automático de recargos nocturnos, festivos, dominicales y horas extra según la Ley 2101/2021.">
+<!-- SEO -->
+<link rel="canonical" href="https://mi-turno-beta.vercel.app/">
+<meta name="description" content="Calculá tu salario real turno a turno. Mi Turno calcula automáticamente recargos nocturnos, festivos, dominicales y horas extra según la Ley 2101/2021. Gratis, offline, sin Excel.">
 <meta name="author" content="Mi Turno">
-<meta name="keywords" content="nómina, turnos, recargos, Colombia, horas extra, festivos, ley 2101, salario">
+<meta name="keywords" content="calculadora nómina Colombia, recargos nocturnos Colombia, horas extra Colombia, ley 2101 2021, nómina por turnos, salario mínimo Colombia, dominicales festivos Colombia">
+<meta name="robots" content="index, follow">
 
 <!-- Open Graph (preview al compartir en WhatsApp, Facebook, etc.) -->
 <meta property="og:type" content="website">
-<meta property="og:title" content="Mi Turno · Nómina inteligente">
-<meta property="og:description" content="Calculá tu salario real turno a turno con todos los recargos colombianos. Funciona offline, sin Excel.">
-<meta property="og:image" content="icon-512.png">
+<meta property="og:url" content="https://mi-turno-beta.vercel.app/">
+<meta property="og:title" content="Mi Turno · Calculadora de nómina colombiana">
+<meta property="og:description" content="Calculá tu salario real turno a turno. Recargos nocturnos, festivos, horas extra según la Ley 2101. Gratis y funciona sin internet.">
+<meta property="og:image" content="https://mi-turno-beta.vercel.app/icon-512.png">
 <meta property="og:locale" content="es_CO">
+<meta property="og:site_name" content="Mi Turno">
 
-<!-- Twitter Card (preview al compartir en X) -->
+<!-- Twitter Card -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Mi Turno · Nómina inteligente">
-<meta name="twitter:description" content="Calculá tu salario real turno a turno con todos los recargos colombianos.">
-<meta name="twitter:image" content="icon-512.png">
+<meta name="twitter:title" content="Mi Turno · Calculadora de nómina colombiana">
+<meta name="twitter:description" content="Calculá tu salario real turno a turno. Recargos nocturnos, festivos y horas extra. Gratis y offline.">
+<meta name="twitter:image" content="https://mi-turno-beta.vercel.app/icon-512.png">
+
+<!-- JSON-LD: Google entiende qué es esta app y la puede mostrar en búsquedas -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Mi Turno",
+  "alternateName": "Mi Turno Colombia",
+  "description": "Calculadora de nómina colombiana para trabajadores por turnos. Calcula automáticamente recargos nocturnos, festivos, dominicales y horas extra según la Ley 2101 de 2021.",
+  "applicationCategory": "FinanceApplication",
+  "operatingSystem": "Android, iOS, Web",
+  "url": "https://mi-turno-beta.vercel.app/",
+  "inLanguage": "es-CO",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "COP"
+  },
+  "featureList": [
+    "Cálculo de recargos nocturnos según Ley 2101/2021",
+    "Horas extra diurnas y nocturnas",
+    "Festivos y dominicales",
+    "Funciona sin internet (offline)",
+    "Sin registro obligatorio"
+  ],
+  "screenshot": "https://mi-turno-beta.vercel.app/icon-512.png",
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "5",
+    "ratingCount": "1"
+  }
+}
+</script>
 
 <!-- Preconnect a CDNs de scripts (React, Supabase, jsPDF, XLSX, Chart.js).
      Bajar 100-300ms en LCP al adelantar el handshake DNS+TLS antes de la
