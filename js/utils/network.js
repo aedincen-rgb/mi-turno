@@ -37,9 +37,13 @@ function _updateOnlineStatus() {
   if (newStatus !== _isOnline) {
     _isOnline = newStatus;
     if (_isOnline) {
-      _onlineListeners.forEach(fn => fn());
+      _onlineListeners.forEach(function (fn) {
+        fn();
+      });
     } else {
-      _offlineListeners.forEach(fn => fn());
+      _offlineListeners.forEach(function (fn) {
+        fn();
+      });
     }
   }
 }
@@ -47,34 +51,25 @@ function _updateOnlineStatus() {
 window.addEventListener('online', _updateOnlineStatus);
 window.addEventListener('offline', _updateOnlineStatus);
 
-function isOnline() { return _isOnline; }
-function onOnline(callback) { _onlineListeners.push(callback); }
-function onOffline(callback) { _offlineListeners.push(callback); }
+function isOnline() {
+  return _isOnline;
+}
+function onOnline(callback) {
+  _onlineListeners.push(callback);
+}
+function onOffline(callback) {
+  _offlineListeners.push(callback);
+}
 
-function removeOnlineListener(callback) { _onlineListeners = _onlineListeners.filter(fn => fn !== callback); }
-function removeOfflineListener(callback) { _offlineListeners = _offlineListeners.filter(fn => fn !== callback); }
-
-/**
- * Wrapper de fetch que maneja el estado offline antes de intentar la petición.
- * @param {string} url 
- * @param {Object} options 
- */
-async function fetchWithOfflineSupport(url, options) {
-  if (!navigator.onLine) {
-    return { 
-      offline: true, 
-      error: 'Sin conexión a internet. La operación se sincronizará cuando vuelvas a estar online.' 
-    };
-  }
-
-  try {
-    // Aplicamos un tiempo de espera para evitar que la app se quede bloqueada en el splash
-    const response = await withTimeout(fetch(url, options), 10000, 'La conexión');
-    return response;
-  } catch (error) {
-    console.warn('[MT] Fallback offline activado para:', url, error);
-    return { offline: true, error: traducirError(error) };
-  }
+function removeOnlineListener(callback) {
+  _onlineListeners = _onlineListeners.filter(function (fn) {
+    return fn !== callback;
+  });
+}
+function removeOfflineListener(callback) {
+  _offlineListeners = _offlineListeners.filter(function (fn) {
+    return fn !== callback;
+  });
 }
 
 // --- Error Translation ---
@@ -100,9 +95,13 @@ function traducirError(err) {
     return 'Ya existe una cuenta con ese correo.';
   if (low.indexOf('password should be') >= 0 || low.indexOf('weak password') >= 0)
     return 'La contraseña es muy débil (mínimo 6).';
-  if (low.indexOf('rate limit') >= 0 || low.indexOf('too many requests') >= 0) 
+  if (low.indexOf('rate limit') >= 0 || low.indexOf('too many requests') >= 0)
     return 'Demasiados intentos. Espera unos minutos e inténtalo de nuevo.';
-  if (low.indexOf('duplicate key') >= 0 || low.indexOf('unique constraint') >= 0 || low.indexOf('23505') >= 0)
+  if (
+    low.indexOf('duplicate key') >= 0 ||
+    low.indexOf('unique constraint') >= 0 ||
+    low.indexOf('23505') >= 0
+  )
     return 'Ya existe un registro con esa información única (ej. el PIN ya está en uso).';
   if (low.indexOf('database error') >= 0 || low.indexOf('pgrst') >= 0)
     return 'Error de base de datos. Los cambios se guardaron localmente.';
