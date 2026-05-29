@@ -15,9 +15,12 @@ const externalGlobals = {
   requestAnimationFrame: 'readonly',
   cancelAnimationFrame: 'readonly',
   fetch: 'readonly',
+  caches: 'readonly',
   URL: 'readonly',
   Blob: 'readonly',
   FormData: 'readonly',
+  FileReader: 'readonly',
+  Image: 'readonly',
   Promise: 'readonly',
   Array: 'readonly',
   Object: 'readonly',
@@ -71,6 +74,8 @@ const projectGlobals = {
   SKEY: 'readonly',
   U12H: 'readonly',
   RC: 'readonly',
+  AUX_TRANSPORTE_2026: 'readonly',
+  PRESTACIONES_PCT: 'readonly',
   FEST_CACHE: 'writable',
   getEaster: 'readonly',
 
@@ -137,6 +142,8 @@ const projectGlobals = {
   buildContext: 'readonly',
   supaUpsertPerfil: 'readonly', // New
   supaSubscribeUser: 'readonly', // v39 realtime
+  supaUpdatePinLookup: 'readonly', // v38 sync cola
+  supaPropagateEmail: 'readonly', // v38 sync cola
 
   // services/quincena.js
   QUINCENA_PREFS_DEFAULT: 'readonly',
