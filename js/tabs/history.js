@@ -9,10 +9,6 @@ function HistoryTab(props) {
     turnos = props.turnos,
     durActual = props.durActual;
 
-  if (!turnos) {
-    return h(SkeletonHistory, null);
-  }
-
   var cs = useState(false);
   var conf = cs[0],
     setConf = cs[1];
