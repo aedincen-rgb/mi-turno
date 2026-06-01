@@ -2,12 +2,19 @@
 //  MI TURNO · tabs/dashboard.js
 //  Tab Análisis: proyección y KPIs
 // ════════════════════════════════════════════════════════════════
+/* global h, useState, useRef, useMemo, useEffect, SkeletonDashboard, RC, window, document */
+
 function DashboardTab(props) {
   var calc = props.calc,
     turnos = props.turnos,
     salario = props.salario,
     vh = props.vh,
     ahora = props.ahora;
+
+  if (!calc || !turnos || !salario || !ahora) {
+    return h(SkeletonDashboard, null);
+  }
+
   var prefs = props.prefs || { auxTransp: false, prestaciones: false, quincenaMode: false };
   var modoQuincena = !!prefs.quincenaMode && props.quincenasMes;
   var canvasRef = useRef(null);
@@ -196,7 +203,8 @@ function DashboardTab(props) {
   var quincenaBlock = null;
   if (modoQuincena) {
     var qs = props.quincenasMes;
-    var extQ = typeof calcularExtras === 'function' ? calcularExtras(salario, prefs, 0.5) : { total: 0 };
+    var extQ =
+      typeof calcularExtras === 'function' ? calcularExtras(salario, prefs, 0.5) : { total: 0 };
     var ahoraMs = ahora.getTime();
     function qStatus(q) {
       if (ahoraMs < q.rango.ini.getTime()) return 'Próxima';
@@ -211,18 +219,12 @@ function DashboardTab(props) {
         return h(
           'div',
           { key: q.rango.label, className: 'kpi-card' },
-          h(
-            'div',
-            { className: 'kpi-label' },
-            q.rango.label + ' · ' + qStatus(q)
-          ),
+          h('div', { className: 'kpi-label' }, q.rango.label + ' · ' + qStatus(q)),
           h('div', { className: 'kpi-val accent' }, fCOP(total)),
           h(
             'div',
             { className: 'kpi-sub' },
-            formatRangoCorto(q.rango) +
-              ' · ' +
-              fDur(q.calc.totalMins)
+            formatRangoCorto(q.rango) + ' · ' + fDur(q.calc.totalMins)
           )
         );
       })

@@ -2,10 +2,17 @@
 //  MI TURNO · tabs/history.js
 //  Tab Historial
 // ════════════════════════════════════════════════════════════════
+/* global h, useState, SkeletonHistory, haptic, esFest, fDur, _saludoHora, _aiNombrePersonal */
+
 function HistoryTab(props) {
   var activo = props.activo,
     turnos = props.turnos,
     durActual = props.durActual;
+
+  if (!turnos) {
+    return h(SkeletonHistory, null);
+  }
+
   var cs = useState(false);
   var conf = cs[0],
     setConf = cs[1];
@@ -15,7 +22,8 @@ function HistoryTab(props) {
 
   // Formato seleccionado del exportador (segmented control estilo iOS)
   var ff = useState('pdf');
-  var fmt = ff[0], setFmt = ff[1];
+  var fmt = ff[0],
+    setFmt = ff[1];
 
   function doDel() {
     if (delId !== null) {
@@ -34,9 +42,7 @@ function HistoryTab(props) {
   var ahora = props.ahora || new Date();
   var session = props.session || {};
   // Nombre personal: mismo helper usado en el asistente
-  var nm = typeof _aiNombrePersonal === 'function'
-    ? _aiNombrePersonal({ session: session })
-    : '';
+  var nm = typeof _aiNombrePersonal === 'function' ? _aiNombrePersonal({ session: session }) : '';
   // Mismo helper que el asistente — fuente única de verdad
   var saludo = typeof _saludoHora === 'function' ? _saludoHora(ahora) : 'Hola';
   var saludoCompleto = nm ? saludo + ', ' + nm : saludo;
@@ -196,7 +202,10 @@ function HistoryTab(props) {
                 className: 'hist-fmt-opt' + (fmt === 'pdf' ? ' active' : ''),
                 role: 'tab',
                 'aria-selected': fmt === 'pdf',
-                onClick: function () { haptic(); setFmt('pdf'); }
+                onClick: function () {
+                  haptic();
+                  setFmt('pdf');
+                }
               },
               h('span', { className: 'hist-fmt-ico' }, '📄'),
               'PDF'
@@ -207,7 +216,10 @@ function HistoryTab(props) {
                 className: 'hist-fmt-opt' + (fmt === 'excel' ? ' active' : ''),
                 role: 'tab',
                 'aria-selected': fmt === 'excel',
-                onClick: function () { haptic(); setFmt('excel'); }
+                onClick: function () {
+                  haptic();
+                  setFmt('excel');
+                }
               },
               h('span', { className: 'hist-fmt-ico' }, '📊'),
               'Excel'
