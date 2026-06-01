@@ -1,7 +1,6 @@
 // ════════════════════════════════════════════════════════════════
 //  MI TURNO · app/app-main.js
 //  Componente principal App con tabs y lógica de sincronización
-//  Componente principal App con tabs
 // ════════════════════════════════════════════════════════════════
 
 function App(props) {
@@ -350,14 +349,6 @@ function App(props) {
             savedFlag === true || remoteFlag || (savedFlag === null && salCarga > SMIN);
           setSalarioConfigured(inferred);
           setPrefs(normalizePrefs(leer(dk(uid, 'prefs'), null)));
-          // Exponer estado global para el Mood Bar
-          window.__miTurnoState = {
-            turnos: data.turnos || [],
-            calc: calc,
-            salario: data.salario || SMIN,
-            vh: (data.salario || SMIN) / 240,
-            session: session
-          };
           loadedRef.current = true;
           function finishSplash() {
             if (cancelled) return;
@@ -581,21 +572,11 @@ function App(props) {
     };
   }, []);
 
-  // ── Mantener estado global para Mood Bar ──────────────
   useEffect(
     function () {
-      window.__miTurnoState = {
-        turnos: turnos,
-        calc: calc,
-        salario: salario,
-        vh: vh,
-        session: session
-      };
-      // Flag leída por sw-register.js para diferir el reload de
-      // actualización si hay un turno en curso (no interrumpir el cronómetro).
       window.__mtTurnoActivo = !!activo;
     },
-    [turnos, calc, salario, vh, session, activo]
+    [activo]
   );
 
   // ── Iniciar/detener rotación Mood Bar según pestaña ──
@@ -622,7 +603,12 @@ function App(props) {
     },
     [ahora]
   );
-  var ahoraMin = Math.floor(ahora / 60000) * 60000;
+  var ahoraMin = useMemo(
+    function () {
+      return Math.floor(ahora / 60000) * 60000;
+    },
+    [ahora]
+  );
   var ahoraDateCalc = useMemo(
     function () {
       return new Date(ahoraMin);

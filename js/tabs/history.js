@@ -2,7 +2,7 @@
 //  MI TURNO · tabs/history.js
 //  Tab Historial
 // ════════════════════════════════════════════════════════════════
-/* global h, useState, useMemo, SkeletonHistory, haptic, esFest, fDur, fCOP, doCalcPerTurno, RC, _saludoHora, _aiNombrePersonal */
+/* global h, useState, useMemo, haptic, esFest, fDur, fCOP, doCalcPerTurno, RC, _saludoHora, _aiNombrePersonal */
 
 function HistoryTab(props) {
   var activo = props.activo,
