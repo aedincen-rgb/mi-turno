@@ -1,6 +1,19 @@
 {
   "cleanUrls": true,
   "trailingSlash": false,
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "destination": "https://miturno.one/$1",
+      "statusCode": 301,
+      "has": [
+        {
+          "type": "host",
+          "value": "mi-turno-beta.vercel.app"
+        }
+      ]
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",
