@@ -13,13 +13,21 @@ var CLOUD_ERROR = null;
 
 // Constantes de la app
 // Ley 2101/2021 — reducción gradual de jornada laboral colombiana
+// Cronograma oficial:
+//   - 2023.06.15: 47h/semana (↓ de 48h)
+//   - 2024.06.15: 46h/semana (↓ de 47h)
+//   - 2025.06.15: 45h/semana (↓ de 46h)
+//   - 2026.06.15: 44h/semana (↓ de 45h)
+//   - 2027.07.01: 42h/semana (meta final)
+// Fuente: Ley 2101 de 2021, Art. 1
 function getHSEM(fecha) {
   var d = fecha instanceof Date ? fecha : new Date(fecha);
+  if (d >= new Date(2027, 6, 1)) return 42; // Meta final de la ley
   if (d >= new Date(2026, 6, 15)) return 44;
   if (d >= new Date(2025, 6, 15)) return 45;
   if (d >= new Date(2024, 6, 15)) return 46;
   if (d >= new Date(2023, 6, 15)) return 47;
-  return 48;
+  return 48; // Estado antes de reforma
 }
 var HSEM = getHSEM(new Date()); // límite de la semana actual (referencia)
 var SMIN = 1750905; // Salario mínimo Colombia 2026 (Decretos 1469-1470 dic 2025)
