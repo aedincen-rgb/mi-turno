@@ -228,6 +228,15 @@ const projectGlobals = {
   DiagnosticoModal: 'readonly',
   ErrorViewerModal: 'readonly',
 
+  // Skeleton components
+  SkeletonDashboard: 'readonly',
+  SkeletonHistory: 'readonly',
+  SkeletonHero: 'readonly',
+  SkeletonCard: 'readonly',
+  SkeletonKPIGrid: 'readonly',
+  SkeletonChartWrap: 'readonly',
+  SkeletonHistoryRow: 'readonly',
+
   // Tab components
   HomeTab: 'readonly',
   DashboardTab: 'readonly',
