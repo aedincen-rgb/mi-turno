@@ -16,10 +16,18 @@ function App(props) {
     setTheme = th[1];
   useEffect(
     function () {
-      document.documentElement.setAttribute('data-theme', theme);
+      var root = document.documentElement;
+      root.classList.add('theme-transitioning');
+      root.setAttribute('data-theme', theme);
       grabar('mt_theme', theme);
       var m = document.getElementById('metaThemeColor');
       if (m) m.setAttribute('content', theme === 'dark' ? '#0a0c12' : '#f5f7fb');
+      var tid = setTimeout(function () {
+        root.classList.remove('theme-transitioning');
+      }, 400);
+      return function () {
+        clearTimeout(tid);
+      };
     },
     [theme]
   );
@@ -804,74 +812,78 @@ function App(props) {
     h(
       'div',
       { className: 'scr', ref: scrRef },
-      tab === 'home'
-        ? h(HomeTab, {
-            calc: calc,
-            activo: activo,
-            ahora: ahoraDate,
-            salario: salario,
-            salarioConfigured: salarioConfigured,
-            vh: vh,
-            turnos: turnos,
-            prefs: prefs,
-            quincena: quincena,
-            session: session,
-            onIni: onIni,
-            onFin: onFin,
-            onOpenAssistant: function () {
-              haptic();
-              setTab('ai');
-            },
-            onOpenConfig: function () {
-              haptic();
-              setTab('config');
-            }
-          })
-        : tab === 'dashboard'
-          ? h(DashboardTab, {
+      h(
+        'div',
+        { key: tab, className: 'tab-view' },
+        tab === 'home'
+          ? h(HomeTab, {
               calc: calc,
-              turnos: turnosMes,
-              salario: salario,
-              vh: vh,
+              activo: activo,
               ahora: ahoraDate,
-              themeKey: theme,
+              salario: salario,
+              salarioConfigured: salarioConfigured,
+              vh: vh,
+              turnos: turnos,
               prefs: prefs,
-              quincenasMes: quincenasMes
+              quincena: quincena,
+              session: session,
+              onIni: onIni,
+              onFin: onFin,
+              onOpenAssistant: function () {
+                haptic();
+                setTab('ai');
+              },
+              onOpenConfig: function () {
+                haptic();
+                setTab('config');
+              }
             })
-          : tab === 'ai'
-            ? h(AsistenteTab, {
-                turnos: turnosMes,
-                turnosAll: turnos,
+          : tab === 'dashboard'
+            ? h(DashboardTab, {
                 calc: calc,
+                turnos: turnosMes,
                 salario: salario,
                 vh: vh,
-                session: session
+                ahora: ahoraDate,
+                themeKey: theme,
+                prefs: prefs,
+                quincenasMes: quincenasMes
               })
-            : tab === 'history'
-              ? h(HistoryTab, {
-                  turnos: turnos,
-                  activo: activo,
-                  durActual: durActual,
-                  session: session,
+            : tab === 'ai'
+              ? h(AsistenteTab, {
+                  turnos: turnosMes,
+                  turnosAll: turnos,
                   calc: calc,
-                  ahora: ahoraDate,
-                  onBorrar: onBorrar,
-                  onBorrarUno: onBorrarUno,
-                  onExportPDF: onExportPDF,
-                  onExportExcel: onExportExcel
-                })
-              : h(ConfigTab, {
                   salario: salario,
-                  valorHora: vh,
-                  session: session,
-                  onSalario: onSalario,
-                  onSignOut: props.onSignOut,
-                  onSessionPatch: onSessionPatch,
-                  theme: theme,
-                  onThemeChange: setTheme,
-                  prefs: prefs,
-                  onPrefsChange: onPrefsChange
+                  vh: vh,
+                  session: session
                 })
+              : tab === 'history'
+                ? h(HistoryTab, {
+                    turnos: turnos,
+                    activo: activo,
+                    durActual: durActual,
+                    session: session,
+                    calc: calc,
+                    ahora: ahoraDate,
+                    onBorrar: onBorrar,
+                    onBorrarUno: onBorrarUno,
+                    onExportPDF: onExportPDF,
+                    onExportExcel: onExportExcel
+                  })
+                : h(ConfigTab, {
+                    salario: salario,
+                    valorHora: vh,
+                    session: session,
+                    onSalario: onSalario,
+                    onSignOut: props.onSignOut,
+                    onSessionPatch: onSessionPatch,
+                    theme: theme,
+                    onThemeChange: setTheme,
+                    prefs: prefs,
+                    onPrefsChange: onPrefsChange
+                  })
+      )
     ),
 
     h(
