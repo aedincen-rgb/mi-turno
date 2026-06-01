@@ -140,3 +140,21 @@
   background: rgba(125, 168, 255, 0.1);
   border-color: rgba(125, 168, 255, 0.2);
 }
+
+/* ── Dark mode surface tokens ── */
+[data-theme='dark'] {
+  --bg-secondary: rgba(255, 255, 255, 0.07);
+}
+
+/* ── Transición suave al cambiar de tema ── */
+.theme-transitioning,
+.theme-transitioning *,
+.theme-transitioning *::before,
+.theme-transitioning *::after {
+  transition:
+    background-color 0.28s ease,
+    color 0.22s ease,
+    border-color 0.28s ease,
+    box-shadow 0.28s ease,
+    opacity 0.22s ease !important;
+}
