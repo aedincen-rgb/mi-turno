@@ -11,10 +11,6 @@ function DashboardTab(props) {
     vh = props.vh,
     ahora = props.ahora;
 
-  if (!calc || !turnos || !salario || !ahora) {
-    return h(SkeletonDashboard, null);
-  }
-
   var prefs = props.prefs || { auxTransp: false, prestaciones: false, quincenaMode: false };
   var modoQuincena = !!prefs.quincenaMode && props.quincenasMes;
   var canvasRef = useRef(null);

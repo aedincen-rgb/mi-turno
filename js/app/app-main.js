@@ -993,7 +993,7 @@ function App(props) {
       ),
       h(
         'div',
-        { key: tab, className: 'tab-view' },
+        { className: 'tab-view' },
         tab === 'home'
           ? h(HomeTab, {
               calc: calc,
