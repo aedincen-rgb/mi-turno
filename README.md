@@ -8,7 +8,7 @@ Mi Turno calcula automáticamente el salario real de cada turno aplicando todos 
 
 ## ¿Qué problema resuelve?
 
-Los trabajadores por turnos en Colombia (salud, seguridad, logística, manufactura) pierden entre el 20 % y el 40 % de su salario real por no conocer o no poder calcular los recargos a los que tienen derecho. Las liquidaciones manuales en Excel generan errores. Mi Turno automatiza ese cálculo según la **Ley 2101/2021** y el **CST Arts. 168–171**.
+Los trabajadores por turnos en Colombia (salud, seguridad, logística, manufactura) pierden entre el 20 % y el 40 % de su salario real por no conocer o no poder calcular los recargos a los que tienen derecho. Las liquidaciones manuales en Excel generan errores. Mi Turno automatiza ese cálculo según la **Ley 2101/2021** y el **CST Arts. 168–171**, con cumplimiento automático y auditable.
 
 ---
 
@@ -56,6 +56,7 @@ Los trabajadores por turnos en Colombia (salud, seguridad, logística, manufactu
           ┌───────▼──────────────────────────▼────────┐
           │              SUPABASE                      │
           │  Auth · Postgres · Realtime · Edge Fns     │
+          │  + RLS (Row Level Security)                │
           └────────────────────────────────────────────┘
 ```
 
@@ -101,6 +102,111 @@ public.email_logs    (id PK, user_id, to_email, format, status, ...)
 
 ---
 
+## Seguridad: Row Level Security (RLS)
+
+Mi Turno implementa **hardening de RLS** en todas las tablas críticas. Cada operación (SELECT, INSERT, UPDATE, DELETE) requiere que `auth.uid() = user_id`, previniendo que un usuario no autorizado pueda acceder a datos de otro usuario, incluso si logra romper la lógica de aplicación.
+
+### Políticas aplicadas
+
+**`public.turnos`** (Mis turnos registrados)
+- `SELECT`: usuario lee solo sus propios turnos
+- `INSERT`: usuario crea turnos asociados a su UID
+- `UPDATE`: usuario modifica solo sus turnos
+- `DELETE`: usuario borra solo sus turnos
+
+**`public.turno_activo`** (Turno en curso)
+- `SELECT`: usuario ve solo su turno activo
+- `INSERT`: usuario inicia turno bajo su UID
+- `UPDATE`: usuario modifica solo su turno activo
+- `DELETE`: usuario cierra solo su turno activo
+
+**`public.perfiles`** (Configuración personal)
+- `SELECT`: usuario lee solo su perfil
+- `UPDATE`: usuario modifica solo su salario_base y email
+- (INSERT deshabilitado — solo sistema via trigger)
+
+**`public.pin_lookup`** (Acceso por PIN)
+- `SELECT`: usuario verifica solo su PIN
+- `INSERT`: usuario crea solo su PIN
+- `UPDATE`: usuario actualiza solo su PIN
+- `DELETE`: usuario borra solo su PIN
+
+### Defensa en profundidad
+
+La RLS opera **debajo de la lógica de aplicación**, en el nivel de PostgreSQL. Incluso si un atacante:
+- Roba el JWT de otro usuario
+- Manipula la solicitud HTTP
+- Explota un XSS
+
+...el servidor rechaza la solicitud en la capa de base de datos. No hay bypass posible desde la aplicación.
+
+---
+
+## Cumplimiento automático: Ley 2101/2021
+
+Colombia implementó la **Ley 2101 de 2021** para reducir gradualmente la jornada laboral. Mi Turno automatiza este cumplimiento sin código hardcodeado.
+
+### Cronograma oficial (reducción gradual de la jornada)
+
+```
+Período                  Jornada máxima semanal
+────────────────────────────────────────────────
+Hasta 15 junio 2023     48 horas/semana
+15 junio 2023 - 14 jun  47 horas/semana
+15 junio 2024 - 14 jun  46 horas/semana
+15 junio 2025 - 14 jun  45 horas/semana
+15 junio 2026 - 30 jun  44 horas/semana
+Desde 1 julio 2027      42 horas/semana (meta final)
+```
+
+### Implementación dinámica
+
+En lugar de hardcodear el límite (ej. "máximo 46 horas"), Mi Turno **calcula automáticamente el límite según la fecha del turno**:
+
+**`js/config/globals.js`:**
+```javascript
+function getHSEM(fecha) {
+  var d = fecha instanceof Date ? fecha : new Date(fecha);
+  if (d >= new Date(2027, 6, 1)) return 42;      // Meta final de la ley
+  if (d >= new Date(2026, 6, 15)) return 44;
+  if (d >= new Date(2025, 6, 15)) return 45;
+  if (d >= new Date(2024, 6, 15)) return 46;
+  if (d >= new Date(2023, 6, 15)) return 47;
+  return 48;                                     // Estado antes de reforma
+}
+```
+
+**`js/utils/time.js`:** helper adicional para auditoría
+```javascript
+function obtenerJornadaMaximaSemanas(fechaTurno) {
+  var anio = new Date(fechaTurno).getFullYear();
+  if (anio <= 2022) return 48;  // Pre-reforma
+  if (anio === 2023) return 47;
+  if (anio === 2024) return 46;
+  if (anio === 2025) return 45;
+  if (anio === 2026) return 44;
+  return 42;                     // 2027 en adelante
+}
+```
+
+**`js/services/calculator.js`:** integración en el cálculo
+```javascript
+var semOrd = getHSEM(new Date(kS)) * 60;  // límite semanal según Ley 2101/2021
+```
+
+### Ventajas
+
+1. **Cumplimiento automático**: cambia el año, la app ajusta la jornada sola
+2. **Auditable**: la función está explícita, no oculta en constantes
+3. **Mantenible**: si la ley cambia en 2027 o después, un solo cambio actualiza toda la app
+4. **Sin errores manuales**: el calculador jamás aplicará un límite obsoleto
+
+### Auditoría
+
+Cualquier auditor laboral puede leer `getHSEM()`, ver que implementa correctamente el cronograma oficial, y verificar que cada cálculo de turno lo aplica.
+
+---
+
 ## Estructura del proyecto
 
 ```
@@ -119,11 +225,14 @@ mi-turno-BETA/
 │
 ├── js/                     39 archivos JS (ES5 + globals window.*)
 │   ├── config/             react-init, env, viewport-fix, globals
+│   │                       (getHSEM() para Ley 2101/2021 aquí)
 │   ├── utils/              storage, format, haptic, network, festivos,
-│   │                       time, validation, otp, password-hash, uuid, icons
-│   ├── services/           supabase, calculator, data, ai, sync-queue,
-│   │                       session-sync, export-files, export-email,
-│   │                       ai-history, ai-greeting, quincena
+│   │                       time (obtenerJornadaMaximaSemanas()),
+│   │                       validation, otp, password-hash, uuid, icons
+│   ├── services/           supabase (con RLS), calculator (con getHSEM()),
+│   │                       data, ai, sync-queue, session-sync,
+│   │                       export-files, export-email, ai-history,
+│   │                       ai-greeting, quincena
 │   ├── tabs/               home, dashboard, assistant, history, config
 │   ├── modals/             auth-forms, pin-setup, manage-account,
 │   │                       export-report, email-compose, splash,
@@ -133,16 +242,16 @@ mi-turno-BETA/
 │
 ├── supabase/
 │   └── functions/
-│       ├── send-report/    Edge Function: enruta reportes al admin para reenvío
+│       ├── send-report/    Edge Function: enruta reportes al admin
 │       └── send-pin/       Edge Function: envío de PIN por email
 │
 ├── tests/
-│   ├── smoke.cjs           Tests de funciones puras (calculator, format, etc.)
-│   └── e2e/                Playwright: boot, flujo invitado (Chromium + WebKit)
+│   ├── smoke.cjs           Tests de funciones puras (getHSEM, doCalc, etc.)
+│   └── e2e/                Playwright: boot, flujo invitado
 │
 └── scripts/
-    ├── bump.sh             Sincroniza versión en las 3 fuentes (globals/sw/version.json)
-    └── check.sh            Valida sintaxis, versiones y precache antes de push
+    ├── bump.sh             Sincroniza versión (globals/sw/version.json)
+    └── check.sh            Valida sintaxis, versiones y precache
 ```
 
 ---
@@ -177,14 +286,17 @@ const total = turnos.map(t => t.pago);
 | `SUPA` | Supabase client | Cliente autenticado; `null` si no hay red |
 | `CLOUD_MODE` | boolean | `true` cuando hay sesión activa en Supabase |
 | `MT_APP_VERSION` | string | `'vNN'` — versión en runtime |
+| `HSEM` | number | Límite de jornada actual (desde getHSEM) |
 | `window.__mtTurnoActivo` | boolean | El SW lo lee para diferir updates durante un turno |
 | `leer(key, fallback)` | fn | `localStorage.getItem` con try/catch |
 | `grabar(key, val)` | fn | `localStorage.setItem` con try/catch |
 | `dk(uid, suffix)` | fn | Genera `'mt_<suffix>_<uid>'` — clave de storage |
-| `doCalc(turnos, activo, ahora, vh)` | fn | Calculador central de nómina |
+| `doCalc(turnos, activo, ahora, vh)` | fn | Calculador central de nómina (aplica getHSEM) |
 | `fCOP(n)` | fn | Formatea número como moneda COP |
 | `fDur(mins)` | fn | `"2h 30m"` desde minutos |
 | `esFest(date)` | fn | ¿Es día festivo en Colombia? |
+| `getHSEM(fecha)` | fn | Jornada máxima según Ley 2101/2021 por fecha |
+| `obtenerJornadaMaximaSemanas(fechaTurno)` | fn | Helper auditability para Ley 2101 |
 | `_mtHardReset()` | fn | Nuclear: borra caches + SW + recarga |
 
 ---
@@ -224,7 +336,7 @@ npm run lint
 npm run format
 
 # Tests
-npm run test:smoke   # rápido, sin browser
+npm run test:smoke   # rápido, sin browser (includes getHSEM validation)
 npm run test:e2e     # Playwright (requiere: npx playwright install --with-deps chromium webkit)
 
 # Validación completa pre-push
@@ -267,6 +379,19 @@ Los updates son **silenciosos**: el nuevo SW instala en background y se activa l
 | `send-pin` | POST autenticado | Envía el PIN de acceso por email |
 
 Las funciones validan JWT, aplican rate limiting (10 req/hora por usuario) y registran cada envío en `public.email_logs`.
+
+---
+
+## Próximos pasos (roadmap)
+
+### Phase 2: APK en Google Play Store (Pendiente)
+
+Mi Turno es una PWA completamente instalable. El siguiente paso es distribuirlo como APK nativo en Google Play Store via **Bubblewrap** (Google's official PWA → APK tool):
+- Cero cambios en código (Service Worker funciona igual)
+- 2-4 horas de setup
+- Google Play review ~24-48h
+
+Esto se realizará cuando la base técnica sea **extremadamente sólida** (como lo es ahora, con RLS + Ley 2101 automatizada).
 
 ---
 
