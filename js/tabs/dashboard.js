@@ -2,7 +2,7 @@
 //  MI TURNO · tabs/dashboard.js
 //  Tab Análisis: proyección y KPIs
 // ════════════════════════════════════════════════════════════════
-/* global h, useState, useRef, useMemo, useEffect, SkeletonDashboard, RC, window, document */
+/* global h, useState, useRef, useMemo, useEffect, RC, window, document */
 
 function DashboardTab(props) {
   var calc = props.calc,
