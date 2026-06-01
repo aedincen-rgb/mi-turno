@@ -97,6 +97,57 @@ function doCalc(turnos, activo, ahoraRef, vh) {
   return { totalMins: tMins, totalCOP: tCOP, bd: bd };
 }
 
+// Ingreso por turno respetando el límite semanal (mismo algoritmo y orden
+// que doCalc). Cada turno recibe su contribución marginal: el primero de la
+// semana consume las horas ordinarias y los siguientes caen en extra. Por
+// eso la suma de todos los turnos COINCIDE con doCalc — a diferencia de
+// calcular cada turno aislado (que reinicia el saldo semanal y subestima
+// los recargos). Devuelve { byId, total }.
+function doCalcPerTurno(turnos, vh) {
+  var byId = {};
+  var total = 0;
+  var semMap = {};
+  turnos.forEach(function (t, idx) {
+    var ini = new Date(t.inicio);
+    if (isNaN(ini.getTime())) return;
+    var k = semLun(ini).toISOString().slice(0, 10);
+    if (!semMap[k]) semMap[k] = [];
+    semMap[k].push({ t: t, idx: idx });
+  });
+  Object.keys(semMap).forEach(function (kS) {
+    var ts = semMap[kS].sort(function (a, b) {
+      return new Date(a.t.inicio) - new Date(b.t.inicio);
+    });
+    var semOrd = getHSEM(new Date(kS)) * 60;
+    ts.forEach(function (item) {
+      var t = item.t;
+      var ini = new Date(t.inicio),
+        fin = new Date(t.fin);
+      if (isNaN(ini.getTime()) || isNaN(fin.getTime()) || fin <= ini) return;
+      var mOrd = Math.min(8 * 60, semOrd);
+      var cats = calcCats(ini, fin, mOrd);
+      var bd = {};
+      var cop = 0,
+        mins = 0;
+      Object.keys(cats).forEach(function (rk) {
+        var m = cats[rk];
+        if (m > 0) {
+          var c = (m / 60) * vh * RC[rk].factor;
+          bd[rk] = { mins: m, cop: c };
+          cop += c;
+          mins += m;
+        }
+      });
+      var key = t.id != null ? t.id : 'idx_' + item.idx;
+      byId[key] = { cop: cop, mins: mins, bd: bd };
+      total += cop;
+      var ord = cats.diurnaOrd + cats.noctOrd + cats.diurnaFest + cats.noctFest;
+      semOrd = Math.max(0, semOrd - ord);
+    });
+  });
+  return { byId: byId, total: total };
+}
+
 function calcPorDia(turnos, vh) {
   var dias = {};
   // Mismo enfoque combinado: min(8h/día, saldo semanal 46h)

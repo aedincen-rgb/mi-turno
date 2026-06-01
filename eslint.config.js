@@ -209,6 +209,7 @@ const projectGlobals = {
   calcCats: 'readonly',
   calcPorDia: 'readonly',
   doCalc: 'readonly',
+  doCalcPerTurno: 'readonly',
   exportPDF: 'readonly',
   exportExcel: 'readonly',
   exportPDFBase64: 'readonly',
