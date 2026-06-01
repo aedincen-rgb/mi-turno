@@ -43,6 +43,45 @@
   will-change: transform, opacity;
 }
 
+/* ─── Pull-to-refresh ─── */
+.ptr {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transition:
+    height 0.12s var(--ease),
+    opacity 0.18s var(--ease);
+  will-change: height;
+}
+.ptr-spin {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2.5px solid var(--accent-dim);
+  border-top-color: var(--accent);
+  opacity: 0.6;
+  transition:
+    opacity 0.18s var(--ease),
+    transform 0.18s var(--spring);
+}
+.ptr-spin.ready {
+  opacity: 1;
+  transform: scale(1.12);
+}
+.ptr--refreshing .ptr-spin {
+  animation: spin 0.8s linear infinite;
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ptr {
+    transition: none;
+  }
+  .ptr--refreshing .ptr-spin {
+    animation-duration: 1.6s;
+  }
+}
+
 @keyframes shimmer {
   0% {
     background-position: -200% 0;
