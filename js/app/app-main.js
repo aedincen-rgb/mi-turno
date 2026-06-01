@@ -917,6 +917,7 @@ function App(props) {
                     durActual: durActual,
                     session: session,
                     calc: calc,
+                    vh: vh,
                     ahora: ahoraDate,
                     onBorrar: onBorrar,
                     onBorrarUno: onBorrarUno,
