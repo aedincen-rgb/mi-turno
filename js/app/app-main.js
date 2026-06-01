@@ -132,12 +132,18 @@ function App(props) {
   }, []);
 
   var toastRef = useRef(null);
-  function showToast(m) {
-    setToast(m);
+  function showToast(m, type) {
+    var t = type || 'info';
+    setToast({ msg: m, type: t });
     clearTimeout(toastRef.current);
     toastRef.current = setTimeout(function () {
       setToast(null);
     }, 2400);
+    try {
+      if (t === 'success' && typeof hapticSuccess === 'function') hapticSuccess();
+      else if (t === 'error' && typeof hapticError === 'function') hapticError();
+      else if (t === 'warning' && typeof hapticWarning === 'function') hapticWarning();
+    } catch (_) {}
   }
   // Exponemos showToast a la cola de sync para que pueda avisar
   // errores permanentes (ej. PIN duplicado al sincronizar offline).
@@ -570,7 +576,7 @@ function App(props) {
       var nuevo = { id: row.id, inicio: row.inicio, userId: uid };
       setActivo(nuevo);
       setShowOlv(false);
-      showToast('Turno iniciado');
+      showToast('Turno iniciado', 'success');
       queueAction(uid, 'setActivo', nuevo);
     });
   }
@@ -585,7 +591,7 @@ function App(props) {
       setActivo(null);
       setShowOlv(false);
       queueAction(uid, 'setActivo', null);
-      showToast('Turno muy corto — no registrado');
+      showToast('Turno muy corto — no registrado', 'warning');
       return;
     }
     var finISO = fin.toISOString();
@@ -595,7 +601,7 @@ function App(props) {
     });
     setActivo(null);
     setShowOlv(false);
-    showToast('Turno cerrado');
+    showToast('Turno cerrado', 'success');
     queueAction(uid, 'insertTurno', turnoCerrado);
     queueAction(uid, 'setActivo', null);
   }
@@ -609,7 +615,7 @@ function App(props) {
     });
     setActivo(null);
     setShowOlv(false);
-    showToast('Turno guardado');
+    showToast('Turno guardado', 'success');
     queueAction(uid, 'insertTurno', turnoCerrado);
     queueAction(uid, 'setActivo', null);
   }
@@ -620,13 +626,13 @@ function App(props) {
     // Cualquier guardado explícito marca el salario como configurado,
     // incluso si coincide con el mínimo legal (caso válido).
     setSalarioConfigured(true);
-    showToast('Salario actualizado');
+    showToast('Salario actualizado', 'success');
     queueAction(uid, 'setSalario', { salario: v });
   }
   function onBorrar() {
     haptic();
     setTurnos([]);
-    showToast('Historial borrado');
+    showToast('Historial borrado', 'warning');
     queueAction(uid, 'deleteAllTurnos', {});
   }
   function onBorrarUno(id) {
@@ -636,7 +642,7 @@ function App(props) {
         return t.id !== id;
       });
     });
-    showToast('Turno eliminado');
+    showToast('Turno eliminado', 'warning');
     queueAction(uid, 'deleteTurno', { id: id });
   }
   // Estado para modal de exportar (PDF o Excel)
@@ -683,7 +689,7 @@ function App(props) {
             }
             if (onSessionPatch) onSessionPatch({ pin: newPin });
             setShowPinSetup(false);
-            showToast('PIN creado correctamente');
+            showToast('PIN creado correctamente', 'success');
           },
           onSkip: function () {
             haptic();
@@ -700,7 +706,24 @@ function App(props) {
           }
         })
       : null,
-    toast ? h('div', { className: 'toast' }, toast) : null,
+    toast
+      ? h(
+          'div',
+          { className: 'toast toast--' + toast.type },
+          h(
+            'span',
+            { className: 'toast-ico' },
+            toast.type === 'success'
+              ? '✓'
+              : toast.type === 'error'
+                ? '✕'
+                : toast.type === 'warning'
+                  ? '!'
+                  : 'i'
+          ),
+          h('span', { className: 'toast-msg' }, toast.msg)
+        )
+      : null,
 
     h(
       'div',
