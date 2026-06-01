@@ -2,7 +2,7 @@
 //  MI TURNO · tabs/history.js
 //  Tab Historial
 // ════════════════════════════════════════════════════════════════
-/* global h, useState, useMemo, SkeletonHistory, haptic, esFest, fDur, fCOP, doCalc, _saludoHora, _aiNombrePersonal */
+/* global h, useState, useMemo, SkeletonHistory, haptic, esFest, fDur, fCOP, doCalc, RC, _saludoHora, _aiNombrePersonal */
 
 function HistoryTab(props) {
   var activo = props.activo,
@@ -19,6 +19,11 @@ function HistoryTab(props) {
   var ds = useState(null);
   var delId = ds[0],
     setDelId = ds[1];
+
+  // Turno seleccionado para ver detalle en bottom sheet
+  var dts = useState(null);
+  var detail = dts[0],
+    setDetail = dts[1];
 
   // Formato seleccionado del exportador (segmented control estilo iOS)
   var ff = useState('pdf');
@@ -142,6 +147,126 @@ function HistoryTab(props) {
             )
           )
         )
+      : null,
+
+    // ═══ Bottom sheet de detalle del turno ═══
+    detail
+      ? (function () {
+          var t = detail.t;
+          var ini = new Date(t.inicio),
+            fin = new Date(t.fin);
+          var mins = Math.round((fin - ini) / 60000);
+          var fest = esFest(ini);
+          var bd = {};
+          try {
+            bd = doCalc([t], null, ahora, vh).bd || {};
+          } catch (_) {
+            bd = {};
+          }
+          var cats = Object.keys(bd).filter(function (k) {
+            return bd[k].mins > 0;
+          });
+          var fechaLarga = ini.toLocaleDateString('es-CO', {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long'
+          });
+          function cerrar() {
+            setDetail(null);
+          }
+          return h(
+            'div',
+            {
+              className: 'mol-ov',
+              onClick: function (ev) {
+                if (ev.target === ev.currentTarget) cerrar();
+              }
+            },
+            h(
+              'div',
+              { className: 'mol-sh' },
+              h('div', { className: 'mol-hdl' }),
+              h(
+                'div',
+                { className: 'td-head' },
+                h(
+                  'div',
+                  { className: 'td-fecha' },
+                  fechaLarga.charAt(0).toUpperCase() + fechaLarga.slice(1)
+                ),
+                fest ? h('span', { className: 'bdg-fest' }, 'Festivo') : null
+              ),
+              detail.cop > 0 ? h('div', { className: 'td-monto' }, fCOP(detail.cop)) : null,
+              h(
+                'div',
+                { className: 'td-grid' },
+                h(
+                  'div',
+                  { className: 'td-cell' },
+                  h('div', { className: 'td-cell-lbl' }, 'Entrada'),
+                  h(
+                    'div',
+                    { className: 'td-cell-val' },
+                    ini.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
+                  )
+                ),
+                h(
+                  'div',
+                  { className: 'td-cell' },
+                  h('div', { className: 'td-cell-lbl' }, 'Salida'),
+                  h(
+                    'div',
+                    { className: 'td-cell-val' },
+                    fin.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
+                  )
+                ),
+                h(
+                  'div',
+                  { className: 'td-cell' },
+                  h('div', { className: 'td-cell-lbl' }, 'Duración'),
+                  h('div', { className: 'td-cell-val' }, fDur(mins))
+                )
+              ),
+              cats.length > 0
+                ? h(
+                    'div',
+                    { className: 'td-bd' },
+                    h('div', { className: 'td-bd-ttl' }, 'Desglose por recargo'),
+                    cats.map(function (k) {
+                      var rc = RC[k] || { short: k, color: 'var(--accent)' };
+                      return h(
+                        'div',
+                        { key: k, className: 'td-bd-row' },
+                        h(
+                          'div',
+                          { className: 'td-bd-name' },
+                          h('span', {
+                            className: 'td-bd-dot',
+                            style: { background: rc.color }
+                          }),
+                          rc.short
+                        ),
+                        h('div', { className: 'td-bd-mins' }, fDur(bd[k].mins)),
+                        h('div', { className: 'td-bd-cop' }, fCOP(bd[k].cop))
+                      );
+                    })
+                  )
+                : null,
+              h(
+                'button',
+                {
+                  className: 'btn btn-ghost btn-block',
+                  style: { marginTop: 16 },
+                  onClick: function () {
+                    haptic();
+                    cerrar();
+                  }
+                },
+                'Cerrar'
+              )
+            )
+          );
+        })()
       : null,
 
     // ═══ HERO con peso visual (estilo IA) ═══
@@ -276,7 +401,14 @@ function HistoryTab(props) {
       var barCls = fest ? 'hist-bar-fill bf-fest' : 'hist-bar-fill';
       return h(
         'div',
-        { key: t.id || i, className: 'hist-row' },
+        {
+          key: t.id || i,
+          className: 'hist-row hist-row--tap',
+          onClick: function () {
+            haptic();
+            setDetail({ t: t, cop: cop });
+          }
+        },
         h(
           'div',
           { className: 'hist-head' },
@@ -295,7 +427,8 @@ function HistoryTab(props) {
               'button',
               {
                 className: 'hist-del',
-                onClick: function () {
+                onClick: function (ev) {
+                  ev.stopPropagation();
                   haptic();
                   setDelId(t.id || i);
                 }
