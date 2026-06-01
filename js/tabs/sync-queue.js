@@ -12,8 +12,8 @@
 // ════════════════════════════════════════════════════════════════
 
 var _SYNC_QUEUE_KEY = 'mt_sync_queue';
-var _flushTimers = {};      // uid → timeout id (debounce)
-var _processingFlags = {};  // uid → bool (IN_FLIGHT)
+var _flushTimers = {}; // uid → timeout id (debounce)
+var _processingFlags = {}; // uid → bool (IN_FLIGHT)
 
 // Carga la cola de sincronización para un UID específico
 function _loadSyncQueue(uid) {
@@ -32,6 +32,10 @@ function _saveSyncQueue(uid, queue) {
     var allQueues = leer(_SYNC_QUEUE_KEY, {});
     allQueues[uid] = queue;
     grabar(_SYNC_QUEUE_KEY, allQueues);
+    // Notificar al indicador de sync que la cola cambió
+    if (typeof window.__updateQueueCount === 'function') {
+      window.__updateQueueCount();
+    }
   } catch (e) {
     console.error('[SyncQueue] Error al guardar cola:', e);
   }
@@ -85,7 +89,13 @@ async function processQueue(uid) {
     return; // Cola vacía
   }
 
-  console.log('[SyncQueue] Procesando cola de sincronización para UID:', uid, '(', queue.length, 'acciones)');
+  console.log(
+    '[SyncQueue] Procesando cola de sincronización para UID:',
+    uid,
+    '(',
+    queue.length,
+    'acciones)'
+  );
 
   var successfulActions = [];
   for (var i = 0; i < queue.length; i++) {
@@ -126,18 +136,27 @@ async function processQueue(uid) {
         // para no reintentarla eternamente. El usuario verá un toast
         // y deberá elegir otro PIN desde la UI.
         successfulActions.push(action.id);
-        console.warn('[SyncQueue] Acción descartada (error permanente):', action.actionType, result.error);
+        console.warn(
+          '[SyncQueue] Acción descartada (error permanente):',
+          action.actionType,
+          result.error
+        );
         try {
-          var msg = action.actionType === 'updatePinLookup'
-            ? 'Tu PIN nuevo ya estaba en uso por otra cuenta. Configurá otro desde Ajustes.'
-            : 'Cambio rechazado por el servidor.';
+          var msg =
+            action.actionType === 'updatePinLookup'
+              ? 'Tu PIN nuevo ya estaba en uso por otra cuenta. Configurá otro desde Ajustes.'
+              : 'Cambio rechazado por el servidor.';
           // Toast diferido para no chocar con otras notificaciones
           setTimeout(function () {
             if (typeof window.showToast === 'function') window.showToast(msg);
           }, 600);
         } catch (_) {}
       } else {
-        console.warn('[SyncQueue] Fallo al sincronizar acción:', action.actionType, result.error || 'Error desconocido');
+        console.warn(
+          '[SyncQueue] Fallo al sincronizar acción:',
+          action.actionType,
+          result.error || 'Error desconocido'
+        );
         // Si falla, no la eliminamos de la cola para reintentar más tarde
       }
     } catch (e) {
@@ -159,7 +178,9 @@ async function processQueue(uid) {
   // intento en 5 s. Sin esto la cola se quedaba estancada hasta el
   // próximo reload / cambio de red.
   if (newQueue.length > 0) {
-    setTimeout(function () { _scheduleFlush(uid); }, 5000);
+    setTimeout(function () {
+      _scheduleFlush(uid);
+    }, 5000);
   }
 }
 

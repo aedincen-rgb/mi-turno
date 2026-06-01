@@ -117,24 +117,24 @@ function App(props) {
   compactRef.current = compact;
 
   // Cuántas acciones quedan en la cola de sync (para el indicador del header).
-  // Poll liviano: setState con el mismo número no re-renderiza (React bail-out).
+  // Event-driven: solo actualiza cuando la cola cambia, no polling continuo.
   var spd = useState(0);
   var syncPending = spd[0],
     setSyncPending = spd[1];
   useEffect(
     function () {
       if (!uid) return;
-      function tick() {
+      function updateQueueCount() {
         try {
           var all = leer('mt_sync_queue', {});
           var q = all && all[uid] ? all[uid] : [];
           setSyncPending(q.length);
         } catch (_) {}
       }
-      tick();
-      var id = setInterval(tick, 1000);
+      updateQueueCount();
+      window.__updateQueueCount = updateQueueCount;
       return function () {
-        clearInterval(id);
+        if (window.__updateQueueCount === updateQueueCount) window.__updateQueueCount = null;
       };
     },
     [uid]
@@ -410,8 +410,7 @@ function App(props) {
   // edita el historial, recibimos un evento de Postgres-Realtime y
   // refrescamos el estado local. Debounced 400 ms para coalescer
   // ráfagas (ej. parar turno = DELETE en turno_activo + INSERT en
-  // turnos casi simultáneos). También refresca al volver al
-  // foreground (catch-all si la conexión Realtime se cae).
+  // turnos casi simultáneos).
   useEffect(
     function () {
       if (!CLOUD_MODE || !SUPA || !uid || session.pinOnly || session.guest) return;
@@ -438,17 +437,9 @@ function App(props) {
         resyncDebounced();
       });
 
-      function onVis() {
-        if (document.visibilityState === 'visible') resyncDebounced();
-      }
-      document.addEventListener('visibilitychange', onVis);
-      window.addEventListener('focus', onVis);
-
       return function () {
         disposed = true;
         if (pendingT) clearTimeout(pendingT);
-        document.removeEventListener('visibilitychange', onVis);
-        window.removeEventListener('focus', onVis);
         if (unsub) unsub();
       };
     },
