@@ -116,6 +116,30 @@ function App(props) {
   var compactRef = useRef(false);
   compactRef.current = compact;
 
+  // Cuántas acciones quedan en la cola de sync (para el indicador del header).
+  // Poll liviano: setState con el mismo número no re-renderiza (React bail-out).
+  var spd = useState(0);
+  var syncPending = spd[0],
+    setSyncPending = spd[1];
+  useEffect(
+    function () {
+      if (!uid) return;
+      function tick() {
+        try {
+          var all = leer('mt_sync_queue', {});
+          var q = all && all[uid] ? all[uid] : [];
+          setSyncPending(q.length);
+        } catch (_) {}
+      }
+      tick();
+      var id = setInterval(tick, 1000);
+      return function () {
+        clearInterval(id);
+      };
+    },
+    [uid]
+  );
+
   var scrRef = useRef(null);
 
   useEffect(function () {
@@ -738,15 +762,20 @@ function App(props) {
           var esLocal = !session || session.guest || session.pinOnly;
           var cloudOk = typeof CLOUD_MODE !== 'undefined' && CLOUD_MODE;
           var conectado = isOnlineStatus && (esLocal || cloudOk);
+          // Hay cambios en cola esperando subir a la nube
+          var sincronizando = conectado && syncPending > 0;
           var titulo = !isOnlineStatus
             ? 'Sin conexión a internet'
-            : esLocal
-              ? 'Conectado (modo local)'
-              : cloudOk
-                ? 'Conectado a la nube'
-                : 'Sin conexión a la nube';
+            : sincronizando
+              ? 'Sincronizando ' + syncPending + ' cambio' + (syncPending !== 1 ? 's' : '') + '…'
+              : esLocal
+                ? 'Conectado (modo local)'
+                : cloudOk
+                  ? 'Conectado a la nube'
+                  : 'Sin conexión a la nube';
+          var ledCls = sincronizando ? 'syncing' : conectado ? 'on' : 'off';
           return h('div', {
-            className: 'hdr-led ' + (conectado ? 'on' : 'off'),
+            className: 'hdr-led ' + ledCls,
             title: titulo,
             'aria-label': titulo
           });

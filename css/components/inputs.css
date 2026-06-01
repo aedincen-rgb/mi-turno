@@ -80,6 +80,62 @@
   border-color: var(--accent);
   background: var(--surface);
   box-shadow: 0 0 0 3px var(--accent-dim);
+  animation: inpFocusGlow 0.45s var(--ease);
+}
+
+/* Pulso suave del anillo de foco (una sola vez al enfocar) */
+@keyframes inpFocusGlow {
+  0% {
+    box-shadow: 0 0 0 0 var(--accent-glow);
+  }
+  100% {
+    box-shadow: 0 0 0 3px var(--accent-dim);
+  }
+}
+
+/* Estados de validación (reutilizables vía clase) */
+.inp.is-valid {
+  border-color: var(--success);
+  box-shadow: 0 0 0 3px var(--success-dim);
+}
+
+.inp.is-invalid {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 3px var(--danger-dim);
+}
+
+/* Shake de validación — reutilizable en cualquier campo (.inp.shake) */
+.inp.shake {
+  animation: inpShake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
+@keyframes inpShake {
+  10%,
+  90% {
+    transform: translateX(-1.5px);
+  }
+  20%,
+  80% {
+    transform: translateX(3px);
+  }
+  30%,
+  50%,
+  70% {
+    transform: translateX(-6px);
+  }
+  40%,
+  60% {
+    transform: translateX(6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .inp:focus {
+    animation: none;
+  }
+  .inp.shake {
+    animation: none;
+  }
 }
 
 .inp:disabled {
