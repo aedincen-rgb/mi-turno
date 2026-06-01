@@ -116,8 +116,11 @@
   font-weight: 600;
   color: var(--muted);
   cursor: pointer;
-  transition: color 0.18s var(--ease), background 0.22s var(--spring),
-    transform 0.18s var(--spring), box-shadow 0.22s var(--ease);
+  transition:
+    color 0.18s var(--ease),
+    background 0.22s var(--spring),
+    transform 0.18s var(--spring),
+    box-shadow 0.22s var(--ease);
 }
 .hist-fmt-opt.active {
   background: var(--surface);
@@ -153,7 +156,9 @@
   box-shadow:
     0 8px 22px var(--accent-glow),
     inset 0 1px 0 rgba(255, 255, 255, 0.25);
-  transition: transform 0.18s var(--spring), box-shadow 0.22s var(--ease);
+  transition:
+    transform 0.18s var(--spring),
+    box-shadow 0.22s var(--ease);
 }
 .hist-export-cta:active {
   transform: scale(0.985);
@@ -203,4 +208,51 @@
     inset 0 1px 0 var(--spec-top),
     inset 0 -0.5px 0 var(--spec-bot),
     0 4px 14px rgba(0, 0, 0, 0.3);
+}
+
+/* ─── Monto destacado por turno (ingreso aproximado) ─── */
+.hist-cop {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.3px;
+}
+
+/* ─── Barra de ingreso relativa al mejor turno visible ─── */
+.hist-bar-track {
+  height: 4px;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  overflow: hidden;
+  margin-top: 10px;
+}
+
+.hist-bar-fill {
+  height: 100%;
+  border-radius: var(--r-pill);
+  background: linear-gradient(90deg, var(--accent), var(--accent2, var(--accent)));
+  box-shadow: 0 0 8px var(--accent-glow);
+  transform-origin: left center;
+  animation: histBarGrow 0.55s var(--ease) both;
+}
+
+.hist-bar-fill.bf-fest {
+  background: linear-gradient(90deg, #d9a441, #e8c074);
+  box-shadow: 0 0 8px rgba(217, 164, 65, 0.4);
+}
+
+@keyframes histBarGrow {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hist-bar-fill {
+    animation: none;
+  }
 }

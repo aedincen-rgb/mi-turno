@@ -2,7 +2,7 @@
 //  MI TURNO · tabs/history.js
 //  Tab Historial
 // ════════════════════════════════════════════════════════════════
-/* global h, useState, SkeletonHistory, haptic, esFest, fDur, _saludoHora, _aiNombrePersonal */
+/* global h, useState, useMemo, SkeletonHistory, haptic, esFest, fDur, fCOP, doCalc, _saludoHora, _aiNombrePersonal */
 
 function HistoryTab(props) {
   var activo = props.activo,
@@ -67,6 +67,28 @@ function HistoryTab(props) {
   var horasMes = Math.round(minsMes / 60);
   var nombreMes = ahora.toLocaleDateString('es-CO', { month: 'long' });
   nombreMes = nombreMes.charAt(0).toUpperCase() + nombreMes.slice(1);
+
+  // Ingreso aproximado por turno (cálculo aislado) + máximo para la barra
+  // relativa. No depende de `ahora` (los turnos cerrados no cambian) para
+  // evitar recálculos en cada tick del reloj.
+  var vh = props.vh || 0;
+  var visibles = turnos.slice(0, 60);
+  var earnings = useMemo(
+    function () {
+      var arr = visibles.map(function (t) {
+        if (!t.fin || !vh) return 0;
+        try {
+          var r = doCalc([t], null, ahora, vh);
+          return r && r.totalCOP ? r.totalCOP : 0;
+        } catch (_) {
+          return 0;
+        }
+      });
+      var max = Math.max.apply(null, arr.concat([1]));
+      return { arr: arr, max: max };
+    },
+    [turnos, vh]
+  );
 
   return h(
     'div',
@@ -243,12 +265,15 @@ function HistoryTab(props) {
         )
       : null,
 
-    turnos.slice(0, 60).map(function (t, i) {
+    visibles.map(function (t, i) {
       var ini = new Date(t.inicio),
         fin = new Date(t.fin);
       if (isNaN(ini.getTime()) || isNaN(fin.getTime())) return null;
       var mins = Math.round((fin - ini) / 60000),
         fest = esFest(ini);
+      var cop = earnings.arr[i] || 0;
+      var pct = cop > 0 ? Math.max(Math.round((cop / earnings.max) * 100), 6) : 0;
+      var barCls = fest ? 'hist-bar-fill bf-fest' : 'hist-bar-fill';
       return h(
         'div',
         { key: t.id || i, className: 'hist-row' },
@@ -264,6 +289,7 @@ function HistoryTab(props) {
           h(
             'div',
             { className: 'hist-right' },
+            cop > 0 ? h('div', { className: 'hist-cop' }, fCOP(cop)) : null,
             h('div', { className: 'hist-dur' }, fDur(mins)),
             h(
               'button',
@@ -284,7 +310,14 @@ function HistoryTab(props) {
           ini.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }) +
             ' → ' +
             fin.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
-        )
+        ),
+        cop > 0
+          ? h(
+              'div',
+              { className: 'hist-bar-track' },
+              h('div', { className: barCls, style: { width: pct + '%' } })
+            )
+          : null
       );
     }),
 
