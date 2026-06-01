@@ -155,6 +155,101 @@ function App(props) {
     };
   }, []);
 
+  // ── Pull-to-refresh ──────────────────────────────────────────────
+  // Distancia de arrastre (px) para el indicador y flag de refresco.
+  var ptr = useState(0);
+  var pullDist = ptr[0],
+    setPullDist = ptr[1];
+  var rfs = useState(false);
+  var refreshing = rfs[0],
+    setRefreshing = rfs[1];
+  var refreshingRef = useRef(false);
+  var pullRef = useRef(0);
+
+  // Re-fetch de datos + flush de la cola. Devuelve promesa.
+  function doRefresh() {
+    if (refreshingRef.current) return Promise.resolve();
+    refreshingRef.current = true;
+    if (uid) processQueue(uid);
+    return cargarDatos(uid, session.pinOnly)
+      .then(function (data) {
+        if (data && data.turnos) {
+          setTurnos(data.turnos || []);
+          setActivo(data.activo || null);
+          if (data.salario) setSalario(data.salario);
+        }
+      })
+      .catch(function () {})
+      .then(function () {
+        refreshingRef.current = false;
+      });
+  }
+
+  useEffect(
+    function () {
+      var el = scrRef.current;
+      if (!el) return;
+      var startY = 0;
+      var pulling = false;
+      var THRESH = 70;
+      var MAX = 110;
+      function onStart(e) {
+        if (el.scrollTop > 0 || refreshingRef.current) {
+          pulling = false;
+          return;
+        }
+        startY = e.touches[0].clientY;
+        pulling = true;
+      }
+      function onMove(e) {
+        if (!pulling) return;
+        if (el.scrollTop > 0) {
+          pulling = false;
+          pullRef.current = 0;
+          setPullDist(0);
+          return;
+        }
+        var dy = e.touches[0].clientY - startY;
+        if (dy <= 0) {
+          pullRef.current = 0;
+          setPullDist(0);
+          return;
+        }
+        // Resistencia: el arrastre se siente "pesado" hacia el final
+        var d = Math.min(MAX, dy * 0.5);
+        pullRef.current = d;
+        setPullDist(d);
+      }
+      function onEnd() {
+        if (!pulling) return;
+        pulling = false;
+        if (pullRef.current >= THRESH) {
+          setRefreshing(true);
+          setPullDist(THRESH);
+          doRefresh().then(function () {
+            setRefreshing(false);
+            pullRef.current = 0;
+            setPullDist(0);
+          });
+        } else {
+          pullRef.current = 0;
+          setPullDist(0);
+        }
+      }
+      el.addEventListener('touchstart', onStart, { passive: true });
+      el.addEventListener('touchmove', onMove, { passive: true });
+      el.addEventListener('touchend', onEnd, { passive: true });
+      el.addEventListener('touchcancel', onEnd, { passive: true });
+      return function () {
+        el.removeEventListener('touchstart', onStart);
+        el.removeEventListener('touchmove', onMove);
+        el.removeEventListener('touchend', onEnd);
+        el.removeEventListener('touchcancel', onEnd);
+      };
+    },
+    [uid]
+  );
+
   var toastRef = useRef(null);
   function showToast(m, type) {
     var t = type || 'info';
@@ -864,6 +959,19 @@ function App(props) {
     h(
       'div',
       { className: 'scr', ref: scrRef },
+      h(
+        'div',
+        {
+          className: 'ptr' + (refreshing ? ' ptr--refreshing' : ''),
+          style: {
+            height: (refreshing ? 44 : pullDist) + 'px',
+            opacity: refreshing || pullDist > 4 ? 1 : 0
+          }
+        },
+        h('div', {
+          className: 'ptr-spin' + (refreshing || pullDist >= 70 ? ' ready' : '')
+        })
+      ),
       h(
         'div',
         { key: tab, className: 'tab-view' },
