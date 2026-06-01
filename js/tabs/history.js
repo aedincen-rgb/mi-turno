@@ -2,7 +2,7 @@
 //  MI TURNO · tabs/history.js
 //  Tab Historial
 // ════════════════════════════════════════════════════════════════
-/* global h, useState, useMemo, SkeletonHistory, haptic, esFest, fDur, fCOP, doCalc, RC, _saludoHora, _aiNombrePersonal */
+/* global h, useState, useMemo, SkeletonHistory, haptic, esFest, fDur, fCOP, doCalcPerTurno, RC, _saludoHora, _aiNombrePersonal */
 
 function HistoryTab(props) {
   var activo = props.activo,
@@ -73,26 +73,39 @@ function HistoryTab(props) {
   var nombreMes = ahora.toLocaleDateString('es-CO', { month: 'long' });
   nombreMes = nombreMes.charAt(0).toUpperCase() + nombreMes.slice(1);
 
-  // Ingreso aproximado por turno (cálculo aislado) + máximo para la barra
-  // relativa. No depende de `ahora` (los turnos cerrados no cambian) para
-  // evitar recálculos en cada tick del reloj.
+  // Ingreso por turno con atribución marginal (mismo algoritmo semanal que
+  // doCalc), así la suma coincide con el total. Se calcula sobre TODOS los
+  // turnos (no solo los visibles) para que el agrupado por semana sea
+  // correcto en los bordes. No depende de `ahora`: los turnos cerrados no
+  // cambian, evitando recálculos en cada tick del reloj.
   var vh = props.vh || 0;
   var visibles = turnos.slice(0, 60);
-  var earnings = useMemo(
+  var perTurno = useMemo(
     function () {
-      var arr = visibles.map(function (t) {
-        if (!t.fin || !vh) return 0;
-        try {
-          var r = doCalc([t], null, ahora, vh);
-          return r && r.totalCOP ? r.totalCOP : 0;
-        } catch (_) {
-          return 0;
-        }
-      });
-      var max = Math.max.apply(null, arr.concat([1]));
-      return { arr: arr, max: max };
+      if (!vh) return { byId: {} };
+      try {
+        return doCalcPerTurno(turnos, vh);
+      } catch (_) {
+        return { byId: {} };
+      }
     },
     [turnos, vh]
+  );
+  function copDe(t, idx) {
+    var key = t.id != null ? t.id : 'idx_' + idx;
+    var e = perTurno.byId[key];
+    return e && e.cop ? e.cop : 0;
+  }
+  var maxCop = useMemo(
+    function () {
+      var m = 1;
+      visibles.forEach(function (t, i) {
+        var c = copDe(t, i);
+        if (c > m) m = c;
+      });
+      return m;
+    },
+    [perTurno, turnos]
   );
 
   return h(
@@ -157,12 +170,9 @@ function HistoryTab(props) {
             fin = new Date(t.fin);
           var mins = Math.round((fin - ini) / 60000);
           var fest = esFest(ini);
-          var bd = {};
-          try {
-            bd = doCalc([t], null, ahora, vh).bd || {};
-          } catch (_) {
-            bd = {};
-          }
+          var key = t.id != null ? t.id : 'idx_' + detail.idx;
+          var entry = perTurno.byId[key] || { bd: {} };
+          var bd = entry.bd || {};
           var cats = Object.keys(bd).filter(function (k) {
             return bd[k].mins > 0;
           });
@@ -396,8 +406,8 @@ function HistoryTab(props) {
       if (isNaN(ini.getTime()) || isNaN(fin.getTime())) return null;
       var mins = Math.round((fin - ini) / 60000),
         fest = esFest(ini);
-      var cop = earnings.arr[i] || 0;
-      var pct = cop > 0 ? Math.max(Math.round((cop / earnings.max) * 100), 6) : 0;
+      var cop = copDe(t, i);
+      var pct = cop > 0 ? Math.max(Math.round((cop / maxCop) * 100), 6) : 0;
       var barCls = fest ? 'hist-bar-fill bf-fest' : 'hist-bar-fill';
       return h(
         'div',
@@ -406,7 +416,7 @@ function HistoryTab(props) {
           className: 'hist-row hist-row--tap',
           onClick: function () {
             haptic();
-            setDetail({ t: t, cop: cop });
+            setDetail({ t: t, cop: cop, idx: i });
           }
         },
         h(
