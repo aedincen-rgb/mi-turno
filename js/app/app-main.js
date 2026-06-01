@@ -170,7 +170,22 @@ function App(props) {
   function doRefresh() {
     if (refreshingRef.current) return Promise.resolve();
     refreshingRef.current = true;
+    // ⚠️ Si hay acciones locales sin subir, NO traemos el remoto encima:
+    // cargarDatos toma `activo` literal del servidor (y borra la clave
+    // local si viene null), así que un refresh durante la ventana en que
+    // un turno recién iniciado aún no se subió borraría ese turno activo.
+    // En ese caso solo empujamos la cola; el realtime/boot reconcilia.
+    var pending = 0;
+    try {
+      var all = leer('mt_sync_queue', {});
+      pending = all && all[uid] ? all[uid].length : 0;
+    } catch (_) {}
     if (uid) processQueue(uid);
+    if (pending > 0) {
+      return Promise.resolve().then(function () {
+        refreshingRef.current = false;
+      });
+    }
     return cargarDatos(uid, session.pinOnly)
       .then(function (data) {
         if (data && data.turnos) {
@@ -184,6 +199,10 @@ function App(props) {
         refreshingRef.current = false;
       });
   }
+  // Ref a la última doRefresh para que los handlers táctiles (efecto con
+  // deps [uid]) no capturen una versión vieja con session.pinOnly stale.
+  var doRefreshRef = useRef(null);
+  doRefreshRef.current = doRefresh;
 
   useEffect(
     function () {
@@ -226,7 +245,7 @@ function App(props) {
         if (pullRef.current >= THRESH) {
           setRefreshing(true);
           setPullDist(THRESH);
-          doRefresh().then(function () {
+          doRefreshRef.current().then(function () {
             setRefreshing(false);
             pullRef.current = 0;
             setPullDist(0);
