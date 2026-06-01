@@ -94,6 +94,9 @@ const projectGlobals = {
 
   // utils/haptic.js
   haptic: 'readonly',
+  hapticSuccess: 'readonly',
+  hapticError: 'readonly',
+  hapticWarning: 'readonly',
 
   // utils/network.js
   traducirError: 'readonly',
