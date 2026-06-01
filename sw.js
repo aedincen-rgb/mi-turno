@@ -89,6 +89,7 @@ const appResources = [
   './js/utils/password-hash.js',
   './js/services/supabase.js',
   './js/services/supabase-init.js',
+  './js/services/error-logger.js',
   './js/services/calculator.js',
   './js/services/quincena.js',
   './js/services/data.js',
