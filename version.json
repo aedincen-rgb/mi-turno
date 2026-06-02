@@ -1,4 +1,4 @@
 {
-  "v": "v70",
-  "label": "Restaurar app funcional — revertir a11y que rompía el layout"
+  "v": "v71",
+  "label": "Accesibilidad WCAG 2.1: ARIA, contraste y zoom"
 }

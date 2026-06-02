@@ -454,7 +454,7 @@ function HomeTab(props) {
             margin: '0 auto 6px',
             borderLeft: '9px solid transparent',
             borderRight: '9px solid transparent',
-            borderBottom: '10px solid var(--accent)'
+            borderBottom: '10px solid var(--accent-deep)'
           }
         }),
         // Burbuja
@@ -463,7 +463,7 @@ function HomeTab(props) {
           {
             style: {
               display: 'inline-block',
-              background: 'var(--accent)',
+              background: 'var(--accent-deep)',
               color: '#fff',
               borderRadius: '16px',
               padding: '11px 18px',
