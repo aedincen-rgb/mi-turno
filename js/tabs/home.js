@@ -164,8 +164,8 @@ function HomeTab(props) {
     typeof props.salarioConfigured === 'boolean' ? !props.salarioConfigured : props.salario <= SMIN;
 
   return h(
-    'div',
-    { className: 'fadeUp' },
+    'section',
+    { className: 'fadeUp', 'aria-label': 'Inicio' },
     // Aviso de salario no configurado
     salarioSinConfig
       ? h(
@@ -231,7 +231,11 @@ function HomeTab(props) {
     // Tarjeta 1: Estimado (mes o quincena)
     h(
       'div',
-      { className: 'card', style: { textAlign: 'center', borderRadius: '32px' } },
+      {
+        className: 'card',
+        style: { textAlign: 'center', borderRadius: '32px' },
+        'aria-label': 'Estimado de ganancia: ' + fCOP(displayAmount)
+      },
       h(
         'div',
         { className: 'hero-eyebrow' },
@@ -291,6 +295,9 @@ function HomeTab(props) {
       'div',
       {
         className: 'mood-line',
+        'aria-label': 'Consejo del asistente IA',
+        'aria-live': 'polite',
+        'aria-atomic': 'true',
         onClick: function () {
           haptic();
           if (props.onOpenAssistant) props.onOpenAssistant();
@@ -312,6 +319,7 @@ function HomeTab(props) {
         'button',
         {
           className: 'action-btn ' + (activo ? 'action-btn-stop' : 'action-btn-go'),
+          'aria-label': activo ? 'Detener turno' : 'Iniciar turno',
           onClick: function () {
             haptic();
             activo ? props.onFin() : props.onIni();

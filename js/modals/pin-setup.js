@@ -294,7 +294,12 @@ function PinSetup(props) {
   if (step === 'done') {
     return h(
       'div',
-      { className: 'pin-setup-wrap' },
+      {
+        className: 'pin-setup-wrap',
+        role: 'dialog',
+        'aria-modal': 'true',
+        'aria-label': 'PIN creado exitosamente'
+      },
       h(
         'div',
         { className: 'pin-setup-card', style: { textAlign: 'center' } },
@@ -370,7 +375,12 @@ function PinSetup(props) {
 
     return h(
       'div',
-      { className: 'pin-setup-wrap' },
+      {
+        className: 'pin-setup-wrap',
+        role: 'dialog',
+        'aria-modal': 'true',
+        'aria-label': 'Crear tu PIN'
+      },
       h(
         'div',
         { className: 'pin-setup-card' },

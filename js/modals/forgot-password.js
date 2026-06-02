@@ -26,7 +26,12 @@ function ModalOlvidado(props) {
   }
   return h(
     'div',
-    { className: 'mol-ov' },
+    {
+      className: 'mol-ov',
+      role: 'dialog',
+      'aria-modal': 'true',
+      'aria-label': 'Registrar hora de fin del turno'
+    },
     h(
       'div',
       { className: 'mol-sh' },
@@ -85,6 +90,7 @@ function ModalOlvidado(props) {
             'select',
             {
               className: 'ios-sel',
+              'aria-label': 'Hora',
               value: hora,
               onChange: function (e) {
                 haptic();
@@ -105,6 +111,7 @@ function ModalOlvidado(props) {
             'select',
             {
               className: 'ios-sel',
+              'aria-label': 'Minutos',
               value: min,
               onChange: function (e) {
                 haptic();

@@ -824,10 +824,15 @@ function App(props) {
     toast
       ? h(
           'div',
-          { className: 'toast toast--' + toast.type },
+          {
+            className: 'toast toast--' + toast.type,
+            role: 'alert',
+            'aria-live': 'assertive',
+            'aria-atomic': 'true'
+          },
           h(
             'span',
-            { className: 'toast-ico' },
+            { className: 'toast-ico', 'aria-hidden': 'true' },
             toast.type === 'success'
               ? '✓'
               : toast.type === 'error'
@@ -1081,6 +1086,9 @@ function App(props) {
           'div',
           {
             className: 'ovl',
+            role: 'dialog',
+            'aria-modal': 'true',
+            'aria-label': 'Exportar reporte',
             onClick: function (ev) {
               if (ev.target === ev.currentTarget) setExportMode(null);
             }
