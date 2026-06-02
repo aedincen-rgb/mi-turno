@@ -15,16 +15,24 @@
 function FastPinScreen(props) {
   var lastUser = props.lastUser || {};
   var pinS = useState('');
-  var pin = pinS[0], setPin = pinS[1];
+  var pin = pinS[0],
+    setPin = pinS[1];
   var errS = useState(null);
-  var err = errS[0], setErr = errS[1];
+  var err = errS[0],
+    setErr = errS[1];
   var shakeS = useState(false);
-  var shake = shakeS[0], setShake = shakeS[1];
+  var shake = shakeS[0],
+    setShake = shakeS[1];
 
   // Saludo personalizado: alias guardado en v30, fallback al email
   var saludoNombre = '';
   try {
-    var dkFn = typeof dk === 'function' ? dk : function (u, k) { return 'mt_' + k + '_' + u; };
+    var dkFn =
+      typeof dk === 'function'
+        ? dk
+        : function (u, k) {
+            return 'mt_' + k + '_' + u;
+          };
     var nm = leer(dkFn(lastUser.uid, 'pname'), '');
     if (nm) saludoNombre = String(nm).trim();
     else if (lastUser.email) {
@@ -45,7 +53,9 @@ function FastPinScreen(props) {
     if (!stored) {
       setErr('No hay PIN guardado en este dispositivo. Usá el login completo.');
       setShake(true);
-      setTimeout(function () { setShake(false); }, 350);
+      setTimeout(function () {
+        setShake(false);
+      }, 350);
       return;
     }
     if (p === stored) {
@@ -65,12 +75,16 @@ function FastPinScreen(props) {
         };
       }
       ses.pin = p;
-      try { haptic && haptic(); } catch (_) {}
+      try {
+        haptic && haptic();
+      } catch (_) {}
       if (props.onAuth) props.onAuth(ses);
     } else {
       setErr('PIN incorrecto. Probá de nuevo.');
       setShake(true);
-      try { haptic && haptic(); } catch (_) {}
+      try {
+        haptic && haptic();
+      } catch (_) {}
       setTimeout(function () {
         setShake(false);
         setPin('');
@@ -80,25 +94,31 @@ function FastPinScreen(props) {
 
   function press(d) {
     if (pin.length >= 4) return;
-    try { haptic && haptic(); } catch (_) {}
+    try {
+      haptic && haptic();
+    } catch (_) {}
     setErr(null);
     var next = pin + d;
     setPin(next);
     if (next.length === 4) {
       // Pequeño delay para que el usuario vea la 4ta celda llenarse
-      setTimeout(function () { tryUnlock(next); }, 110);
+      setTimeout(function () {
+        tryUnlock(next);
+      }, 110);
     }
   }
   function backspace() {
     if (!pin.length) return;
-    try { haptic && haptic(); } catch (_) {}
+    try {
+      haptic && haptic();
+    } catch (_) {}
     setErr(null);
     setPin(pin.slice(0, -1));
   }
 
   return h(
-    'div',
-    { className: 'fastpin-wrap' },
+    'main',
+    { className: 'fastpin-wrap', 'aria-label': 'Entrar con PIN' },
 
     // Flecha ← arriba a la izquierda: vuelve al login completo
     h(
@@ -106,7 +126,9 @@ function FastPinScreen(props) {
       {
         className: 'fastpin-back',
         onClick: function () {
-          try { haptic && haptic(); } catch (_) {}
+          try {
+            haptic && haptic();
+          } catch (_) {}
           if (props.onExitFastMode) props.onExitFastMode();
         },
         'aria-label': 'Volver al inicio de sesión completo'
@@ -132,7 +154,12 @@ function FastPinScreen(props) {
     // ─── 4 celdas centradas ───
     h(
       'div',
-      { className: 'fastpin-cells' + (shake ? ' shake' : '') },
+      {
+        className: 'fastpin-cells' + (shake ? ' shake' : ''),
+        role: 'status',
+        'aria-live': 'polite',
+        'aria-label': pin.length + ' de 4 dígitos ingresados'
+      },
       [0, 1, 2, 3].map(function (i) {
         var filled = pin.length > i;
         var active = pin.length === i && !err;
@@ -140,6 +167,7 @@ function FastPinScreen(props) {
           'div',
           {
             key: i,
+            'aria-hidden': 'true',
             className: 'fastpin-cell' + (filled ? ' filled' : '') + (active ? ' active' : '')
           },
           filled ? h('span', { className: 'fastpin-dot' }) : null
@@ -149,24 +177,34 @@ function FastPinScreen(props) {
 
     // ─── Pill informativo / error ───
     err
-      ? h('div', { className: 'fastpin-pill err' },
-          h('span', { className: 'fastpin-pill-ico' }, '⚠'), err)
-      : h('div', { className: 'fastpin-pill' },
-          h('span', { className: 'fastpin-pill-ico' }, 'ⓘ'),
-          'No compartas tu PIN con nadie.'),
+      ? h(
+          'div',
+          { className: 'fastpin-pill err', role: 'alert', 'aria-live': 'assertive' },
+          h('span', { className: 'fastpin-pill-ico', 'aria-hidden': 'true' }, '⚠'),
+          err
+        )
+      : h(
+          'div',
+          { className: 'fastpin-pill' },
+          h('span', { className: 'fastpin-pill-ico', 'aria-hidden': 'true' }, 'ⓘ'),
+          'No compartas tu PIN con nadie.'
+        ),
 
     // ─── Keypad numérico (3×3 + 0 + ⌫) ───
     h(
       'div',
-      { className: 'fastpin-keypad' },
+      { className: 'fastpin-keypad', role: 'group', 'aria-label': 'Teclado numérico' },
       ['1', '2', '3', '4', '5', '6', '7', '8', '9'].map(function (n) {
         return h(
           'button',
           {
             key: n,
             className: 'fastpin-key',
-            onClick: function () { press(n); },
-            type: 'button'
+            onClick: function () {
+              press(n);
+            },
+            type: 'button',
+            'aria-label': 'Dígito ' + n
           },
           n
         );
@@ -177,8 +215,11 @@ function FastPinScreen(props) {
         {
           key: '0',
           className: 'fastpin-key',
-          onClick: function () { press('0'); },
-          type: 'button'
+          onClick: function () {
+            press('0');
+          },
+          type: 'button',
+          'aria-label': 'Dígito 0'
         },
         '0'
       ),
@@ -201,7 +242,9 @@ function FastPinScreen(props) {
       {
         className: 'fastpin-forgot',
         onClick: function () {
-          try { haptic && haptic(); } catch (_) {}
+          try {
+            haptic && haptic();
+          } catch (_) {}
           if (props.onForgotPin) props.onForgotPin();
         },
         type: 'button'

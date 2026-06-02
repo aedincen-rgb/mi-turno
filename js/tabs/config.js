@@ -391,8 +391,8 @@ function ConfigTabInner(props) {
       : 'Datos locales';
 
   return h(
-    'div',
-    { className: 'fadeUp ajustes-wrap' },
+    'section',
+    { className: 'fadeUp ajustes-wrap', 'aria-label': 'Ajustes' },
 
     // ══════ HERO IDENTIDAD ══════
     h(
@@ -445,6 +445,7 @@ function ConfigTabInner(props) {
               inputMode: 'text',
               maxLength: 32,
               className: 'ajustes-edit-input',
+              'aria-label': 'Tu nombre o apodo',
               value: tempName,
               autoFocus: true,
               placeholder: 'Tu nombre o apodo',
@@ -568,6 +569,9 @@ function ConfigTabInner(props) {
             { className: 'ajustes-switch' },
             h('input', {
               type: 'checkbox',
+              role: 'switch',
+              'aria-checked': props.theme === 'dark',
+              'aria-label': 'Modo oscuro, ' + (props.theme === 'dark' ? 'activado' : 'desactivado'),
               checked: props.theme === 'dark',
               onChange: function () {
                 haptic();
@@ -629,6 +633,7 @@ function ConfigTabInner(props) {
                   inputMode: 'numeric',
                   pattern: '[0-9.,$ ]*',
                   className: 'ajustes-edit-input',
+                  'aria-label': 'Salario base mensual en pesos',
                   value: tempSal,
                   onChange: function (e) {
                     setTempSal(e.target.value);
@@ -702,6 +707,10 @@ function ConfigTabInner(props) {
             { className: 'ajustes-switch' },
             h('input', {
               type: 'checkbox',
+              role: 'switch',
+              'aria-checked': !!prefs.auxTransp,
+              'aria-label':
+                'Auxilio de transporte, ' + (prefs.auxTransp ? 'activado' : 'desactivado'),
               checked: !!prefs.auxTransp,
               onChange: function () {
                 haptic();
@@ -732,6 +741,10 @@ function ConfigTabInner(props) {
             { className: 'ajustes-switch' },
             h('input', {
               type: 'checkbox',
+              role: 'switch',
+              'aria-checked': !!prefs.prestaciones,
+              'aria-label':
+                'Prestaciones aproximadas, ' + (prefs.prestaciones ? 'activado' : 'desactivado'),
               checked: !!prefs.prestaciones,
               onChange: function () {
                 haptic();
@@ -778,6 +791,10 @@ function ConfigTabInner(props) {
             { className: 'ajustes-switch' },
             h('input', {
               type: 'checkbox',
+              role: 'switch',
+              'aria-checked': !!prefs.quincenaMode,
+              'aria-label':
+                'Calcular por quincena, ' + (prefs.quincenaMode ? 'activado' : 'desactivado'),
               checked: !!prefs.quincenaMode,
               onChange: function () {
                 haptic();
@@ -836,6 +853,7 @@ function ConfigTabInner(props) {
                       min: 1,
                       max: 28,
                       className: 'ajustes-edit-input',
+                      'aria-label': 'Día de inicio de la primera quincena, del 1 al 28',
                       value: q1Text,
                       onFocus: function (e) {
                         e.target.select();
@@ -859,6 +877,7 @@ function ConfigTabInner(props) {
                       min: 1,
                       max: 28,
                       className: 'ajustes-edit-input',
+                      'aria-label': 'Día de inicio de la segunda quincena, del 1 al 28',
                       value: q2Text,
                       onFocus: function (e) {
                         e.target.select();
