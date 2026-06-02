@@ -1,4 +1,4 @@
 {
-  "v": "v69",
-  "label": "Fix a11y CSS layout regression - isolate contrast rules"
+  "v": "v70",
+  "label": "Restaurar app funcional — revertir a11y que rompía el layout"
 }
