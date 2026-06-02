@@ -668,8 +668,8 @@ function AuthScreen(props) {
   //  PANTALLA PRINCIPAL DE LOGIN / REGISTRO (con icono personalizado)
   // ════════════════════════════════════════════════════════════════
   return h(
-    'div',
-    { className: 'auth-wrap' },
+    'main',
+    { className: 'auth-wrap', 'aria-label': modo === 'login' ? 'Iniciar sesión' : 'Crear cuenta' },
     h(
       'div',
       { className: 'auth-hero' },
@@ -708,6 +708,8 @@ function AuthScreen(props) {
         ? h(
             'div',
             {
+              role: 'status',
+              'aria-live': 'polite',
               style: {
                 background: 'var(--accent-dim)',
                 color: 'var(--accent)',
@@ -773,6 +775,8 @@ function AuthScreen(props) {
           inputMode: modo === 'login' ? 'text' : 'email',
           autoComplete: modo === 'login' ? 'username' : 'email',
           className: 'inp',
+          'aria-label':
+            modo === 'login' ? 'Correo electrónico o PIN de 4 dígitos' : 'Correo electrónico',
           placeholder:
             !email && modo === 'login'
               ? ''
@@ -813,6 +817,7 @@ function AuthScreen(props) {
           type: 'password',
           autoComplete: modo === 'login' ? 'current-password' : 'new-password',
           className: 'inp',
+          'aria-label': 'Contraseña',
           placeholder: !pass ? '' : 'Contraseña',
           value: pass,
           onChange: function (e) {
@@ -827,12 +832,16 @@ function AuthScreen(props) {
         !pass ? h(AnimatedWaveDots, { n: 6 }) : null
       ),
 
-      err ? h('div', { className: 'auth-err' }, err) : null,
+      err
+        ? h('div', { className: 'auth-err', role: 'alert', 'aria-live': 'assertive' }, err)
+        : null,
 
       load && statusMsg
         ? h(
             'div',
             {
+              role: 'status',
+              'aria-live': 'polite',
               style: {
                 padding: '14px 16px',
                 marginBottom: 12,
