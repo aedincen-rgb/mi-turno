@@ -87,10 +87,6 @@ const appResources = [
   './js/utils/validation.js',
   './js/utils/otp.js',
   './js/utils/password-hash.js',
-  './js/utils/a11y-helpers.js',
-  './js/utils/a11y-keyboard.js',
-  './js/utils/a11y-announcements.js',
-  './js/utils/a11y-form-validation.js',
   './js/services/supabase.js',
   './js/services/supabase-init.js',
   './js/services/error-logger.js',
@@ -124,7 +120,6 @@ const appResources = [
   './js/app/fast-pin-screen.js',
   './js/app/app-main.js',
   './js/app/root.js',
-  './js/app/a11y-init.js',
   './js/app/sw-register.js',
   './js/app/init.js',
   './js/app/install-prompt.js'
