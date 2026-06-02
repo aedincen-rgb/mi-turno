@@ -2,7 +2,7 @@
 //  MI TURNO · SERVICE WORKER
 //  Split cache: SHELL_CACHE (archivos de la app, se invalida en cada release)
 //               CDN_CACHE   (librerías externas, sobrevive entre releases)
-const SHELL_CACHE = 'mt-shell-v69'; // bump con scripts/bump.sh
+const SHELL_CACHE = 'mt-shell-v66'; // bump con scripts/bump.sh
 const CDN_CACHE   = 'mt-cdn-v1';    // solo bump cuando cambien URLs de CDN
 
 const CDN = [
@@ -68,8 +68,6 @@ const appResources = [
   './css/modals/misc.css',
   './css/modals/dark-overrides.css',
   './css/animations/keyframes.css',
-  './css/accessibility/a11y-focus.css',
-  './css/accessibility/a11y-contrast.css',
   // JS (39 archivos)
   './js/config.js',
   './js/theme-boot.js',
@@ -89,10 +87,6 @@ const appResources = [
   './js/utils/validation.js',
   './js/utils/otp.js',
   './js/utils/password-hash.js',
-  './js/utils/a11y-helpers.js',
-  './js/utils/a11y-keyboard.js',
-  './js/utils/a11y-announcements.js',
-  './js/utils/a11y-form-validation.js',
   './js/services/supabase.js',
   './js/services/supabase-init.js',
   './js/services/error-logger.js',
@@ -126,7 +120,6 @@ const appResources = [
   './js/app/fast-pin-screen.js',
   './js/app/app-main.js',
   './js/app/root.js',
-  './js/app/a11y-init.js',
   './js/app/sw-register.js',
   './js/app/init.js',
   './js/app/install-prompt.js'
