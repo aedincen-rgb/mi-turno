@@ -2,7 +2,7 @@
 //  MI TURNO · SERVICE WORKER
 //  Split cache: SHELL_CACHE (archivos de la app, se invalida en cada release)
 //               CDN_CACHE   (librerías externas, sobrevive entre releases)
-const SHELL_CACHE = 'mt-shell-v67'; // bump con scripts/bump.sh
+const SHELL_CACHE = 'mt-shell-v68'; // bump con scripts/bump.sh
 const CDN_CACHE   = 'mt-cdn-v1';    // solo bump cuando cambien URLs de CDN
 
 const CDN = [
@@ -68,6 +68,8 @@ const appResources = [
   './css/modals/misc.css',
   './css/modals/dark-overrides.css',
   './css/animations/keyframes.css',
+  './css/accessibility/a11y-focus.css',
+  './css/accessibility/a11y-contrast.css',
   // JS (39 archivos)
   './js/config.js',
   './js/theme-boot.js',

@@ -1,4 +1,4 @@
 {
-  "v": "v67",
-  "label": "Clean cache: remove broken a11y references"
+  "v": "v68",
+  "label": "Add a11y CSS to Service Worker precache"
 }
