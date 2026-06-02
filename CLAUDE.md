@@ -144,7 +144,7 @@ La app pasa auditoría **axe-core** con **0 violaciones** en las 6 pantallas (re
    - Local requiere `npx playwright install --with-deps chromium webkit` la primera vez.
    - En CI corre automático en cada PR vía `.github/workflows/e2e.yml`.
 4. Para sync cross-device real: abrir Chrome + Safari con la **misma cuenta**, hacer la acción, esperar < 1 s.
-5. A11y: auditar con axe-core vía Playwright (bloquear el SW con `serviceWorkers: 'block'` e inyectar React local porque el CDN se bloquea en sandbox). Criterio: **0 violaciones** serias/moderadas o no se mergea.
+5. `npm run test:a11y` — auditoría axe-core (WCAG 2.1 A/AA) sobre las 6 pantallas vía `tests/a11y.mjs`. Bloquea el SW e inyecta React local (el CDN se bloquea en sandbox). Sale con código 1 si hay **cualquier** violación. Criterio: **0 violaciones** o no se mergea.
 
 Si CI falla, los artifacts (videos del navegador en el momento del bug) están en la pestaña "Artifacts" del workflow run en GitHub Actions.
 

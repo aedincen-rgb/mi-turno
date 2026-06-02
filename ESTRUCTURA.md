@@ -233,7 +233,7 @@ globals en `window.*` que los siguientes necesitan.
 
 ## Accesibilidad (WCAG 2.1 AA)
 
-Desde v71 la app pasa **axe-core con 0 violaciones** en las 6 pantallas. La accesibilidad vive en **atributos ARIA inline** dentro de los componentes (no en archivos CSS aparte — eso rompió v67). Reglas: `div`→`section`/`main` preservando `className`; `aria-label` solo en elementos con `role`; íconos decorativos con `aria-hidden`; `--muted` ≥ 4.5:1. Ver detalle en `CLAUDE.md` y `README.md`.
+Desde v71 la app pasa **axe-core con 0 violaciones** en las 6 pantallas. Auditoría reproducible: `npm run test:a11y` (`tests/a11y.mjs`). La accesibilidad vive en **atributos ARIA inline** dentro de los componentes (no en archivos CSS aparte — eso rompió v67). Reglas: `div`→`section`/`main` preservando `className`; `aria-label` solo en elementos con `role`; íconos decorativos con `aria-hidden`; `--muted` ≥ 4.5:1. Ver detalle en `CLAUDE.md` y `README.md`.
 
 ---
 

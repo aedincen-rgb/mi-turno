@@ -1,5 +1,12 @@
 # Mi Turno · Colombia
 
+![WCAG 2.1 AA](https://img.shields.io/badge/WCAG_2.1-AA_·_0_violaciones-2ea44f)
+![axe-core](https://img.shields.io/badge/axe--core-auditado-5b86e5)
+![PWA](https://img.shields.io/badge/PWA-offline--first-4f6bbf)
+![No build](https://img.shields.io/badge/build-zero_tooling-555)
+![Ley 2101/2021](https://img.shields.io/badge/Ley_2101%2F2021-cumplimiento_automático-dc6b65)
+![License: MIT](https://img.shields.io/badge/license-MIT-blue)
+
 **Nómina inteligente para trabajadores por turnos.**
 
 Mi Turno calcula automáticamente el salario real de cada turno aplicando todos los recargos de ley colombiana: nocturno, dominical, festivo, horas extra y sus combinaciones (ej. hora extra nocturna dominical). Funciona como PWA instalable, es 100% offline-first, sincroniza en tiempo real entre dispositivos y es **accesible para lectores de pantalla (WCAG 2.1 AA, 0 violaciones auditadas)**.
@@ -256,9 +263,27 @@ TOTAL                 0          WCAG 2.1 A + AA ✓
 
 **Zoom permitido (1.4.4)** — se eliminó `user-scalable=no` del viewport. Las personas con baja visión ahora pueden hacer pinch-zoom hasta 5×, requisito que casi todas las PWA incumplen por copiar configs de "se siente más app".
 
-### Cómo se audita (reproducible)
+### Cómo se audita (reproducible — corré esto vos mismo)
 
-La auditoría corre con **Playwright + axe-core**, bloqueando el Service Worker e inyectando React localmente (el sandbox de CI bloquea el CDN). El criterio de aceptación es binario: **cero violaciones serias o moderadas**, o el cambio no se mergea.
+```bash
+npm install          # instala axe-core, playwright, react (devDeps)
+npx playwright install chromium
+npm run test:a11y    # arranca server, recorre las 6 pantallas, reporta
+```
+
+Salida esperada:
+
+```
+✓ Pantalla Login   —  violaciones: 0 | aprobadas: 19
+✓ Tab Inicio       —  violaciones: 0 | aprobadas: 22
+✓ Tab Historial    —  violaciones: 0 | aprobadas: 21
+✓ Tab Análisis     —  violaciones: 0 | aprobadas: 20
+✓ Tab Asistente    —  violaciones: 0 | aprobadas: 24
+✓ Tab Ajustes      —  violaciones: 0 | aprobadas: 24
+  TOTAL violaciones: 0  —  WCAG 2.1 A/AA ✓
+```
+
+La auditoría (`tests/a11y.mjs`) corre con **Playwright + axe-core**, bloqueando el Service Worker e inyectando React localmente (algunos sandboxes de CI bloquean el CDN). **Sale con código 1 si hay cualquier violación** — el criterio de aceptación es binario: cero violaciones serias o moderadas, o el cambio no se mergea.
 
 > **Lección registrada** (`CLAUDE.md`): un intento previo de accesibilidad (v67) rompió el layout porque tocaba CSS estructural. La regla desde entonces: **la accesibilidad se agrega vía atributos ARIA y HTML semántico, nunca reescribiendo el CSS de layout.** El `className` se preserva siempre; solo cambia el `tag` o se añaden props ARIA.
 
@@ -395,6 +420,7 @@ npm run format
 # Tests
 npm run test:smoke   # rápido, sin browser (includes getHSEM validation)
 npm run test:e2e     # Playwright (requiere: npx playwright install --with-deps chromium webkit)
+npm run test:a11y    # auditoría WCAG 2.1 con axe-core (0 violaciones o falla)
 
 # Validación completa pre-push
 scripts/check.sh
