@@ -1,4 +1,4 @@
 {
-  "v": "v69",
-  "label": "Fix a11y CSS layout regression - isolate contrast rules"
+  "v": "v66",
+  "label": "Skeletons, transiciones, toasts, sync indicator, pull-to-refresh, cards de historial y bottom sheet"
 }
