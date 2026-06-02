@@ -224,8 +224,8 @@ function AsistenteTab(props) {
   var phrases = _aiHeroPhrases(props);
 
   return h(
-    'div',
-    { className: 'fadeUp asistente-wrap' },
+    'section',
+    { className: 'fadeUp asistente-wrap', 'aria-label': 'Asistente AI' },
 
     // ═══ HERO: saludo cálido (solo sin conversación) ═══
     !tieneConversacion &&
@@ -259,6 +259,8 @@ function AsistenteTab(props) {
               'button',
               {
                 className: 'asistente-cat-head',
+                'aria-label': cat.titulo + (abierta ? ' (abierto)' : ' (cerrado)'),
+                'aria-expanded': abierta,
                 onClick: function () {
                   haptic();
                   setOpenCat(abierta ? null : cat.id);
@@ -283,6 +285,7 @@ function AsistenteTab(props) {
                     {
                       key: i,
                       className: 'asistente-cat-q',
+                      'aria-label': 'Preguntar: ' + q,
                       onClick: function () {
                         send(q);
                       }
@@ -309,12 +312,18 @@ function AsistenteTab(props) {
     tieneConversacion &&
       h(
         'div',
-        { className: 'asistente-chat' },
+        {
+          className: 'asistente-chat',
+          role: 'region',
+          'aria-live': 'polite',
+          'aria-atomic': 'false',
+          'aria-label': 'Conversación con asistente'
+        },
         msgs.map(function (m, i) {
           if (m.role === 'ai') {
             return h(
               'div',
-              { key: i, className: 'asistente-msg ai' },
+              { key: i, className: 'asistente-msg ai', 'aria-label': 'Mensaje del asistente' },
               h('div', { className: 'asistente-msg-orb' }, '✦'),
               h(
                 'div',
@@ -373,6 +382,7 @@ function AsistenteTab(props) {
       h('textarea', {
         ref: inputRef,
         className: 'asistente-input',
+        'aria-label': 'Tu mensaje al asistente',
         placeholder: tieneConversacion ? 'Sigue preguntando…' : 'O escríbeme directamente…',
         value: input,
         onChange: function (e) {
@@ -402,6 +412,10 @@ function AsistenteTab(props) {
 
     // ═══ Reanudar / nueva conversación ═══
     tieneConversacion &&
-      h('button', { className: 'asistente-reset', onClick: clearChat }, 'Nueva conversación')
+      h(
+        'button',
+        { className: 'asistente-reset', onClick: clearChat, 'aria-label': 'Nueva conversación' },
+        'Nueva conversación'
+      )
   );
 }
