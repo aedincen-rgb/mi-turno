@@ -1,4 +1,4 @@
 {
-  "v": "v68",
-  "label": "Add a11y CSS to Service Worker precache"
+  "v": "v69",
+  "label": "Fix a11y CSS layout regression - isolate contrast rules"
 }
