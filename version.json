@@ -1,4 +1,4 @@
 {
-  "v": "v66",
-  "label": "Skeletons, transiciones, toasts, sync indicator, pull-to-refresh, cards de historial y bottom sheet"
+  "v": "v67",
+  "label": "Clean cache: remove broken a11y references"
 }
