@@ -46,6 +46,10 @@ async function bootAsGuest(page) {
       pinOnly: false
     };
     localStorage.setItem('mt_session', JSON.stringify(guestSession));
+    // Marcar el onboarding como visto: su tooltip flota sobre el botón
+    // de acción y en webkit-iphone interceptaba el click. Este spec no
+    // prueba el onboarding, así que lo sacamos del medio.
+    localStorage.setItem('mt_ob_done', 'true');
   });
   await page.reload();
   // App montada cuando MT_APP_VERSION existe
@@ -76,9 +80,10 @@ test('iniciar y parar turno actualiza localStorage', async ({ page }) => {
   // Click el botón principal (action-btn). Es el único de su clase.
   const actionBtn = page.locator('button.action-btn');
   await expect(actionBtn).toBeVisible({ timeout: 10_000 });
-  // force: true porque el botón tiene animación CSS continua (pulse/glow)
-  // y Playwright nunca lo considera "estable" para click — pero ES clickable.
-  await actionBtn.click({ force: true });
+  // Invocamos el handler directamente (el.click()): el botón tiene una
+  // animación CSS continua y, en webkit-iphone, el click por coordenadas
+  // es frágil. Esto dispara el onClick de React sin depender de la posición.
+  await actionBtn.evaluate((el) => el.click());
 
   // Esperamos a que el activo aparezca en localStorage
   await expect.poll(
@@ -92,9 +97,10 @@ test('iniciar y parar turno actualiza localStorage', async ({ page }) => {
   // Damos 1.5s antes de parar (el código descarta turnos < 60s, pero
   // el cambio de estado en localStorage es lo que importa acá)
   await page.waitForTimeout(1_500);
-  // force: true porque el botón tiene animación CSS continua (pulse/glow)
-  // y Playwright nunca lo considera "estable" para click — pero ES clickable.
-  await actionBtn.click({ force: true });
+  // Invocamos el handler directamente (el.click()): el botón tiene una
+  // animación CSS continua y, en webkit-iphone, el click por coordenadas
+  // es frágil. Esto dispara el onClick de React sin depender de la posición.
+  await actionBtn.evaluate((el) => el.click());
 
   // Vuelve a estado "iniciar" (sin activo)
   await expect.poll(
@@ -109,9 +115,10 @@ test('turno activo persiste a través de un reload', async ({ page }) => {
 
   const actionBtn = page.locator('button.action-btn');
   await expect(actionBtn).toBeVisible({ timeout: 10_000 });
-  // force: true porque el botón tiene animación CSS continua (pulse/glow)
-  // y Playwright nunca lo considera "estable" para click — pero ES clickable.
-  await actionBtn.click({ force: true });
+  // Invocamos el handler directamente (el.click()): el botón tiene una
+  // animación CSS continua y, en webkit-iphone, el click por coordenadas
+  // es frágil. Esto dispara el onClick de React sin depender de la posición.
+  await actionBtn.evaluate((el) => el.click());
 
   // Esperar que el activo esté en localStorage
   await expect.poll(
