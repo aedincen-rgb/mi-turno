@@ -302,6 +302,7 @@ function HistoryTab(props) {
           'div',
           {
             className: 'hist-hero-stat',
+            role: 'img',
             'aria-label': turnosMes + (turnosMes === 1 ? ' turno' : ' turnos')
           },
           h('div', { className: 'hist-hero-stat-num', 'aria-hidden': 'true' }, turnosMes),
@@ -316,6 +317,7 @@ function HistoryTab(props) {
           'div',
           {
             className: 'hist-hero-stat',
+            role: 'img',
             'aria-label': horasMes + (horasMes === 1 ? ' hora' : ' horas')
           },
           h('div', { className: 'hist-hero-stat-num', 'aria-hidden': 'true' }, horasMes),
@@ -330,6 +332,7 @@ function HistoryTab(props) {
           'div',
           {
             className: 'hist-hero-stat',
+            role: 'img',
             'aria-label': diasMes + (diasMes === 1 ? ' día' : ' días')
           },
           h('div', { className: 'hist-hero-stat-num', 'aria-hidden': 'true' }, diasMes),
