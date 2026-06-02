@@ -105,8 +105,8 @@ function HistoryTab(props) {
   );
 
   return h(
-    'div',
-    { className: 'fadeUp' },
+    'section',
+    { className: 'fadeUp', 'aria-label': 'Historial de turnos' },
     delId !== null
       ? h(
           'div',
@@ -118,7 +118,13 @@ function HistoryTab(props) {
           },
           h(
             'div',
-            { className: 'modal-card', style: { textAlign: 'center' } },
+            {
+              className: 'modal-card',
+              style: { textAlign: 'center' },
+              role: 'dialog',
+              'aria-modal': 'true',
+              'aria-label': 'Confirmación para eliminar turno'
+            },
             h('div', { style: { fontSize: 30, marginBottom: 12, opacity: 0.85 } }, '🗑'),
             h(
               'div',
@@ -140,7 +146,8 @@ function HistoryTab(props) {
                   onClick: function () {
                     haptic();
                     setDelId(null);
-                  }
+                  },
+                  'aria-label': 'Cancelar eliminación'
                 },
                 'Cancelar'
               ),
@@ -149,7 +156,8 @@ function HistoryTab(props) {
                 {
                   className: 'btn btn-danger btn-block',
                   onClick: doDel,
-                  style: { background: 'var(--danger)', color: '#fff' }
+                  style: { background: 'var(--danger)', color: '#fff' },
+                  'aria-label': 'Confirmar eliminación de turno'
                 },
                 'Eliminar'
               )
@@ -190,7 +198,12 @@ function HistoryTab(props) {
             },
             h(
               'div',
-              { className: 'mol-sh' },
+              {
+                className: 'mol-sh',
+                role: 'dialog',
+                'aria-modal': 'true',
+                'aria-label': 'Detalle del turno del ' + fechaLarga
+              },
               h('div', { className: 'mol-hdl' }),
               h(
                 'div',
@@ -266,7 +279,8 @@ function HistoryTab(props) {
                   onClick: function () {
                     haptic();
                     cerrar();
-                  }
+                  },
+                  'aria-label': 'Cerrar detalle del turno'
                 },
                 'Cerrar'
               )
@@ -283,26 +297,47 @@ function HistoryTab(props) {
       h('h1', { className: 'hist-hero-greeting' }, saludoCompleto + '.'),
       h(
         'div',
-        { className: 'hist-hero-stats' },
+        { className: 'hist-hero-stats', role: 'group', 'aria-label': 'Resumen de ' + nombreMes },
         h(
           'div',
-          { className: 'hist-hero-stat' },
-          h('div', { className: 'hist-hero-stat-num' }, turnosMes),
-          h('div', { className: 'hist-hero-stat-lbl' }, turnosMes === 1 ? 'turno' : 'turnos')
+          {
+            className: 'hist-hero-stat',
+            'aria-label': turnosMes + (turnosMes === 1 ? ' turno' : ' turnos')
+          },
+          h('div', { className: 'hist-hero-stat-num', 'aria-hidden': 'true' }, turnosMes),
+          h(
+            'div',
+            { className: 'hist-hero-stat-lbl', 'aria-hidden': 'true' },
+            turnosMes === 1 ? 'turno' : 'turnos'
+          )
         ),
-        h('div', { className: 'hist-hero-sep' }),
+        h('div', { className: 'hist-hero-sep', 'aria-hidden': 'true' }),
         h(
           'div',
-          { className: 'hist-hero-stat' },
-          h('div', { className: 'hist-hero-stat-num' }, horasMes),
-          h('div', { className: 'hist-hero-stat-lbl' }, horasMes === 1 ? 'hora' : 'horas')
+          {
+            className: 'hist-hero-stat',
+            'aria-label': horasMes + (horasMes === 1 ? ' hora' : ' horas')
+          },
+          h('div', { className: 'hist-hero-stat-num', 'aria-hidden': 'true' }, horasMes),
+          h(
+            'div',
+            { className: 'hist-hero-stat-lbl', 'aria-hidden': 'true' },
+            horasMes === 1 ? 'hora' : 'horas'
+          )
         ),
-        h('div', { className: 'hist-hero-sep' }),
+        h('div', { className: 'hist-hero-sep', 'aria-hidden': 'true' }),
         h(
           'div',
-          { className: 'hist-hero-stat' },
-          h('div', { className: 'hist-hero-stat-num' }, diasMes),
-          h('div', { className: 'hist-hero-stat-lbl' }, diasMes === 1 ? 'día' : 'días')
+          {
+            className: 'hist-hero-stat',
+            'aria-label': diasMes + (diasMes === 1 ? ' día' : ' días')
+          },
+          h('div', { className: 'hist-hero-stat-num', 'aria-hidden': 'true' }, diasMes),
+          h(
+            'div',
+            { className: 'hist-hero-stat-lbl', 'aria-hidden': 'true' },
+            diasMes === 1 ? 'día' : 'días'
+          )
         )
       )
     ),
@@ -310,16 +345,31 @@ function HistoryTab(props) {
     activo
       ? h(
           'div',
-          { className: 'hist-cur' },
+          {
+            className: 'hist-cur',
+            role: 'status',
+            'aria-live': 'polite',
+            'aria-label':
+              'Turno en curso desde las ' +
+              new Date(activo.inicio).toLocaleTimeString('es-CO', {
+                hour: '2-digit',
+                minute: '2-digit'
+              }) +
+              '. Duración ' +
+              fDur(durActual)
+          },
           h(
             'div',
-            { className: 'hist-cur-tag' },
+            { className: 'hist-cur-tag', 'aria-hidden': 'true' },
             h('div', { className: 'active-dot', style: { width: 5, height: 5 } }),
             'En curso'
           ),
           h(
             'div',
-            { style: { fontSize: 13, fontWeight: 600, color: 'var(--text)' } },
+            {
+              style: { fontSize: 13, fontWeight: 600, color: 'var(--text)' },
+              'aria-hidden': 'true'
+            },
             new Date(activo.inicio).toLocaleTimeString('es-CO', {
               hour: '2-digit',
               minute: '2-digit'
@@ -405,11 +455,26 @@ function HistoryTab(props) {
       var cop = copDe(t, i);
       var pct = cop > 0 ? Math.max(Math.round((cop / maxCop) * 100), 6) : 0;
       var barCls = fest ? 'hist-bar-fill bf-fest' : 'hist-bar-fill';
+      var fechaRow = ini.toLocaleDateString('es-CO', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long'
+      });
+      var rowLabel =
+        'Turno del ' +
+        fechaRow +
+        (fest ? ', festivo' : '') +
+        '. Duración ' +
+        fDur(mins) +
+        (cop > 0 ? '. Ingreso ' + fCOP(cop) : '') +
+        '. Toca para ver el detalle.';
       return h(
         'div',
         {
           key: t.id || i,
           className: 'hist-row hist-row--tap',
+          role: 'button',
+          'aria-label': rowLabel,
           onClick: function () {
             haptic();
             setDetail({ t: t, cop: cop, idx: i });
@@ -433,6 +498,9 @@ function HistoryTab(props) {
               'button',
               {
                 className: 'hist-del',
+                'aria-label':
+                  'Borrar turno del ' +
+                  ini.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' }),
                 onClick: function (ev) {
                   ev.stopPropagation();
                   haptic();
@@ -470,13 +538,19 @@ function HistoryTab(props) {
                 haptic();
                 setConf(true);
               },
-              style: { marginTop: 10 }
+              style: { marginTop: 10 },
+              'aria-label': 'Borrar todo el historial de turnos'
             },
             '🗑 Borrar todo el historial'
           )
         : h(
             'div',
-            { className: 'confirm-row', style: { marginTop: 10 } },
+            {
+              className: 'confirm-row',
+              style: { marginTop: 10 },
+              role: 'group',
+              'aria-label': 'Confirmar borrado de todo el historial'
+            },
             h(
               'button',
               {
@@ -484,7 +558,8 @@ function HistoryTab(props) {
                 onClick: function () {
                   haptic();
                   setConf(false);
-                }
+                },
+                'aria-label': 'Cancelar borrado del historial'
               },
               'Cancelar'
             ),
@@ -497,7 +572,8 @@ function HistoryTab(props) {
                   props.onBorrar();
                   setConf(false);
                 },
-                style: { background: 'var(--danger)', color: '#fff' }
+                style: { background: 'var(--danger)', color: '#fff' },
+                'aria-label': 'Confirmar borrado de todo el historial'
               },
               'Sí, borrar'
             )
