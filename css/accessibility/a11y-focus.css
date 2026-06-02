@@ -1,0 +1,78 @@
+/* ════════════════════════════════════════════════════════════════
+   MI TURNO · accessibility/a11y-focus.css
+   Estilos de focus y navegación por teclado
+   ════════════════════════════════════════════════════════════════ */
+
+/* Focus visible mejorado - WCAG 2.4.7 */
+:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Skip links (aparecen al tabbing) */
+a[href='#main-content']:focus {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 10000;
+  background: var(--accent);
+  color: white;
+  padding: 8px 16px;
+  text-decoration: none;
+  border-radius: 0 0 var(--radius-sm) 0;
+}
+
+/* Mejora focus en botones */
+button:focus-visible,
+[role="button"]:focus-visible {
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+/* Mejora focus en inputs */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-glow);
+}
+
+/* Focus en elementos interactivos */
+a:focus-visible,
+[role="link"]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Para usuarios que prefieren reduced motion, no animar focus */
+@media (prefers-reduced-motion: reduce) {
+  :focus-visible {
+    outline: 3px solid var(--accent);
+    outline-offset: 2px;
+    transition: none;
+  }
+}
+
+/* Remover outline por defecto del navegador (lo reemplazo con nuestro) */
+:focus {
+  outline: none;
+}
+
+/* Visible focus para elementos con role="button" */
+[role="button"]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Switches y controles personalizados */
+input[type="checkbox"]:focus-visible + [role="switch"],
+input[type="radio"]:focus-visible + [role="radio"] {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Tooltip accesible (si existe) */
+[role="tooltip"]:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
