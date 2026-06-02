@@ -841,8 +841,8 @@ function App(props) {
       : null,
 
     h(
-      'div',
-      { className: 'hdr' + (compact ? ' hdr--compact' : '') },
+      'header',
+      { className: 'hdr' + (compact ? ' hdr--compact' : ''), role: 'banner' },
       h(
         'div',
         { className: 'hdr-l' },
@@ -868,7 +868,9 @@ function App(props) {
           return h('div', {
             className: 'hdr-led ' + ledCls,
             title: titulo,
-            'aria-label': titulo
+            'aria-label': titulo,
+            role: 'status',
+            'aria-live': 'polite'
           });
         })(),
         h('img', {
@@ -906,6 +908,8 @@ function App(props) {
           'button',
           {
             className: 'icon-btn',
+            'aria-label': theme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro',
+            title: theme === 'dark' ? 'Modo claro' : 'Modo oscuro',
             onClick: function () {
               haptic();
               setTheme(theme === 'dark' ? 'light' : 'dark');
@@ -969,8 +973,8 @@ function App(props) {
         })
       ),
       h(
-        'div',
-        { className: 'tab-view' },
+        'main',
+        { className: 'tab-view', role: 'main' },
         tab === 'home'
           ? h(HomeTab, {
               calc: calc,
@@ -1044,11 +1048,12 @@ function App(props) {
     ),
 
     h(
-      'div',
-      { className: 'tabs' },
+      'nav',
+      { className: 'tabs', role: 'tablist', 'aria-label': 'Navegación principal' },
       h('div', {
         className: 'tab-indicator',
-        style: { transform: 'translateX(' + activeIdx * 100 + '%)' }
+        style: { transform: 'translateX(' + activeIdx * 100 + '%)' },
+        'aria-hidden': 'true'
       }),
       TABS.map(function (item) {
         return h(
@@ -1056,6 +1061,9 @@ function App(props) {
           {
             key: item.id,
             className: 'tab-btn ' + (tab === item.id ? 'on' : ''),
+            role: 'tab',
+            'aria-selected': tab === item.id ? 'true' : 'false',
+            'aria-label': item.lbl,
             onClick: function () {
               haptic();
               setTab(item.id);
