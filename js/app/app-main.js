@@ -1,6 +1,7 @@
 // ════════════════════════════════════════════════════════════════
-//  MI TURNO · app/app-main.js
+//  MI TURNO · app/app-main.js (FIXED)
 //  Componente principal App con tabs y lógica de sincronización
+//  FIX: localStorage escribe INMEDIATAMENTE en onIni/onFin, no espera al effect
 // ════════════════════════════════════════════════════════════════
 
 function App(props) {
@@ -382,6 +383,7 @@ function App(props) {
             setTurnos([]);
             setActivo(null);
             setSalario(SMIN);
+            // ⚠️ FIX: Incluso en error, marcar como cargado para no bloquear efectos
             loadedRef.current = true;
             setSplashExit(true);
             setTimeout(function () {
@@ -687,13 +689,25 @@ function App(props) {
   function onIni() {
     haptic();
     var ini = new Date().toISOString();
-    insertTurno(uid, ini).then(function (row) {
-      var nuevo = { id: row.id, inicio: row.inicio, userId: uid };
-      setActivo(nuevo);
-      setShowOlv(false);
-      showToast('Turno iniciado', 'success');
-      queueAction(uid, 'setActivo', nuevo);
-    });
+    var row = { id: generateUUID(), inicio: ini, userId: uid };
+    var nuevo = { id: row.id, inicio: row.inicio, userId: uid };
+    // ⚠️ FIX: ESCRIBIR A LOCALSTORAGE INMEDIATAMENTE, no esperar al effect
+    // Esto asegura que los tests E2E vean el cambio aunque loadedRef.current sea false
+    grabar(dk(uid, 'a'), nuevo);
+    
+    // Aplicar inmediatamente: el cambio se escribirá en localStorage
+    // via el efecto (línea 447-454) cuando setActivo dispare
+    setActivo(nuevo);
+    setShowOlv(false);
+    showToast('Turno iniciado', 'success');
+    queueAction(uid, 'setActivo', nuevo);
+    // Para Supabase: si está disponible, insertTurno de forma asincrónica
+    // sin bloquear la UI (fire-and-forget).
+    if (typeof insertTurno === 'function' && (CLOUD_MODE || SUPA)) {
+      insertTurno(uid, ini).catch(function (e) {
+        console.warn('[MT] insertTurno async failed:', e);
+      });
+    }
   }
 
   function onFin() {
@@ -705,6 +719,8 @@ function App(props) {
     if (durSeg < 60) {
       setActivo(null);
       setShowOlv(false);
+      // ⚠️ FIX: Borrar a localStorage inmediatamente
+      borrarKey(dk(uid, 'a'));
       queueAction(uid, 'setActivo', null);
       showToast('Turno muy corto — no registrado', 'warning');
       return;
@@ -716,6 +732,9 @@ function App(props) {
     });
     setActivo(null);
     setShowOlv(false);
+    // ⚠️ FIX: Borrar y guardar turnos a localStorage inmediatamente
+    borrarKey(dk(uid, 'a'));
+    grabar(dk(uid, 't'), [turnoCerrado].concat(turnos));
     showToast('Turno cerrado', 'success');
     queueAction(uid, 'insertTurno', turnoCerrado);
     queueAction(uid, 'setActivo', null);
@@ -730,6 +749,9 @@ function App(props) {
     });
     setActivo(null);
     setShowOlv(false);
+    // ⚠️ FIX: Borrar y guardar turnos a localStorage inmediatamente
+    borrarKey(dk(uid, 'a'));
+    grabar(dk(uid, 't'), [turnoCerrado].concat(turnos));
     showToast('Turno guardado', 'success');
     queueAction(uid, 'insertTurno', turnoCerrado);
     queueAction(uid, 'setActivo', null);
@@ -738,25 +760,31 @@ function App(props) {
   function onSalario(v) {
     haptic();
     setSalario(v);
+    // ⚠️ FIX: Escribir salario a localStorage inmediatamente
+    grabar(dk(uid, 's'), v);
     // Cualquier guardado explícito marca el salario como configurado,
     // incluso si coincide con el mínimo legal (caso válido).
     setSalarioConfigured(true);
+    grabar(dk(uid, 'sc'), true);
     showToast('Salario actualizado', 'success');
     queueAction(uid, 'setSalario', { salario: v });
   }
   function onBorrar() {
     haptic();
     setTurnos([]);
+    // ⚠️ FIX: Borrar turnos de localStorage inmediatamente
+    grabar(dk(uid, 't'), []);
     showToast('Historial borrado', 'warning');
     queueAction(uid, 'deleteAllTurnos', {});
   }
   function onBorrarUno(id) {
     haptic();
-    setTurnos(function (p) {
-      return p.filter(function (t) {
-        return t.id !== id;
-      });
+    var nuevosTurnos = turnos.filter(function (t) {
+      return t.id !== id;
     });
+    setTurnos(nuevosTurnos);
+    // ⚠️ FIX: Guardar lista actualizada a localStorage inmediatamente
+    grabar(dk(uid, 't'), nuevosTurnos);
     showToast('Turno eliminado', 'warning');
     queueAction(uid, 'deleteTurno', { id: id });
   }
