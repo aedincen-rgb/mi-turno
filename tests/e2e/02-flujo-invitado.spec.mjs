@@ -67,41 +67,18 @@ async function getActivoFromStorage(page) {
   });
 }
 
-// Helper: click al botón de acción via JavaScript nativo.
-// Playwright click({ force: true }) en WebKit-iPhone no siempre dispara
-// el handler de React cuando el botón tiene CSS animation continua
-// (btn3dBreathe: translateY oscilante). page.evaluate().click() envía
-// un evento nativo que React captura siempre, sin depender de las
-// coordenadas del botón animado.
-async function clickActionBtn(page) {
-  // Esperar a que el botón exista y sea visible
-  const actionBtn = page.locator('button.action-btn');
-  await expect(actionBtn).toBeVisible({ timeout: 10_000 });
-
-  // Esperar a que el splash haya terminado completamente
-  // (el initSplash HTML se retira, y el React SplashScreen ya no existe)
-  await page.waitForFunction(
-    () => !document.getElementById('initSplash') && !document.querySelector('.splash'),
-    null,
-    { timeout: 10_000 }
-  );
-
-  // Click via JavaScript nativo — bypassa problemas de coordenadas en
-  // WebKit con elementos animados por CSS transforms
-  await page.evaluate(() => {
-    const btn = document.querySelector('button.action-btn');
-    if (btn) btn.click();
-  });
-}
-
 test('iniciar y parar turno actualiza localStorage', async ({ page }) => {
   await bootAsGuest(page);
 
   // No hay turno activo aún
   expect(await getActivoFromStorage(page), 'sin turno al inicio').toBeNull();
 
-  // Click el botón principal via JS nativo
-  await clickActionBtn(page);
+  // Click el botón principal (action-btn). Es el único de su clase.
+  const actionBtn = page.locator('button.action-btn');
+  await expect(actionBtn).toBeVisible({ timeout: 10_000 });
+  // force: true porque el botón tiene animación CSS continua (pulse/glow)
+  // y Playwright nunca lo considera "estable" para click — pero ES clickable.
+  await actionBtn.click({ force: true });
 
   // Esperamos a que el activo aparezca en localStorage
   await expect.poll(
@@ -110,18 +87,14 @@ test('iniciar y parar turno actualiza localStorage', async ({ page }) => {
   ).not.toBeNull();
 
   // La clase del botón cambia a action-btn-stop (parar)
-  const actionBtn = page.locator('button.action-btn');
   await expect(actionBtn).toHaveClass(/action-btn-stop/, { timeout: 3_000 });
 
   // Damos 1.5s antes de parar (el código descarta turnos < 60s, pero
   // el cambio de estado en localStorage es lo que importa acá)
   await page.waitForTimeout(1_500);
-
-  // Segundo click: parar turno (via JS nativo)
-  await page.evaluate(() => {
-    const btn = document.querySelector('button.action-btn');
-    if (btn) btn.click();
-  });
+  // force: true porque el botón tiene animación CSS continua (pulse/glow)
+  // y Playwright nunca lo considera "estable" para click — pero ES clickable.
+  await actionBtn.click({ force: true });
 
   // Vuelve a estado "iniciar" (sin activo)
   await expect.poll(
@@ -134,8 +107,11 @@ test('iniciar y parar turno actualiza localStorage', async ({ page }) => {
 test('turno activo persiste a través de un reload', async ({ page }) => {
   await bootAsGuest(page);
 
-  // Click el botón principal via JS nativo
-  await clickActionBtn(page);
+  const actionBtn = page.locator('button.action-btn');
+  await expect(actionBtn).toBeVisible({ timeout: 10_000 });
+  // force: true porque el botón tiene animación CSS continua (pulse/glow)
+  // y Playwright nunca lo considera "estable" para click — pero ES clickable.
+  await actionBtn.click({ force: true });
 
   // Esperar que el activo esté en localStorage
   await expect.poll(
@@ -163,4 +139,3 @@ test('turno activo persiste a través de un reload', async ({ page }) => {
     timeout: 5_000
   });
 });
-
