@@ -1,4 +1,4 @@
-# Mi Turno · Estructura del proyecto (v58)
+# Mi Turno · Estructura del proyecto (v71)
 
 PWA de nómina inteligente para trabajadores por turnos en Colombia.
 Sin build tools — vanilla JS ES5, React 18 vía CDN, Supabase como backend.
@@ -226,7 +226,15 @@ globals en `window.*` que los siguientes necesitan.
 | Envío por email | `js/services/export-email.js` · `js/modals/export-report.js` · `supabase/functions/send-report/` |
 | App no se actualiza / bucle de reload | `js/app/sw-register.js` · `sw.js` |
 | Estilos en modo oscuro | `css/components/dark-mode-overrides.css` · `css/modals/dark-overrides.css` |
+| Accesibilidad (ARIA, roles, lector de pantalla) | tabs/*.js · app/auth-screen.js · app/fast-pin-screen.js (atributos ARIA inline) |
+| Contraste de texto reprobando AA | `css/base/variables.css` (token `--muted`) |
 
 ---
 
-*Actualizado en v58 — Mayo 2025*
+## Accesibilidad (WCAG 2.1 AA)
+
+Desde v71 la app pasa **axe-core con 0 violaciones** en las 6 pantallas. La accesibilidad vive en **atributos ARIA inline** dentro de los componentes (no en archivos CSS aparte — eso rompió v67). Reglas: `div`→`section`/`main` preservando `className`; `aria-label` solo en elementos con `role`; íconos decorativos con `aria-hidden`; `--muted` ≥ 4.5:1. Ver detalle en `CLAUDE.md` y `README.md`.
+
+---
+
+*Actualizado en v71 — Junio 2026*

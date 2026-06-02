@@ -2,7 +2,7 @@
 
 **Nómina inteligente para trabajadores por turnos.**
 
-Mi Turno calcula automáticamente el salario real de cada turno aplicando todos los recargos de ley colombiana: nocturno, dominical, festivo, horas extra y sus combinaciones (ej. hora extra nocturna dominical). Funciona como PWA instalable, es 100% offline-first, y sincroniza en tiempo real entre dispositivos.
+Mi Turno calcula automáticamente el salario real de cada turno aplicando todos los recargos de ley colombiana: nocturno, dominical, festivo, horas extra y sus combinaciones (ej. hora extra nocturna dominical). Funciona como PWA instalable, es 100% offline-first, sincroniza en tiempo real entre dispositivos y es **accesible para lectores de pantalla (WCAG 2.1 AA, 0 violaciones auditadas)**.
 
 ---
 
@@ -207,6 +207,63 @@ Cualquier auditor laboral puede leer `getHSEM()`, ver que implementa correctamen
 
 ---
 
+## Accesibilidad (WCAG 2.1 AA) — auditada, no prometida
+
+La mayoría de las apps dicen "es accesible". Mi Turno lo **demuestra con una auditoría automatizada reproducible**: cada pantalla pasa por **axe-core** (el motor de accesibilidad estándar de la industria, el mismo de Lighthouse) con las reglas `wcag2a`, `wcag2aa`, `wcag21a` y `wcag21aa` activadas.
+
+### Resultado: 0 violaciones en las 6 pantallas
+
+```
+Pantalla        Violaciones    Reglas aprobadas
+────────────────────────────────────────────────
+Login                 0               19
+Inicio                0               21
+Historial             0               21
+Análisis              0               20
+Asistente             0               24
+Ajustes               0               24
+────────────────────────────────────────────────
+TOTAL                 0          WCAG 2.1 A + AA ✓
+```
+
+### Antes → después
+
+| Métrica | Antes | Después |
+|---|---|---|
+| Violaciones axe-core (6 pantallas) | **10** | **0** |
+| `aria-prohibited-attr` (ARIA mal aplicado) | 1 | 0 |
+| `color-contrast` (texto ilegible <4.5:1) | 3 | 0 |
+| `meta-viewport` (zoom bloqueado) | 6 | 0 |
+
+### Qué se implementó
+
+**HTML semántico** — `<section>`, `<main>`, `<nav>`, `<h1>`/`<h2>` con jerarquía real. Un lector de pantalla ahora navega la app por regiones y encabezados, no por un mar de `<div>`.
+
+**Roles y nombres ARIA** — cada control comunica qué es y en qué estado está:
+- Modales → `role="dialog"` + `aria-modal="true"` + `aria-label` descriptivo
+- Toggles de ajustes → `role="switch"` + `aria-checked` ("Modo oscuro, activado")
+- Filas de turnos → `role="button"` con contexto completo hablado ("Turno del lunes 2 de junio, festivo. Duración 8h. Ingreso $148.000")
+- Stats numéricos → `role="img"` + `aria-label` con el valor exacto (no el dígito suelto sin contexto)
+
+**Regiones en vivo (`aria-live`)** — el contenido dinámico se anuncia solo:
+- Chat del asistente → `aria-live="polite"` (no interrumpe)
+- Errores de login/PIN → `role="alert"` + `aria-live="assertive"` (anuncio inmediato)
+- Turno en curso y progreso del PIN → `role="status"`
+
+**Formularios etiquetados** — todos los inputs (correo, contraseña, salario, días de quincena, nombre) tienen `aria-label`, aunque su etiqueta visual viva en un elemento hermano.
+
+**Contraste AA (1.4.3)** — el token `--muted` se oscureció de `#7a8294` (3.85:1, reprobado) a `#646b7d` (5.3:1, aprobado) manteniendo el mismo tono azul-gris del diseño. El tooltip de onboarding pasó a `--accent-deep` (5:1).
+
+**Zoom permitido (1.4.4)** — se eliminó `user-scalable=no` del viewport. Las personas con baja visión ahora pueden hacer pinch-zoom hasta 5×, requisito que casi todas las PWA incumplen por copiar configs de "se siente más app".
+
+### Cómo se audita (reproducible)
+
+La auditoría corre con **Playwright + axe-core**, bloqueando el Service Worker e inyectando React localmente (el sandbox de CI bloquea el CDN). El criterio de aceptación es binario: **cero violaciones serias o moderadas**, o el cambio no se mergea.
+
+> **Lección registrada** (`CLAUDE.md`): un intento previo de accesibilidad (v67) rompió el layout porque tocaba CSS estructural. La regla desde entonces: **la accesibilidad se agrega vía atributos ARIA y HTML semántico, nunca reescribiendo el CSS de layout.** El `className` se preserva siempre; solo cambia el `tag` o se añaden props ARIA.
+
+---
+
 ## Estructura del proyecto
 
 ```
@@ -383,6 +440,10 @@ Las funciones validan JWT, aplican rate limiting (10 req/hora por usuario) y reg
 ---
 
 ## Próximos pasos (roadmap)
+
+### ✅ Phase 1: Accesibilidad WCAG 2.1 AA (Completado · v71)
+
+Auditoría axe-core con **0 violaciones** en las 6 pantallas. HTML semántico, roles y nombres ARIA, regiones en vivo, contraste AA y zoom habilitado. Ver sección [Accesibilidad](#accesibilidad-wcag-21-aa--auditada-no-prometida).
 
 ### Phase 2: APK en Google Play Store (Pendiente)
 
