@@ -11,31 +11,31 @@
     --muted: #4a5568;
     --border: #1a202c;
     --border2: #000000;
-    
+
     /* Acentos más fuertes */
     --accent: #0052cc;
     --danger: #b91c1c;
     --success: #065f46;
     --accent-dim: rgba(0, 82, 204, 0.25);
   }
-  
+
   body {
     color: var(--text);
   }
-  
+
   /* Mayor contraste en textos */
   a {
     text-decoration: underline;
     font-weight: 600;
   }
-  
+
   button {
     border-width: 2px;
     font-weight: 600;
   }
-  
+
   /* Borders más visibles */
-  [role="button"],
+  [role='button'],
   .btn,
   input,
   select,
@@ -49,12 +49,12 @@
   html {
     font-size: 18px;
   }
-  
+
   /* Aumentar lineheight para mejor legibilidad */
   body {
     line-height: 1.8;
   }
-  
+
   button,
   input,
   select,
@@ -75,56 +75,59 @@
   }
 }
 
-/* Asegurar mínimo 4.5:1 de contraste en texto regular */
-body {
-  color: var(--text);
-  background: var(--bg);
-}
+/* Estilos de contraste solo cuando se detecta preferencia */
+@media (prefers-contrast: more) {
+  /* Asegurar mínimo 4.5:1 de contraste en texto regular */
+  body {
+    color: var(--text);
+    background: var(--bg);
+  }
 
-/* Textos mutados deben tener suficiente contraste */
-.text-muted,
-[class*="muted"],
-.hint {
-  color: var(--muted);
-  font-weight: 500; /* Más pesado para mantener contraste */
-}
+  /* Textos mutados deben tener suficiente contraste */
+  .text-muted,
+  [class*='muted'],
+  .hint {
+    color: var(--muted);
+    font-weight: 500; /* Más pesado para mantener contraste */
+  }
 
-/* Links deben tener suficiente contraste */
-a {
-  color: var(--accent);
-  text-decoration: underline;
-}
+  /* Links deben tener suficiente contraste */
+  a {
+    color: var(--accent);
+    text-decoration: underline;
+  }
 
-a:visited {
-  color: #6d28d9; /* Morado más oscuro para visited */
-}
+  a:visited {
+    color: #6d28d9; /* Morado más oscuro para visited */
+  }
 
-/* Botones: asegurar contraste suficiente */
-button,
-[role="button"] {
-  border: 1px solid currentColor;
-  font-weight: 600;
-}
+  /* Botones: asegurar contraste suficiente */
+  button,
+  [role='button'] {
+    border: 1px solid currentColor;
+    font-weight: 600;
+  }
 
-/* Inputs con borde visible */
-input,
-textarea,
-select {
-  border: 2px solid var(--border);
-  color: var(--text);
-  background: var(--surface);
-}
+  /* Inputs con borde visible */
+  input,
+  textarea,
+  select {
+    border: 2px solid var(--border);
+    color: var(--text);
+    background: var(--surface);
+  }
 
-/* Placeholders con suficiente contraste */
-input::placeholder,
-textarea::placeholder {
-  color: var(--muted);
-  opacity: 0.8;
-}
+  /* Placeholders con suficiente contraste */
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--muted);
+    opacity: 0.8;
+  }
 
-/* Desactivados: claramente visibles como desactivados */
-[disabled],
-[aria-disabled="true"] {
-  opacity: 0.6;
-  cursor: not-allowed;
+  /* Desactivados: claramente visibles como desactivados */
+  [disabled],
+  [aria-disabled='true'] {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
 }
