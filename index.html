@@ -33,9 +33,9 @@
 
 <!-- SEO -->
 <link rel="canonical" href="https://miturno.one/">
-<meta name="description" content="Calculá tu salario real turno a turno. Mi Turno calcula automáticamente recargos nocturnos, festivos, dominicales y horas extra según la Ley 2101/2021. Gratis, offline, sin Excel.">
+<meta name="description" content="Calculá tu salario real turno a turno. Mi Turno calcula automáticamente recargos nocturnos, festivos, dominicales y horas extra según la Ley 2101/2021. Gratis,[...]
 <meta name="author" content="Mi Turno">
-<meta name="keywords" content="calculadora nómina Colombia, recargos nocturnos Colombia, horas extra Colombia, ley 2101 2021, nómina por turnos, salario mínimo Colombia, dominicales festivos Colombia">
+<meta name="keywords" content="calculadora nómina Colombia, recargos nocturnos Colombia, horas extra Colombia, ley 2101 2021, nómina por turnos, salario mínimo Colombia, dominicales festivos Co[...]
 <meta name="robots" content="index, follow">
 
 <!-- Open Graph (preview al compartir en WhatsApp, Facebook, etc.) -->
@@ -75,7 +75,8 @@
     "Horas extra diurnas y nocturnas",
     "Festivos y dominicales",
     "Funciona sin internet (offline)",
-    "Sin registro obligatorio"
+    "Sin registro obligatorio",
+    "Accesible para invidentes con screen readers"
   ],
   "screenshot": "https://miturno.one/icon-512.png",
   "aggregateRating": {
@@ -110,7 +111,7 @@
 <link rel="preconnect" href="https://yrpqvmqmchsxpotytxiy.supabase.co" crossorigin>
 <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,200;9..40,300;9..40,400;9..40,500;9..40,600;9..40,700;9..40,800;9..40,900&family=Nunito:wght@900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,200;9..40,300;9..40,400;9..40,500;9..40,600;9..40,700;9..40,800;9..40,900&family=Nunito:wght@900&display=swap" rel="st[...]
 
 <!-- CSS FRAGMENTADO -->
 <link rel="stylesheet" href="css/base/variables.css">
@@ -159,6 +160,10 @@
 
 <link rel="stylesheet" href="css/animations/keyframes.css">
 
+<!-- Accesibilidad: Focus y Contraste -->
+<link rel="stylesheet" href="css/accessibility/a11y-focus.css">
+<link rel="stylesheet" href="css/accessibility/a11y-contrast.css">
+
 <!-- Librerías externas -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js" crossorigin></script>
@@ -184,7 +189,7 @@
   <div class="is-ring"></div>
 </div>
 
-<div id="root"></div>
+<div id="root" role="main" aria-label="Contenido principal de Mi Turno"></div>
 
 <script>
   /* Failsafe del splash inicial: si la app no llega a arrancar bien,
@@ -210,7 +215,9 @@
 <script src="js/config/viewport-fix.js"></script>
 <script src="js/config/globals.js"></script>
 
-<!-- 2. Utilidades -->
+<!-- 2. Utilidades - Accesibilidad PRIMERO -->
+<script src="js/utils/a11y-helpers.js"></script>
+<script src="js/utils/a11y-announcements.js"></script>
 <script src="js/utils/storage.js"></script>
 <script src="js/utils/format.js"></script>
 <script src="js/utils/haptic.js"></script>
