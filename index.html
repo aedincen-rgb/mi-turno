@@ -215,9 +215,11 @@
 <script src="js/config/viewport-fix.js"></script>
 <script src="js/config/globals.js"></script>
 
-<!-- 2. Utilidades - Accesibilidad PRIMERO -->
+<!-- 2. Utilidades - Accesibilidad PRIMERO (debe cargar antes que otros scripts) -->
 <script src="js/utils/a11y-helpers.js"></script>
 <script src="js/utils/a11y-announcements.js"></script>
+<script src="js/utils/a11y-keyboard.js"></script>
+<script src="js/utils/a11y-form-validation.js"></script>
 <script src="js/utils/storage.js"></script>
 <script src="js/utils/format.js"></script>
 <script src="js/utils/haptic.js"></script>
@@ -271,6 +273,7 @@
 <script src="js/app/fast-pin-screen.js"></script>
 <script src="js/app/app-main.js"></script>
 <script src="js/app/root.js"></script>
+<script src="js/app/a11y-init.js"></script>
 <script src="js/app/sw-register.js"></script>
 <script src="js/app/init.js"></script>
 <script src="js/app/install-prompt.js"></script>
