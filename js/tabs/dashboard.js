@@ -228,12 +228,15 @@ function DashboardTab(props) {
   }
 
   return h(
-    'div',
-    { className: 'fadeUp' },
+    'section',
+    { className: 'fadeUp', 'aria-label': 'Análisis y proyección' },
     quincenaBlock,
     h(
       'div',
-      { className: 'dash-hero' },
+      {
+        className: 'dash-hero',
+        'aria-label': 'Proyección: ' + fCOP(ctx.proy) + ' al cierre del mes'
+      },
       h('div', { className: 'dash-hero-label' }, 'Proyección al cierre del mes'),
       h('div', { className: 'dash-hero-amount' }, fCOP(ctx.proy)),
       h(
@@ -246,7 +249,11 @@ function DashboardTab(props) {
           ' · promedio ' +
           fCOP(ctx.prom)
       ),
-      h('div', { className: 'ritmo-badge' }, ritmoBadge)
+      h(
+        'div',
+        { className: 'ritmo-badge', 'aria-label': 'Estado de ritmo: ' + ritmoBadge },
+        ritmoBadge
+      )
     ),
 
     h(
@@ -254,28 +261,49 @@ function DashboardTab(props) {
       { className: 'dash-kpi-grid' },
       h(
         'div',
-        { className: 'kpi-card' },
+        {
+          className: 'kpi-card',
+          'aria-label': 'Días trabajados: ' + ctx.diasTrab + ' de ' + ctx.diasMes
+        },
         h('div', { className: 'kpi-label' }, 'Días Trabajados'),
         h('div', { className: 'kpi-val accent' }, ctx.diasTrab),
         h('div', { className: 'kpi-sub' }, 'de ' + ctx.diasMes + ' del mes')
       ),
       h(
         'div',
-        { className: 'kpi-card' },
+        {
+          className: 'kpi-card',
+          'aria-label': 'Horas totales: ' + (ctx.totalMins / 60).toFixed(1) + ' horas'
+        },
         h('div', { className: 'kpi-label' }, 'Horas Totales'),
         h('div', { className: 'kpi-val' }, (ctx.totalMins / 60).toFixed(1) + 'h'),
         h('div', { className: 'kpi-sub' }, ctx.promHoras.toFixed(1) + 'h promedio')
       ),
       h(
         'div',
-        { className: 'kpi-card' },
+        {
+          className: 'kpi-card',
+          'aria-label': 'Promedio por turno: ' + fCOP(ctx.prom)
+        },
         h('div', { className: 'kpi-label' }, 'Promedio'),
         h('div', { className: 'kpi-val' }, fCOP(ctx.prom)),
         h('div', { className: 'kpi-sub' }, 'por turno')
       ),
       h(
         'div',
-        { className: 'kpi-card' },
+        {
+          className: 'kpi-card',
+          'aria-label':
+            'Mejor día: ' +
+            (ctx.mejor
+              ? fCOP(ctx.mejor.cop) +
+                ' el ' +
+                new Date(ctx.mejor.fecha + 'T12:00:00').toLocaleDateString('es-CO', {
+                  day: 'numeric',
+                  month: 'short'
+                })
+              : 'Sin datos')
+        },
         h('div', { className: 'kpi-label' }, 'Mejor Día'),
         h('div', { className: 'kpi-val accent' }, ctx.mejor ? fCOP(ctx.mejor.cop) : '—'),
         h(
