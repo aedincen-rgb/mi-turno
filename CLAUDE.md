@@ -118,6 +118,23 @@ El código nunca sale del dispositivo. Si necesitás replicarlo, los estilos est
 | v36 | Cambiar email dejaba `pin_lookup.user_email` viejo → regeneración de PIN encima del real | Lookup por email frágil | Lookup siempre por `user_id` |
 | v37→v39→v40 | "Iniciar turno" en device A no aparecía en device B | `queueAction` solo guardaba en localStorage, nunca llamaba `processQueue` | El sync queue debe flushear inmediato (debounced), no solo en boot/online |
 | v34 | Arrow function en `sync-queue.js` | Inconsistencia con el codebase ES5 | `function(){}` siempre |
+| v67 | Experimento de accesibilidad rompió el layout (pantalla blanca/desencaje) | Tocaba CSS estructural y creaba archivos a11y no registrados en `sw.js` | A11y se agrega vía atributos ARIA + HTML semántico, **nunca** reescribiendo CSS de layout. Preservar `className`, solo cambiar el `tag` o añadir props ARIA |
+
+## Accesibilidad (WCAG 2.1 AA)
+
+La app pasa auditoría **axe-core** con **0 violaciones** en las 6 pantallas (reglas `wcag2a/2aa/21a/21aa`). Patrones establecidos (v71):
+
+- **Tags semánticos**: `<section>`/`<main>` con `aria-label` por tab, `<h1>`/`<h2>` con jerarquía.
+- **Modales**: `role="dialog"` + `aria-modal="true"` + `aria-label`.
+- **Toggles**: `role="switch"` + `aria-checked` + `aria-label` con estado ("activado/desactivado").
+- **Listas tappables** (filas de turno): `role="button"` + `aria-label` con contexto completo hablado.
+- **Stats numéricos** en `<div>`: requieren `role="img"` para que `aria-label` sea válido (un `div` genérico **prohíbe** `aria-label` → `aria-prohibited-attr`).
+- **Live regions**: `aria-live="polite"` (chat), `role="alert"`+`aria-live="assertive"` (errores), `role="status"` (turno activo, progreso PIN).
+- **Inputs**: `aria-label` aunque la etiqueta visual viva en un hermano.
+- **Contraste**: `--muted` = `#646b7d` (5.3:1). NO volver a `#7a8294` (reprueba AA).
+- **Viewport**: NO reponer `user-scalable=no`/`maximum-scale` en `index.html` (bloquea zoom, WCAG 1.4.4).
+
+**Reglas de oro**: cambiar `div`→`section`/`main` preserva el `className` (CSS intacto). Íconos decorativos → `aria-hidden="true"`. Nunca poner `aria-label` en un `div` sin `role`.
 
 ## Cómo testear cambios
 
@@ -127,6 +144,7 @@ El código nunca sale del dispositivo. Si necesitás replicarlo, los estilos est
    - Local requiere `npx playwright install --with-deps chromium webkit` la primera vez.
    - En CI corre automático en cada PR vía `.github/workflows/e2e.yml`.
 4. Para sync cross-device real: abrir Chrome + Safari con la **misma cuenta**, hacer la acción, esperar < 1 s.
+5. A11y: auditar con axe-core vía Playwright (bloquear el SW con `serviceWorkers: 'block'` e inyectar React local porque el CDN se bloquea en sandbox). Criterio: **0 violaciones** serias/moderadas o no se mergea.
 
 Si CI falla, los artifacts (videos del navegador en el momento del bug) están en la pestaña "Artifacts" del workflow run en GitHub Actions.
 
@@ -157,6 +175,9 @@ Si CI falla, los artifacts (videos del navegador en el momento del bug) están e
 - ❌ Lookup por `user_email` (usar `user_id`)
 - ❌ Pushear a `master` sin pasar `scripts/check.sh`
 - ❌ Habilitar RLS en `config` / `Empleados` sin definir policies antes
+- ❌ Poner `aria-label` en un `div` sin `role` (usar `role="img"`/`group`)
+- ❌ Reponer `user-scalable=no` en el viewport (bloquea zoom, WCAG 1.4.4)
+- ❌ Tocar CSS de layout "por accesibilidad" (rompió v67) — solo ARIA + tags semánticos
 
 ## Comandos rápidos
 
