@@ -139,6 +139,42 @@ function App(props) {
     [uid]
   );
 
+  // ── LED tappable: revela el estado REAL de conexión a Supabase ──
+  // Microinteracción sutil (sin botones nuevos): al tocar el LED aparece
+  // una pill translúcida que se desvanece sola. El LED de color sigue
+  // mirando navigator.onLine; esto entrega el estado fino de la nube.
+  var lpop = useState(null);
+  var ledPop = lpop[0],
+    setLedPop = lpop[1];
+  var ledPopT = useRef(null);
+  useEffect(function () {
+    return function () {
+      if (ledPopT.current) clearTimeout(ledPopT.current);
+    };
+  }, []);
+  function _connState() {
+    var esLocal = !session || session.guest || session.pinOnly;
+    if (!navigator.onLine) return { k: 'off', t: 'Sin conexión a internet' };
+    if (esLocal) return { k: 'on', t: 'Conectado (modo local)' };
+    if (typeof CLOUD_MODE === 'undefined' || !CLOUD_MODE)
+      return { k: 'off', t: 'Sin conexión a la nube' };
+    var rt = typeof getRealtimeStatus === 'function' ? getRealtimeStatus() : null;
+    if (rt === 'SUBSCRIBED') return { k: 'on', t: 'Conectado a Supabase' };
+    if (rt === 'CHANNEL_ERROR' || rt === 'TIMED_OUT' || rt === 'CLOSED')
+      return { k: 'off', t: 'Sin conexión a Supabase' };
+    return { k: 'connecting', t: 'Conectando a Supabase…' };
+  }
+  function revealConn() {
+    try {
+      haptic && haptic();
+    } catch (_) {}
+    setLedPop(_connState());
+    if (ledPopT.current) clearTimeout(ledPopT.current);
+    ledPopT.current = setTimeout(function () {
+      setLedPop(null);
+    }, 2600);
+  }
+
   var scrRef = useRef(null);
 
   useEffect(function () {
@@ -870,13 +906,17 @@ function App(props) {
                   ? 'Conectado a la nube'
                   : 'Sin conexión a la nube';
           var ledCls = sincronizando ? 'syncing' : conectado ? 'on' : 'off';
-          return h('div', {
-            className: 'hdr-led ' + ledCls,
-            title: titulo,
-            'aria-label': titulo,
-            role: 'status',
-            'aria-live': 'polite'
-          });
+          return h(
+            'button',
+            {
+              className: 'hdr-led-btn',
+              type: 'button',
+              onClick: revealConn,
+              title: titulo,
+              'aria-label': titulo + '. Tocá para ver el estado de conexión.'
+            },
+            h('span', { className: 'hdr-led ' + ledCls, 'aria-hidden': 'true' })
+          );
         })(),
         h('img', {
           src: 'img/logo-mark.svg',
@@ -958,7 +998,15 @@ function App(props) {
                 h('path', { d: 'M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z' })
               )
         )
-      )
+      ),
+      ledPop
+        ? h(
+            'div',
+            { className: 'hdr-led-pop ' + ledPop.k, role: 'status', 'aria-live': 'polite' },
+            h('span', { className: 'hdr-led-pop-dot', 'aria-hidden': 'true' }),
+            ledPop.t
+          )
+        : null
     ),
 
     h(

@@ -208,3 +208,99 @@
       inset 0 1px 0 rgba(255, 255, 255, 0.15);
   }
 }
+
+/* ── LED tappable + pill de estado de conexión ─────────────────────
+   El botón mide lo mismo que el punto (no mueve nada del header), pero
+   un ::before invisible agranda el área táctil. */
+.hdr-led-btn {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+.hdr-led-btn::before {
+  content: '';
+  position: absolute;
+  inset: -12px -10px;
+}
+.hdr-led {
+  display: block;
+}
+
+.hdr-led-pop {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 12px;
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(20px) saturate(1.4);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  border: 1px solid var(--glass-border-sm);
+  border-radius: 999px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.14);
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 120;
+  transform-origin: top left;
+  animation: ledPopInOut 2.6s var(--ios-ease) forwards;
+}
+[data-theme='dark'] .hdr-led-pop {
+  background: var(--glass-mid);
+  border-color: var(--glass-border);
+  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.5);
+}
+.hdr-led-pop-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: #8e8e93;
+}
+.hdr-led-pop.on .hdr-led-pop-dot {
+  background: #34c759;
+  box-shadow: 0 0 7px rgba(52, 199, 89, 0.6);
+}
+.hdr-led-pop.off .hdr-led-pop-dot {
+  background: #ff3b30;
+  box-shadow: 0 0 7px rgba(255, 59, 48, 0.6);
+}
+.hdr-led-pop.connecting .hdr-led-pop-dot {
+  background: #ff9500;
+  box-shadow: 0 0 7px rgba(255, 149, 0, 0.6);
+  animation: ledPulse 0.8s ease-in-out infinite;
+}
+
+@keyframes ledPopInOut {
+  0% {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.96);
+  }
+  12% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  78% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-3px) scale(0.98);
+  }
+}
