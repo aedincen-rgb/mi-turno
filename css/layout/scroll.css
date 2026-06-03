@@ -10,7 +10,8 @@
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
   touch-action: pan-y;
-  padding: calc(var(--sat) + 88px) var(--sz-2) calc(96px + var(--sab));
+  padding: calc(var(--safe-top) + 88px) max(var(--sz-2), env(safe-area-inset-right, 0px))
+    calc(96px + var(--sab)) max(var(--sz-2), env(safe-area-inset-left, 0px));
   display: flex;
   flex-direction: column;
   gap: var(--sz-2); /* 16px de separación constante */

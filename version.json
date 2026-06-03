@@ -1,4 +1,4 @@
 {
-  "v": "v71",
-  "label": "Accesibilidad WCAG 2.1: ARIA, contraste y zoom"
+  "v": "v72",
+  "label": "Fix safe-area: header bajo barra de estado en Safari/Chrome"
 }

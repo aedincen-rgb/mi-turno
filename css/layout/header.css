@@ -10,7 +10,7 @@
   transform: translateX(-50%);
   width: calc(100% - 20px);
   max-width: 460px;
-  margin-top: calc(var(--sat) + 12px);
+  margin-top: calc(var(--safe-top) + 12px);
   padding: var(--sz-1) var(--sz-2);
   display: flex;
   align-items: center;
@@ -29,7 +29,7 @@
 }
 
 .hdr--compact {
-  margin-top: calc(var(--sat) + 6px);
+  margin-top: calc(var(--safe-top) + 6px);
   padding: 6px 14px;
   transform: translateX(-50%) scale(0.96);
   background: rgba(255, 255, 255, 0.85);
