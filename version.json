@@ -1,4 +1,4 @@
 {
-  "v": "v72",
-  "label": "Fix safe-area: header bajo barra de estado en Safari/Chrome"
+  "v": "v73",
+  "label": "Fix: login por PIN ya no borra turno activo ni historial"
 }

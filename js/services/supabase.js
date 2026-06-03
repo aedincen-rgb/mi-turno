@@ -4,43 +4,50 @@
 // ════════════════════════════════════════════════════════════════
 function supaSyncDown(uid) {
   if (!SUPA) return Promise.resolve(null);
-  return Promise.all([
-    SUPA.from('perfiles').select('salario_base').eq('id', uid).maybeSingle(),
-    SUPA.from('turnos')
-      .select('id,inicio,fin')
-      .eq('user_id', uid)
-      .order('inicio', { ascending: false })
-      .limit(500),
-    SUPA.from('turno_activo').select('id,inicio').eq('user_id', uid).maybeSingle()
-  ])
-    .then(function (results) {
-      if (results[0].error || results[1].error) return null;
-      if (results[2].error && results[2].error.code !== 'PGRST116') return null;
-      var perfil = results[0].data;
-      var turnos = (results[1].data || []).map(function (t) {
-        return { id: t.id, inicio: t.inicio, fin: t.fin, userId: uid };
+  return SUPA.auth.getSession().then(function (sres) {
+    // Sin sesión autenticada en Supabase (p. ej. se entró por PIN offline
+    // tras un signOut global) la nube NO es fuente de verdad: sus queries
+    // con RLS devuelven vacío SIN error y borrarían el turno activo y el
+    // salario locales. Devolvemos null → cargarDatos cae a los datos locales.
+    if (!sres || !sres.data || !sres.data.session) return null;
+    return Promise.all([
+      SUPA.from('perfiles').select('salario_base').eq('id', uid).maybeSingle(),
+      SUPA.from('turnos')
+        .select('id,inicio,fin')
+        .eq('user_id', uid)
+        .order('inicio', { ascending: false })
+        .limit(500),
+      SUPA.from('turno_activo').select('id,inicio').eq('user_id', uid).maybeSingle()
+    ])
+      .then(function (results) {
+        if (results[0].error || results[1].error) return null;
+        if (results[2].error && results[2].error.code !== 'PGRST116') return null;
+        var perfil = results[0].data;
+        var turnos = (results[1].data || []).map(function (t) {
+          return { id: t.id, inicio: t.inicio, fin: t.fin, userId: uid };
+        });
+        var activoRaw = results[2].data;
+        var activo = activoRaw ? { id: activoRaw.id, inicio: activoRaw.inicio, userId: uid } : null;
+        // Distinguimos "configurado" de "default": si perfil.salario_base
+        // es un número > 0, el usuario lo guardó explícitamente alguna vez
+        // (aunque coincida con SMIN actual por casualidad). Esto evita que
+        // el banner de "Salario no configurado" aparezca para siempre cuando
+        // el SMIN del año sube hasta el valor que el usuario ya tenía.
+        var rawSalario = perfil && perfil.salario_base;
+        var salarioConfigured = rawSalario != null && Number(rawSalario) > 0;
+        var salario = salarioConfigured ? Number(rawSalario) : SMIN;
+        return {
+          turnos: turnos,
+          activo: activo,
+          salario: salario,
+          salarioConfigured: salarioConfigured
+        };
+      })
+      .catch(function (e) {
+        console.warn('[Supa] error:', e);
+        return null;
       });
-      var activoRaw = results[2].data;
-      var activo = activoRaw ? { id: activoRaw.id, inicio: activoRaw.inicio, userId: uid } : null;
-      // Distinguimos "configurado" de "default": si perfil.salario_base
-      // es un número > 0, el usuario lo guardó explícitamente alguna vez
-      // (aunque coincida con SMIN actual por casualidad). Esto evita que
-      // el banner de "Salario no configurado" aparezca para siempre cuando
-      // el SMIN del año sube hasta el valor que el usuario ya tenía.
-      var rawSalario = perfil && perfil.salario_base;
-      var salarioConfigured = rawSalario != null && Number(rawSalario) > 0;
-      var salario = salarioConfigured ? Number(rawSalario) : SMIN;
-      return {
-        turnos: turnos,
-        activo: activo,
-        salario: salario,
-        salarioConfigured: salarioConfigured
-      };
-    })
-    .catch(function (e) {
-      console.warn('[Supa] error:', e);
-      return null;
-    });
+  });
 }
 
 function supaSetActivo(uid, activo) {
