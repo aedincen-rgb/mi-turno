@@ -1,4 +1,4 @@
 {
-  "v": "v73",
-  "label": "Fix: login por PIN ya no borra turno activo ni historial"
+  "v": "v74",
+  "label": "LED tappable: revela estado de conexion a Supabase (pill sutil)"
 }

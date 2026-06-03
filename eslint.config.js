@@ -145,6 +145,7 @@ const projectGlobals = {
   buildContext: 'readonly',
   supaUpsertPerfil: 'readonly', // New
   supaSubscribeUser: 'readonly', // v39 realtime
+  getRealtimeStatus: 'readonly', // v74 estado conexión Supabase
   supaUpdatePinLookup: 'readonly', // v38 sync cola
   supaPropagateEmail: 'readonly', // v38 sync cola
 

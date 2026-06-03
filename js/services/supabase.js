@@ -2,6 +2,15 @@
 //  MI TURNO · services/supabase.js
 //  Helpers CRUD de Supabase
 // ════════════════════════════════════════════════════════════════
+
+// Estado de la suscripción Realtime, para el indicador de conexión del
+// header. Valores: null | 'CONNECTING' | 'SUBSCRIBED' | 'TIMED_OUT' |
+// 'CHANNEL_ERROR' | 'CLOSED'. Es informativo: lo lee getRealtimeStatus().
+var _mtRealtimeStatus = null;
+function getRealtimeStatus() {
+  return _mtRealtimeStatus;
+}
+
 function supaSyncDown(uid) {
   if (!SUPA) return Promise.resolve(null);
   return SUPA.auth.getSession().then(function (sres) {
@@ -159,6 +168,7 @@ function supaUpsertPerfil(uid, data) {
 function supaSubscribeUser(uid, onChange) {
   if (!SUPA || !uid || typeof SUPA.channel !== 'function') return function () {};
   var ch;
+  _mtRealtimeStatus = 'CONNECTING';
   try {
     ch = SUPA.channel('mt-user-' + uid)
       .on(
@@ -190,16 +200,19 @@ function supaSubscribeUser(uid, onChange) {
         }
       )
       .subscribe(function (status) {
+        _mtRealtimeStatus = status;
         if (status === 'SUBSCRIBED') console.log('[MT] Realtime suscrito para', uid);
         else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
           console.warn('[MT] Realtime status:', status);
         }
       });
   } catch (e) {
+    _mtRealtimeStatus = 'CHANNEL_ERROR';
     console.warn('[MT] No se pudo iniciar realtime:', e);
     return function () {};
   }
   return function () {
+    _mtRealtimeStatus = null;
     try {
       if (ch && SUPA.removeChannel) SUPA.removeChannel(ch);
     } catch (_) {}
