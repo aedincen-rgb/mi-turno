@@ -161,6 +161,41 @@ function Root() {
         }
       } catch (_) {}
 
+      // Cachear los tokens de Supabase: habilita que FastPin restaure la
+      // sesión REAL (setSession) sin pedir contraseña, así el device queda
+      // autenticado y sincroniza de verdad (sube, baja y realtime).
+      try {
+        if (u.email && supaSession.access_token && supaSession.refresh_token) {
+          var _okey = 'mt_offline_' + btoa(String(u.email).toLowerCase());
+          var _oblob = leer(_okey, null) || {
+            uid: u.id,
+            email: String(u.email).toLowerCase(),
+            cloud: true,
+            guest: false,
+            isAdmin: esAdminAuto
+          };
+          _oblob.access_token = supaSession.access_token;
+          _oblob.refresh_token = supaSession.refresh_token;
+          _oblob.token_expires_at = supaSession.expires_at || null;
+          grabar(_okey, _oblob);
+        }
+      } catch (_) {}
+
+      // Sesión autenticada confirmada → vaciar la cola pendiente y forzar
+      // una convergencia de datos (cierra el hueco si se entró por PIN o
+      // si realtime estuvo caído mientras hubo cambios en otro device).
+      // Diferido con setTimeout: NUNCA llamar métodos de supabase (getSession
+      // dentro de processQueue) de forma síncrona dentro del callback de
+      // onAuthStateChange — puede bloquear el lock de auth.
+      setTimeout(function () {
+        try {
+          if (typeof processQueue === 'function') processQueue(u.id);
+        } catch (_) {}
+        try {
+          if (typeof window.__mtResync === 'function') window.__mtResync();
+        } catch (_) {}
+      }, 450);
+
       if (u.email) {
         // Lookup por user_id (estable) en vez de user_email (mutable):
         // si el usuario cambia su correo, el lookup por email queda
