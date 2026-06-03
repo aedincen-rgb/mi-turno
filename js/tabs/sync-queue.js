@@ -83,6 +83,22 @@ async function processQueue(uid) {
   }
   _processingFlags[uid] = true;
 
+  // Auth-gate: si Supabase no tiene sesión autenticada (p. ej. se entró por
+  // PIN sin restaurar tokens, o tras un logout) NO machacamos la cola contra
+  // RLS en bucle — eso dejaba el LED ámbar pegado para siempre. La dejamos
+  // intacta; se vacía cuando vuelve la auth (root.js dispara processQueue en
+  // SIGNED_IN / TOKEN_REFRESHED) o cuando vuelve la red (onOnline).
+  try {
+    var _authed = await withTimeout(SUPA.auth.getSession(), 6000, 'auth-gate cola');
+    if (!_authed || !_authed.data || !_authed.data.session) {
+      _processingFlags[uid] = false;
+      return;
+    }
+  } catch (_) {
+    _processingFlags[uid] = false;
+    return;
+  }
+
   var queue = _loadSyncQueue(uid);
   if (queue.length === 0) {
     _processingFlags[uid] = false;

@@ -23,6 +23,9 @@ function FastPinScreen(props) {
   var shakeS = useState(false);
   var shake = shakeS[0],
     setShake = shakeS[1];
+  var busyS = useState(false);
+  var busy = busyS[0],
+    setBusy = busyS[1];
 
   // Saludo personalizado: alias guardado en v30, fallback al email
   var saludoNombre = '';
@@ -78,6 +81,47 @@ function FastPinScreen(props) {
       try {
         haptic && haptic();
       } catch (_) {}
+
+      // Restaurar la sesión REAL de Supabase con los tokens cacheados. Esto
+      // autentica el cliente → el device sube, baja y recibe realtime (antes
+      // entraba "cloud" pero deslogueado → no sincronizaba, LED ámbar pegado).
+      // Si no hay tokens / red, o el refresh token está revocado/expirado,
+      // entramos en modo local (sin pérdida: cargarDatos usa lo local).
+      if (isOnline() && CLOUD_MODE && SUPA && ses.access_token && ses.refresh_token) {
+        setBusy(true);
+        withTimeout(
+          SUPA.auth.setSession({
+            access_token: ses.access_token,
+            refresh_token: ses.refresh_token
+          }),
+          9000,
+          'Restaurar sesión'
+        )
+          .then(function (res) {
+            setBusy(false);
+            if (res && res.error) {
+              // Token muerto: lo limpiamos para no reintentar en vano.
+              try {
+                var k = 'mt_offline_' + btoa(lastUser.email);
+                var b = leer(k, null);
+                if (b) {
+                  delete b.access_token;
+                  delete b.refresh_token;
+                  grabar(k, b);
+                }
+              } catch (_) {}
+            }
+            // Con éxito, onAuthStateChange en root.js refina la sesión y
+            // dispara la convergencia; igual entramos ya para UI instantánea.
+            if (props.onAuth) props.onAuth(ses);
+          })
+          .catch(function () {
+            setBusy(false);
+            if (props.onAuth) props.onAuth(ses);
+          });
+        return;
+      }
+
       if (props.onAuth) props.onAuth(ses);
     } else {
       setErr('PIN incorrecto. Probá de nuevo.');
@@ -93,6 +137,7 @@ function FastPinScreen(props) {
   }
 
   function press(d) {
+    if (busy) return;
     if (pin.length >= 4) return;
     try {
       haptic && haptic();
@@ -176,19 +221,26 @@ function FastPinScreen(props) {
     ),
 
     // ─── Pill informativo / error ───
-    err
+    busy
       ? h(
           'div',
-          { className: 'fastpin-pill err', role: 'alert', 'aria-live': 'assertive' },
-          h('span', { className: 'fastpin-pill-ico', 'aria-hidden': 'true' }, '⚠'),
-          err
+          { className: 'fastpin-pill', role: 'status', 'aria-live': 'polite' },
+          h('span', { className: 'fastpin-pill-ico', 'aria-hidden': 'true' }, '⏳'),
+          'Entrando y sincronizando…'
         )
-      : h(
-          'div',
-          { className: 'fastpin-pill' },
-          h('span', { className: 'fastpin-pill-ico', 'aria-hidden': 'true' }, 'ⓘ'),
-          'No compartas tu PIN con nadie.'
-        ),
+      : err
+        ? h(
+            'div',
+            { className: 'fastpin-pill err', role: 'alert', 'aria-live': 'assertive' },
+            h('span', { className: 'fastpin-pill-ico', 'aria-hidden': 'true' }, '⚠'),
+            err
+          )
+        : h(
+            'div',
+            { className: 'fastpin-pill' },
+            h('span', { className: 'fastpin-pill-ico', 'aria-hidden': 'true' }, 'ⓘ'),
+            'No compartas tu PIN con nadie.'
+          ),
 
     // ─── Keypad numérico (3×3 + 0 + ⌫) ───
     h(

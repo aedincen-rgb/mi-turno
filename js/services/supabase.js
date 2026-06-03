@@ -201,8 +201,15 @@ function supaSubscribeUser(uid, onChange) {
       )
       .subscribe(function (status) {
         _mtRealtimeStatus = status;
-        if (status === 'SUBSCRIBED') console.log('[MT] Realtime suscrito para', uid);
-        else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+        if (status === 'SUBSCRIBED') {
+          console.log('[MT] Realtime suscrito para', uid);
+          // Realtime NUNCA reenvía los eventos perdidos mientras estuvo
+          // desconectado. Por eso, en CADA (re)suscripción forzamos un
+          // re-fetch completo para reconciliar (best practice Supabase).
+          try {
+            if (typeof window.__mtResync === 'function') setTimeout(window.__mtResync, 250);
+          } catch (_) {}
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
           console.warn('[MT] Realtime status:', status);
         }
       });

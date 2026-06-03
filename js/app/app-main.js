@@ -356,6 +356,52 @@ function App(props) {
     };
   }, []);
 
+  // ── Convergencia forzada: flush de cola + re-fetch del remoto. Se dispara
+  // al restaurar la auth (root.js), al resucitar realtime (supabase.js, cierra
+  // el hueco de eventos perdidos) y al volver la app a primer plano / recuperar
+  // red. Expuesto como window.__mtResync. Es la pieza que hace converger los
+  // dos devices tras una desconexión.
+  useEffect(
+    function () {
+      if (!uid) return;
+      function resync() {
+        var pending = 0;
+        try {
+          var all = leer('mt_sync_queue', {});
+          pending = all && all[uid] ? all[uid].length : 0;
+        } catch (_) {}
+        try {
+          processQueue(uid);
+        } catch (_) {}
+        // Si hay cambios locales sin subir, NO traemos el remoto encima
+        // (borraría un turno recién iniciado aquí); primero se vacía la cola
+        // y el realtime / próximo resync reconcilia.
+        if (pending > 0) return;
+        cargarDatos(uid, session.pinOnly)
+          .then(function (data) {
+            if (data && data.turnos) {
+              setTurnos(data.turnos || []);
+              setActivo(data.activo || null);
+              if (data.salario) setSalario(data.salario);
+            }
+          })
+          .catch(function () {});
+      }
+      window.__mtResync = resync;
+      function onVis() {
+        if (document.visibilityState === 'visible') resync();
+      }
+      document.addEventListener('visibilitychange', onVis, { passive: true });
+      if (typeof onOnline === 'function') onOnline(resync);
+      return function () {
+        if (window.__mtResync === resync) window.__mtResync = null;
+        document.removeEventListener('visibilitychange', onVis);
+        if (typeof removeOnlineListener === 'function') removeOnlineListener(resync);
+      };
+    },
+    [uid, session.pinOnly]
+  );
+
   useEffect(
     function () {
       var cancelled = false;

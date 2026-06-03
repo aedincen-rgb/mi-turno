@@ -1,4 +1,4 @@
 {
-  "v": "v74",
-  "label": "LED tappable: revela estado de conexion a Supabase (pill sutil)"
+  "v": "v75",
+  "label": "Sync robusto: FastPin restaura sesion real (setSession) + cola con auth-gate + convergencia multi-device"
 }
