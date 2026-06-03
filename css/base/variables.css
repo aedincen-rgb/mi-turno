@@ -67,6 +67,9 @@
   /* ── Safe area ── */
   --sat: env(safe-area-inset-top, 0px);
   --sab: env(safe-area-inset-bottom, 0px);
+  /* Piso de 48px: en Safari/Chrome (no-standalone) inset-top reporta 0 y el
+     header se metía bajo la barra de estado del iPhone. Mismo patrón que fast-pin. */
+  --safe-top: max(env(safe-area-inset-top, 0px), 48px);
 
   /* ── Liquid Glass tokens (light mode) ── */
   --glass-heavy: rgba(255, 255, 255, 0.7);
