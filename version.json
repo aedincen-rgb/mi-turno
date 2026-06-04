@@ -1,4 +1,4 @@
 {
-  "v": "v95",
-  "label": "Potencia v76-v94: dark mode banner, auxilio 2026, NLP reset al limpiar"
+  "v": "v96",
+  "label": "Respaldo y restauración de datos: export/import localStorage a JSON."
 }
