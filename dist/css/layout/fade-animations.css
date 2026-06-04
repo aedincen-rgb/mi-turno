@@ -1,0 +1,53 @@
+/* ════════════════════════════════════════════════════════════════
+   MI TURNO · layout/fade-animations.css
+   ════════════════════════════════════════════════════════════════ */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.fadeUp {
+  display: flex;
+  flex-direction: column;
+  gap: 14px; /* Separa todas las tarjetas y elementos internos */
+}
+
+.fadeUp > * {
+  animation: fadeUp 0.5s var(--spring) both;
+  transform: translateZ(0);
+  will-change: transform, opacity;
+}
+
+.fadeUp > *:nth-child(1) {
+  animation-delay: 0.04s;
+}
+
+.fadeUp > *:nth-child(2) {
+  animation-delay: 0.08s;
+}
+
+.fadeUp > *:nth-child(3) {
+  animation-delay: 0.12s;
+}
+
+.fadeUp > *:nth-child(4) {
+  animation-delay: 0.16s;
+}
+
+.fadeUp > *:nth-child(5) {
+  animation-delay: 0.2s;
+}

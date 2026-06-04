@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Mi Turno"/>
+<meta name="theme-color" id="metaThemeColor" content="#f5f7fb"/>
+
+<script>
+  // Captura errores críticos de carga inmediatamente
+  window.onerror = function(msg, url, line, col, error) {
+    var div = document.createElement('div');
+    div.style = "position:fixed;top:0;left:0;background:#b91c1c;color:white;z-index:999999;padding:12px;font-size:11px;width:100%;font-family:monospace;box-shadow:0 4px 12px rgba(0,0,0,0.3)";
+    div.innerText = "🚨 FALLO DE CARGA: " + msg + "\nArchivo: " + (url ? url.split('/').pop() : 'desconocido') + ":" + line;
+    document.body.appendChild(div);
+  };
+</script>
+
+<meta name="google-site-verification" content="cKN4WtALKGnFiuqQM10JmHKCnQ7wCCDWApZI_5i2uXY">
+
+<link rel="manifest" href="manifest.json">
+<link rel="sitemap" type="application/xml" href="/sitemap.xml">
+<link rel="icon" type="image/svg+xml" href="img/logo-mark.svg">
+<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
+<link rel="apple-touch-icon" sizes="152x152" href="icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+
+<title>Mi Turno · Calculadora de nómina colombiana — recargos nocturnos, festivos y horas extra</title>
+
+<!-- SEO -->
+<link rel="canonical" href="https://miturno.one/">
+<meta name="description" content="Calculá tu salario real turno a turno. Mi Turno calcula automáticamente recargos nocturnos, festivos, dominicales y horas extra según la Ley 2101/2021. Gratis, offline, sin Excel.">
+<meta name="author" content="Mi Turno">
+<meta name="keywords" content="calculadora nómina Colombia, recargos nocturnos Colombia, horas extra Colombia, ley 2101 2021, nómina por turnos, salario mínimo Colombia, dominicales festivos Colombia">
+<meta name="robots" content="index, follow">
+
+<!-- Open Graph (preview al compartir en WhatsApp, Facebook, etc.) -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://miturno.one/">
+<meta property="og:title" content="Mi Turno · Calculadora de nómina colombiana">
+<meta property="og:description" content="Calculá tu salario real turno a turno. Recargos nocturnos, festivos, horas extra según la Ley 2101. Gratis y funciona sin internet.">
+<meta property="og:image" content="https://miturno.one/icon-512.png">
+<meta property="og:locale" content="es_CO">
+<meta property="og:site_name" content="Mi Turno">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Mi Turno · Calculadora de nómina colombiana">
+<meta name="twitter:description" content="Calculá tu salario real turno a turno. Recargos nocturnos, festivos y horas extra. Gratis y offline.">
+<meta name="twitter:image" content="https://miturno.one/icon-512.png">
+
+<!-- JSON-LD: Google entiende qué es esta app y la puede mostrar en búsquedas -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Mi Turno",
+  "alternateName": "Mi Turno Colombia",
+  "description": "Calculadora de nómina colombiana para trabajadores por turnos. Calcula automáticamente recargos nocturnos, festivos, dominicales y horas extra según la Ley 2101 de 2021.",
+  "applicationCategory": "FinanceApplication",
+  "operatingSystem": "Android, iOS, Web",
+  "url": "https://miturno.one/",
+  "inLanguage": "es-CO",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "COP"
+  },
+  "featureList": [
+    "Cálculo de recargos nocturnos según Ley 2101/2021",
+    "Horas extra diurnas y nocturnas",
+    "Festivos y dominicales",
+    "Funciona sin internet (offline)",
+    "Sin registro obligatorio"
+  ],
+  "screenshot": "https://miturno.one/icon-512.png",
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "5",
+    "ratingCount": "1"
+  }
+}
+</script>
+
+<!-- Preconnect a CDNs de scripts (React, Supabase, jsPDF, XLSX, Chart.js).
+     Bajar 100-300ms en LCP al adelantar el handshake DNS+TLS antes de la
+     primera <script src=cdnjs...> del bloque CDN. -->
+<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+
+<!-- Preload de archivos críticos para evitar cascada en Vercel -->
+<link rel="preload" href="js/config/globals.js" as="script">
+<link rel="preload" href="js/utils/storage.js" as="script">
+<link rel="preload" href="js/services/calculator.js" as="script">
+<link rel="preload" href="js/services/quincena.js" as="script">
+<link rel="preload" href="js/tabs/sync-queue.js" as="script">
+<link rel="preload" href="version.json" as="fetch" crossorigin>
+<link rel="preload" href="css/base/variables.css" as="style">
+<link rel="preload" href="css/base/blur-fix.css" as="style">
+
+
+
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://yrpqvmqmchsxpotytxiy.supabase.co" crossorigin>
+<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,200;9..40,300;9..40,400;9..40,500;9..40,600;9..40,700;9..40,800;9..40,900&family=Nunito:wght@900&display=swap" rel="stylesheet">
+
+<!-- CSS FRAGMENTADO -->
+<link rel="stylesheet" href="css/base/variables.css">
+<link rel="stylesheet" href="css/base/reset.css">
+<link rel="stylesheet" href="css/base/typography.css">
+<link rel="stylesheet" href="css/base/background.css">
+<link rel="stylesheet" href="css/base/media-queries.css">
+<link rel="stylesheet" href="css/base/blur-fix.css">
+
+<link rel="stylesheet" href="css/layout/header.css">
+<link rel="stylesheet" href="css/layout/scroll.css">
+<link rel="stylesheet" href="css/layout/hero-card.css">
+<link rel="stylesheet" href="css/layout/progress-bar.css">
+<link rel="stylesheet" href="css/layout/action-button.css">
+<link rel="stylesheet" href="css/layout/shapes.css">
+<link rel="stylesheet" href="css/layout/fade-animations.css">
+<link rel="stylesheet" href="css/layout/misc-animations.css">
+<link rel="stylesheet" href="css/layout/misc.css">
+
+<link rel="stylesheet" href="css/components/cards.css">
+<link rel="stylesheet" href="css/components/buttons.css">
+<link rel="stylesheet" href="css/components/buttons-glass.css">
+<link rel="stylesheet" href="css/components/inputs.css">
+<link rel="stylesheet" href="css/components/switches.css">
+<link rel="stylesheet" href="css/components/config-rows.css">
+<link rel="stylesheet" href="css/components/dashboard-hero.css">
+<link rel="stylesheet" href="css/components/dashboard-kpis.css">
+<link rel="stylesheet" href="css/components/dashboard-chart.css">
+<link rel="stylesheet" href="css/components/dashboard-tip.css">
+<link rel="stylesheet" href="css/components/assistant-chat.css">
+<link rel="stylesheet" href="css/components/history-list.css">
+<link rel="stylesheet" href="css/components/fast-pin.css">
+<link rel="stylesheet" href="css/components/auth-screen.css">
+<link rel="stylesheet" href="css/components/misc.css">
+<link rel="stylesheet" href="css/components/dark-mode-overrides.css">
+
+<link rel="stylesheet" href="css/modals/overlay.css">
+<link rel="stylesheet" href="css/modals/modal-card.css">
+<link rel="stylesheet" href="css/modals/bottom-sheets.css">
+<link rel="stylesheet" href="css/modals/auth-screen.css">
+<link rel="stylesheet" href="css/modals/assistant-chat.css">
+<link rel="stylesheet" href="css/modals/time-picker.css">
+<link rel="stylesheet" href="css/modals/splash.css">
+<link rel="stylesheet" href="css/modals/misc.css">
+<link rel="stylesheet" href="css/modals/dark-overrides.css">
+
+<link rel="stylesheet" href="css/animations/keyframes.css">
+
+<!-- Librerías externas -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js" crossorigin></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js" crossorigin="anonymous"></script>
+
+</head>
+<body>
+
+<div class="bg-shapes">
+  <div class="shape shape-1"></div>
+  <div class="shape shape-2"></div>
+  <div class="shape shape-3"></div>
+</div>
+
+<div id="initSplash">
+  <img src="img/logo-mark.svg" class="is-logo" alt="mi turno" draggable="false"/>
+  <div class="is-name">Mi Turno</div>
+  <div class="is-tag">Colombia · Nómina inteligente</div>
+  <div class="is-ring"></div>
+</div>
+
+<div id="root"></div>
+
+<script>
+  /* Failsafe del splash inicial: si la app no llega a arrancar bien,
+     la pantalla azul NUNCA debe quedarse pegada. A los 8 s se retira
+     sí o sí, así queda visible la app (o el mensaje de error). */
+  (function () {
+    setTimeout(function () {
+      var s = document.getElementById('initSplash');
+      if (!s) return; // la app ya lo retiró con normalidad
+      s.classList.add('fadeout');
+      setTimeout(function () {
+        if (s.parentNode) s.parentNode.removeChild(s);
+      }, 500);
+    }, 8000);
+  })();
+</script>
+
+<!-- JS FRAGMENTADO -->
+<script src="app.js" defer></script>
+
+</body>
+</html>

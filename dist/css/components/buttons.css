@@ -1,0 +1,86 @@
+/* ════════════════════════════════════════════════════════════════
+   MI TURNO · components/buttons.css
+   ════════════════════════════════════════════════════════════════ */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 11px 18px;
+  border-radius: var(--r-pill);
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border: none;
+  transition: all 0.25s var(--spring);
+}
+
+.btn:active {
+  transform: scale(0.96);
+}
+
+.btn-primary {
+  background: var(--text);
+  color: var(--surface);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 2px 8px rgba(20, 30, 60, 0.1);
+}
+
+.btn-primary:active {
+  filter: brightness(0.9);
+}
+
+.btn-accent {
+  background: linear-gradient(135deg, var(--accent2), var(--accent));
+  color: #fff;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.06),
+    0 4px 14px var(--accent-glow);
+}
+
+.btn-ghost {
+  background: color-mix(in srgb, var(--surface2) 75%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: var(--muted);
+  border: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+}
+
+.btn-danger {
+  background: var(--danger-dim);
+  color: var(--danger);
+  border: 1px solid color-mix(in srgb, var(--danger) 22%, transparent);
+}
+
+.btn-danger:active {
+  background: var(--danger);
+  color: #fff;
+}
+
+.btn-edit {
+  padding: 7px 14px;
+  border-radius: var(--r-pill);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--accent-dim);
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+.btn-edit:active {
+  transform: scale(0.95);
+  background: var(--accent);
+  color: #fff;
+}
+
+.btn-block {
+  width: 100%;
+  padding: 14px;
+  font-size: 13px;
+}

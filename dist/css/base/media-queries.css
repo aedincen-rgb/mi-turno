@@ -1,0 +1,148 @@
+/* ════════════════════════════════════════════════════════════════
+   MI TURNO · base/media-queries.css
+   Media queries y modo bajo consumo
+   ════════════════════════════════════════════════════════════════ */
+
+/* ════════════════════════════════════════════════════════════════
+   MI TURNO · BASE
+   Variables, reset, tipografía, media queries
+   ════════════════════════════════════════════════════════════════ */
+
+[data-theme='dark'] {
+  /* Background: espacio nocturno profundo */
+  --bg: linear-gradient(165deg, #050f20 0%, #080f26 35%, #060c1c 65%, #040810 100%);
+  --surface: #14171f;
+  --surface2: #1c2029;
+  --border: #2a2f3b;
+  --border2: #3a4050;
+  --text: #ecedf3;
+  --muted: #7c8395;
+  --accent: #7da8ff;
+  --accent2: #9fbeff;
+  --accent3: #b3cdff;
+  --accent-soft: rgba(143, 179, 255, 0.18);
+  --accent-tint: rgba(125, 168, 255, 0.08);
+  --accent-deep: #5b86e5;
+  --accent-dim: rgba(125, 168, 255, 0.14);
+  --accent-glow: rgba(125, 168, 255, 0.32);
+  --danger: #e58a85;
+  --danger-dim: rgba(229, 138, 133, 0.13);
+  --success: #7ec4a6;
+  --success-dim: rgba(126, 196, 166, 0.13);
+  --info: #90aed9;
+  --night: #7da8ff;
+
+  /* Liquid Glass tokens dark */
+  --glass-heavy: rgba(255, 255, 255, 0.09);
+  --glass-mid: rgba(255, 255, 255, 0.07);
+  --glass-thin: rgba(255, 255, 255, 0.05);
+  --glass-border: rgba(255, 255, 255, 0.14);
+  --glass-border-sm: rgba(255, 255, 255, 0.1);
+  --spec-top: rgba(255, 255, 255, 0.11);
+  --spec-bot: rgba(0, 0, 0, 0.28);
+
+  /* Shadows */
+  --sh-1: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --sh-2: 0 8px 32px rgba(0, 0, 0, 0.45);
+  --sh-3: 0 20px 60px rgba(0, 0, 0, 0.58);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+button {
+  font-family: inherit;
+  border: none;
+  background: none;
+  cursor: pointer;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+  color: inherit;
+  touch-action: manipulation;
+}
+input,
+select,
+textarea {
+  font-family: inherit;
+  outline: none;
+  background: transparent;
+  color: inherit;
+}
+
+/* Respetar preferencia de reducir movimiento del SO */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .shape,
+  .bar-fill::after,
+  .action-btn-go,
+  .bar-fill-live,
+  .hero-amount-live,
+  .prog-val-live,
+  .active-dot,
+  .hdr-live::before {
+    animation: none !important;
+    transform: translateY(0) !important;
+    box-shadow:
+      inset 0 1.5px 0 rgba(255, 255, 255, 0.5),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.1),
+      0 7px 0 0 #3550a8,
+      0 15px 45px rgba(91, 134, 229, 0.12) !important;
+  }
+}
+
+/* Modo bajo consumo (batería <20% sin cargar): para animaciones decorativas */
+.low-power .shape,
+.low-power .bar-fill::after,
+.low-power .action-btn-go,
+.low-power .bar-fill-live,
+.low-power .bar-fill-live::before,
+.low-power .hero-amount-live,
+.low-power .prog-val-live {
+  animation: none !important;
+  transform: translateY(0) !important;
+}
+.low-power 
+
+/* Background shapes */
+
+
+
+
+[data-theme="dark"] 
+[data-theme="dark"] 
+[data-theme="dark"] 
+@keyframes float {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  100% {
+    transform: translate(5%, 8%) scale(1.08);
+  }
+}
+
+#root {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  max-width: 480px;
+  margin: 0 auto;
+  height: 100%;
+  height: -webkit-fill-available;
+  overflow: hidden;
+}
+
+/* ── HEADER ── */

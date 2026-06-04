@@ -1,0 +1,150 @@
+/* ════════════════════════════════════════════════════════════════
+   MI TURNO · components/inputs.css
+   ════════════════════════════════════════════════════════════════ */
+
+.ios-sw input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+
+.ios-sw input:checked + .sw-track {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--accent) 88%, transparent) 0%,
+    color-mix(in srgb, var(--accent2) 88%, transparent) 100%
+  );
+  border-color: color-mix(in srgb, var(--accent) 50%, transparent);
+  box-shadow:
+    inset 0 1.5px 3px color-mix(in srgb, var(--accent) 25%, rgba(0, 0, 0, 0.1)),
+    inset 0 -1px 0 color-mix(in srgb, white 22%, transparent),
+    0 0 12px color-mix(in srgb, var(--accent-glow) 70%, transparent),
+    0 2px 6px color-mix(in srgb, var(--accent-glow) 35%, transparent);
+}
+
+.ios-sw input:checked + .sw-track::before {
+  transform: translateX(22px);
+  background: radial-gradient(
+    circle at 30% 28%,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(255, 255, 255, 0.92) 22%,
+    rgba(248, 250, 255, 0.98) 55%,
+    rgba(230, 236, 248, 1) 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1px 1px rgba(0, 0, 0, 0.04),
+    0 3px 10px rgba(0, 0, 0, 0.2),
+    0 1px 3px rgba(0, 0, 0, 0.12),
+    0 0 0 0.5px rgba(0, 0, 0, 0.05);
+}
+
+.ios-sw input:checked + .sw-track::after {
+  content: '';
+  left: 30px;
+  color: rgba(123, 107, 217, 0.85);
+}
+
+[data-theme='dark'] .ios-sw input:checked + .sw-track {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--accent) 75%, transparent) 0%,
+    color-mix(in srgb, var(--accent2) 75%, transparent) 100%
+  );
+  border-color: color-mix(in srgb, var(--accent) 60%, transparent);
+  box-shadow:
+    inset 0 1.5px 3px rgba(0, 0, 0, 0.25),
+    inset 0 -1px 0 color-mix(in srgb, white 18%, transparent),
+    0 0 16px color-mix(in srgb, var(--accent-glow) 90%, transparent),
+    0 2px 8px color-mix(in srgb, var(--accent-glow) 55%, transparent);
+}
+
+.inp {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--surface2);
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 500;
+  border: 1.5px solid transparent;
+  transition:
+    border-color 0.2s var(--ease),
+    background 0.2s var(--ease);
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.inp:focus {
+  border-color: var(--accent);
+  background: var(--surface);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+  animation: inpFocusGlow 0.45s var(--ease);
+}
+
+/* Pulso suave del anillo de foco (una sola vez al enfocar) */
+@keyframes inpFocusGlow {
+  0% {
+    box-shadow: 0 0 0 0 var(--accent-glow);
+  }
+  100% {
+    box-shadow: 0 0 0 3px var(--accent-dim);
+  }
+}
+
+/* Estados de validación (reutilizables vía clase) */
+.inp.is-valid {
+  border-color: var(--success);
+  box-shadow: 0 0 0 3px var(--success-dim);
+}
+
+.inp.is-invalid {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 3px var(--danger-dim);
+}
+
+/* Shake de validación — reutilizable en cualquier campo (.inp.shake) */
+.inp.shake {
+  animation: inpShake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
+@keyframes inpShake {
+  10%,
+  90% {
+    transform: translateX(-1.5px);
+  }
+  20%,
+  80% {
+    transform: translateX(3px);
+  }
+  30%,
+  50%,
+  70% {
+    transform: translateX(-6px);
+  }
+  40%,
+  60% {
+    transform: translateX(6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .inp:focus {
+    animation: none;
+  }
+  .inp.shake {
+    animation: none;
+  }
+}
+
+.inp:disabled {
+  opacity: 0.6;
+}
+
+button:focus-visible,
+a:focus-visible,
+.inp:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
