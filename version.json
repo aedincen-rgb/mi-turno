@@ -1,4 +1,4 @@
 {
-  "v": "v103",
-  "label": "Fix: React hooks orden correcto (onboarding useState antes de returns)."
+  "v": "v104",
+  "label": "Tabs: padding 8→10px para igualar proporción con header. Más pill-shaped."
 }
