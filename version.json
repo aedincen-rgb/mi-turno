@@ -1,4 +1,4 @@
 {
-  "v": "v127",
-  "label": "Voz a texto: micrófono 🎤 en el chat para dictar preguntas."
+  "v": "v128",
+  "label": "Fix: NLP email ahora dispara EmailComposeCard real."
 }

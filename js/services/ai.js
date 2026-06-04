@@ -759,6 +759,14 @@ function _aiDispatchNLP(intent, c, state, q, t) {
 
   // ── Email ──
   if (intent === 'email') {
+    // Usar el mismo builder que el sistema clásico para acción real
+    if (typeof _aiBuildEmail === 'function') {
+      var emailAction = _aiBuildEmail(q, t, c, state);
+      return {
+        text: emailAction.preview,
+        action: { type: 'email_compose', data: emailAction.data }
+      };
+    }
     return '📧 Claro, puedo ayudarte a enviar tu reporte. Solo necesito que me digas:\n\n• ¿A qué correo lo mando?\n• ¿Preferís PDF o Excel?\n\nO si ya lo tenés claro, decime "enviá mi reporte a [correo]" y lo gestiono.';
   }
   if (intent === 'correo_formal') {
@@ -879,13 +887,18 @@ function aiAnswer(question, state) {
       : '';
     var _resp = _aiDispatchNLP(_nlp.intent, c, state, q, t);
     if (_resp) {
-      var _final = _pref + _resp + _suff;
+      // _resp puede ser string o {text, action}
+      var _isAction = _resp && typeof _resp === 'object' && _resp.action;
+      var _text = _isAction ? _resp.text : _resp;
+      var _final = _pref + _text + _suff;
       if (typeof aiEnhancedRespond === 'function') {
         var _enriched = aiEnhancedRespond(_final, _nlp.intent, _nlp.topic, q, c);
         if (_enriched && _enriched.text) {
+          if (_isAction) _enriched.action = _resp.action;
           return _enriched;
         }
       }
+      if (_isAction) return _resp;
       return _final;
     }
   }
