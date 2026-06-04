@@ -311,47 +311,57 @@ function HomeTab(props) {
       )
     ),
 
-    // Control de turno · botón flotante (sin tarjeta que lo encajone)
+    // Control de turno · botón con anillo animado iOS Style
     h(
       'div',
       { className: 'action-stage', style: { marginTop: 0 } },
       h(
-        'button',
-        {
-          className: 'action-btn ' + (activo ? 'action-btn-stop' : 'action-btn-go'),
-          'aria-label': activo ? 'Detener turno' : 'Iniciar turno',
-          onClick: function () {
-            haptic();
-            activo ? props.onFin() : props.onIni();
-          }
-        },
-        activo
-          ? h(
-              'svg',
-              {
-                className: 'action-icon',
-                viewBox: '0 0 24 24',
-                width: 30,
-                height: 30,
-                'aria-hidden': 'true'
-              },
-              h('rect', { x: 6.5, y: 6.5, width: 11, height: 11, rx: 3, fill: 'currentColor' })
-            )
-          : h(
-              'svg',
-              {
-                className: 'action-icon',
-                viewBox: '0 0 24 24',
-                width: 34,
-                height: 34,
-                'aria-hidden': 'true'
-              },
-              h('path', {
-                d: 'M14.5 2.5 L5.5 13 L11 13 L9.5 21.5 L18.5 11 L13 11 Z',
-                fill: 'currentColor'
-              })
-            ),
-        h('div', { className: 'action-lbl' }, activo ? 'Parar' : 'Iniciar')
+        'div',
+        { className: 'action-btn-wrap' },
+        // Anillo exterior pulsante (visible solo con turno activo)
+        h('div', {
+          className: 'action-ring' + (activo ? ' active' : ''),
+          'aria-hidden': 'true'
+        }),
+        // Botón principal
+        h(
+          'button',
+          {
+            className: 'action-btn ' + (activo ? 'action-btn-stop' : 'action-btn-go'),
+            'aria-label': activo ? 'Detener turno' : 'Iniciar turno',
+            onClick: function () {
+              haptic();
+              activo ? props.onFin() : props.onIni();
+            }
+          },
+          activo
+            ? h(
+                'svg',
+                {
+                  className: 'action-icon',
+                  viewBox: '0 0 24 24',
+                  width: 30,
+                  height: 30,
+                  'aria-hidden': 'true'
+                },
+                h('rect', { x: 6.5, y: 6.5, width: 11, height: 11, rx: 3, fill: 'currentColor' })
+              )
+            : h(
+                'svg',
+                {
+                  className: 'action-icon',
+                  viewBox: '0 0 24 24',
+                  width: 34,
+                  height: 34,
+                  'aria-hidden': 'true'
+                },
+                h('path', {
+                  d: 'M14.5 2.5 L5.5 13 L11 13 L9.5 21.5 L18.5 11 L13 11 Z',
+                  fill: 'currentColor'
+                })
+              ),
+          h('div', { className: 'action-lbl' }, activo ? 'Parar' : 'Iniciar')
+        )
       ),
       activo
         ? h(
