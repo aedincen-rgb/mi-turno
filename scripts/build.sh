@@ -99,6 +99,7 @@ JS_FILES=(
   js/modals/asignar-pins.js
   js/modals/usuarios.js
   js/modals/export-report.js
+  js/modals/onboarding.js
 
   # 6. App top-level
   js/app/auth-screen.js

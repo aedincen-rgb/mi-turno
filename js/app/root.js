@@ -388,11 +388,26 @@ function Root() {
     }
     return h(AuthScreen, { onAuth: handleAuth });
   }
-  return h(App, {
-    key: session.uid,
-    session: session,
-    onSignOut: signOut,
-    onSessionPatch: patchSession,
-    introPlayed: introPlayed
+  // ── Onboarding: solo en primer launch ──
+  var ob = useState(function () {
+    return !onboardingDone();
   });
+  var showOnboarding = ob[0], setShowOnboarding = ob[1];
+
+  return h(
+    'div',
+    { style: { display: 'contents' } },
+    h(App, {
+      key: session.uid,
+      session: session,
+      onSignOut: signOut,
+      onSessionPatch: patchSession,
+      introPlayed: introPlayed
+    }),
+    showOnboarding && typeof OnboardingModal === 'function'
+      ? h(OnboardingModal, {
+          onDone: function () { setShowOnboarding(false); }
+        })
+      : null
+  );
 }
