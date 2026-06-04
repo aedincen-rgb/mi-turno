@@ -74,6 +74,7 @@ JS_FILES=(
   js/services/backup.js
   js/services/ai-nlp.js
   js/services/ai.js
+  js/services/ai-help.js
   js/services/export-files.js
   js/services/export-email.js
   js/services/ai-history.js
