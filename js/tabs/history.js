@@ -227,6 +227,11 @@ function HistoryTab(props) {
                     'div',
                     { className: 'td-cell-val' },
                     ini.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
+                  ),
+                  h(
+                    'span',
+                    { className: 'td-cell-date' },
+                    ini.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })
                   )
                 ),
                 h(
@@ -237,6 +242,11 @@ function HistoryTab(props) {
                     'div',
                     { className: 'td-cell-val' },
                     fin.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
+                  ),
+                  h(
+                    'span',
+                    { className: 'td-cell-date' },
+                    fin.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })
                   )
                 ),
                 h(
