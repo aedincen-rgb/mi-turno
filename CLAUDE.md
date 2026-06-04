@@ -162,12 +162,25 @@ Si CI falla, los artifacts (videos del navegador en el momento del bug) están e
 - `_saludoHora(date)` — saludo compartido (AI + Historial)
 - `_aiNombrePersonal({session})` — alias del usuario (perfil o email)
 - `window._mtHardReset()` — nuclear: limpia caches + SW + reload
+- `aiClassifyIntent(text, conv, ctx)` — clasificador NLP (v77)
+- `aiAnalyzeMood(text, ctx)` — detección de tono emocional (v77)
+- `aiResetConv()` — resetea el estado conversacional (v95)
+- `backupExport()` / `backupImport(cb)` — respaldo/restauración (v96)
+- `onboardingDone()` / `onboardingMarkDone()` — flag de tour guiado (v98)
+- `_connState()` → `{ k, t }` — estado real de conexión a Supabase (v84)
+- `revealConn()` — toggle del banner de conexión (v89, DOM directo)
 
 ## Cosas a evitar
 
 - ❌ `let` / `const` en JS de app (sí en `sw.js`/`init.js`)
 - ❌ Arrow functions
 - ❌ JSX
+- ❌ Optional chaining (`?.`) — rompe en Android <80 (v76 fix)
+- ❌ Destructuring de arrays (`var [a,b] = ...`) — usar `var s = ...; var a = s[0]` (v76 fix)
+- ❌ `transform: translateZ(0)` en contenedores de scroll — crea containing block que rompe `position:fixed` (v94 fix)
+- ❌ `contain: paint` en overlays — recorta bottom sheets y banners (v93 fix)
+- ❌ `display: none` en `<input type="file">` — `.click()` no funciona (v91 fix)
+- ❌ `overflow: hidden` en contenedores de avatar con badge flotante (v79 fix)
 - ❌ Crear archivos `*.md` sin pedido explícito
 - ❌ Crear archivos nuevos sin agregarlos a `index.html` Y `sw.js`
 - ❌ Bumpear versión manual (usar `scripts/bump.sh`)
@@ -178,11 +191,36 @@ Si CI falla, los artifacts (videos del navegador en el momento del bug) están e
 - ❌ Poner `aria-label` en un `div` sin `role` (usar `role="img"`/`group`)
 - ❌ Reponer `user-scalable=no` en el viewport (bloquea zoom, WCAG 1.4.4)
 - ❌ Tocar CSS de layout "por accesibilidad" (rompió v67) — solo ARIA + tags semánticos
+- ❌ Usar estado React para overlays que pueden ir a document.body — usar DOM directo (v89 fix)
 
 ## Comandos rápidos
 
 ```bash
 scripts/bump.sh 42 "Label de la release"   # bumpear las 3 versiones
 scripts/check.sh                           # validar sintaxis + version drift
-git push origin claude/funny-hawking-pac1m # branch de desarrollo
+scripts/build.sh                           # build de producción (56 JS → 1)
+git push origin master                     # deploy automático en Vercel
 ```
+
+---
+
+## Lecciones incorporadas (v76–v98)
+
+Registradas durante la sesión del 3 de junio de 2026 con DeepSeek v4 Pro + Copilot en VS Code.
+
+| Versión | Lección |
+|---|---|
+| v76 | Optional chaining (`?.`) y destructuring rompen en Android gama baja. ES5 estricto. |
+| v76 | Auxilio de transporte debe usar constante global (`AUX_TRANSPORTE_2026`), nunca hardcodeado. |
+| v79 | `overflow: hidden` en avatar recorta el badge de cámara. Usar `overflow: visible`. |
+| v84 | El LED de conexión debe reflejar el estado real de Supabase (Realtime status), no solo `navigator.onLine`. |
+| v87 | `position: fixed` no funciona dentro de contenedores con `transform`, `backdrop-filter` o `will-change`. Renderizar overlays como siblings, no como children. |
+| v89 | Para overlays críticos que se rompen con React state + re-render, usar DOM directo (`document.createElement` + `appendChild`). |
+| v91 | `<input type="file">` con `display: none` no responde a `.click()` en muchos navegadores. Usar `position:absolute;opacity:0`. |
+| v91 | Imágenes con `position:absolute;inset:0` dentro de botones necesitan `pointer-events:none`. |
+| v93 | `contain: paint` en overlays recorta bottom sheets y banners. No usar en contenedores de modales. |
+| v94 | `transform: translateZ(0)` en el scroll container crea un containing block que rompe TODOS los `position: fixed` descendientes. **Nunca usar en `.scr`.** |
+| v95 | El estado conversacional del NLP debe resetearse al limpiar el chat (`/limpiar` → `aiResetConv()`). |
+| v96 | El respaldo de datos debe validar estructura (`app === 'mi-turno'`) antes de restaurar. |
+| v97 | Un build script sin tooling (`cat` en orden) reduce 56 requests a 1 sin complejidad. |
+| v98 | El onboarding debe usar `localStorage` flag para no repetirse. Spotlight via `getBoundingClientRect()` + ring animado. |

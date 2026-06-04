@@ -25,7 +25,7 @@ Los trabajadores por turnos en Colombia (salud, seguridad, logística, manufactu
 |---|---|---|
 | UI | React 18 (UMD/CDN) | Sin transpilación; carga directa en el browser |
 | Renderizado | `h = React.createElement` (sin JSX) | Compatible con ES5 sin build step |
-| Estilo | CSS modular (38 archivos) | Un archivo por responsabilidad; edición quirúrgica |
+| Estilo | CSS modular (40 archivos) | Un archivo por responsabilidad; edición quirúrgica |
 | Estado | `localStorage` via `leer()`/`grabar()` | Offline-first; datos disponibles sin red |
 | Backend | Supabase (Auth + Postgres + Realtime) | BaaS gestionado; Realtime para sync cross-device |
 | Deploy | Vercel (auto-deploy desde `master`) | Zero-config; CDN edge global |
@@ -289,6 +289,61 @@ La auditoría (`tests/a11y.mjs`) corre con **Playwright + axe-core**, bloqueando
 
 ---
 
+## Onboarding guiado (v98)
+
+Los nuevos usuarios reciben un **tour de 3 pasos con spotlight** que resalta cada zona clave de la app. Solo en el primer launch; no molesta más.
+
+1. **Configurá tu salario** — spotlight naranja sobre la pestaña Ajustes
+2. **Iniciá tu primer turno** — spotlight verde sobre el botón de acción
+3. **Preguntame lo que quieras** — spotlight azul sobre la pestaña Asistente
+
+Implementado con overlay + spotlight ring animado + tarjeta glass-morphism. Se guarda en `localStorage.mt_onboarding_done`.
+
+---
+
+## Asistente IA con NLP mejorado (v77)
+
+El asistente usa un **motor de comprensión de lenguaje natural 100% offline** (`js/services/ai-nlp.js`) con:
+
+| Técnica | Descripción |
+|---|---|
+| Clasificación por puntaje | 25+ intents con keywords ponderadas. El de mayor score gana |
+| Stemming español | Reduce palabras a raíz ("trabajé" → "trabaj") |
+| Stop words (150+) | Filtra palabras vacías ("el, la, de, que...") |
+| Similitud Jaccard | Matching difuso entre tokens |
+| Levenshtein | Tolerancia a typos en palabras cortas |
+| Sinónimos colombianos | 60+ términos ("plata"="lucas"="dinero", "camello"="trabajo") |
+| Estado multi-turno | Bonus por contexto conversacional |
+| Empatía contextual | Detecta frustración, alegría, preocupación y ajusta el tono |
+
+El sistema clásico (`_aiHas`) sigue como fallback. Cero código eliminado.
+
+---
+
+## Respaldo y restauración de datos (v96)
+
+Sección **Datos** en Ajustes con dos acciones:
+
+- **📦 Respaldar:** exporta todas las claves `mt_*` de `localStorage` a un archivo `.json` descargable. Incluye versión, fecha y metadatos.
+- **📂 Restaurar:** importa desde un `.json` con validación de integridad y confirmación antes de sobrescribir.
+
+Ambos 100% offline. Implementados en `js/services/backup.js`.
+
+---
+
+## Build de producción (v97)
+
+Para entornos de producción con público en redes lentas (3G / Android gama baja), un script sin dependencias que reduce **56 requests JS a 1 solo**:
+
+```bash
+./scripts/build.sh    # genera dist/app.js (643 KB) + assets
+vercel dist/ --prod   # deploy
+```
+
+`dist/app.js` concatena todos los `.js` en el orden exacto de `index.html`. Sin minificación, sin tree-shaking, sin tooling. Misma filosofía del proyecto: simple, auditable, sin magia.
+
+---
+
 ## Estructura del proyecto
 
 ```
@@ -298,26 +353,28 @@ mi-turno-BETA/
 ├── version.json            Fuente de verdad de versión para updates
 ├── manifest.json           PWA manifest (nombre, iconos, tema)
 │
-├── css/                    38 archivos CSS modulares
+├── css/                    40 archivos CSS modulares
 │   ├── base/               Variables, reset, tipografía, backgrounds
 │   ├── layout/             Header, hero-card, progress-bar, botón acción
 │   ├── components/         Buttons, cards, inputs, switches, dashboard, chat
 │   ├── modals/             Overlays, bottom-sheets, time-picker, splash
 │   └── animations/         @keyframes centralizados
 │
-├── js/                     39 archivos JS (ES5 + globals window.*)
+├── js/                     44 archivos JS (ES5 + globals window.*)
 │   ├── config/             react-init, env, viewport-fix, globals
 │   │                       (getHSEM() para Ley 2101/2021 aquí)
 │   ├── utils/              storage, format, haptic, network, festivos,
 │   │                       time (obtenerJornadaMaximaSemanas()),
 │   │                       validation, otp, password-hash, uuid, icons
 │   ├── services/           supabase (con RLS), calculator (con getHSEM()),
-│   │                       data, ai, sync-queue, session-sync,
+│   │                       data, ai, ai-nlp (NLP mejorado), sync-queue,
+│   │                       session-sync, backup (respaldos JSON),
 │   │                       export-files, export-email, ai-history,
 │   │                       ai-greeting, quincena
 │   ├── tabs/               home, dashboard, assistant, history, config
 │   ├── modals/             auth-forms, pin-setup, manage-account,
 │   │                       export-report, email-compose, splash,
+│   │                       onboarding (tour guiado),
 │   │                       diagnostico, asignar-pins, usuarios
 │   └── app/                auth-screen, fast-pin-screen, app-main,
 │                           root, sw-register, init
@@ -333,6 +390,7 @@ mi-turno-BETA/
 │
 └── scripts/
     ├── bump.sh             Sincroniza versión (globals/sw/version.json)
+    ├── build.sh            Build de producción (concatena 56 JS → 1 solo)
     └── check.sh            Valida sintaxis, versiones y precache
 ```
 
@@ -380,6 +438,11 @@ const total = turnos.map(t => t.pago);
 | `getHSEM(fecha)` | fn | Jornada máxima según Ley 2101/2021 por fecha |
 | `obtenerJornadaMaximaSemanas(fechaTurno)` | fn | Helper auditability para Ley 2101 |
 | `_mtHardReset()` | fn | Nuclear: borra caches + SW + recarga |
+| `aiClassifyIntent(text, conv, ctx)` | fn | Clasifica intención del usuario (NLP mejorado v77) |
+| `aiAnalyzeMood(text, ctx)` | fn | Detecta tono emocional (frustrado/positivo/neutral) |
+| `backupExport()` | fn | Exporta localStorage a archivo .json descargable |
+| `backupImport(cb)` | fn | Restaura datos desde archivo .json con validación |
+| `onboardingDone()` | fn | ¿Ya vio el tour guiado? (localStorage flag) |
 
 ---
 
@@ -422,6 +485,9 @@ npm run test:smoke   # rápido, sin browser (includes getHSEM validation)
 npm run test:e2e     # Playwright (requiere: npx playwright install --with-deps chromium webkit)
 npm run test:a11y    # auditoría WCAG 2.1 con axe-core (0 violaciones o falla)
 
+# Build de producción (reduce 56 requests JS a 1)
+./scripts/build.sh   # genera dist/ con app.js único + assets
+
 # Validación completa pre-push
 scripts/check.sh
 ```
@@ -432,8 +498,14 @@ scripts/check.sh
 
 El proyecto hace auto-deploy en **Vercel** al pushear a `master`. No hay paso de build: Vercel sirve los archivos estáticos directamente.
 
+Para despliegues de producción con audiencia real (3G / Android gama baja), se recomienda el build:
+
 ```bash
 git push origin master   # → Vercel detecta el push → deploy en ~30s
+
+# O para producción optimizada:
+./scripts/build.sh       # → concatena 56 JS en 1 solo
+vercel dist/ --prod      # → deploy desde dist/
 ```
 
 El `vercel.json` configura:
