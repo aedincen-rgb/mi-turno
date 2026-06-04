@@ -155,6 +155,10 @@ function App(props) {
   function _connState() {
     var esLocal = !session || session.guest || session.pinOnly;
     if (!navigator.onLine) return { k: 'off', t: 'Sin conexión a internet' };
+    // Sincronizando: hay cambios pendientes en cola
+    if (!esLocal && syncPending > 0 && typeof CLOUD_MODE !== 'undefined' && CLOUD_MODE) {
+      return { k: 'connecting', t: 'Sincronizando ' + syncPending + ' cambio' + (syncPending !== 1 ? 's' : '') + '…' };
+    }
     if (esLocal) return { k: 'on', t: 'Conectado (modo local)' };
     if (typeof CLOUD_MODE === 'undefined' || !CLOUD_MODE)
       return { k: 'off', t: 'Sin conexión a la nube' };
@@ -934,32 +938,19 @@ function App(props) {
         'div',
         { className: 'hdr-l' },
         (function () {
-          // Verde: hay internet y (es usuario local que no necesita cloud,
-          //         o el cliente Supabase está activo).
-          // Rojo: sin internet, o usuario en la nube sin CLOUD_MODE.
-          var esLocal = !session || session.guest || session.pinOnly;
-          var cloudOk = typeof CLOUD_MODE !== 'undefined' && CLOUD_MODE;
-          var conectado = isOnlineStatus && (esLocal || cloudOk);
-          // Hay cambios en cola esperando subir a la nube
-          var sincronizando = conectado && syncPending > 0;
-          var titulo = !isOnlineStatus
-            ? 'Sin conexión a internet'
-            : sincronizando
-              ? 'Sincronizando ' + syncPending + ' cambio' + (syncPending !== 1 ? 's' : '') + '…'
-              : esLocal
-                ? 'Conectado (modo local)'
-                : cloudOk
-                  ? 'Conectado a la nube'
-                  : 'Sin conexión a la nube';
-          var ledCls = sincronizando ? 'syncing' : conectado ? 'on' : 'off';
+          // LED unificado: refleja el estado REAL de Supabase (no solo internet).
+          // Misma fuente que el popover (_connState), para que dot y texto coincidan.
+          var st = _connState();
+          // 'on' = verde · 'off' = rojo · 'connecting' = ámbar pulsante
+          var ledCls = st.k;
           return h(
             'button',
             {
               className: 'hdr-led-btn',
               type: 'button',
               onClick: revealConn,
-              title: titulo,
-              'aria-label': titulo + '. Tocá para ver el estado de conexión.'
+              title: st.t,
+              'aria-label': st.t + '. Tocá para ver el estado de conexión.'
             },
             h('span', { className: 'hdr-led ' + ledCls, 'aria-hidden': 'true' })
           );
