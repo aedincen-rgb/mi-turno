@@ -1,15 +1,17 @@
-# Mi Turno · Estructura del proyecto (v71)
+# Mi Turno · Estructura del proyecto (v98)
 
 PWA de nómina inteligente para trabajadores por turnos en Colombia.
 Sin build tools — vanilla JS ES5, React 18 vía CDN, Supabase como backend.
+Build de producción opcional: `scripts/build.sh` → `dist/app.js` (56 JS → 1 solo).
 
 ---
 
 ## Estadísticas
 
-- **77 archivos** totales: 38 CSS + 39 JS
-- Tamaño promedio JS: ~80–150 líneas por archivo
-- Sin dependencias de build (no Webpack, no Vite, no Babel)
+- **87 archivos** totales: 40 CSS + 44 JS + 3 scripts
+- Tamaño promedio JS: ~80–200 líneas por archivo
+- **Build de producción:** 56 archivos JS concatenados en 1 solo `app.js` (643 KB)
+- Sin dependencias de build en desarrollo (no Webpack, no Vite, no Babel)
 - Un `<script src="...">` por archivo en `index.html` — orden crítico de carga
 
 ---
@@ -30,7 +32,7 @@ mi-turno-BETA/
 ├── icon-512.png            PWA icon splash
 ├── img/logo-mark.svg       Logo SVG
 │
-├── css/                    38 archivos — una responsabilidad por archivo
+├── css/                    40 archivos — una responsabilidad por archivo
 │   │
 │   ├── base/               Fundamentos globales
 │   │   ├── variables.css       Design tokens: colores, radios, sombras, espaciados
@@ -78,12 +80,13 @@ mi-turno-BETA/
 │   │   ├── time-picker.css     Selector de hora tipo drum-roll
 │   │   ├── splash.css          Pantalla de carga inicial animada
 │   │   ├── misc.css            OTP, progress-bars de modales, misc
+│   │   ├── onboarding.css      Tour guiado de 3 pasos con spotlight
 │   │   └── dark-overrides.css  Overrides de modales en modo oscuro
 │   │
 │   └── animations/
 │       └── keyframes.css       Todos los @keyframes del proyecto centralizados
 │
-├── js/                     39 archivos — todos exponen globales en window.*
+├── js/                     44 archivos — todos exponen globales en window.*
 │   │
 │   ├── config.js               Credenciales Supabase (SUPABASE_URL + ANON_KEY)
 │   ├── theme-boot.js           Aplica dark/light-mode antes del primer render
@@ -116,8 +119,10 @@ mi-turno-BETA/
 │   │   ├── quincena.js         Lógica de modo quincena (períodos 1-15 / 16-fin)
 │   │   ├── data.js             cargarDatos(), setTurnos(), setSalario() — fuente de verdad local
 │   │   ├── ai.js               Asistente IA offline: NLP, respuestas, contexto
+│   │   ├── ai-nlp.js           Motor NLP mejorado (v77): clasificación por puntaje, stemming, empatía
 │   │   ├── ai-history.js       Persistencia del historial de chat del asistente
 │   │   ├── ai-greeting.js      Saludo personalizado según hora y contexto del turno
+│   │   ├── backup.js           Respaldo/restauración de datos locales (export/import JSON)
 │   │   ├── export-files.js     exportPDF(), exportExcel() — descarga directa
 │   │   └── export-email.js     enviarReportePorEmail(), exportPDFBase64() — vía Edge Function
 │   │
@@ -140,7 +145,8 @@ mi-turno-BETA/
 │   │   ├── manage-account.js   Cambiar PIN / email / contraseña (patrón OTP local)
 │   │   ├── diagnostico.js      Modal de diagnóstico técnico (solo admin)
 │   │   ├── asignar-pins.js     Asignar PINs a usuarios (solo admin)
-│   │   └── usuarios.js         Gestión de usuarios (solo admin)
+│   │   ├── usuarios.js         Gestión de usuarios (solo admin)
+│   │   └── onboarding.js       Tour guiado de 3 pasos con spotlight (primer launch)
 │   │
 │   └── app/                Inicialización y shell de la aplicación
 │       ├── auth-screen.js      Pantalla login / registro / recuperación
@@ -166,6 +172,7 @@ mi-turno-BETA/
 │
 └── scripts/
     ├── bump.sh                 Sincroniza globals.js + sw.js + version.json en una sola vez
+    ├── build.sh                Build de producción: concatena 56 JS → dist/app.js
     ├── check.sh                Valida sintaxis JS + versiones + precache del SW
     └── setup-hooks.sh          Instala git hooks de husky
 ```
@@ -221,13 +228,31 @@ globals en `window.*` que los siguientes necesitan.
 | PIN no funciona | `js/modals/pin-setup.js` · `js/modals/forgot-pin.js` |
 | Pestaña Inicio visual | `js/tabs/home.js` · `css/layout/hero-card.css` |
 | Pestaña Análisis | `js/tabs/dashboard.js` · `css/components/dashboard-*.css` |
-| Asistente IA responde mal | `js/services/ai.js` |
+| Asistente IA responde mal | `js/services/ai.js` · `js/services/ai-nlp.js` |
+| Asistente IA no entiende ciertas frases | `js/services/ai-nlp.js` (intents, sinónimos, stemming) |
 | Exportar PDF / Excel | `js/services/export-files.js` |
 | Envío por email | `js/services/export-email.js` · `js/modals/export-report.js` · `supabase/functions/send-report/` |
 | App no se actualiza / bucle de reload | `js/app/sw-register.js` · `sw.js` |
 | Estilos en modo oscuro | `css/components/dark-mode-overrides.css` · `css/modals/dark-overrides.css` |
 | Accesibilidad (ARIA, roles, lector de pantalla) | tabs/*.js · app/auth-screen.js · app/fast-pin-screen.js (atributos ARIA inline) |
 | Contraste de texto reprobando AA | `css/base/variables.css` (token `--muted`) |
+| Respaldo/restauración de datos | `js/services/backup.js` · `js/tabs/config.js` (sección Datos) |
+| Onboarding / primer launch | `js/modals/onboarding.js` · `js/app/root.js` |
+| LED de conexión / banner Supabase | `js/app/app-main.js` (revealConn, _connState) · `css/layout/header.css` |
+| Build de producción | `scripts/build.sh` → genera `dist/` |
+
+---
+
+## Build de producción (v97+)
+
+Para reducir los 56 requests JS a 1 solo en producción:
+
+```bash
+./scripts/build.sh    # genera dist/ con app.js único + assets
+cd dist && python3 -m http.server 8000   # probar local
+```
+
+`dist/app.js` concatena todos los `.js` en el orden exacto de `index.html`. Sin minificación, sin tree-shaking — el mismo código, solo que en un archivo. Ideal para deploy en Vercel (`vercel dist/ --prod`) o cualquier CDN.
 
 ---
 
@@ -237,4 +262,14 @@ Desde v71 la app pasa **axe-core con 0 violaciones** en las 6 pantallas. Auditor
 
 ---
 
-*Actualizado en v71 — Junio 2026*
+## Onboarding guiado (v98)
+
+Tour de 3 pasos con spotlight para nuevos usuarios. Se activa automáticamente en el primer launch post-login. Implementado en `js/modals/onboarding.js` con estado en `root.js`. Usa `localStorage.mt_onboarding_done` para no repetirse. Los pasos son:
+
+1. **Configurá tu salario** → spotlight naranja en la pestaña Ajustes
+2. **Iniciá tu primer turno** → spotlight verde en el botón de acción
+3. **Preguntame lo que quieras** → spotlight azul en la pestaña Asistente
+
+---
+
+*Actualizado en v98 — Junio 2026*
