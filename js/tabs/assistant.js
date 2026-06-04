@@ -227,156 +227,82 @@ function AsistenteTab(props) {
     'section',
     { className: 'fadeUp asistente-wrap', 'aria-label': 'Asistente AI' },
 
-    // ═══ HERO iOS STYLE: orb izq + texto der ═══
-    !tieneConversacion &&
+    // ═══ HERO iOS STYLE: orb izq + texto der (siempre visible) ═══
+    h(
+      'div',
+      { className: 'asistente-hero' },
       h(
         'div',
-        { className: 'asistente-hero' },
-        h(
+        { className: 'asistente-hero-orb' },
+        h('div', { className: 'asistente-hero-orb-symbol' }, '✦')
+      ),
+      h(
+        'div',
+        { className: 'asistente-hero-txt' },
+        h('h1', { className: 'asistente-greeting' }, saludo + '.'),
+        h('div', { className: 'asistente-phrase', key: heroIdx }, phrases[heroIdx % phrases.length])
+      )
+    ),
+
+    // ═══ CHAT (visible solo si hay conversación) ═══
+    tieneConversacion
+      ? h(
           'div',
-          { className: 'asistente-hero-orb' },
-          h('div', { className: 'asistente-hero-orb-symbol' }, '✦')
-        ),
-        h(
-          'div',
-          { className: 'asistente-hero-txt' },
-          h('h1', { className: 'asistente-greeting' }, saludo + '.'),
-          h('div', { className: 'asistente-phrase', key: heroIdx }, phrases[heroIdx % phrases.length])
-        )
-      ),
-
-    // ═══ CATEGORÍAS EXPANDIBLES (solo sin conversación) ═══
-    !tieneConversacion &&
-      h(
-        'div',
-        { className: 'asistente-cats' },
-        categorias.map(function (cat) {
-          var abierta = openCat === cat.id;
-          return h(
-            'div',
-            {
-              key: cat.id,
-              className: 'asistente-cat' + (abierta ? ' open' : '')
-            },
-            h(
-              'button',
-              {
-                className: 'asistente-cat-head',
-                'aria-label': cat.titulo + (abierta ? ' (abierto)' : ' (cerrado)'),
-                'aria-expanded': abierta,
-                onClick: function () {
-                  haptic();
-                  setOpenCat(abierta ? null : cat.id);
-                }
-              },
-              h('div', { className: 'asistente-cat-ico' }, cat.icono),
-              h(
+          {
+            className: 'asistente-chat',
+            role: 'region',
+            'aria-live': 'polite',
+            'aria-atomic': 'false',
+            'aria-label': 'Conversación con asistente'
+          },
+          msgs.map(function (m, i) {
+            if (m.role === 'ai') {
+              return h(
                 'div',
-                { className: 'asistente-cat-txt' },
-                h('div', { className: 'asistente-cat-ttl' }, cat.titulo),
-                h('div', { className: 'asistente-cat-dsc' }, cat.desc)
-              ),
-              h('div', { className: 'asistente-cat-chev' }, abierta ? '−' : '+')
-            ),
-            abierta &&
-              h(
-                'div',
-                { className: 'asistente-cat-body' },
-                cat.preguntas.map(function (q, i) {
-                  return h(
-                    'button',
-                    {
-                      key: i,
-                      className: 'asistente-cat-q',
-                      'aria-label': 'Preguntar: ' + q,
-                      onClick: function () {
-                        send(q);
-                      }
-                    },
-                    h('span', { className: 'asistente-cat-q-txt' }, q),
-                    h('span', { className: 'asistente-cat-q-arr' }, '→')
-                  );
-                })
-              )
-          );
-        })
-      ),
-
-    // ═══ DESCRIPCIÓN FIJA (solo sin conversación) ═══
-    !tieneConversacion &&
-      h(
-        'p',
-        { className: 'asistente-about' },
-        'Soy tu asistente. Conozco tus turnos, recargos y movimientos del mes — ' +
-          'pregúntame en tus palabras o explora las categorías.'
-      ),
-
-    // ═══ CONVERSACIÓN ═══
-    tieneConversacion &&
-      h(
-        'div',
-        {
-          className: 'asistente-chat',
-          role: 'region',
-          'aria-live': 'polite',
-          'aria-atomic': 'false',
-          'aria-label': 'Conversación con asistente'
-        },
-        msgs.map(function (m, i) {
-          if (m.role === 'ai') {
+                { key: i, className: 'asistente-msg ai', 'aria-label': 'Mensaje del asistente' },
+                h('div', { className: 'asistente-msg-orb' }, '✦'),
+                h(
+                  'div',
+                  { className: 'asistente-col' },
+                  h('div', {
+                    className: 'asistente-bubble ai',
+                    dangerouslySetInnerHTML: { __html: _aiFormat(m.content) }
+                  }),
+                  m.action && m.action.type === 'email_compose'
+                    ? h(EmailComposeCard, {
+                        data: m.action.data,
+                        parent: props,
+                        onResolved: function (r) { resolveAction(i, r); }
+                      })
+                    : null,
+                  m.actionResult
+                    ? h('div', { className: 'email-result-badge ' + (m.actionResult.ok ? 'ok' : 'bad') }, m.actionResult.msg)
+                    : null
+                )
+              );
+            }
             return h(
               'div',
-              { key: i, className: 'asistente-msg ai', 'aria-label': 'Mensaje del asistente' },
+              { key: i, className: 'asistente-msg user' },
+              h('div', { className: 'asistente-bubble user' }, m.content)
+            );
+          }),
+          busy &&
+            h(
+              'div',
+              { className: 'asistente-msg ai' },
               h('div', { className: 'asistente-msg-orb' }, '✦'),
               h(
                 'div',
-                { className: 'asistente-col' },
-                h('div', {
-                  className: 'asistente-bubble ai',
-                  dangerouslySetInnerHTML: { __html: _aiFormat(m.content) }
-                }),
-                m.action && m.action.type === 'email_compose'
-                  ? h(EmailComposeCard, {
-                      data: m.action.data,
-                      parent: props,
-                      onResolved: function (r) {
-                        resolveAction(i, r);
-                      }
-                    })
-                  : null,
-                m.actionResult
-                  ? h(
-                      'div',
-                      {
-                        className: 'email-result-badge ' + (m.actionResult.ok ? 'ok' : 'bad')
-                      },
-                      m.actionResult.msg
-                    )
-                  : null
+                { className: 'asistente-bubble ai typing' },
+                h('span', { className: 'asistente-dot' }),
+                h('span', { className: 'asistente-dot' }),
+                h('span', { className: 'asistente-dot' })
               )
-            );
-          }
-          return h(
-            'div',
-            { key: i, className: 'asistente-msg user' },
-            h('div', { className: 'asistente-bubble user' }, m.content)
-          );
-        }),
-        busy &&
-          h(
-            'div',
-            { className: 'asistente-msg ai' },
-            h('div', { className: 'asistente-msg-orb' }, '✦'),
-            h(
-              'div',
-              { className: 'asistente-bubble ai typing' },
-              h('span', { className: 'asistente-dot' }),
-              h('span', { className: 'asistente-dot' }),
-              h('span', { className: 'asistente-dot' })
-            )
-          ),
-        h('div', { ref: endRef })
-      ),
+            ),
+          h('div', { ref: endRef })
+        )
+      : null,
 
     // ═══ COMPOSER ═══
     h(
@@ -388,9 +314,7 @@ function AsistenteTab(props) {
         'aria-label': 'Tu mensaje al asistente',
         placeholder: tieneConversacion ? 'Sigue preguntando…' : 'O escríbeme directamente…',
         value: input,
-        onChange: function (e) {
-          setInput(e.target.value);
-        },
+        onChange: function (e) { setInput(e.target.value); },
         onKeyDown: function (e) {
           if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
@@ -403,9 +327,7 @@ function AsistenteTab(props) {
         'button',
         {
           className: 'asistente-send' + (input.trim() && !busy ? ' active' : ''),
-          onClick: function () {
-            send();
-          },
+          onClick: function () { send(); },
           disabled: !input.trim() || busy,
           'aria-label': 'Enviar'
         },
@@ -419,6 +341,70 @@ function AsistenteTab(props) {
         'button',
         { className: 'asistente-reset', onClick: clearChat, 'aria-label': 'Nueva conversación' },
         'Nueva conversación'
-      )
+      ),
+
+    // ═══ CATEGORÍAS PRECARGADAS (siempre visibles, al final) ═══
+    h(
+      'div',
+      { className: 'asistente-cats' },
+      categorias.map(function (cat) {
+        var abierta = openCat === cat.id;
+        return h(
+          'div',
+          {
+            key: cat.id,
+            className: 'asistente-cat' + (abierta ? ' open' : '')
+          },
+          h(
+            'button',
+            {
+              className: 'asistente-cat-head',
+              'aria-label': cat.titulo + (abierta ? ' (abierto)' : ' (cerrado)'),
+              'aria-expanded': abierta,
+              onClick: function () {
+                haptic();
+                setOpenCat(abierta ? null : cat.id);
+              }
+            },
+            h('div', { className: 'asistente-cat-ico' }, cat.icono),
+            h(
+              'div',
+              { className: 'asistente-cat-txt' },
+              h('div', { className: 'asistente-cat-ttl' }, cat.titulo),
+              h('div', { className: 'asistente-cat-dsc' }, cat.desc)
+            ),
+            h('div', { className: 'asistente-cat-chev' }, abierta ? '−' : '+')
+          ),
+          abierta &&
+            h(
+              'div',
+              { className: 'asistente-cat-body' },
+              cat.preguntas.map(function (q, i) {
+                return h(
+                  'button',
+                  {
+                    key: i,
+                    className: 'asistente-cat-q',
+                    'aria-label': 'Preguntar: ' + q,
+                    onClick: function () {
+                      send(q);
+                    }
+                  },
+                  h('span', { className: 'asistente-cat-q-txt' }, q),
+                  h('span', { className: 'asistente-cat-q-arr' }, '→')
+                );
+              })
+            )
+        );
+      })
+    ),
+
+    // ═══ ABOUT (siempre visible, abajo del todo) ═══
+    h(
+      'p',
+      { className: 'asistente-about' },
+      'Soy tu asistente. Conozco tus turnos, recargos y movimientos del mes — ' +
+        'pregúntame en tus palabras o explorá las categorías.'
+    )
   );
 }
