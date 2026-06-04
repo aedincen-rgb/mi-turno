@@ -276,7 +276,7 @@
   pointer-events: none;
   z-index: 120;
   transform-origin: top left;
-  animation: ledPopInOut 2.6s var(--ios-ease) forwards;
+  animation: ledPopInOut 4.5s var(--ios-ease) forwards;
 }
 [data-theme='dark'] .hdr-led-pop {
   background: var(--glass-mid);
@@ -307,18 +307,18 @@
 @keyframes ledPopInOut {
   0% {
     opacity: 0;
-    transform: translateY(-4px) scale(0.96);
+    transform: translateY(-3px) scale(0.97);
   }
-  12% {
+  8% {
     opacity: 1;
     transform: translateY(0) scale(1);
   }
-  78% {
+  75% {
     opacity: 1;
     transform: translateY(0) scale(1);
   }
   100% {
     opacity: 0;
-    transform: translateY(-3px) scale(0.98);
+    transform: translateY(-2px) scale(0.98);
   }
 }

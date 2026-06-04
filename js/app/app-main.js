@@ -176,7 +176,7 @@ function App(props) {
     if (ledPopT.current) clearTimeout(ledPopT.current);
     ledPopT.current = setTimeout(function () {
       setLedPop(null);
-    }, 2600);
+    }, 4500);
   }
 
   var scrRef = useRef(null);
