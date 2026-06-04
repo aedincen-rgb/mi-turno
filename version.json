@@ -1,4 +1,4 @@
 {
-  "v": "v78",
-  "label": "UX perfil: indicadores visuales de foto y nombre rediseñados para ser intuitivos y visibles."
+  "v": "v79",
+  "label": "Fix: badge de foto ahora completamente visible (overflow:hidden → overflow:visible en avatar)"
 }
