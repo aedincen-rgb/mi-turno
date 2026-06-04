@@ -457,23 +457,36 @@ function AsistenteTab(props) {
                   setListening(false);
                   return;
                 }
-                var SR = SpeechRecognition || webkitSpeechRecognition;
-                var rec = new SR();
-                rec.lang = 'es-CO';
-                rec.interimResults = false;
-                rec.continuous = false;
-                rec.onresult = function (e) {
-                  var text = e.results[0][0].transcript;
-                  setInput(text);
+                var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+                if (!SR) {
+                  alert('Reconocimiento de voz no disponible en este navegador. Probá con Chrome o Edge.');
+                  return;
+                }
+                try {
+                  var rec = new SR();
+                  rec.lang = 'es-CO';
+                  rec.interimResults = false;
+                  rec.continuous = false;
+                  rec.onresult = function (e) {
+                    var text = e.results[0][0].transcript;
+                    setInput(text);
+                    setListening(false);
+                    setTimeout(function () { send(text); }, 400);
+                  };
+                  rec.onerror = function (e) {
+                    setListening(false);
+                    if (e.error === 'not-allowed') {
+                      alert('Permiso de micrófono denegado. Concedelo en Configuración del navegador.');
+                    }
+                  };
+                  rec.onend = function () { setListening(false); };
+                  rec.start();
+                  setListening(true);
+                  recognitionRef.current = rec;
+                } catch (err) {
                   setListening(false);
-                  // Auto-enviar después de breve pausa
-                  setTimeout(function () { send(text); }, 400);
-                };
-                rec.onerror = function () { setListening(false); };
-                rec.onend = function () { setListening(false); };
-                rec.start();
-                setListening(true);
-                recognitionRef.current = rec;
+                  alert('No se pudo iniciar el micrófono: ' + (err.message || 'error desconocido'));
+                }
               },
               disabled: busy,
               'aria-label': listening ? 'Escuchando...' : 'Hablar por voz',
