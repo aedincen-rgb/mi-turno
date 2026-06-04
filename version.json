@@ -1,4 +1,4 @@
 {
-  "v": "v109",
-  "label": "Landing page: miturno.one ahora muestra presentación. App en /app."
+  "v": "v110",
+  "label": "Landing: fix Vercel cache + espacio para video demo."
 }
