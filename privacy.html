@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Política de Privacidad · Mi Turno</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 720px; margin: 0 auto; padding: 40px 24px; background: #f5f7fb; color: #1c1c1e; line-height: 1.7; }
+  h1 { font-size: 28px; font-weight: 800; letter-spacing: -0.5px; }
+  h2 { font-size: 20px; font-weight: 700; margin-top: 32px; }
+  p, li { font-size: 15px; color: #3a3a3c; }
+  .last-updated { font-size: 12px; color: #8e8e93; margin-top: 40px; }
+  @media (prefers-color-scheme: dark) {
+    body { background: #0a0c12; color: #e5e5ea; }
+    p, li { color: #aeaeb2; }
+  }
+</style>
+</head>
+<body>
+
+<h1>Política de Privacidad</h1>
+<p><strong>Mi Turno</strong> — Calculadora de nómina colombiana para trabajadores por turnos.</p>
+
+<h2>1. Datos que recopilamos</h2>
+<p><strong>Mi Turno no recopila, almacena ni transmite datos personales a terceros.</strong> Toda la información que ingresás en la aplicación permanece exclusivamente en tu dispositivo.</p>
+<ul>
+  <li><strong>Datos de turnos:</strong> horas de entrada/salida, duración, ingresos calculados. Se almacenan en localStorage (memoria local de tu navegador).</li>
+  <li><strong>Foto de perfil y nombre:</strong> se guardan únicamente en tu dispositivo.</li>
+  <li><strong>Salario base:</strong> se almacena localmente para realizar los cálculos de nómina.</li>
+</ul>
+
+<h2>2. Uso de Supabase (nube opcional)</h2>
+<p>Si decidís crear una cuenta, tus datos de turnos y salario se sincronizan con <strong>Supabase</strong>, un servicio de backend seguro que actúa como nube personal. Esta sincronización te permite acceder a tus datos desde múltiples dispositivos.</p>
+<ul>
+  <li>La autenticación se realiza mediante correo electrónico y contraseña, gestionados por Supabase Auth.</li>
+  <li>Tus datos están protegidos por Row Level Security (RLS): solo vos podés ver y modificar tu información.</li>
+  <li>No compartimos, vendemos ni cedemos tus datos a terceros.</li>
+</ul>
+
+<h2>3. Datos que NO recopilamos</h2>
+<p>Mi Turno <strong>no</strong> recopila:</p>
+<ul>
+  <li>Ubicación GPS</li>
+  <li>Contactos de tu dispositivo</li>
+  <li>Historial de navegación</li>
+  <li>Identificadores de publicidad</li>
+  <li>Cookies de seguimiento</li>
+</ul>
+
+<h2>4. Modo offline</h2>
+<p>La aplicación funciona completamente sin conexión a internet. Todos los cálculos de nómina, recargos y proyecciones se procesan localmente en tu dispositivo. La IA del asistente es 100% local: ninguna de tus preguntas se envía a servidores externos.</p>
+
+<h2>5. Respaldo de datos</h2>
+<p>La app incluye una función de respaldo que te permite exportar tus datos a un archivo JSON. Este archivo es tuyo y podés almacenarlo donde desees. La app también permite restaurar datos desde un respaldo anterior.</p>
+
+<h2>6. Permisos del dispositivo</h2>
+<p>Mi Turno solicita los siguientes permisos, siempre con tu consentimiento:</p>
+<ul>
+  <li><strong>Almacenamiento / Archivos:</strong> para exportar reportes (PDF/Excel), respaldos (JSON) y seleccionar foto de perfil.</li>
+  <li><strong>Vibración:</strong> para feedback háptico al interactuar con botones (puede desactivarse desde los ajustes del dispositivo).</li>
+  <li><strong>Internet:</strong> solo para sincronización con Supabase (opcional) y descarga de actualizaciones.</li>
+</ul>
+
+<h2>7. Seguridad</h2>
+<p>Implementamos las siguientes medidas de seguridad:</p>
+<ul>
+  <li>Conexión HTTPS para todas las comunicaciones con Supabase.</li>
+  <li>Row Level Security (RLS) en la base de datos: cada usuario solo accede a sus propios datos.</li>
+  <li>PIN de acceso local para proteger la entrada a la aplicación.</li>
+  <li>Contraseñas hasheadas con PBKDF2-SHA256 + salt aleatorio.</li>
+</ul>
+
+<h2>8. Cambios en esta política</h2>
+<p>Nos reservamos el derecho de actualizar esta política de privacidad. Los cambios se publicarán en esta misma página y entrarán en vigor inmediatamente.</p>
+
+<h2>9. Contacto</h2>
+<p>Si tenés preguntas sobre esta política de privacidad, escribinos a:<br>
+📧 <strong>aedincen@gmail.com</strong></p>
+
+<p class="last-updated">Última actualización: 3 de junio de 2026 · Versión 1.0</p>
+
+</body>
+</html>

@@ -21,6 +21,7 @@ const appResources = [
   './manifest.json',
   './sw.js',
   './version.json',
+  './privacy.html',
   './sitemap.xml',
   './robots.txt',
   './icon-180.png',
