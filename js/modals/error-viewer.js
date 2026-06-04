@@ -4,13 +4,20 @@
 // ════════════════════════════════════════════════════════════════
 
 function ErrorViewerModal(props) {
-  var [errors, setErrors] = useState(getErrors());
-  var [selectedError, setSelectedError] = useState(null);
-  var [sourceCode, setSourceCode] = useState(null);
-  var [loadingSource, setLoadingSource] = useState(false);
-  var [sourceError, setSourceError] = useState(null);
-  var [devQuery, setDevQuery] = useState('');
-  var [aiAdvice, setAiAdvice] = useState(null);
+  var s1 = useState(getErrors());
+  var errors = s1[0], setErrors = s1[1];
+  var s2 = useState(null);
+  var selectedError = s2[0], setSelectedError = s2[1];
+  var s3 = useState(null);
+  var sourceCode = s3[0], setSourceCode = s3[1];
+  var s4 = useState(false);
+  var loadingSource = s4[0], setLoadingSource = s4[1];
+  var s5 = useState(null);
+  var sourceError = s5[0], setSourceError = s5[1];
+  var s6 = useState('');
+  var devQuery = s6[0], setDevQuery = s6[1];
+  var s7 = useState(null);
+  var aiAdvice = s7[0], setAiAdvice = s7[1];
 
   var scrollRef = useRef(null);
 
@@ -20,7 +27,7 @@ function ErrorViewerModal(props) {
       function updateErrors(newErrors) {
         setErrors(newErrors);
         // Si el error seleccionado ya no existe, deseleccionarlo
-        if (selectedError && !newErrors.some(e => e.id === selectedError.id)) {
+        if (selectedError && !newErrors.some(function(e) { return e.id === selectedError.id; })) {
           setSelectedError(null);
           setSourceCode(null);
         }
@@ -87,7 +94,7 @@ function ErrorViewerModal(props) {
     function () {
       if (sourceCode && selectedError && selectedError.lineno > 0 && scrollRef.current) {
         // Pequeño retraso para asegurar que el DOM se haya renderizado
-        setTimeout(() => {
+        setTimeout(function() {
           var lineElement = scrollRef.current.querySelector('.code-line-' + selectedError.lineno);
           if (lineElement) {
             lineElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -225,8 +232,8 @@ function ErrorViewerModal(props) {
           className: 'input',
           placeholder: 'Ej: ¿Donde cambio el emoji del inicio?',
           value: devQuery,
-          onChange: e => setDevQuery(e.target.value),
-          onKeyDown: e => e.key === 'Enter' && handleAskAI(),
+          onChange: function(e) { return setDevQuery(e.target.value); },
+          onKeyDown: function(e) { return e.key === 'Enter' && handleAskAI(); },
           style: { fontSize: 12 }
         }),
         h(

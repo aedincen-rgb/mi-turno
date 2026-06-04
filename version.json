@@ -1,4 +1,4 @@
 {
-  "v": "v75",
-  "label": "Sync robusto: FastPin restaura sesion real (setSession) + cola con auth-gate + convergencia multi-device"
+  "v": "v76",
+  "label": "ES5 compliance: remove optional chaining (?.), destructuring & arrow functions. Refactor break logic. Update auxilio transporte to 2026 constant."
 }

@@ -37,15 +37,15 @@ function DashboardTab(props) {
             }, dias[0])
           : null;
       var festMins =
-        (calc.bd.diurnaFest?.mins || 0) +
-        (calc.bd.noctFest?.mins || 0) +
-        (calc.bd.extraFestDiur?.mins || 0) +
-        (calc.bd.extraFestNoct?.mins || 0);
+        ((calc.bd.diurnaFest || {}).mins || 0) +
+        ((calc.bd.noctFest || {}).mins || 0) +
+        ((calc.bd.extraFestDiur || {}).mins || 0) +
+        ((calc.bd.extraFestNoct || {}).mins || 0);
       var noctMins =
-        (calc.bd.noctOrd?.mins || 0) +
-        (calc.bd.extraNoct?.mins || 0) +
-        (calc.bd.noctFest?.mins || 0) +
-        (calc.bd.extraFestNoct?.mins || 0);
+        ((calc.bd.noctOrd || {}).mins || 0) +
+        ((calc.bd.extraNoct || {}).mins || 0) +
+        ((calc.bd.noctFest || {}).mins || 0) +
+        ((calc.bd.extraFestNoct || {}).mins || 0);
       var proy = diaActual > 0 ? (totalCOP / diaActual) * diasMes : 0;
       var pctSalario = (totalCOP / salario) * 100;
       return {
