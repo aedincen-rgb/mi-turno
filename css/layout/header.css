@@ -330,10 +330,10 @@
 
 .conn-banner {
   position: fixed;
-  top: 56px;
-  left: 16px;
-  right: 16px;
-  z-index: 200;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
   display: flex;
   justify-content: center;
   pointer-events: none;

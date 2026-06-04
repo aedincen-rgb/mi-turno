@@ -1,4 +1,4 @@
 {
-  "v": "v91",
-  "label": "Fix: foto de perfil tappable. Input file click() + pointer-events:none en img."
+  "v": "v92",
+  "label": "Banner: z-index 9999 + top-center. Imposible de perder."
 }
