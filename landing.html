@@ -140,6 +140,17 @@
 </head>
 <body>
 
+<script>
+  // Si ya inició sesión antes (PWA o navegador), ir directo a la app
+  (function(){
+    try {
+      var sess = localStorage.getItem('mt_sess');
+      var lastUser = localStorage.getItem('mt_last_user');
+      if (sess || lastUser) { window.location.replace('/app'); }
+    } catch(_) {}
+  })();
+</script>
+
 <div class="hero">
   <div class="hero-logo">
     <img src="img/logo-mark.svg" alt="Mi Turno" draggable="false">

@@ -2,7 +2,7 @@
   "name": "Mi Turno",
   "short_name": "Mi Turno",
   "description": "Nómina inteligente para Colombia",
-  "start_url": "/",
+  "start_url": "/app",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
