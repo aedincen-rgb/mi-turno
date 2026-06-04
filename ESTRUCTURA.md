@@ -1,14 +1,25 @@
-# Mi Turno · Estructura del proyecto (v98)
+# Mi Turno · Estructura del proyecto (v112)
 
 PWA de nómina inteligente para trabajadores por turnos en Colombia.
 Sin build tools — vanilla JS ES5, React 18 vía CDN, Supabase como backend.
 Build de producción opcional: `scripts/build.sh` → `dist/app.js` (56 JS → 1 solo).
 
+## Arquitectura de archivos (v112)
+
+La raíz del proyecto tiene dos puntos de entrada:
+
+| Archivo | Rol | Servido en |
+|---|---|---|
+| `index.html` | **Landing page** (presentación) | `/` (raíz, por defecto Vercel) |
+| `app.html` | **Aplicación** (login + tabs) | `/app` y `/*` (vía rewrite en vercel.json) |
+| `landing.html` | Respaldo de la landing (sin redirect script) | Acceso directo si es necesario |
+| `privacy.html` | Política de privacidad (requisito Google Play) | `/privacy.html` |
+
 ---
 
 ## Estadísticas
 
-- **87 archivos** totales: 40 CSS + 44 JS + 3 scripts
+- **90+ archivos** totales: 40 CSS + 44 JS + 3 HTML principales + scripts
 - Tamaño promedio JS: ~80–200 líneas por archivo
 - **Build de producción:** 56 archivos JS concatenados en 1 solo `app.js` (643 KB)
 - Sin dependencias de build en desarrollo (no Webpack, no Vite, no Babel)
@@ -21,11 +32,14 @@ Build de producción opcional: `scripts/build.sh` → `dist/app.js` (56 JS → 1
 ```
 mi-turno-BETA/
 │
-├── index.html              Punto de entrada — lista todos los scripts y estilos
+├── index.html              Landing page · presentación de la app (v109–v112)
+├── app.html                Punto de entrada de la aplicación (login + tabs)
+├── landing.html            Respaldo de la landing page
+├── privacy.html            Política de privacidad (requisito Google Play)
 ├── sw.js                   Service Worker (split cache SHELL/CDN + Navigation Preload)
 ├── version.json            { "v": "vNN" } — detectado por SW para updates silenciosos
-├── manifest.json           PWA: nombre, iconos, theme-color, display: standalone
-├── vercel.json             Headers de seguridad + cache headers + rewrite SPA
+├── manifest.json           PWA: nombre, iconos, theme-color, start_url=/app
+├── vercel.json             Headers de seguridad + cache + rewrites (/app → app.html)
 │
 ├── icon-180.png            Apple Touch Icon
 ├── icon-192.png            PWA icon
