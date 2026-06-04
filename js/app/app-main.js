@@ -202,15 +202,16 @@ function App(props) {
     var title = st.k === 'on' ? 'Conectado' : st.k === 'off' ? 'Sin conexión' : 'Conectando';
     var dotColor = st.k === 'on' ? '#34c759' : st.k === 'off' ? '#ff3b30' : '#ff9500';
 
-    // Banner con estilos inline — garantizado, sin depender de CSS externo
+    // Banner con estilos inline — garantizado, con prefijos iOS
     var wrap = document.createElement('div');
     wrap.setAttribute('role', 'status');
     wrap.setAttribute('aria-live', 'polite');
-    wrap.style.cssText = 'position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:99999;display:flex;justify-content:center;pointer-events:none;animation:connBannerIn 4.5s ease forwards;';
+    wrap.style.cssText = 'position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:99999;display:flex;justify-content:center;pointer-events:none;opacity:0;transition:opacity 0.35s ease;';
 
     var card = document.createElement('div');
     card.style.cssText = 'display:flex;align-items:center;gap:12px;padding:14px 18px;border-radius:18px;' +
-      'background:rgba(255,255,255,0.72);backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);' +
+      'background:rgba(255,255,255,0.72);' +
+      '-webkit-backdrop-filter:blur(28px);backdrop-filter:blur(28px);' +
       'border:1px solid rgba(0,0,0,0.06);box-shadow:0 8px 32px rgba(0,0,0,0.12);max-width:380px;';
 
     var dot = document.createElement('span');
@@ -234,6 +235,11 @@ function App(props) {
     card.appendChild(txt);
     wrap.appendChild(card);
     document.body.appendChild(wrap);
+
+    // Fade-in via RAF (funciona en iOS, a diferencia de CSS animation inline)
+    requestAnimationFrame(function () {
+      wrap.style.opacity = '1';
+    });
 
     _connBannerEl = wrap;
     _connBannerT = setTimeout(_dismissBanner, 4500);

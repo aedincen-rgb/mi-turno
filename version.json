@@ -1,4 +1,4 @@
 {
-  "v": "v104",
-  "label": "Tabs: padding 8→10px para igualar proporción con header. Más pill-shaped."
+  "v": "v105",
+  "label": "Fix banner en iOS: -webkit-backdrop-filter + RAF fade-in."
 }
