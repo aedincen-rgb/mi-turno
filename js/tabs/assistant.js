@@ -278,6 +278,29 @@ function AsistenteTab(props) {
                     className: 'asistente-bubble ai',
                     dangerouslySetInnerHTML: { __html: _aiFormat(m.content) }
                   }),
+                  // Botón de voz: leer respuesta en voz alta (Web Speech API)
+                  typeof speechSynthesis !== 'undefined'
+                    ? h(
+                        'button',
+                        {
+                          className: 'asistente-speak-btn',
+                          onClick: function () {
+                            haptic();
+                            // Cancelar cualquier lectura previa
+                            speechSynthesis.cancel();
+                            var utter = new SpeechSynthesisUtterance(
+                              m.content.replace(/\*\*|__|\*|`|📊|💰|📅|🎯|🔮|🚀|🤖|✨|📖|⚖️|📡|📱|♿|💡|🔗|📧|⚠️|✅|🔥|📋|⏱|💎|📤|💬/g, '')
+                            );
+                            utter.lang = 'es-CO';
+                            utter.rate = 1.1;
+                            speechSynthesis.speak(utter);
+                          },
+                          'aria-label': 'Escuchar respuesta',
+                          title: 'Escuchar'
+                        },
+                        '🔊'
+                      )
+                    : null,
                   m.action && m.action.type === 'email_compose'
                     ? h(EmailComposeCard, {
                         data: m.action.data,
