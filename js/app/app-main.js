@@ -139,23 +139,15 @@ function App(props) {
     [uid]
   );
 
-  // ── LED tappable: revela el estado REAL de conexión a Supabase ──
-  // Microinteracción sutil (sin botones nuevos): al tocar el LED aparece
-  // una pill translúcida que se desvanece sola. El LED de color sigue
-  // mirando navigator.onLine; esto entrega el estado fino de la nube.
-  var lpop = useState(null);
-  var ledPop = lpop[0],
-    setLedPop = lpop[1];
-  var ledPopT = useRef(null);
-  useEffect(function () {
-    return function () {
-      if (ledPopT.current) clearTimeout(ledPopT.current);
-    };
-  }, []);
+  // ── BANNER DE CONEXIÓN · DOM directo (seguro, sin React) ──
+  // Inyecta/remueve un elemento en document.body.
+  // Cero riesgo de congelar la app o romper scroll.
+  var _connBannerEl = null;
+  var _connBannerT = null;
+
   function _connState() {
     var esLocal = !session || session.guest || session.pinOnly;
     if (!navigator.onLine) return { k: 'off', t: 'Sin conexión a internet' };
-    // Sincronizando: hay cambios pendientes en cola
     if (!esLocal && syncPending > 0 && typeof CLOUD_MODE !== 'undefined' && CLOUD_MODE) {
       return { k: 'connecting', t: 'Sincronizando ' + syncPending + ' cambio' + (syncPending !== 1 ? 's' : '') + '…' };
     }
@@ -168,20 +160,64 @@ function App(props) {
       return { k: 'off', t: 'Sin conexión a Supabase' };
     return { k: 'connecting', t: 'Conectando a Supabase…' };
   }
+
+  function _dismissBanner() {
+    if (_connBannerT) { clearTimeout(_connBannerT); _connBannerT = null; }
+    if (_connBannerEl && _connBannerEl.parentNode) {
+      _connBannerEl.parentNode.removeChild(_connBannerEl);
+    }
+    _connBannerEl = null;
+  }
+
   function revealConn() {
     try { haptic && haptic(); } catch (_) {}
-    // Toggle: si ya está visible, cerrar; si no, mostrar
-    if (ledPop) {
-      if (ledPopT.current) clearTimeout(ledPopT.current);
-      setLedPop(null);
-      return;
-    }
-    setLedPop(_connState());
-    if (ledPopT.current) clearTimeout(ledPopT.current);
-    ledPopT.current = setTimeout(function () {
-      setLedPop(null);
-    }, 4500);
+    // Toggle: si ya está visible, cerrar
+    if (_connBannerEl) { _dismissBanner(); return; }
+
+    var st = _connState();
+    var title = st.k === 'on' ? 'Conectado' : st.k === 'off' ? 'Sin conexión' : 'Conectando';
+
+    // Crear banner via DOM (sin tocar React)
+    var wrap = document.createElement('div');
+    wrap.className = 'conn-banner';
+    wrap.setAttribute('role', 'status');
+    wrap.setAttribute('aria-live', 'polite');
+
+    var card = document.createElement('div');
+    card.className = 'conn-banner-card ' + st.k;
+
+    var dot = document.createElement('span');
+    dot.className = 'conn-banner-dot';
+    dot.setAttribute('aria-hidden', 'true');
+
+    var txt = document.createElement('div');
+    txt.className = 'conn-banner-txt';
+
+    var ttl = document.createElement('span');
+    ttl.className = 'conn-banner-title';
+    ttl.textContent = title;
+
+    var sub = document.createElement('span');
+    sub.className = 'conn-banner-sub';
+    sub.textContent = st.t;
+
+    txt.appendChild(ttl);
+    txt.appendChild(sub);
+    card.appendChild(dot);
+    card.appendChild(txt);
+    wrap.appendChild(card);
+    document.body.appendChild(wrap);
+
+    _connBannerEl = wrap;
+    _connBannerT = setTimeout(_dismissBanner, 4500);
   }
+
+  // Limpiar banner al desmontar el componente
+  useEffect(function () {
+    return function () {
+      _dismissBanner();
+    };
+  }, []);
 
   var scrRef = useRef(null);
 
@@ -1041,32 +1077,6 @@ function App(props) {
         )
       )
     ),
-
-    // ═══ BANNER DE CONEXIÓN (fuera del header, fixed real) ═══
-    ledPop
-      ? h(
-          'div',
-          {
-            className: 'conn-banner',
-            role: 'status',
-            'aria-live': 'polite'
-          },
-          h(
-            'div',
-            { className: 'conn-banner-card ' + ledPop.k },
-            h('span', { className: 'conn-banner-dot', 'aria-hidden': 'true' }),
-            h(
-              'div',
-              { className: 'conn-banner-txt' },
-              h('span', { className: 'conn-banner-title' },
-                ledPop.k === 'on' ? 'Conectado' :
-                ledPop.k === 'off' ? 'Sin conexión' :
-                'Conectando'),
-              h('span', { className: 'conn-banner-sub' }, ledPop.t)
-            )
-          )
-        )
-      : null,
 
     h(
       'div',

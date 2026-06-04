@@ -1,4 +1,4 @@
 {
-  "v": "v88",
-  "label": "Banner conexión: toggle tap + accesible desde Ajustes (estado sync)"
+  "v": "v89",
+  "label": "Banner conexión: DOM directo. Cero riesgo de congelar app o romper scroll."
 }
