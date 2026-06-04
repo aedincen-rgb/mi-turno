@@ -246,6 +246,26 @@ function _aiExpandir(original, intent, userContext) {
     addon += '\n\n' + aiRandomPick(_aiColombianismo.encouragements);
   }
 
+  // Default: siempre agregar algo útil si la respuesta es muy corta
+  if (!addon && original.length < 300) {
+    var defaults = [
+      '\n\n💡 ¿Sabías que podés preguntarme "¿cómo voy vs el mes pasado?" o "¿cuál fue mi mejor día?"? Soy más útil de lo que parezco.',
+      '\n\n📊 Tip: En la pestaña Análisis tenés gráficos, KPIs y proyección. Y ahora también botones para compartir por WhatsApp.',
+      '\n\n🔮 Probá preguntarme "¿cuánto ganaría si trabajo 4 horas extra?" — te hago la simulación al instante.',
+      '\n\n💎 Dato curioso: esta app no envía tus datos a ningún servidor. Todo se procesa acá, en tu dispositivo. 100% privado.',
+      '\n\n🧘 La ley colombiana dice que después de 6 días trabajados, tenés derecho a uno de descanso. Es tu derecho, no un favor.'
+    ];
+    if (c && c.totalMins > 0) {
+      defaults.push('\n\n📈 Vas ' + (c.diasTrab || 0) + ' turnos este mes. Cada uno es un ladrillo más en tu pared. ¡Seguí construyendo!');
+    }
+    addon += defaults[Math.floor(Math.random() * defaults.length)];
+  }
+
+  // Cierre colombiano para respuestas extendidas
+  if (addon && Math.random() < 0.3) {
+    addon += '\n\n' + aiRandomPick(_aiColombianismo.closings);
+  }
+
   return original + addon;
 }
 

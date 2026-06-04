@@ -341,6 +341,8 @@ function AsistenteTab(props) {
                               // Unidades: que el TTS lea correctamente
                               .replace(/(\d+)mins\b/g, '$1 minutos')
                               .replace(/\bmins\b/g, 'minutos')
+                              .replace(/(\d+)m\b/g, '$1 minutos')
+                              .replace(/(\d+)h\b/g, '$1 horas')
                               .replace(/\$|USD/g, ' pesos ')
                               .replace(/\bCOP\b/g, 'pesos')
                             var utter = new SpeechSynthesisUtterance(clean);
