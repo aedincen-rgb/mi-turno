@@ -117,11 +117,16 @@ function App(props) {
 
   // ── Lazy tabs: solo la activa y la previa se mantienen en DOM ──
   var mountedRef = useRef({ home: true });
-  useEffect(function () {
-    mountedRef.current[tab] = true;
-  }, [tab]);
+  useEffect(
+    function () {
+      mountedRef.current[tab] = true;
+    },
+    [tab]
+  );
   function _lazy(id, el) {
-    return mountedRef.current[id] ? h('div', { style: { display: tab === id ? 'block' : 'none' }, key: id }, el) : null;
+    return mountedRef.current[id]
+      ? h('div', { style: { display: tab === id ? 'block' : 'none' }, key: id }, el)
+      : null;
   }
 
   // Cuántas acciones quedan en la cola de sync (para el indicador del header).
@@ -173,7 +178,10 @@ function App(props) {
     var esLocal = !session || session.guest || session.pinOnly;
     if (!navigator.onLine) return { k: 'off', t: 'Sin conexión a internet' };
     if (!esLocal && syncPending > 0 && typeof CLOUD_MODE !== 'undefined' && CLOUD_MODE) {
-      return { k: 'connecting', t: 'Sincronizando ' + syncPending + ' cambio' + (syncPending !== 1 ? 's' : '') + '…' };
+      return {
+        k: 'connecting',
+        t: 'Sincronizando ' + syncPending + ' cambio' + (syncPending !== 1 ? 's' : '') + '…'
+      };
     }
     if (esLocal) return { k: 'on', t: 'Conectado (modo local)' };
     if (typeof CLOUD_MODE === 'undefined' || !CLOUD_MODE)
@@ -186,7 +194,10 @@ function App(props) {
   }
 
   function _dismissBanner() {
-    if (_connBannerT) { clearTimeout(_connBannerT); _connBannerT = null; }
+    if (_connBannerT) {
+      clearTimeout(_connBannerT);
+      _connBannerT = null;
+    }
     if (_connBannerEl && _connBannerEl.parentNode) {
       _connBannerEl.parentNode.removeChild(_connBannerEl);
     }
@@ -194,9 +205,14 @@ function App(props) {
   }
 
   function revealConn() {
-    try { haptic && haptic(); } catch (_) {}
+    try {
+      haptic && haptic();
+    } catch (_) {}
     // Toggle: si ya está visible, cerrar
-    if (_connBannerEl) { _dismissBanner(); return; }
+    if (_connBannerEl) {
+      _dismissBanner();
+      return;
+    }
 
     var st = _connState();
     var title = st.k === 'on' ? 'Conectado' : st.k === 'off' ? 'Sin conexión' : 'Conectando';
@@ -206,17 +222,24 @@ function App(props) {
     var wrap = document.createElement('div');
     wrap.setAttribute('role', 'status');
     wrap.setAttribute('aria-live', 'polite');
-    wrap.style.cssText = 'position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:99999;display:flex;justify-content:center;pointer-events:none;opacity:0;transition:opacity 0.35s ease;';
+    wrap.style.cssText =
+      'position:fixed;top:calc(env(safe-area-inset-top, 0px) + 16px);left:50%;transform:translateX(-50%);z-index:99999;display:flex;justify-content:center;pointer-events:none;opacity:0;transition:opacity 0.35s ease;';
 
     var card = document.createElement('div');
-    card.style.cssText = 'display:flex;align-items:center;gap:12px;padding:14px 18px;border-radius:18px;' +
+    card.style.cssText =
+      'display:flex;align-items:center;gap:12px;padding:14px 18px;border-radius:18px;' +
       'background:rgba(255,255,255,0.72);' +
       '-webkit-backdrop-filter:blur(28px);backdrop-filter:blur(28px);' +
       'border:1px solid rgba(0,0,0,0.06);box-shadow:0 8px 32px rgba(0,0,0,0.12);max-width:380px;';
 
     var dot = document.createElement('span');
     dot.setAttribute('aria-hidden', 'true');
-    dot.style.cssText = 'width:10px;height:10px;border-radius:50%;flex-shrink:0;background:' + dotColor + ';box-shadow:0 0 10px ' + dotColor + ';';
+    dot.style.cssText =
+      'width:10px;height:10px;border-radius:50%;flex-shrink:0;background:' +
+      dotColor +
+      ';box-shadow:0 0 10px ' +
+      dotColor +
+      ';';
 
     var txt = document.createElement('div');
     txt.style.cssText = 'display:flex;flex-direction:column;gap:2px;';
@@ -1137,71 +1160,87 @@ function App(props) {
       h(
         'main',
         { className: 'tab-view', role: 'main' },
-        _lazy('home',
+        _lazy(
+          'home',
           h(HomeTab, {
-              calc: calc,
-              activo: activo,
-              ahora: ahoraDate,
-              salario: salario,
-              salarioConfigured: salarioConfigured,
-              vh: vh,
-              turnos: turnos,
-              prefs: prefs,
-              quincena: quincena,
-              session: session,
-              onIni: onIni,
-              onFin: onFin,
-              onOpenAssistant: function () { haptic(); setTab('ai'); },
-              onOpenConfig: function () { haptic(); setTab('config'); }
-            })),
-        _lazy('dashboard',
+            calc: calc,
+            activo: activo,
+            ahora: ahoraDate,
+            salario: salario,
+            salarioConfigured: salarioConfigured,
+            vh: vh,
+            turnos: turnos,
+            prefs: prefs,
+            quincena: quincena,
+            session: session,
+            onIni: onIni,
+            onFin: onFin,
+            onOpenAssistant: function () {
+              haptic();
+              setTab('ai');
+            },
+            onOpenConfig: function () {
+              haptic();
+              setTab('config');
+            }
+          })
+        ),
+        _lazy(
+          'dashboard',
           h(DashboardTab, {
-              calc: calc,
-              turnos: turnosMes,
-              salario: salario,
-              vh: vh,
-              ahora: ahoraDate,
-              themeKey: theme,
-              prefs: prefs,
-              quincenasMes: quincenasMes
-            })),
-        _lazy('ai',
+            calc: calc,
+            turnos: turnosMes,
+            salario: salario,
+            vh: vh,
+            ahora: ahoraDate,
+            themeKey: theme,
+            prefs: prefs,
+            quincenasMes: quincenasMes
+          })
+        ),
+        _lazy(
+          'ai',
           h(AsistenteTab, {
-              turnos: turnosMes,
-              turnosAll: turnos,
-              calc: calc,
-              salario: salario,
-              vh: vh,
-              session: session
-            })),
-        _lazy('history',
+            turnos: turnosMes,
+            turnosAll: turnos,
+            calc: calc,
+            salario: salario,
+            vh: vh,
+            session: session
+          })
+        ),
+        _lazy(
+          'history',
           h(HistoryTab, {
-              turnos: turnos,
-              activo: activo,
-              durActual: durActual,
-              session: session,
-              calc: calc,
-              vh: vh,
-              ahora: ahoraDate,
-              onBorrar: onBorrar,
-              onBorrarUno: onBorrarUno,
-              onExportPDF: onExportPDF,
-              onExportExcel: onExportExcel
-            })),
-        _lazy('config',
+            turnos: turnos,
+            activo: activo,
+            durActual: durActual,
+            session: session,
+            calc: calc,
+            vh: vh,
+            ahora: ahoraDate,
+            onBorrar: onBorrar,
+            onBorrarUno: onBorrarUno,
+            onExportPDF: onExportPDF,
+            onExportExcel: onExportExcel
+          })
+        ),
+        _lazy(
+          'config',
           h(ConfigTab, {
-              salario: salario,
-              valorHora: vh,
-              session: session,
-              onSalario: onSalario,
-              onSignOut: props.onSignOut,
-              onSessionPatch: onSessionPatch,
-              theme: theme,
-              onThemeChange: setTheme,
-              prefs: prefs,
-              onPrefsChange: onPrefsChange,
-              onRevealConn: revealConn
-            }))
+            salario: salario,
+            valorHora: vh,
+            session: session,
+            onSalario: onSalario,
+            onSignOut: props.onSignOut,
+            onSessionPatch: onSessionPatch,
+            theme: theme,
+            onThemeChange: setTheme,
+            prefs: prefs,
+            onPrefsChange: onPrefsChange,
+            onRevealConn: revealConn
+          })
+        )
       )
     ),
 

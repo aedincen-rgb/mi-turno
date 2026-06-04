@@ -4,13 +4,18 @@
    ════════════════════════════════════════════════════════════════ */
 
 /* Prevenir scroll horizontal y espacios blancos */
-html, body {
+html,
+body {
   overflow-x: hidden;
   max-width: 100vw;
   overscroll-behavior-x: none;
   margin: 0;
   padding: 0;
-  background: #f5f7fb;
+  /* El gradiente (no un sólido) en AMBOS html y body: si el body con
+     -webkit-fill-available deja un hueco abajo (zona del home-indicator en
+     iPhone, que asoma tras un zoom), html muestra el MISMO fondo y no queda
+     una línea blanca plana cortando el degradado. */
+  background: var(--bg);
   /* Fija el viewport — evita zoom/reflow al cambiar de pantalla */
   width: 100%;
   height: 100%;
@@ -28,10 +33,17 @@ html {
 }
 
 /* iOS: previene auto-zoom en inputs (requiere font-size ≥ 16px) */
-input, textarea, select, button {
+input,
+textarea,
+select,
+button {
   font-size: 16px;
 }
 
 @media (prefers-color-scheme: dark) {
-  html, body { background: #0a0c12; }
+  /* var(--bg) ya es el degradado oscuro en este modo (media-queries.css). */
+  html,
+  body {
+    background: var(--bg);
+  }
 }
