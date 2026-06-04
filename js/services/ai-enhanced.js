@@ -199,6 +199,56 @@ function aiColombianizar(text, mood) {
   return text;
 }
 
+// ─── EXPANSOR DE RESPUESTAS ───────────────────────────────────
+// Añade contexto, tips y ánimo sin modificar la respuesta base.
+// Solo agrega contenido — nunca quita.
+
+function _aiExpandir(original, intent, userContext) {
+  var c = userContext || {};
+  var addon = '';
+
+  // Contexto adicional según el intent
+  if (intent === 'total_ganado' || intent === 'stats') {
+    if (c.pctSalario >= 80) {
+      addon += '\n\n🎯 ¡Estás cerca de tu meta! Al ritmo actual te faltan aproximadamente ' + Math.max(1, Math.ceil((100 - c.pctSalario) / (c.pctSalario / Math.max(1, c.diasTrab)))) + ' días para alcanzarla.';
+    } else if (c.pctSalario < 30 && c.diasTrab > 0) {
+      addon += '\n\n💡 Tip: Si metés turnos nocturnos o en festivo, tus ingresos suben más rápido. Un turno nocturno te paga 35% extra — en 8 horas son como 11 horas diurnas.';
+    }
+    if (c.nocturnasMins < c.totalMins * 0.1 && c.totalMins > 600) {
+      addon += '\n\n🌙 Dato curioso: si hacés turnos de noche, cada hora te rinde 35% más. Es como trabajar menos por la misma plata.';
+    }
+  }
+
+  if (intent === 'proyeccion') {
+    if (c.proy && c.salario && c.proy > c.salario * 1.2) {
+      addon += '\n\n🔥 Vas a superar tu salario base por mucho. ¡Este mes viene con bonos!';
+    }
+    addon += '\n\n💡 Recordá: la proyección se basa en tu ritmo actual. Si metés más horas extra o trabajás en festivos, ese número sube. Si descansás, baja. Es un estimado, no una promesa.';
+  }
+
+  if (intent === 'bienestar') {
+    if (c.rachaActual >= 5) {
+      addon += '\n\n🧘 La ley colombiana exige al menos un día de descanso por cada 6 trabajados. Es tu derecho. Usalo sin culpa.';
+    }
+    addon += '\n\n💤 Dormir bien después de un turno nocturno es clave. Oscuridad total, sin pantallas, 7-8 horas. Tu cuerpo te lo agradece y tu productividad también.';
+  }
+
+  if (intent === 'comparativa_mes') {
+    addon += '\n\n📈 Cada mes que pasa tenés más datos. Con el tiempo vas a ver patrones — qué días te rinden más, qué semanas son más flojas. Esa info es poder para negociar tus horarios.';
+  }
+
+  if (intent === 'ayuda_navegacion' || intent === 'ayuda_app') {
+    addon += '\n\n💎 Dato extra: también podés preguntarme cosas como "¿cuánto gané hoy?", "¿cómo voy vs el mes pasado?", o "enviame el reporte por correo". Soy más conversacional de lo que parezco.';
+  }
+
+  // Ánimo aleatorio (20% de probabilidad)
+  if (Math.random() < 0.2) {
+    addon += '\n\n' + aiRandomPick(_aiColombianismo.encouragements);
+  }
+
+  return original + addon;
+}
+
 // ─── API PÚBLICA ──────────────────────────────────────────────
 // Wrapper que integra todo: memoria + enriquecimiento + personalidad.
 
@@ -207,10 +257,13 @@ function aiEnhancedRespond(originalResponse, intent, topic, question, userContex
   aiRemember('user', question, intent, topic, userContext);
   aiRemember('ai', originalResponse.substring(0, 120), intent, topic, userContext);
 
-  // 2. Enriquecer con acciones rápidas
-  var enriched = aiEnrichResponse(originalResponse, intent, userContext);
+  // 2. Expandir respuesta con más contexto y tips
+  var expanded = _aiExpandir(originalResponse, intent, userContext);
 
-  // 3. Colombianizar
+  // 3. Enriquecer con acciones rápidas
+  var enriched = aiEnrichResponse(expanded, intent, userContext);
+
+  // 4. Colombianizar
   var mood = typeof aiAnalyzeMood === 'function' ? aiAnalyzeMood(question, userContext) : { mood: 'neutral' };
   enriched.text = aiColombianizar(enriched.text, mood.mood);
 
