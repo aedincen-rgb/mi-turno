@@ -8,10 +8,11 @@
 // ─── MEMORIA CONVERSACIONAL ────────────────────────────────────
 // Almacena las últimas N interacciones para dar contexto.
 var _aiMemory = {
-  history: [],       // [{role, topic, intent, timestamp}]
-  userState: {},     // cache del último contexto del usuario
-  maxTurns: 10,      // máximo de turnos recordados
-  proactiveCount: 0  // contador de sugerencias proactivas
+  history: [],
+  userState: {},
+  maxTurns: 10,
+  proactiveCount: 0,
+  lastSuggestion: null  // lo que la IA acaba de preguntar al usuario
 };
 
 // Registrar una interacción
@@ -47,11 +48,32 @@ function aiHasContext(topic) {
   return false;
 }
 
+// ¿El usuario está respondiendo a la última sugerencia de la IA?
+// Si es así, devuelve el intent que debería ejecutarse.
+function aiCheckFollowUp(text) {
+  var sug = _aiMemory.lastSuggestion;
+  if (!sug) return null;
+  var t = (text || '').toLowerCase().trim();
+  // Respuestas afirmativas a sugerencias
+  var affirm = ['si','sí','dale','bueno','ok','vale','de una','hagale','hágale','mostrame','mostrame','dime','decime','quiero','claro','obvio','porfa','porfi','sisas','va','vamos'];
+  for (var i = 0; i < affirm.length; i++) {
+    if (t === affirm[i] || t.indexOf(affirm[i]) === 0) {
+      var intent = sug.intent;
+      _aiMemory.lastSuggestion = null; // consumido
+      return intent;
+    }
+  }
+  // Si la respuesta no es afirmativa, limpiar la sugerencia
+  if (t.length > 3) _aiMemory.lastSuggestion = null;
+  return null;
+}
+
 // Limpiar memoria (al resetear chat)
 function aiClearMemory() {
   _aiMemory.history = [];
   _aiMemory.userState = {};
   _aiMemory.proactiveCount = 0;
+  _aiMemory.lastSuggestion = null;
 }
 
 // ─── SUGERENCIAS PROACTIVAS ────────────────────────────────────
@@ -160,6 +182,12 @@ function aiEnrichResponse(originalText, intent, userContext) {
   var proactive = aiProactiveSuggest(userContext);
   if (proactive && actions.length === 0) {
     actions.push({ label: '💡 ' + proactive.action, query: proactive.action });
+    _aiMemory.lastSuggestion = { intent: proactive.intent, text: proactive.action };
+  }
+
+  // Guardar la primera acción como sugerencia activa
+  if (actions.length > 0 && !_aiMemory.lastSuggestion) {
+    _aiMemory.lastSuggestion = { intent: intent, text: actions[0].label };
   }
 
   return {

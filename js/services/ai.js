@@ -880,15 +880,28 @@ function aiAnswer(question, state) {
     var _resp = _aiDispatchNLP(_nlp.intent, c, state, q, t);
     if (_resp) {
       var _final = _pref + _resp + _suff;
-      // Enriquecer con memoria y acciones rápidas (ai-enhanced.js)
       if (typeof aiEnhancedRespond === 'function') {
         var _enriched = aiEnhancedRespond(_final, _nlp.intent, _nlp.topic, q, c);
         if (_enriched && _enriched.text) {
-          // Devolver como objeto enriquecido (soporta acciones)
           return _enriched;
         }
       }
       return _final;
+    }
+  }
+
+  // ── FOLLOW-UP: ¿el usuario responde a una sugerencia de la IA? ──
+  if (typeof aiCheckFollowUp === 'function') {
+    var _fuIntent = aiCheckFollowUp(q);
+    if (_fuIntent) {
+      var _fuResp = _aiDispatchNLP(_fuIntent, c, state, q, t);
+      if (_fuResp) {
+        if (typeof aiEnhancedRespond === 'function') {
+          var _fuEnriched = aiEnhancedRespond(_fuResp, _fuIntent, _aiIntentTopic(_fuIntent), q, c);
+          if (_fuEnriched && _fuEnriched.text) return _fuEnriched;
+        }
+        return _fuResp;
+      }
     }
   }
 
