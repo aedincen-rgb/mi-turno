@@ -1,4 +1,4 @@
 {
-  "v": "v122",
-  "label": "Historial: detalle del turno (bottom-sheet) ya no aparece al final del scroll (.tab-view sin transform que atrapaba el overlay)"
+  "v": "v123",
+  "label": "Historial: día/mes sutil en esquina de Entrada y Salida (turnos que cruzan medianoche)"
 }

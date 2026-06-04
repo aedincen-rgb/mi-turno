@@ -296,11 +296,26 @@
   margin-bottom: 18px;
 }
 .td-cell {
+  position: relative;
   background: var(--surface2);
   border: 1px solid var(--border);
   border-radius: 14px;
   padding: 12px 10px;
   text-align: center;
+}
+/* Día/mes muy sutil en la esquina (para turnos que cruzan la medianoche) */
+.td-cell-date {
+  position: absolute;
+  bottom: 4px;
+  right: 7px;
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--muted);
+  opacity: 0.6;
+  letter-spacing: 0;
+  text-transform: none;
+  font-variant-numeric: normal;
+  pointer-events: none;
 }
 .td-cell-lbl {
   font-size: 10px;
