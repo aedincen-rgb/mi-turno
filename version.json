@@ -1,4 +1,4 @@
 {
-  "v": "v87",
-  "label": "Fix: banner de conexión movido fuera del header. position:fixed ahora funciona."
+  "v": "v88",
+  "label": "Banner conexión: toggle tap + accesible desde Ajustes (estado sync)"
 }

@@ -478,10 +478,17 @@ function ConfigTabInner(props) {
             ? h('div', { className: 'ajustes-profile-email' }, 'Modo invitado')
             : null,
 
-        // Estado de sincronización
+        // Estado de sincronización — tappable, muestra banner de conexión
         h(
-          'div',
-          { className: 'ajustes-profile-status' },
+          'button',
+          {
+            className: 'ajustes-profile-status',
+            onClick: function () {
+              if (props.onRevealConn) props.onRevealConn();
+            },
+            'aria-label': 'Estado: ' + estado + '. Tocá para ver detalles de conexión.',
+            title: 'Tocá para ver el estado de conexión'
+          },
           h('span', { className: 'ajustes-profile-dot' + (isGuest ? ' off' : '') }),
           estado
         )

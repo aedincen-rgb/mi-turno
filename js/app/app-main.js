@@ -169,9 +169,13 @@ function App(props) {
     return { k: 'connecting', t: 'Conectando a Supabase…' };
   }
   function revealConn() {
-    try {
-      haptic && haptic();
-    } catch (_) {}
+    try { haptic && haptic(); } catch (_) {}
+    // Toggle: si ya está visible, cerrar; si no, mostrar
+    if (ledPop) {
+      if (ledPopT.current) clearTimeout(ledPopT.current);
+      setLedPop(null);
+      return;
+    }
     setLedPop(_connState());
     if (ledPopT.current) clearTimeout(ledPopT.current);
     ledPopT.current = setTimeout(function () {
@@ -1150,7 +1154,8 @@ function App(props) {
                     theme: theme,
                     onThemeChange: setTheme,
                     prefs: prefs,
-                    onPrefsChange: onPrefsChange
+                    onPrefsChange: onPrefsChange,
+                    onRevealConn: revealConn
                   })
       )
     ),
