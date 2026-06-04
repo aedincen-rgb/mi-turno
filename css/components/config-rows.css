@@ -60,20 +60,38 @@
 }
 .ajustes-hero-av-edit{
   position:absolute;
-  bottom:-2px;
-  right:-2px;
-  width:26px;
-  height:26px;
+  bottom:-4px;
+  right:-4px;
+  width:34px;
+  height:34px;
   border-radius:50%;
   background:var(--accent);
   color:#fff;
   display:flex;
   align-items:center;
   justify-content:center;
-  font-size:12px;
-  border:2px solid var(--surface);
-  box-shadow:0 2px 6px rgba(0,0,0,0.18);
-  z-index:2;
+  font-size:16px;
+  line-height:1;
+  border:3px solid var(--surface);
+  box-shadow:0 3px 10px rgba(0,0,0,0.25), 0 0 0 2px rgba(255,255,255,0.35);
+  z-index:5;
+  transition:transform 0.2s var(--spring);
+  cursor:pointer;
+}
+.ajustes-hero-av:active .ajustes-hero-av-edit{
+  transform:scale(1.12);
+}
+.ajustes-hero-av-hint{
+  font-size:10.5px;
+  color:var(--muted);
+  text-align:center;
+  margin-bottom:14px;
+  opacity:0.65;
+  transition:opacity 0.2s;
+}
+.ajustes-hero-av:hover ~ .ajustes-hero-av-hint,
+.ajustes-hero-av-hint:hover{
+  opacity:1;
 }
 .ajustes-hero-av.has-photo .ajustes-hero-av-glow{
   opacity:0.3;
@@ -104,10 +122,10 @@
 }
 /* ─── Nombre editable inline ─── */
 .ajustes-hero-nm-btn{
-  background:none;
-  border:none;
-  padding:6px 14px;
-  margin:0 auto 6px;
+  background:var(--surface2);
+  border:1.5px dashed var(--border);
+  padding:8px 16px;
+  margin:0 auto;
   font-family:inherit;
   font-size:17px;
   font-weight:600;
@@ -118,20 +136,48 @@
   display:inline-flex;
   align-items:center;
   gap:8px;
-  border-radius:10px;
+  border-radius:14px;
   cursor:pointer;
-  transition:background 0.18s var(--ease);
+  transition:border-color 0.2s var(--ease), background 0.2s var(--ease);
+}
+.ajustes-hero-nm-btn:hover{
+  border-color:var(--accent);
+  background:var(--surface);
 }
 .ajustes-hero-nm-btn:active{
-  background:var(--surface2);
+  background:var(--accent-dim);
+}
+.ajustes-hero-nm-txt{
+  flex:1;
+  text-align:center;
 }
 .ajustes-hero-nm-pen{
-  font-size:11px;
-  color:var(--muted);
-  opacity:0.6;
-  transition:opacity 0.2s var(--ease);
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:28px;
+  height:28px;
+  border-radius:50%;
+  background:var(--accent);
+  color:#fff;
+  font-size:14px;
+  flex-shrink:0;
+  box-shadow:0 2px 8px rgba(0,0,0,0.15);
+  transition:transform 0.2s var(--spring);
 }
 .ajustes-hero-nm-btn:hover .ajustes-hero-nm-pen{
+  transform:scale(1.12);
+}
+.ajustes-hero-nm-hint{
+  font-size:11px;
+  color:var(--muted);
+  margin-top:6px;
+  text-align:center;
+  opacity:0.7;
+  transition:opacity 0.2s;
+}
+.ajustes-hero-nm-btn:hover ~ .ajustes-hero-nm-hint,
+.ajustes-hero-nm-hint:hover{
   opacity:1;
 }
 .ajustes-hero-name-edit{
