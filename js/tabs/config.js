@@ -419,7 +419,15 @@ function ConfigTabInner(props) {
               draggable: false
             })
           : h('span', { className: 'ajustes-hero-av-ini' }, inicial),
-        h('span', { className: 'ajustes-hero-av-edit', 'aria-hidden': 'true' }, '✎')
+        // Indicador visual: cámara sobre la foto o ícono + para agregar
+        h(
+          'span',
+          {
+            className: 'ajustes-hero-av-edit',
+            'aria-hidden': 'true'
+          },
+          photo ? '📷' : '+'
+        )
       ),
       // Input file oculto
       h('input', {
@@ -434,6 +442,12 @@ function ConfigTabInner(props) {
           e.target.value = '';
         }
       }),
+      // Pista visual: el avatar es interactivo
+      h(
+        'div',
+        { className: 'ajustes-hero-av-hint' },
+        photo ? 'Tocá la foto para cambiarla' : 'Tocá para agregar tu foto'
+      ),
 
       // Nombre — edición inline
       editName
@@ -468,14 +482,31 @@ function ConfigTabInner(props) {
             )
           )
         : h(
-            'button',
-            {
-              className: 'ajustes-hero-nm-btn',
-              onClick: abrirEditName,
-              title: 'Tocá para editar tu nombre'
-            },
-            displayName,
-            h('span', { className: 'ajustes-hero-nm-pen', 'aria-hidden': 'true' }, '✎')
+            'div',
+            { style: { textAlign: 'center' } },
+            h(
+              'button',
+              {
+                className: 'ajustes-hero-nm-btn',
+                onClick: abrirEditName,
+                'aria-label': 'Editar tu nombre o apodo',
+                title: 'Tocá para cambiar cómo te llamás en la app'
+              },
+              h('span', { className: 'ajustes-hero-nm-txt' }, displayName),
+              h(
+                'span',
+                {
+                  className: 'ajustes-hero-nm-pen',
+                  'aria-hidden': 'true'
+                },
+                '✎'
+              )
+            ),
+            h(
+              'div',
+              { className: 'ajustes-hero-nm-hint' },
+              'Tocá para editar tu nombre'
+            )
           ),
 
       // Si el usuario puso alias personalizado, mostramos email en chico debajo
