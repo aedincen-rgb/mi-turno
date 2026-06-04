@@ -141,9 +141,12 @@
 <body>
 
 <script>
-  // Si ya inició sesión antes (PWA o navegador), ir directo a la app
+  // Solo redirigir si NO viene desde la app (sin parámetro ?show)
+  // y TIENE sesión previa. Así el diamante de Ajustes funciona.
   (function(){
     try {
+      var showForce = window.location.search.indexOf('show') >= 0;
+      if (showForce) return; // venimos del diamante, mostrar landing sí o sí
       var sess = localStorage.getItem('mt_sess');
       var lastUser = localStorage.getItem('mt_last_user');
       if (sess || lastUser) { window.location.replace('/app'); }

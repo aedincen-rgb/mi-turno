@@ -1287,11 +1287,11 @@ function ConfigTabInner(props) {
             'a',
             {
               className: 'ajustes-row ajustes-row-tap',
-              href: '/',
+              href: '/?show=1',
               onClick: function (e) {
                 e.preventDefault();
                 haptic();
-                window.location.href = '/';
+                window.location.href = '/?show=1';
               },
               'aria-label': 'Ver presentación de Mi Turno'
             },
