@@ -809,34 +809,30 @@
   border-color: var(--accent);
 }
 
-/* Micrófono (voz a texto) */
+/* Micrófono con anillo (voz a texto) */
 .asistente-mic {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 38px;
-  height: 38px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  border: 1.5px solid var(--border);
-  background: var(--surface2);
-  font-size: 16px;
+  border: none;
+  background: transparent;
   cursor: pointer;
   flex-shrink: 0;
-  transition: background 0.2s, border-color 0.2s, transform 0.2s;
+  transition: transform 0.2s;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .asistente-mic:active {
   transform: scale(0.92);
 }
 
-.asistente-mic.listening {
-  background: var(--danger);
-  border-color: var(--danger);
-  color: #fff;
-  animation: micPulse 1s ease-in-out infinite;
+.asistente-mic.listening circle:last-child {
+  stroke: #ff3b30;
 }
 
-@keyframes micPulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(255,59,48,0.4); }
-  50% { box-shadow: 0 0 0 8px rgba(255,59,48,0); }
+.asistente-mic.listening circle:first-child {
+  stroke: rgba(255,59,48,0.2);
 }

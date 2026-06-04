@@ -581,7 +581,15 @@ function AsistenteTab(props) {
               'aria-label': listening ? 'Escuchando...' : 'Hablar por voz',
               title: listening ? 'Escuchando...' : 'Hablar'
             },
-            listening ? '●' : '🎤'
+            listening ? '●' : 
+            h('svg', {
+              viewBox: '0 0 36 36',
+              width: 24, height: 24,
+              style: { transform: 'rotate(-90deg)' }
+            },
+              h('circle', { cx: 18, cy: 18, r: 14, fill: 'none', stroke: 'rgba(91,134,229,0.2)', 'stroke-width': 3 }),
+              h('circle', { cx: 18, cy: 18, r: 14, fill: 'none', stroke: '#5b86e5', 'stroke-width': 3, strokeDasharray: 87.96, strokeDashoffset: 87.96, strokeLinecap: 'round' })
+            )
           )
         : null
     ),
