@@ -1,4 +1,4 @@
 {
-  "v": "v117",
-  "label": "iOS standalone: body/#root con 100dvh — elimina la banda clara inferior (home-indicator)"
+  "v": "v118",
+  "label": "iOS standalone: quitar transform del body — orbs y barras al viewport real, sin franja clara abajo"
 }

@@ -29,6 +29,9 @@ body {
   overflow: hidden;
   position: fixed;
   inset: 0;
-  /* GPU compositing del root */
-  transform: translateZ(0);
+  /* SIN transform/will-change en el body: crea un containing block que ancla
+     a .bg-shapes (orbs) y a las barras fixed al body — que con fill-available
+     excluye el home-indicator → dejaba una franja clara abajo y la barra
+     flotando de más. Anclados al viewport real (viewport-fit=cover) cubren
+     hasta el borde. (Lección v87/v94: transform rompe position:fixed.) */
 }
