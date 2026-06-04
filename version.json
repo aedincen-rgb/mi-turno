@@ -1,4 +1,4 @@
 {
-  "v": "v111",
-  "label": "Fix: landing redirect inteligente + CDN cache purge."
+  "v": "v112",
+  "label": "Swap: landing ahora es index.html. App en app.html."
 }
