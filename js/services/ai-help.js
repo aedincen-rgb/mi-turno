@@ -17,7 +17,16 @@ var AI_HELP_GUIDES = [
   {
     id: 'iniciar_turno',
     title: 'Iniciar un turno',
-    keywords: ['iniciar turno','como inicio','empezar turno','comenzar turno','arrancar','empezar a trabajar','marcar entrada','fichar'],
+    keywords: [
+      'iniciar turno',
+      'como inicio',
+      'empezar turno',
+      'comenzar turno',
+      'arrancar',
+      'empezar a trabajar',
+      'marcar entrada',
+      'fichar'
+    ],
     steps: [
       'Abrí la app — ya estás en la pestaña **Inicio**.',
       'Tocá el botón grande que dice **Iniciar**.',
@@ -30,7 +39,14 @@ var AI_HELP_GUIDES = [
   {
     id: 'finalizar_turno',
     title: 'Finalizar un turno',
-    keywords: ['finalizar turno','terminar turno','cerrar turno','acabar','salir del trabajo','marcar salida'],
+    keywords: [
+      'finalizar turno',
+      'terminar turno',
+      'cerrar turno',
+      'acabar',
+      'salir del trabajo',
+      'marcar salida'
+    ],
     steps: [
       'En la pestaña **Inicio**, tocá el botón **Finalizar**.',
       'Si tu turno duró menos de 1 minuto, no se registra (evita toques accidentales).',
@@ -44,7 +60,15 @@ var AI_HELP_GUIDES = [
   {
     id: 'configurar_salario',
     title: 'Configurar tu salario',
-    keywords: ['configurar salario','poner salario','cambiar salario','ajustar salario','cuanto gano','salario base','sueldo'],
+    keywords: [
+      'configurar salario',
+      'poner salario',
+      'cambiar salario',
+      'ajustar salario',
+      'cuanto gano',
+      'salario base',
+      'sueldo'
+    ],
     steps: [
       'Andá a la pestaña **Ajustes** (última de la barra inferior).',
       'Tocá donde dice **Salario base** — se abre un campo para editar.',
@@ -59,7 +83,14 @@ var AI_HELP_GUIDES = [
   {
     id: 'ver_historial',
     title: 'Ver tu historial de turnos',
-    keywords: ['ver historial','mis turnos','turnos pasados','historial de turnos','lista de turnos','todos mis turnos'],
+    keywords: [
+      'ver historial',
+      'mis turnos',
+      'turnos pasados',
+      'historial de turnos',
+      'lista de turnos',
+      'todos mis turnos'
+    ],
     steps: [
       'Tocá la pestaña **Historial** (ícono de reloj).',
       'Ahí ves todos tus turnos cerrados, ordenados del más reciente al más viejo.',
@@ -71,7 +102,15 @@ var AI_HELP_GUIDES = [
   {
     id: 'exportar_datos',
     title: 'Exportar tus datos',
-    keywords: ['exportar','descargar','pdf','excel','bajar datos','guardar informe','descargar turnos'],
+    keywords: [
+      'exportar',
+      'descargar',
+      'pdf',
+      'excel',
+      'bajar datos',
+      'guardar informe',
+      'descargar turnos'
+    ],
     steps: [
       'Andá a la pestaña **Historial**.',
       'Tocá el botón **Exportar** (ícono de descarga).',
@@ -83,7 +122,14 @@ var AI_HELP_GUIDES = [
   {
     id: 'enviar_reporte',
     title: 'Enviar reporte por correo',
-    keywords: ['enviar correo','mandar reporte','email','correo electronico','enviar a jefe','enviar a empresa'],
+    keywords: [
+      'enviar correo',
+      'mandar reporte',
+      'email',
+      'correo electronico',
+      'enviar a jefe',
+      'enviar a empresa'
+    ],
     steps: [
       'Andá a la pestaña **Historial**.',
       'Tocá **Exportar** y elegí el formato (PDF o Excel).',
@@ -96,7 +142,7 @@ var AI_HELP_GUIDES = [
   {
     id: 'borrar_turno',
     title: 'Borrar un turno',
-    keywords: ['borrar turno','eliminar turno','quitar turno','borrar historial'],
+    keywords: ['borrar turno', 'eliminar turno', 'quitar turno', 'borrar historial'],
     steps: [
       'Andá a la pestaña **Historial**.',
       'Deslizá el turno hacia la izquierda o tocá el ícono de basurero.',
@@ -110,7 +156,14 @@ var AI_HELP_GUIDES = [
   {
     id: 'cambiar_foto',
     title: 'Cambiar tu foto de perfil',
-    keywords: ['cambiar foto','poner foto','foto perfil','imagen perfil','avatar','fotografia'],
+    keywords: [
+      'cambiar foto',
+      'poner foto',
+      'foto perfil',
+      'imagen perfil',
+      'avatar',
+      'fotografia'
+    ],
     steps: [
       'Andá a la pestaña **Ajustes**.',
       'Tocá el círculo de la foto (o el ícono 📷).',
@@ -123,7 +176,14 @@ var AI_HELP_GUIDES = [
   {
     id: 'cambiar_nombre',
     title: 'Cambiar tu nombre en la app',
-    keywords: ['cambiar nombre','poner nombre','editar nombre','apodo','alias','como me llamo'],
+    keywords: [
+      'cambiar nombre',
+      'poner nombre',
+      'editar nombre',
+      'apodo',
+      'alias',
+      'como me llamo'
+    ],
     steps: [
       'Andá a la pestaña **Ajustes**.',
       'Tocá tu nombre (al lado del lápiz ✎).',
@@ -137,7 +197,14 @@ var AI_HELP_GUIDES = [
   {
     id: 'configurar_pin',
     title: 'Configurar tu PIN de acceso',
-    keywords: ['configurar pin','poner pin','crear pin','codigo acceso','pin acceso','bloquear app'],
+    keywords: [
+      'configurar pin',
+      'poner pin',
+      'crear pin',
+      'codigo acceso',
+      'pin acceso',
+      'bloquear app'
+    ],
     steps: [
       'Andá a la pestaña **Ajustes**.',
       'Buscá la sección **Seguridad** y tocá **PIN de acceso**.',
@@ -150,7 +217,13 @@ var AI_HELP_GUIDES = [
   {
     id: 'cambiar_password',
     title: 'Cambiar tu contraseña',
-    keywords: ['cambiar contraseña','cambiar password','nueva contraseña','olvide contraseña','resetear password'],
+    keywords: [
+      'cambiar contraseña',
+      'cambiar password',
+      'nueva contraseña',
+      'olvide contraseña',
+      'resetear password'
+    ],
     steps: [
       'Andá a la pestaña **Ajustes**.',
       'Tocá **Gestionar cuenta**.',
@@ -163,7 +236,7 @@ var AI_HELP_GUIDES = [
   {
     id: 'recuperar_pin',
     title: 'Recuperar tu PIN',
-    keywords: ['recuperar pin','olvide pin','perdi pin','no recuerdo pin','pin olvidado'],
+    keywords: ['recuperar pin', 'olvide pin', 'perdi pin', 'no recuerdo pin', 'pin olvidado'],
     steps: [
       'En la pantalla de acceso rápido, tocá **¿Olvidaste tu PIN?**.',
       'Seguí los pasos: confirmar identidad → esperar → código → nuevo PIN.',
@@ -175,7 +248,7 @@ var AI_HELP_GUIDES = [
   {
     id: 'cerrar_sesion',
     title: 'Cerrar sesión',
-    keywords: ['cerrar sesion','salir','logout','desconectar','cambiar cuenta'],
+    keywords: ['cerrar sesion', 'salir', 'logout', 'desconectar', 'cambiar cuenta'],
     steps: [
       'Andá a la pestaña **Ajustes**.',
       'Bajá hasta el final y tocá **Cerrar sesión**.',
@@ -189,7 +262,14 @@ var AI_HELP_GUIDES = [
   {
     id: 'respaldar_datos',
     title: 'Respaldar tus datos',
-    keywords: ['respaldar','backup','copia seguridad','guardar datos','no perder datos','salvar datos'],
+    keywords: [
+      'respaldar',
+      'backup',
+      'copia seguridad',
+      'guardar datos',
+      'no perder datos',
+      'salvar datos'
+    ],
     steps: [
       'Andá a la pestaña **Ajustes** > sección **Datos**.',
       'Tocá **📦 Respaldar datos**.',
@@ -202,7 +282,7 @@ var AI_HELP_GUIDES = [
   {
     id: 'restaurar_datos',
     title: 'Restaurar un respaldo',
-    keywords: ['restaurar','recuperar datos','importar','cargar backup','recuperar backup'],
+    keywords: ['restaurar', 'recuperar datos', 'importar', 'cargar backup', 'recuperar backup'],
     steps: [
       'Andá a la pestaña **Ajustes** > sección **Datos**.',
       'Tocá **📂 Restaurar datos**.',
@@ -217,7 +297,16 @@ var AI_HELP_GUIDES = [
   {
     id: 'entender_dashboard',
     title: 'Entender la pestaña Análisis',
-    keywords: ['analisis','dashboard','grafico','kpi','estadisticas','proyeccion','metricas','como voy'],
+    keywords: [
+      'analisis',
+      'dashboard',
+      'grafico',
+      'kpi',
+      'estadisticas',
+      'proyeccion',
+      'metricas',
+      'como voy'
+    ],
     steps: [
       'Tocá la pestaña **Análisis** (ícono de gráfico).',
       '**Proyección al cierre:** cuánto ganarías este mes a tu ritmo actual.',
@@ -231,7 +320,7 @@ var AI_HELP_GUIDES = [
   {
     id: 'modo_quincena',
     title: 'Activar el modo quincena',
-    keywords: ['quincena','pago quincenal','cada 15 dias','q1','q2','periodo pago'],
+    keywords: ['quincena', 'pago quincenal', 'cada 15 dias', 'q1', 'q2', 'periodo pago'],
     steps: [
       'Andá a la pestaña **Ajustes**.',
       'Activá el switch **Calcular por quincena**.',
@@ -246,7 +335,14 @@ var AI_HELP_GUIDES = [
   {
     id: 'usar_asistente',
     title: 'Usar el asistente IA',
-    keywords: ['usar asistente','como pregunto','chat','ia','inteligencia artificial','consultar'],
+    keywords: [
+      'usar asistente',
+      'como pregunto',
+      'chat',
+      'ia',
+      'inteligencia artificial',
+      'consultar'
+    ],
     steps: [
       'Tocá la pestaña **Asistente** (ícono ✦).',
       'Escribí tu pregunta en lenguaje natural. Ejemplos:',
@@ -263,7 +359,7 @@ var AI_HELP_GUIDES = [
   {
     id: 'modo_oscuro',
     title: 'Activar el modo oscuro',
-    keywords: ['modo oscuro','dark mode','tema oscuro','noche','cambiar tema','fondo negro'],
+    keywords: ['modo oscuro', 'dark mode', 'tema oscuro', 'noche', 'cambiar tema', 'fondo negro'],
     steps: [
       'Tocá el ícono de luna 🌙 en la esquina superior derecha.',
       'La app cambia a modo oscuro al instante.',
@@ -277,7 +373,15 @@ var AI_HELP_GUIDES = [
   {
     id: 'accesibilidad',
     title: 'Usar la app con lector de pantalla',
-    keywords: ['accesibilidad','lector pantalla','voiceover','talkback','ciego','discapacidad visual','accesible'],
+    keywords: [
+      'accesibilidad',
+      'lector pantalla',
+      'voiceover',
+      'talkback',
+      'ciego',
+      'discapacidad visual',
+      'accesible'
+    ],
     steps: [
       'Mi Turno es compatible con VoiceOver (iOS) y TalkBack (Android).',
       'Cada botón, pestaña y tarjeta tiene una etiqueta que el lector lee en voz alta.',
@@ -295,8 +399,10 @@ var AI_HELP_GUIDES = [
 // Usa puntaje por coincidencia de keywords.
 
 function aiHelpSearch(question) {
-  var q = (question || '').toLowerCase()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  var q = (question || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
     .replace(/[¿¡?!,.]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
@@ -335,7 +441,7 @@ function aiHelpFormat(guide) {
 
   var resp = '📖 **' + guide.title + '**\n\n';
   for (var i = 0; i < guide.steps.length; i++) {
-    resp += (i + 1) + '. ' + guide.steps[i] + '\n';
+    resp += i + 1 + '. ' + guide.steps[i] + '\n';
   }
 
   if (guide.related && guide.related.length > 0) {
@@ -363,20 +469,20 @@ function aiHelpGetById(id) {
 function aiHelpListAll() {
   var resp = '📚 **Guías disponibles**\n\n';
   var cats = {
-    'Turnos': ['iniciar_turno','finalizar_turno'],
-    'Salario': ['configurar_salario','modo_quincena'],
-    'Historial': ['ver_historial','exportar_datos','enviar_reporte','borrar_turno'],
-    'Perfil': ['cambiar_foto','cambiar_nombre'],
-    'Seguridad': ['configurar_pin','cambiar_password','recuperar_pin','cerrar_sesion'],
-    'Datos': ['respaldar_datos','restaurar_datos'],
-    'Análisis': ['entender_dashboard'],
-    'Asistente': ['usar_asistente'],
-    'Apariencia': ['modo_oscuro'],
-    'Accesibilidad': ['accesibilidad']
+    Turnos: ['iniciar_turno', 'finalizar_turno'],
+    Salario: ['configurar_salario', 'modo_quincena'],
+    Historial: ['ver_historial', 'exportar_datos', 'enviar_reporte', 'borrar_turno'],
+    Perfil: ['cambiar_foto', 'cambiar_nombre'],
+    Seguridad: ['configurar_pin', 'cambiar_password', 'recuperar_pin', 'cerrar_sesion'],
+    Datos: ['respaldar_datos', 'restaurar_datos'],
+    Análisis: ['entender_dashboard'],
+    Asistente: ['usar_asistente'],
+    Apariencia: ['modo_oscuro'],
+    Accesibilidad: ['accesibilidad']
   };
 
   for (var cat in cats) {
-    if (cats.hasOwnProperty(cat)) {
+    if (Object.prototype.hasOwnProperty.call(cats, cat)) {
       resp += '**' + cat + ':**\n';
       for (var i = 0; i < cats[cat].length; i++) {
         var g = aiHelpGetById(cats[cat][i]);
