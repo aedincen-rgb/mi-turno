@@ -3,11 +3,17 @@
    Reset CSS y normalización · optimizaciones iOS
    ════════════════════════════════════════════════════════════════ */
 
-/* Prevenir scroll horizontal (barras fixed se desplazan) */
+/* Prevenir scroll horizontal y espacios blancos */
 html, body {
   overflow-x: hidden;
   max-width: 100vw;
   overscroll-behavior-x: none;
+  margin: 0;
+  padding: 0;
+  background: #f5f7fb;
+  /* Fija el viewport — evita zoom/reflow al cambiar de pantalla */
+  width: 100%;
+  height: 100%;
 }
 
 /* iOS font smoothing — texto más nítido en iPhone */
@@ -24,4 +30,8 @@ html {
 /* iOS: previene auto-zoom en inputs (requiere font-size ≥ 16px) */
 input, textarea, select, button {
   font-size: 16px;
+}
+
+@media (prefers-color-scheme: dark) {
+  html, body { background: #0a0c12; }
 }
