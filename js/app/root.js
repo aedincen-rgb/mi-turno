@@ -19,6 +19,12 @@ function Root() {
   // dispositivo, para no confundirlo con un cierre remoto (otro equipo).
   var cierreManualRef = useRef(false);
 
+  // ── Onboarding: solo en primer launch ──
+  var ob = useState(function () {
+    return !onboardingDone();
+  });
+  var showOnboarding = ob[0], setShowOnboarding = ob[1];
+
   function patchSession(p) {
     setSession(function (s) {
       return s ? Object.assign({}, s, p) : s;
@@ -388,11 +394,6 @@ function Root() {
     }
     return h(AuthScreen, { onAuth: handleAuth });
   }
-  // ── Onboarding: solo en primer launch ──
-  var ob = useState(function () {
-    return !onboardingDone();
-  });
-  var showOnboarding = ob[0], setShowOnboarding = ob[1];
 
   return h(
     'div',
