@@ -1,4 +1,4 @@
 {
-  "v": "v90",
-  "label": "Login iOS Style: logo izq + Mi Turno/Colombia der. Horizontal limpio."
+  "v": "v91",
+  "label": "Fix: foto de perfil tappable. Input file click() + pointer-events:none en img."
 }

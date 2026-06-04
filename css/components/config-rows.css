@@ -60,6 +60,7 @@
   height:100%;
   object-fit:cover;
   border-radius:50%;
+  pointer-events:none;
 }
 .ajustes-profile-av-ini{
   position:relative;

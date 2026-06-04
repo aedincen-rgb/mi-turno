@@ -495,12 +495,12 @@ function ConfigTabInner(props) {
       )
     ),
 
-    // Input file oculto
+    // Input file oculto (visibility hidden para que .click() funcione)
     h('input', {
       ref: fileInputRef,
       type: 'file',
       accept: 'image/*',
-      style: { display: 'none' },
+      style: { position: 'absolute', opacity: 0, width: 0, height: 0, overflow: 'hidden' },
       onChange: function (e) {
         var f = e.target.files && e.target.files[0];
         if (f) onPickPhoto(f);
