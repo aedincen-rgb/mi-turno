@@ -11,6 +11,10 @@ html {
 body {
   height: 100%;
   height: -webkit-fill-available;
+  /* 100dvh cubre TODA la pantalla con viewport-fit=cover (incluida la zona del
+     home-indicator) y es dinámico — evita la banda clara abajo que dejaba
+     -webkit-fill-available al excluir el safe-area inferior. Fallback arriba. */
+  height: 100dvh;
   width: 100%;
   background: var(--bg);
   font-family: var(--font-sans);
