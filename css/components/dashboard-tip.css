@@ -37,13 +37,18 @@
 }
 
 /* Web Share button */
+.dash-share-group {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+
 .dash-share-btn {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  width: 100%;
-  margin-top: 14px;
+  flex: 1;
   padding: 13px;
   border-radius: 14px;
   border: 1.5px dashed var(--border);
@@ -53,10 +58,23 @@
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
+  text-decoration: none;
   transition: background 0.2s, border-color 0.2s;
 }
 
 .dash-share-btn:active {
   background: var(--accent-dim);
   border-color: var(--accent);
+}
+
+.dash-share-wa {
+  background: #dcf8c6;
+  border-color: #25d366;
+  color: #075e54;
+}
+
+[data-theme='dark'] .dash-share-wa {
+  background: rgba(37,211,102,0.15);
+  border-color: rgba(37,211,102,0.4);
+  color: #25d366;
 }
