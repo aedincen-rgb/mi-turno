@@ -21,7 +21,8 @@ import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 
 var PORT = 8123;
-var BASE = 'http://127.0.0.1:' + PORT + '/index.html';
+// La app vive en app.html desde el swap v112 (index.html es el landing).
+var BASE = 'http://127.0.0.1:' + PORT + '/app.html';
 
 function readIf(path) {
   try {
@@ -106,6 +107,14 @@ try {
     if (url.indexOf('supabase') !== -1 || url.indexOf('jspdf') !== -1 || url.indexOf('xlsx') !== -1)
       return route.fulfill({ body: '/* stub */', headers: H });
     return route.continue();
+  });
+
+  // Saltar el tour de onboarding (v98): si no, su overlay bloquea la
+  // navegación a las otras pestañas y no se pueden auditar.
+  await page.addInitScript(function () {
+    try {
+      localStorage.setItem('mt_onboarding_done', '1');
+    } catch (e) {}
   });
 
   await page.goto(BASE, { waitUntil: 'networkidle' });

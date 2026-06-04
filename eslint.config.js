@@ -205,6 +205,22 @@ const projectGlobals = {
   hashPassword: 'readonly',
   verifyPassword: 'readonly',
 
+  // services/backup.js (v96)
+  backupExport: 'readonly',
+  backupImport: 'readonly',
+  backupMarkExported: 'readonly',
+
+  // services/ai-help.js (v107)
+  aiHelpAnswer: 'readonly',
+  aiHelpListAll: 'readonly',
+
+  // modals/onboarding.js (v98)
+  OnboardingModal: 'readonly',
+  onboardingDone: 'readonly',
+
+  // app-main.js (toast global de UI)
+  showToast: 'readonly',
+
   deleteError: 'readonly',
   aiAnswer: 'readonly',
   aiClassifyIntent: 'readonly',

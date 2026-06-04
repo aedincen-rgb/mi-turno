@@ -447,17 +447,23 @@ function ConfigTabInner(props) {
                 value: tempName,
                 autoFocus: true,
                 placeholder: 'Tu nombre o apodo',
-                onChange: function (e) { setTempName(e.target.value); },
+                onChange: function (e) {
+                  setTempName(e.target.value);
+                },
                 onKeyDown: function (e) {
                   if (e.key === 'Enter') guardarName();
                   if (e.key === 'Escape') setEditName(false);
                 }
               }),
-              h('button', {
-                className: 'ajustes-edit-save',
-                onClick: guardarName,
-                'aria-label': 'Guardar nombre'
-              }, '✓')
+              h(
+                'button',
+                {
+                  className: 'ajustes-edit-save',
+                  onClick: guardarName,
+                  'aria-label': 'Guardar nombre'
+                },
+                '✓'
+              )
             )
           : h(
               'button',
@@ -472,8 +478,11 @@ function ConfigTabInner(props) {
 
         // Email (si hay alias personalizado o usuario registrado)
         !editName && !isGuest && session.email
-          ? h('div', { className: 'ajustes-profile-email' },
-              pname ? session.email : 'Tocá para poner tu nombre')
+          ? h(
+              'div',
+              { className: 'ajustes-profile-email' },
+              pname ? session.email : 'Tocá para poner tu nombre'
+            )
           : !editName && isGuest
             ? h('div', { className: 'ajustes-profile-email' }, 'Modo invitado')
             : null,
@@ -500,6 +509,7 @@ function ConfigTabInner(props) {
       ref: fileInputRef,
       type: 'file',
       accept: 'image/*',
+      'aria-label': 'Seleccionar foto de perfil',
       style: { position: 'absolute', opacity: 0, width: 0, height: 0, overflow: 'hidden' },
       onChange: function (e) {
         var f = e.target.files && e.target.files[0];
