@@ -14,8 +14,6 @@
   justify-content: center;
   overflow: hidden;
   animation: fadeIn 0.25s var(--ease);
-  isolation: isolate;
-  contain: paint;
 }
 
 [data-theme='dark'] .mol-ov {
@@ -36,7 +34,6 @@
   border-bottom: none;
   box-shadow: var(--sh-3);
   animation: slideUp 0.4s var(--spring);
-  contain: paint layout;
 }
 
 .mol-hdl {
