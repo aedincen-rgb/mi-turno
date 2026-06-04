@@ -1,4 +1,4 @@
 {
-  "v": "v79",
-  "label": "Fix: badge de foto ahora completamente visible (overflow:hidden → overflow:visible en avatar)"
+  "v": "v80",
+  "label": "Perfil iOS Style: layout horizontal foto+nombre+email+estado. Inspirado en Ajustes de iOS."
 }

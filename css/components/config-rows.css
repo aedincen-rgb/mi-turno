@@ -14,38 +14,46 @@
   padding:4px 0 24px;
 }
 
-/* ─── HERO identidad ─── */
-.ajustes-hero{
-  text-align:center;
-  padding:20px 8px 8px;
-  animation:fadeUp 0.6s var(--spring);
+/* ═══════════════════════════════════════════════════════════
+   PERFIL · iOS Settings style (v79)
+   Layout horizontal: foto izq + nombre/email/estado der
+   ═══════════════════════════════════════════════════════════ */
+
+.ajustes-profile{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  padding:8px 0 4px;
+  animation:fadeUp 0.5s var(--spring);
 }
-.ajustes-hero-av{
+
+/* Avatar */
+.ajustes-profile-av{
   position:relative;
-  width:80px;
-  height:80px;
-  margin:0 auto 18px;
+  width:68px;
+  height:68px;
+  flex-shrink:0;
   border-radius:50%;
   background:linear-gradient(135deg, var(--surface), var(--surface2));
   border:1px solid var(--border);
   display:flex;
   align-items:center;
   justify-content:center;
-  font-size:30px;
+  font-size:28px;
   font-weight:600;
   color:var(--accent);
   letter-spacing:-0.5px;
-  box-shadow:0 10px 36px var(--accent-glow), inset 0 1px 0 rgba(255,255,255,0.5);
+  box-shadow:0 4px 16px var(--accent-glow);
   cursor:pointer;
   padding:0;
   overflow:visible;
   font-family:inherit;
   transition:transform 0.18s var(--spring);
 }
-.ajustes-hero-av:active{
-  transform:scale(0.94);
+.ajustes-profile-av:active{
+  transform:scale(0.93);
 }
-.ajustes-hero-av-img{
+.ajustes-profile-av-img{
   position:absolute;
   inset:0;
   width:100%;
@@ -53,121 +61,118 @@
   object-fit:cover;
   border-radius:50%;
 }
-.ajustes-hero-av-ini{
+.ajustes-profile-av-ini{
   position:relative;
   z-index:1;
 }
-.ajustes-hero-av-edit{
+
+/* Badge cámara / + */
+.ajustes-profile-av-badge{
   position:absolute;
   bottom:-4px;
   right:-4px;
-  width:34px;
-  height:34px;
+  width:32px;
+  height:32px;
   border-radius:50%;
   background:var(--accent);
   color:#fff;
   display:flex;
   align-items:center;
   justify-content:center;
-  font-size:16px;
+  font-size:15px;
   line-height:1;
-  border:3px solid var(--surface);
-  box-shadow:0 3px 10px rgba(0,0,0,0.25), 0 0 0 2px rgba(255,255,255,0.35);
+  border:2.5px solid var(--surface);
+  box-shadow:0 3px 10px rgba(0,0,0,0.22), 0 0 0 2px rgba(255,255,255,0.3);
   z-index:5;
   transition:transform 0.2s var(--spring);
-  cursor:pointer;
 }
-.ajustes-hero-av:active .ajustes-hero-av-edit{
+.ajustes-profile-av:active .ajustes-profile-av-badge{
   transform:scale(1.12);
 }
-.ajustes-hero-av-hint{
-  font-size:10.5px;
-  color:var(--muted);
-  text-align:center;
-  margin-bottom:14px;
-  opacity:0.65;
-  transition:opacity 0.2s;
+
+/* Columna derecha: nombre + email + estado */
+.ajustes-profile-info{
+  flex:1;
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  gap:1px;
 }
-.ajustes-hero-av:hover ~ .ajustes-hero-av-hint,
-.ajustes-hero-av-hint:hover{
-  opacity:1;
-}
-.ajustes-hero-av.has-photo .ajustes-hero-av-glow{
-  opacity:0.3;
-}
-.ajustes-hero-av-glow{
-  position:absolute;
-  inset:-10px;
-  border-radius:50%;
-  background:radial-gradient(circle, var(--accent-glow) 0%, transparent 65%);
-  filter:blur(14px);
-  z-index:-1;
-  animation:ajustesPulse 3.4s ease-in-out infinite;
-}
-@keyframes ajustesPulse{
-  0%, 100%{ opacity:0.5; transform:scale(1); }
-  50%     { opacity:0.95; transform:scale(1.1); }
-}
-.ajustes-hero-nm{
-  font-size:17px;
-  font-weight:600;
-  color:var(--text);
-  letter-spacing:-0.3px;
-  margin-bottom:6px;
-  word-break:break-word;
-  max-width:280px;
-  margin-left:auto;
-  margin-right:auto;
-}
-/* ─── Nombre editable inline ─── */
-.ajustes-hero-nm-btn{
-  background:var(--surface2);
-  border:1.5px dashed var(--border);
-  padding:8px 16px;
-  margin:0 auto;
-  font-family:inherit;
-  font-size:17px;
-  font-weight:600;
-  color:var(--text);
-  letter-spacing:-0.3px;
-  word-break:break-word;
-  max-width:280px;
+
+/* Nombre editable */
+.ajustes-profile-name{
   display:inline-flex;
   align-items:center;
-  gap:8px;
-  border-radius:14px;
+  gap:6px;
+  background:none;
+  border:none;
+  padding:0;
+  font-family:inherit;
   cursor:pointer;
-  transition:border-color 0.2s var(--ease), background 0.2s var(--ease);
+  color:var(--text);
+  max-width:100%;
 }
-.ajustes-hero-nm-btn:hover{
-  border-color:var(--accent);
-  background:var(--surface);
+.ajustes-profile-name-txt{
+  font-size:19px;
+  font-weight:700;
+  letter-spacing:-0.3px;
+  line-height:1.25;
+  word-break:break-word;
 }
-.ajustes-hero-nm-btn:active{
-  background:var(--accent-dim);
-}
-.ajustes-hero-nm-txt{
-  flex:1;
-  text-align:center;
-}
-.ajustes-hero-nm-pen{
+.ajustes-profile-name-pen{
   display:inline-flex;
   align-items:center;
   justify-content:center;
-  width:28px;
-  height:28px;
+  width:24px;
+  height:24px;
   border-radius:50%;
   background:var(--accent);
   color:#fff;
-  font-size:14px;
+  font-size:12px;
   flex-shrink:0;
-  box-shadow:0 2px 8px rgba(0,0,0,0.15);
-  transition:transform 0.2s var(--spring);
+  opacity:0.85;
+  transition:opacity 0.2s, transform 0.2s var(--spring);
 }
-.ajustes-hero-nm-btn:hover .ajustes-hero-nm-pen{
-  transform:scale(1.12);
+.ajustes-profile-name:active .ajustes-profile-name-pen{
+  transform:scale(1.15);
+  opacity:1;
 }
-.ajustes-hero-nm-hint{
+
+/* Email / texto secundario */
+.ajustes-profile-email{
+  font-size:13px;
+  color:var(--muted);
+  line-height:1.35;
+  margin-top:1px;
+}
+
+/* Estado de sincronización */
+.ajustes-profile-status{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  font-size:12px;
+  color:var(--muted);
+  margin-top:2px;
+}
+.ajustes-profile-dot{
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  background:#34c759;
+  flex-shrink:0;
+}
+.ajustes-profile-dot.off{
+  background:#8e8e93;
+}
+
+/* Edición inline del nombre */
+.ajustes-profile-name-edit{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  width:100%;
+}
   font-size:11px;
   color:var(--muted);
   margin-top:6px;
@@ -189,14 +194,16 @@
   padding:0 16px;
   box-sizing:border-box;
 }
-.ajustes-hero-name-edit .ajustes-edit-input{
+.ajustes-hero-name-edit .ajustes-edit-input,
+.ajustes-profile-name-edit .ajustes-edit-input{
   flex:1;
-  text-align:center;
-  font-size:16px;
+  font-size:17px;
+  font-weight:600;
 }
-.ajustes-hero-name-edit .ajustes-edit-save{
-  width:42px;
-  height:42px;
+.ajustes-hero-name-edit .ajustes-edit-save,
+.ajustes-profile-name-edit .ajustes-edit-save{
+  width:38px;
+  height:38px;
   font-size:16px;
 }
 .ajustes-hero-email{
@@ -699,6 +706,13 @@
 [data-theme="dark"] .ajustes-hero-av{
   background:linear-gradient(135deg, var(--surface2), var(--surface));
   box-shadow:0 10px 36px var(--accent-glow), inset 0 1px 0 rgba(255,255,255,0.05);
+}
+[data-theme="dark"] .ajustes-profile-av{
+  background:linear-gradient(135deg, var(--surface2), var(--surface));
+  box-shadow:0 4px 16px var(--accent-glow);
+}
+[data-theme="dark"] .ajustes-profile-av-badge{
+  border-color:var(--surface2);
 }
 [data-theme="dark"] .ajustes-switch-track::after{
   background:#f4f4f5;
