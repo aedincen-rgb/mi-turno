@@ -1035,32 +1035,34 @@ function App(props) {
                 h('path', { d: 'M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z' })
               )
         )
-      ),
-      ledPop
-        ? h(
+      )
+    ),
+
+    // ═══ BANNER DE CONEXIÓN (fuera del header, fixed real) ═══
+    ledPop
+      ? h(
+          'div',
+          {
+            className: 'conn-banner',
+            role: 'status',
+            'aria-live': 'polite'
+          },
+          h(
             'div',
-            {
-              className: 'conn-banner',
-              role: 'status',
-              'aria-live': 'polite'
-            },
+            { className: 'conn-banner-card ' + ledPop.k },
+            h('span', { className: 'conn-banner-dot', 'aria-hidden': 'true' }),
             h(
               'div',
-              { className: 'conn-banner-card ' + ledPop.k },
-              h('span', { className: 'conn-banner-dot', 'aria-hidden': 'true' }),
-              h(
-                'div',
-                { className: 'conn-banner-txt' },
-                h('span', { className: 'conn-banner-title' },
-                  ledPop.k === 'on' ? 'Conectado' :
-                  ledPop.k === 'off' ? 'Sin conexión' :
-                  'Conectando'),
-                h('span', { className: 'conn-banner-sub' }, ledPop.t)
-              )
+              { className: 'conn-banner-txt' },
+              h('span', { className: 'conn-banner-title' },
+                ledPop.k === 'on' ? 'Conectado' :
+                ledPop.k === 'off' ? 'Sin conexión' :
+                'Conectando'),
+              h('span', { className: 'conn-banner-sub' }, ledPop.t)
             )
           )
-        : null
-    ),
+        )
+      : null,
 
     h(
       'div',

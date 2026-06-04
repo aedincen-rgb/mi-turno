@@ -1,4 +1,4 @@
 {
-  "v": "v86",
-  "label": "Banner de conexión: tarjeta legible con título + descripción. Glass morphism estilo iOS."
+  "v": "v87",
+  "label": "Fix: banner de conexión movido fuera del header. position:fixed ahora funciona."
 }
