@@ -221,7 +221,7 @@ La app tiene dos puntos de entrada. NO confundirlos:
 
 ---
 
-## Lecciones incorporadas (v76–v112)
+## Lecciones incorporadas (v76–v115)
 
 Registradas durante la sesión del 3-4 de junio de 2026 con DeepSeek v4 Pro + Copilot en VS Code.
 
@@ -247,6 +247,6 @@ Registradas durante la sesión del 3-4 de junio de 2026 con DeepSeek v4 Pro + Co
 | v110 | Video demo en landing: `<video autoplay muted loop playsinline>`. iOS requiere los 4 atributos. |
 | v111 | La landing necesita parámetro `?show=1` para evitar redirect automático cuando se accede desde la app. |
 | v112 | **Swap nuclear:** `index.html` = landing, `app.html` = app. Cero dependencia de rewrites para la raíz. Vercel sirve `index.html` por defecto — imposible de fallar. `check.sh` actualizado para validar contra `app.html`. |
-| v96 | El respaldo de datos debe validar estructura (`app === 'mi-turno'`) antes de restaurar. |
-| v97 | Un build script sin tooling (`cat` en orden) reduce 56 requests a 1 sin complejidad. |
-| v98 | El onboarding debe usar `localStorage` flag para no repetirse. Spotlight via `getBoundingClientRect()` + ring animado. |
+| v113 | iOS auto-zoom: la lección de v106 estaba escrita pero los inputs seguían en 15px. Subidos `.inp` / `.asistente-input` / `.email-card-inp` a **16px** (mínimo real que lo evita). NO bloquear el zoom (`user-scalable=no` rompe WCAG 1.4.4) — se ataca la causa, no el síntoma. |
+| v114 | Higiene multi-mano: **todo global nuevo** (backup/onboarding/ai-help/`showToast`) debe registrarse en `eslint.config.js` o el linter queda rojo y se termina commiteando con `--no-verify` (se cae la red de seguridad). `dist/` (salida de `scripts/build.sh`) va en `.gitignore`, **nunca** al repo — Vercel sirve desde la raíz. Un solo landing (`index.html`); sin copias (`landing.html`/`bak_landing.html`). El swap v112 dejó `tests/a11y.mjs` apuntando a `index.html` (landing) → repuntar a `/app.html` y saltar el onboarding (`mt_onboarding_done`) para auditar las 6 tabs. |
+| v115 | El **landing también** pasa el gate de accesibilidad: texto sobre `#f5f7fb` necesita ≥4.5:1 (azul de marca `#5b86e5` ≈ 3:1 → `#3a5cb5`; grises `#8e8e93`/`#aeaeb2` → `#646b7d`). Definir overrides de modo oscuro (aclarar a `#8fb3ff`/`#a0a0a6`) para cumplir también sobre `#0a0c12`. Verificar repuntando el harness al landing temporalmente. |
