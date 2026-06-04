@@ -38,9 +38,13 @@
 
 /* tab-view: wrapper con key que fuerza re-animación al cambiar tabs */
 .tab-view {
-  animation: fadeUp 0.32s var(--spring) both;
-  transform: translateZ(0);
-  will-change: transform, opacity;
+  /* SIN transform/will-change/'both': dejaban un transform persistente
+     (translateZ(0), y el to-state de fadeUp con 'both') que convierte a
+     .tab-view en containing block y ATRAPA los overlays position:fixed
+     renderizados dentro de un tab (ej: el bottom-sheet de detalle de turno en
+     Historial), que aparecían al final del scroll en vez de sobre la pantalla.
+     Lección v94: translateZ(0)/transform rompe position:fixed descendiente. */
+  animation: fadeUp 0.32s var(--spring);
 }
 
 /* ─── Pull-to-refresh ─── */

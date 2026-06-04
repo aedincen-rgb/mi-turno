@@ -1,4 +1,4 @@
 {
-  "v": "v121",
-  "label": "WhatsApp share: botón 💬 en Dashboard con mensaje pre-formateado."
+  "v": "v122",
+  "label": "Historial: detalle del turno (bottom-sheet) ya no aparece al final del scroll (.tab-view sin transform que atrapaba el overlay)"
 }
