@@ -746,3 +746,27 @@
   color: var(--danger);
   border: 1px solid color-mix(in srgb, var(--danger) 22%, transparent);
 }
+
+/* Botón de voz (TTS) en mensajes del asistente */
+.asistente-speak-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 13px;
+  cursor: pointer;
+  margin-top: 4px;
+  opacity: 0.6;
+  transition: opacity 0.2s, transform 0.2s var(--spring);
+}
+.asistente-speak-btn:hover,
+.asistente-speak-btn:active {
+  opacity: 1;
+  transform: scale(1.12);
+  background: var(--accent-dim);
+  border-color: var(--accent);
+}
