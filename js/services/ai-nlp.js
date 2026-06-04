@@ -728,6 +728,19 @@ var AI_INTENTS = [
     ]
   },
 
+  // ── WhatsApp Share ──
+  {
+    id: 'whatsapp_share',
+    kw: [
+      ['whatsapp', 3],
+      ['compartir whatsapp', 3],
+      ['compartir por whatsapp', 3],
+      ['enviar whatsapp', 3],
+      ['mandar whatsapp', 3],
+      ['whats', 2]
+    ]
+  },
+
   // ── Ayuda ──
   {
     id: 'ayuda_app',
