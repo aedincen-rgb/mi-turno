@@ -115,6 +115,15 @@ function App(props) {
   var compactRef = useRef(false);
   compactRef.current = compact;
 
+  // ── Lazy tabs: solo la activa y la previa se mantienen en DOM ──
+  var mountedRef = useRef({ home: true });
+  useEffect(function () {
+    mountedRef.current[tab] = true;
+  }, [tab]);
+  function _lazy(id, el) {
+    return mountedRef.current[id] ? h('div', { style: { display: tab === id ? 'block' : 'none' }, key: id }, el) : null;
+  }
+
   // Cuántas acciones quedan en la cola de sync (para el indicador del header).
   // Event-driven: solo actualiza cuando la cola cambia, no polling continuo.
   var spd = useState(0);
@@ -137,6 +146,21 @@ function App(props) {
       };
     },
     [uid]
+  );
+
+  // ── Badge API: muestra sync pendiente en el ícono de la PWA ──
+  useEffect(
+    function () {
+      if (typeof navigator === 'undefined') return;
+      if (navigator.setAppBadge) {
+        if (syncPending > 0) {
+          navigator.setAppBadge(syncPending).catch(function () {});
+        } else {
+          navigator.clearAppBadge().catch(function () {});
+        }
+      }
+    },
+    [syncPending]
   );
 
   // ── BANNER DE CONEXIÓN · DOM directo (seguro, sin React) ──
@@ -1107,8 +1131,8 @@ function App(props) {
       h(
         'main',
         { className: 'tab-view', role: 'main' },
-        tab === 'home'
-          ? h(HomeTab, {
+        _lazy('home',
+          h(HomeTab, {
               calc: calc,
               activo: activo,
               ahora: ahoraDate,
@@ -1121,62 +1145,57 @@ function App(props) {
               session: session,
               onIni: onIni,
               onFin: onFin,
-              onOpenAssistant: function () {
-                haptic();
-                setTab('ai');
-              },
-              onOpenConfig: function () {
-                haptic();
-                setTab('config');
-              }
-            })
-          : tab === 'dashboard'
-            ? h(DashboardTab, {
-                calc: calc,
-                turnos: turnosMes,
-                salario: salario,
-                vh: vh,
-                ahora: ahoraDate,
-                themeKey: theme,
-                prefs: prefs,
-                quincenasMes: quincenasMes
-              })
-            : tab === 'ai'
-              ? h(AsistenteTab, {
-                  turnos: turnosMes,
-                  turnosAll: turnos,
-                  calc: calc,
-                  salario: salario,
-                  vh: vh,
-                  session: session
-                })
-              : tab === 'history'
-                ? h(HistoryTab, {
-                    turnos: turnos,
-                    activo: activo,
-                    durActual: durActual,
-                    session: session,
-                    calc: calc,
-                    vh: vh,
-                    ahora: ahoraDate,
-                    onBorrar: onBorrar,
-                    onBorrarUno: onBorrarUno,
-                    onExportPDF: onExportPDF,
-                    onExportExcel: onExportExcel
-                  })
-                : h(ConfigTab, {
-                    salario: salario,
-                    valorHora: vh,
-                    session: session,
-                    onSalario: onSalario,
-                    onSignOut: props.onSignOut,
-                    onSessionPatch: onSessionPatch,
-                    theme: theme,
-                    onThemeChange: setTheme,
-                    prefs: prefs,
-                    onPrefsChange: onPrefsChange,
-                    onRevealConn: revealConn
-                  })
+              onOpenAssistant: function () { haptic(); setTab('ai'); },
+              onOpenConfig: function () { haptic(); setTab('config'); }
+            })),
+        _lazy('dashboard',
+          h(DashboardTab, {
+              calc: calc,
+              turnos: turnosMes,
+              salario: salario,
+              vh: vh,
+              ahora: ahoraDate,
+              themeKey: theme,
+              prefs: prefs,
+              quincenasMes: quincenasMes
+            })),
+        _lazy('ai',
+          h(AsistenteTab, {
+              turnos: turnosMes,
+              turnosAll: turnos,
+              calc: calc,
+              salario: salario,
+              vh: vh,
+              session: session
+            })),
+        _lazy('history',
+          h(HistoryTab, {
+              turnos: turnos,
+              activo: activo,
+              durActual: durActual,
+              session: session,
+              calc: calc,
+              vh: vh,
+              ahora: ahoraDate,
+              onBorrar: onBorrar,
+              onBorrarUno: onBorrarUno,
+              onExportPDF: onExportPDF,
+              onExportExcel: onExportExcel
+            })),
+        _lazy('config',
+          h(ConfigTab, {
+              salario: salario,
+              valorHora: vh,
+              session: session,
+              onSalario: onSalario,
+              onSignOut: props.onSignOut,
+              onSessionPatch: onSessionPatch,
+              theme: theme,
+              onThemeChange: setTheme,
+              prefs: prefs,
+              onPrefsChange: onPrefsChange,
+              onRevealConn: revealConn
+            }))
       )
     ),
 
