@@ -176,29 +176,32 @@ function App(props) {
 
     var st = _connState();
     var title = st.k === 'on' ? 'Conectado' : st.k === 'off' ? 'Sin conexión' : 'Conectando';
+    var dotColor = st.k === 'on' ? '#34c759' : st.k === 'off' ? '#ff3b30' : '#ff9500';
 
-    // Crear banner via DOM (sin tocar React)
+    // Banner con estilos inline — garantizado, sin depender de CSS externo
     var wrap = document.createElement('div');
-    wrap.className = 'conn-banner';
     wrap.setAttribute('role', 'status');
     wrap.setAttribute('aria-live', 'polite');
+    wrap.style.cssText = 'position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:99999;display:flex;justify-content:center;pointer-events:none;animation:connBannerIn 4.5s ease forwards;';
 
     var card = document.createElement('div');
-    card.className = 'conn-banner-card ' + st.k;
+    card.style.cssText = 'display:flex;align-items:center;gap:12px;padding:14px 18px;border-radius:18px;' +
+      'background:rgba(255,255,255,0.72);backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);' +
+      'border:1px solid rgba(0,0,0,0.06);box-shadow:0 8px 32px rgba(0,0,0,0.12);max-width:380px;';
 
     var dot = document.createElement('span');
-    dot.className = 'conn-banner-dot';
     dot.setAttribute('aria-hidden', 'true');
+    dot.style.cssText = 'width:10px;height:10px;border-radius:50%;flex-shrink:0;background:' + dotColor + ';box-shadow:0 0 10px ' + dotColor + ';';
 
     var txt = document.createElement('div');
-    txt.className = 'conn-banner-txt';
+    txt.style.cssText = 'display:flex;flex-direction:column;gap:2px;';
 
     var ttl = document.createElement('span');
-    ttl.className = 'conn-banner-title';
+    ttl.style.cssText = 'font-size:14px;font-weight:700;color:#1c1c1e;letter-spacing:-0.2px;';
     ttl.textContent = title;
 
     var sub = document.createElement('span');
-    sub.className = 'conn-banner-sub';
+    sub.style.cssText = 'font-size:12px;font-weight:500;color:#6e6e73;';
     sub.textContent = st.t;
 
     txt.appendChild(ttl);
