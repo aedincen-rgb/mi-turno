@@ -354,6 +354,26 @@ function DashboardTab(props) {
         )
       : null,
 
-    h('div', { className: 'tip-box', dangerouslySetInnerHTML: { __html: tip } })
+    h('div', { className: 'tip-box', dangerouslySetInnerHTML: { __html: tip } }),
+
+    // Web Share API: compartir logros (degrade gracefully si no disponible)
+    typeof navigator !== 'undefined' && navigator.share
+      ? h(
+          'button',
+          {
+            className: 'dash-share-btn',
+            onClick: function () {
+              haptic();
+              navigator.share({
+                title: 'Mi Turno · Mis números del mes',
+                text: '📊 Llevo ' + fCOP(ctx.totalCOP) + ' en ' + ctx.diasTrab + ' turnos. ¡' + ctx.pctSalario.toFixed(0) + '% de mi meta! 🚀',
+                url: 'https://miturno.one'
+              }).catch(function () {});
+            },
+            'aria-label': 'Compartir mis números'
+          },
+          '📤 Compartir'
+        )
+      : null
   );
 }

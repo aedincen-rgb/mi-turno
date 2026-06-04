@@ -35,3 +35,28 @@
 .tip-box strong {
   color: var(--accent);
 }
+
+/* Web Share button */
+.dash-share-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  margin-top: 14px;
+  padding: 13px;
+  border-radius: 14px;
+  border: 1.5px dashed var(--border);
+  background: var(--surface2);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.dash-share-btn:active {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+}
