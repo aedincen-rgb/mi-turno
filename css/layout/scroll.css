@@ -18,8 +18,6 @@
   scrollbar-width: none;
   /* Containment: el navegador puede saltarse layout/paint fuera de viewport */
   contain: layout style;
-  /* GPU compositing */
-  transform: translateZ(0);
 }
 
 .scr::-webkit-scrollbar {
