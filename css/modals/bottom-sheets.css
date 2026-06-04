@@ -2,6 +2,12 @@
    MI TURNO · modals/bottom-sheets.css
    ════════════════════════════════════════════════════════════════ */
 
+/* ⚠️  NO agregar contain:paint, contain:layout ni isolation:isolate
+   a .mol-ov ni a .mol-sh. contain:paint recorta el contenido animado
+   (el slideUp del bottom sheet queda fuera de vista). isolation crea
+   un stacking context que puede ocultar elementos con z-index alto.
+   Lección v93. */
+
 .mol-ov {
   position: fixed;
   inset: 0;
