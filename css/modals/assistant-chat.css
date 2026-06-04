@@ -770,3 +770,31 @@
   background: var(--accent-dim);
   border-color: var(--accent);
 }
+
+/* Botones de acción rápida (ai-enhanced) */
+.asistente-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.asistente-action-btn {
+  padding: 7px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--accent);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.asistente-action-btn:hover,
+.asistente-action-btn:active {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+}

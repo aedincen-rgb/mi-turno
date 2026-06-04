@@ -879,7 +879,16 @@ function aiAnswer(question, state) {
       : '';
     var _resp = _aiDispatchNLP(_nlp.intent, c, state, q, t);
     if (_resp) {
-      return _pref + _resp + _suff;
+      var _final = _pref + _resp + _suff;
+      // Enriquecer con memoria y acciones rápidas (ai-enhanced.js)
+      if (typeof aiEnhancedRespond === 'function') {
+        var _enriched = aiEnhancedRespond(_final, _nlp.intent, _nlp.topic, q, c);
+        if (_enriched && _enriched.text) {
+          // Devolver como objeto enriquecido (soporta acciones)
+          return _enriched;
+        }
+      }
+      return _final;
     }
   }
 
