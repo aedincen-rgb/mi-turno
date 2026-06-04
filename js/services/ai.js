@@ -796,6 +796,11 @@ function _aiDispatchNLP(intent, c, state, q, t) {
     return '🤔 Contame qué querés hacer y te guío paso a paso. Por ejemplo:\n\n• "¿Cómo exporto mis turnos?"\n• "¿Cómo cambio mi foto?"\n• "¿Cómo configuro el PIN?"\n• "¿Cómo respaldo mis datos?"';
   }
 
+  // ── WhatsApp Share ──
+  if (intent === 'whatsapp_share') {
+    return '📱 Podés compartir tus números por WhatsApp desde la pestaña **Análisis**. Bajá hasta el final y tocá el botón verde **💬 WhatsApp**.\n\nTambién podés usar **📤 Compartir** para enviarlo por cualquier otra app (Telegram, correo, etc).\n\n¿Querés que te lleve al Análisis?';
+  }
+
   // Intent no mapeado → advertir en consola y delegar al sistema clásico
   if (intent) {
     try { console.warn('[NLP] Intent sin handler en _aiDispatchNLP:', intent, '— delegando a sistema clásico'); } catch (_) {}

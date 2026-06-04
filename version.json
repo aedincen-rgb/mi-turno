@@ -1,4 +1,4 @@
 {
-  "v": "v128",
-  "label": "Fix: NLP email ahora dispara EmailComposeCard real."
+  "v": "v129",
+  "label": "WhatsApp intent: la IA ahora entiende 'compartir por whatsapp'."
 }
