@@ -100,6 +100,7 @@ function AsistenteTab(props) {
       setOpenCat(null);
       _aiClearHistory(uid);
       if (typeof aiResetConv === 'function') aiResetConv();
+      if (typeof aiClearMemory === 'function') aiClearMemory();
     },
     [uid]
   );
@@ -151,6 +152,8 @@ function AsistenteTab(props) {
           var newMsg;
           if (resp && typeof resp === 'object' && resp.action) {
             newMsg = { role: 'ai', content: resp.text, action: resp.action };
+          } else if (resp && typeof resp === 'object' && resp.actions) {
+            newMsg = { role: 'ai', content: resp.text, actions: resp.actions };
           } else if (resp && typeof resp === 'object') {
             newMsg = { role: 'ai', content: resp.text || String(resp) };
           } else {
@@ -299,6 +302,24 @@ function AsistenteTab(props) {
                           title: 'Escuchar'
                         },
                         '🔊'
+                      )
+                    : null,
+                  // Botones de acción rápida (ai-enhanced.js)
+                  m.actions && m.actions.length
+                    ? h(
+                        'div',
+                        { className: 'asistente-actions' },
+                        m.actions.map(function (a, j) {
+                          return h(
+                            'button',
+                            {
+                              key: j,
+                              className: 'asistente-action-btn',
+                              onClick: function () { send(a.query); }
+                            },
+                            a.label
+                          );
+                        })
                       )
                     : null,
                   m.action && m.action.type === 'email_compose'
