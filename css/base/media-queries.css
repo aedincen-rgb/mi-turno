@@ -142,6 +142,7 @@ textarea {
   margin: 0 auto;
   height: 100%;
   height: -webkit-fill-available;
+  height: 100dvh; /* cubre todo el alto real con viewport-fit=cover (ver typography.css) */
   overflow: hidden;
 }
 

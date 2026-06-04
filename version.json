@@ -1,4 +1,4 @@
 {
-  "v": "v116",
-  "label": "iOS standalone: banner del LED bajo el notch (safe-area-top) + html con gradiente (sin linea blanca abajo)"
+  "v": "v117",
+  "label": "iOS standalone: body/#root con 100dvh — elimina la banda clara inferior (home-indicator)"
 }
