@@ -396,7 +396,8 @@
   border: 1.5px solid var(--glass-border-sm);
   border-radius: 22px;
   color: var(--text);
-  font-size: 15px;
+  /* 16px mínimo: evita el auto-zoom de iOS al enfocar el chat. */
+  font-size: 16px;
   font-family: inherit;
   outline: none;
   resize: none;
@@ -572,7 +573,8 @@
   border-radius: 11px;
   color: var(--text);
   font-family: var(--font-sans);
-  font-size: 14px;
+  /* 16px mínimo: evita el auto-zoom de iOS al enfocar (asunto/mensaje). */
+  font-size: 16px;
   outline: none;
   box-shadow: inset 0 1px 0 var(--spec-top);
   transition:

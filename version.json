@@ -1,4 +1,4 @@
 {
-  "v": "v112",
-  "label": "Swap: landing ahora es index.html. App en app.html."
+  "v": "v113",
+  "label": "Fix zoom iOS: inputs a 16px (login/chat/email) — sin auto-zoom ni paneo lateral"
 }
