@@ -1,4 +1,4 @@
 {
-  "v": "v110",
-  "label": "Landing: fix Vercel cache + espacio para video demo."
+  "v": "v111",
+  "label": "Fix: landing redirect inteligente + CDN cache purge."
 }
