@@ -1,4 +1,4 @@
 {
-  "v": "v105",
-  "label": "Fix banner en iOS: -webkit-backdrop-filter + RAF fade-in."
+  "v": "v106",
+  "label": "Optimizaciones iOS: font-smoothing, touch-action, input 16px anti-zoom."
 }

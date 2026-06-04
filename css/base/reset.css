@@ -1,4 +1,20 @@
 /* ════════════════════════════════════════════════════════════════
    MI TURNO · base/reset.css
-   Reset CSS y normalización
+   Reset CSS y normalización · optimizaciones iOS
    ════════════════════════════════════════════════════════════════ */
+
+/* iOS font smoothing — texto más nítido en iPhone */
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Touch: elimina el delay de 300ms en iOS */
+html {
+  touch-action: manipulation;
+}
+
+/* iOS: previene auto-zoom en inputs (requiere font-size ≥ 16px) */
+input, textarea, select, button {
+  font-size: 16px;
+}
