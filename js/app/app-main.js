@@ -1039,9 +1039,25 @@ function App(props) {
       ledPop
         ? h(
             'div',
-            { className: 'hdr-led-pop ' + ledPop.k, role: 'status', 'aria-live': 'polite' },
-            h('span', { className: 'hdr-led-pop-dot', 'aria-hidden': 'true' }),
-            ledPop.t
+            {
+              className: 'conn-banner',
+              role: 'status',
+              'aria-live': 'polite'
+            },
+            h(
+              'div',
+              { className: 'conn-banner-card ' + ledPop.k },
+              h('span', { className: 'conn-banner-dot', 'aria-hidden': 'true' }),
+              h(
+                'div',
+                { className: 'conn-banner-txt' },
+                h('span', { className: 'conn-banner-title' },
+                  ledPop.k === 'on' ? 'Conectado' :
+                  ledPop.k === 'off' ? 'Sin conexión' :
+                  'Conectando'),
+                h('span', { className: 'conn-banner-sub' }, ledPop.t)
+              )
+            )
           )
         : null
     ),
