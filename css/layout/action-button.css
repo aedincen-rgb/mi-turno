@@ -1,6 +1,6 @@
 /* ════════════════════════════════════════════════════════════════
-   MI TURNO · layout/action-button.css
-   Botón de acción 3D – iOS 26 physics press
+   MI TURNO · layout/action-button.css (v107)
+   Botón de acción iOS Style · anillo animado + glass morphism
    ════════════════════════════════════════════════════════════════ */
 
 .action-stage {
@@ -11,30 +11,83 @@
   gap: 18px;
 }
 
-.action-btn {
-  will-change: transform, box-shadow;
-  width: 104px;
-  height: 104px;
+/* Contenedor del botón + anillos */
+.action-btn-wrap {
+  position: relative;
+  width: 136px;
+  height: 136px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Anillo exterior pulsante (solo visible en estado activo) */
+.action-ring {
+  position: absolute;
+  inset: -6px;
   border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.22);
+  border: 3px solid transparent;
+  pointer-events: none;
+  transition: border-color 0.5s var(--ease), box-shadow 0.5s var(--ease);
+}
+.action-ring.active {
+  border-color: rgba(91,134,229,0.35);
+  box-shadow: 0 0 40px rgba(91,134,229,0.25), inset 0 0 30px rgba(91,134,229,0.08);
+  animation: ringPulse 2.2s ease-in-out infinite;
+}
+
+@keyframes ringPulse {
+  0%, 100% { 
+    transform: scale(1);
+    border-color: rgba(91,134,229,0.3);
+    box-shadow: 0 0 30px rgba(91,134,229,0.18);
+  }
+  50% { 
+    transform: scale(1.06);
+    border-color: rgba(91,134,229,0.55);
+    box-shadow: 0 0 55px rgba(91,134,229,0.35);
+  }
+}
+
+/* Círculo de progreso (borde superior, tipo Apple Watch) */
+.action-progress-ring {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.4s var(--ease);
+}
+.action-progress-ring.active {
+  opacity: 1;
+}
+
+.action-btn {
+  will-change: transform;
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255,255,255,0.25);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 5px;
+  gap: 4px;
   color: #fff;
   position: relative;
+  z-index: 2;
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
   overflow: hidden;
-  /* efecto glass: desenfoca lo que queda detrás del botón */
-  backdrop-filter: blur(13px) saturate(170%);
-  -webkit-backdrop-filter: blur(13px) saturate(170%);
-  /* spring en release, ease-out en press */
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
   transition:
-    transform 0.13s cubic-bezier(0.34, 1.56, 0.64, 1),
-    box-shadow 0.13s cubic-bezier(0.16, 1, 0.3, 1);
+    transform 0.35s cubic-bezier(0.34,1.56,0.64,1),
+    box-shadow 0.35s cubic-bezier(0.34,1.56,0.64,1);
 }
 
-/* Brillo especular superior (gloss) tipo Liquid Glass */
+/* Brillo superior (gloss) */
 .action-btn::before {
   content: '';
   position: absolute;
@@ -42,98 +95,107 @@
   border-radius: inherit;
   background: linear-gradient(
     180deg,
-    rgba(255, 255, 255, 0.4) 0%,
-    rgba(255, 255, 255, 0.08) 38%,
-    rgba(255, 255, 255, 0) 60%
+    rgba(255,255,255,0.45) 0%,
+    rgba(255,255,255,0.1) 35%,
+    rgba(255,255,255,0) 55%
   );
   pointer-events: none;
 }
 
-/* ── GO – Iniciar ──────────────────────────────────────────── */
+/* ── GO · Iniciar ── */
 .action-btn-go {
   background: linear-gradient(
-    155deg,
-    rgba(159, 190, 255, 0.95) 0%,
-    rgba(125, 168, 255, 0.93) 20%,
-    rgba(91, 134, 229, 0.93) 64%,
-    rgba(74, 113, 212, 0.96) 100%
+    160deg,
+    rgba(140,180,255,0.92) 0%,
+    rgba(100,155,245,0.9) 30%,
+    rgba(70,120,225,0.92) 70%,
+    rgba(55,100,210,0.95) 100%
   );
   box-shadow:
-    inset 0 1.5px 0 rgba(255, 255, 255, 0.5),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.1),
-    0 7px 0 0 #3550a8,
-    0 15px 45px rgba(91, 134, 229, 0.12);
-  transform: translateY(0);
-  animation: btn3dBreathe 3.2s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+    0 8px 32px rgba(91,134,229,0.35),
+    0 2px 8px rgba(91,134,229,0.2),
+    inset 0 1px 0 rgba(255,255,255,0.3);
+  animation: btnFloat 3.8s ease-in-out infinite;
 }
 
 .action-btn-go:active {
-  transform: translateY(5px);
+  transform: scale(0.91);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.28),
-    inset 0 -2px 0 rgba(0, 0, 0, 0.22),
-    0 2px 0 0 #3550a8,
-    0 4px 12px rgba(91, 134, 229, 0.08);
+    0 2px 12px rgba(91,134,229,0.25),
+    inset 0 2px 4px rgba(0,0,0,0.12);
   animation: none;
 }
 
-/* ── STOP – Parar ──────────────────────────────────────────── */
+/* ── STOP · Parar (azul profundo, no rojo) ── */
 .action-btn-stop {
   background: linear-gradient(
-    155deg,
-    rgba(248, 113, 113, 0.95) 0%,
-    rgba(239, 68, 68, 0.93) 40%,
-    rgba(220, 38, 38, 0.95) 100%
+    160deg,
+    rgba(99,102,241,0.92) 0%,
+    rgba(79,70,229,0.9) 30%,
+    rgba(67,56,202,0.92) 70%,
+    rgba(55,48,163,0.95) 100%
   );
   box-shadow:
-    inset 0 1.5px 0 rgba(255, 255, 255, 0.4),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.12),
-    0 7px 0 0 #7f1d1d,
-    0 15px 45px rgba(220, 38, 38, 0.12);
-  transform: translateY(0);
+    0 8px 32px rgba(99,102,241,0.35),
+    0 2px 8px rgba(99,102,241,0.2),
+    inset 0 1px 0 rgba(255,255,255,0.3);
 }
 
 .action-btn-stop:active {
-  transform: translateY(5px);
+  transform: scale(0.91);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.24),
-    inset 0 -2px 0 rgba(0, 0, 0, 0.25),
-    0 2px 0 0 #7f1d1d,
-    0 4px 12px rgba(220, 38, 38, 0.08);
+    0 2px 12px rgba(99,102,241,0.25),
+    inset 0 2px 4px rgba(0,0,0,0.12);
 }
 
-/* ── Animación respira-flota 3D ────────────────────────────── */
-/* La sombra lateral sube +3px cuando el botón sube -3px      */
-/* → el "piso" visual no se mueve, solo el botón flota         */
-@keyframes btn3dBreathe {
-  0%,
-  100% {
+/* Flotación suave (GO state) */
+@keyframes btnFloat {
+  0%, 100% {
     transform: translateY(0);
     box-shadow:
-      inset 0 1.5px 0 rgba(255, 255, 255, 0.5),
-      inset 0 -1px 0 rgba(0, 0, 0, 0.1),
-      0 7px 0 0 #3550a8,
-      0 15px 45px rgba(91, 134, 229, 0.12);
+      0 8px 32px rgba(91,134,229,0.35),
+      0 2px 8px rgba(91,134,229,0.2),
+      inset 0 1px 0 rgba(255,255,255,0.3);
   }
   50% {
-    transform: translateY(-3px);
+    transform: translateY(-4px);
     box-shadow:
-      inset 0 1.5px 0 rgba(255, 255, 255, 0.58),
-      inset 0 -1px 0 rgba(0, 0, 0, 0.08),
-      0 10px 0 0 #3550a8,
-      0 25px 60px rgba(91, 134, 229, 0.18);
+      0 16px 44px rgba(91,134,229,0.45),
+      0 4px 14px rgba(91,134,229,0.28),
+      inset 0 1px 0 rgba(255,255,255,0.35);
   }
 }
 
+/* Icono SVG */
 .action-icon {
   line-height: 1;
   display: block;
-  /* sombra en dos capas → relieve glossy como el chulo de la referencia */
-  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.3)) drop-shadow(0 1px 1px rgba(0, 0, 0, 0.18));
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
 }
+
+/* Label debajo del ícono */
 .action-lbl {
   font-size: 9px;
   font-weight: 700;
-  letter-spacing: 2px;
+  letter-spacing: 2.5px;
   text-transform: uppercase;
+  opacity: 0.9;
+}
+
+/* Caja de info del turno activo (debajo del botón) */
+.active-box {
+  background: rgba(255,255,255,0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 16px;
+  padding: 16px 20px;
+  text-align: center;
+  border: 1px solid rgba(0,0,0,0.04);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  animation: fadeUp 0.5s var(--spring);
+}
+
+[data-theme='dark'] .active-box {
+  background: rgba(30,30,35,0.65);
+  border-color: rgba(255,255,255,0.06);
 }
