@@ -394,15 +394,18 @@ function ConfigTabInner(props) {
     'section',
     { className: 'fadeUp ajustes-wrap', 'aria-label': 'Ajustes' },
 
-    // ══════ HERO IDENTIDAD ══════
+    // ══════ PERFIL · iOS STYLE ══════
+    // Layout horizontal: foto a la izquierda, nombre + datos a la derecha.
+    // Inspirado en la app nativa de Ajustes de iOS.
     h(
       'div',
-      { className: 'ajustes-hero' },
-      // Avatar tappable — abre file picker o action sheet si ya hay foto
+      { className: 'ajustes-profile' },
+
+      // ── Avatar con badge ──
       h(
         'button',
         {
-          className: 'ajustes-hero-av' + (photo ? ' has-photo' : ''),
+          className: 'ajustes-profile-av' + (photo ? ' has-photo' : ''),
           onClick: function () {
             haptic();
             if (photo) setShowPhotoSheet(true);
@@ -410,117 +413,93 @@ function ConfigTabInner(props) {
           },
           'aria-label': photo ? 'Cambiar o eliminar foto' : 'Elegir foto de perfil'
         },
-        h('div', { className: 'ajustes-hero-av-glow' }),
         photo
           ? h('img', {
               src: photo,
               alt: '',
-              className: 'ajustes-hero-av-img',
+              className: 'ajustes-profile-av-img',
               draggable: false
             })
-          : h('span', { className: 'ajustes-hero-av-ini' }, inicial),
-        // Indicador visual: cámara sobre la foto o ícono + para agregar
+          : h('span', { className: 'ajustes-profile-av-ini' }, inicial),
         h(
           'span',
-          {
-            className: 'ajustes-hero-av-edit',
-            'aria-hidden': 'true'
-          },
+          { className: 'ajustes-profile-av-badge', 'aria-hidden': 'true' },
           photo ? '📷' : '+'
         )
       ),
-      // Input file oculto
-      h('input', {
-        ref: fileInputRef,
-        type: 'file',
-        accept: 'image/*',
-        style: { display: 'none' },
-        onChange: function (e) {
-          var f = e.target.files && e.target.files[0];
-          if (f) onPickPhoto(f);
-          // Permite re-seleccionar la misma foto si se quitó y se vuelve a poner
-          e.target.value = '';
-        }
-      }),
-      // Pista visual: el avatar es interactivo
+
+      // ── Columna derecha: nombre + email + estado ──
       h(
         'div',
-        { className: 'ajustes-hero-av-hint' },
-        photo ? 'Tocá la foto para cambiarla' : 'Tocá para agregar tu foto'
-      ),
+        { className: 'ajustes-profile-info' },
 
-      // Nombre — edición inline
-      editName
-        ? h(
-            'div',
-            { className: 'ajustes-hero-name-edit' },
-            h('input', {
-              type: 'text',
-              inputMode: 'text',
-              maxLength: 32,
-              className: 'ajustes-edit-input',
-              'aria-label': 'Tu nombre o apodo',
-              value: tempName,
-              autoFocus: true,
-              placeholder: 'Tu nombre o apodo',
-              onChange: function (e) {
-                setTempName(e.target.value);
-              },
-              onKeyDown: function (e) {
-                if (e.key === 'Enter') guardarName();
-                if (e.key === 'Escape') setEditName(false);
-              }
-            }),
-            h(
-              'button',
-              {
+        // Nombre — edición inline
+        editName
+          ? h(
+              'div',
+              { className: 'ajustes-profile-name-edit' },
+              h('input', {
+                type: 'text',
+                inputMode: 'text',
+                maxLength: 32,
+                className: 'ajustes-edit-input',
+                'aria-label': 'Tu nombre o apodo',
+                value: tempName,
+                autoFocus: true,
+                placeholder: 'Tu nombre o apodo',
+                onChange: function (e) { setTempName(e.target.value); },
+                onKeyDown: function (e) {
+                  if (e.key === 'Enter') guardarName();
+                  if (e.key === 'Escape') setEditName(false);
+                }
+              }),
+              h('button', {
                 className: 'ajustes-edit-save',
                 onClick: guardarName,
                 'aria-label': 'Guardar nombre'
-              },
-              '✓'
+              }, '✓')
             )
-          )
-        : h(
-            'div',
-            { style: { textAlign: 'center' } },
-            h(
+          : h(
               'button',
               {
-                className: 'ajustes-hero-nm-btn',
+                className: 'ajustes-profile-name',
                 onClick: abrirEditName,
-                'aria-label': 'Editar tu nombre o apodo',
-                title: 'Tocá para cambiar cómo te llamás en la app'
+                'aria-label': 'Editar tu nombre o apodo'
               },
-              h('span', { className: 'ajustes-hero-nm-txt' }, displayName),
-              h(
-                'span',
-                {
-                  className: 'ajustes-hero-nm-pen',
-                  'aria-hidden': 'true'
-                },
-                '✎'
-              )
+              h('span', { className: 'ajustes-profile-name-txt' }, displayName),
+              h('span', { className: 'ajustes-profile-name-pen', 'aria-hidden': 'true' }, '✎')
             ),
-            h(
-              'div',
-              { className: 'ajustes-hero-nm-hint' },
-              'Tocá para editar tu nombre'
-            )
-          ),
 
-      // Si el usuario puso alias personalizado, mostramos email en chico debajo
-      !editName && pname && !isGuest && session.email
-        ? h('div', { className: 'ajustes-hero-email' }, session.email)
-        : null,
+        // Email (si hay alias personalizado o usuario registrado)
+        !editName && !isGuest && session.email
+          ? h('div', { className: 'ajustes-profile-email' },
+              pname ? session.email : 'Tocá para poner tu nombre')
+          : !editName && isGuest
+            ? h('div', { className: 'ajustes-profile-email' }, 'Modo invitado')
+            : null,
 
-      h(
-        'div',
-        { className: 'ajustes-hero-est' },
-        h('span', { className: 'ajustes-hero-dot' + (isGuest ? ' off' : '') }),
-        estado
+        // Estado de sincronización
+        h(
+          'div',
+          { className: 'ajustes-profile-status' },
+          h('span', { className: 'ajustes-profile-dot' + (isGuest ? ' off' : '') }),
+          estado
+        )
       )
     ),
+
+    // Input file oculto
+    h('input', {
+      ref: fileInputRef,
+      type: 'file',
+      accept: 'image/*',
+      style: { display: 'none' },
+      onChange: function (e) {
+        var f = e.target.files && e.target.files[0];
+        if (f) onPickPhoto(f);
+        e.target.value = '';
+      }
+    }),
 
     // ══════ ACTION SHEET FOTO (estilo iOS) ══════
     showPhotoSheet
