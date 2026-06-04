@@ -773,7 +773,10 @@ function _aiDispatchNLP(intent, c, state, q, t) {
       '💡 La app funciona sin internet. Tus datos se sincronizan cuando vuelve la conexión.';
   }
 
-  // Intent no mapeado → devolver null para que el sistema clásico lo maneje
+  // Intent no mapeado → advertir en consola y delegar al sistema clásico
+  if (intent) {
+    try { console.warn('[NLP] Intent sin handler en _aiDispatchNLP:', intent, '— delegando a sistema clásico'); } catch (_) {}
+  }
   return null;
 }
 

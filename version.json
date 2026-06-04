@@ -1,4 +1,4 @@
 {
-  "v": "v99",
-  "label": "Guarda: no iniciar turno sin salario configurado. Redirige a Ajustes."
+  "v": "v100",
+  "label": "NLP: warning en consola para intents sin handler. 30/30 verificados."
 }
