@@ -2,6 +2,14 @@
    MI TURNO · layout/scroll.css
    ════════════════════════════════════════════════════════════════ */
 
+/* ⚠️  NO agregar transform, filter, will-change ni contain:paint
+   a .scr ni a sus ancestros. Estas propiedades crean un containing
+   block que rompe TODOS los position:fixed descendientes (overlays,
+   bottom sheets, banner de conexión, onboarding).
+   Ya pasó en v87 (header), v93 (contain:paint) y v94 (translateZ).
+   Si necesitás acelerar scroll, usá overscroll-behavior o
+   -webkit-overflow-scrolling. NUNCA transform:translateZ(0). */
+
 .scr {
   flex: 1;
   min-height: 0;

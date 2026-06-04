@@ -3,6 +3,12 @@
    iOS 26 Liquid Glass header flotante
    ════════════════════════════════════════════════════════════════ */
 
+/* ⚠️  El .hdr usa transform y backdrop-filter por diseño (glass effect).
+   Esto crea un containing block. NO renderizar overlays con
+   position:fixed como hijos del header — van a quedar atrapados.
+   Los overlays (banner, onboarding, modales) deben ser siblings
+   del header o appendearse a document.body. Lección v87. */
+
 .hdr {
   position: fixed;
   top: 0;
