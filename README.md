@@ -6,6 +6,7 @@
 ![No build](https://img.shields.io/badge/build-zero_tooling-555)
 ![Ley 2101/2021](https://img.shields.io/badge/Ley_2101%2F2021-cumplimiento_automático-dc6b65)
 ![License: MIT](https://img.shields.io/badge/license-MIT-blue)
+![v112](https://img.shields.io/badge/version-v112-5b86e5)
 
 **Nómina inteligente para trabajadores por turnos.**
 
@@ -341,6 +342,14 @@ vercel dist/ --prod   # deploy
 ```
 
 `dist/app.js` concatena todos los `.js` en el orden exacto de `index.html`. Sin minificación, sin tree-shaking, sin tooling. Misma filosofía del proyecto: simple, auditable, sin magia.
+
+---
+
+## Landing page (v109–v112)
+
+`miturno.one` muestra una **página de presentación profesional** con hero, features, stats, video demo y CTA a la app. La landing vive en `index.html`. La aplicación vive en `app.html`. Vercel sirve `index.html` en la raíz sin necesidad de rewrites. La PWA usa `start_url: "/app"` para abrir directo a la app.
+
+Usuarios con sesión previa son redirigidos a `/app`. Desde Ajustes (💎 Conocer Mi Turno) se fuerza la landing con `/?show=1`.
 
 ---
 

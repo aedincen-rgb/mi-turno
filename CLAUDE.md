@@ -204,9 +204,26 @@ git push origin master                     # deploy automático en Vercel
 
 ---
 
-## Lecciones incorporadas (v76–v98)
+## Arquitectura de archivos (v112)
 
-Registradas durante la sesión del 3 de junio de 2026 con DeepSeek v4 Pro + Copilot en VS Code.
+La app tiene dos puntos de entrada. NO confundirlos:
+
+| Archivo | Rol | Rewrite Vercel |
+|---|---|---|
+| `index.html` | **Landing page** | `/` (por defecto) |
+| `app.html` | **Aplicación** | `/app` y `/*` (SPA) |
+| `privacy.html` | Política de privacidad | `/privacy.html` |
+
+- El PWA manifest tiene `start_url: "/app"` → la PWA siempre abre la app, no la landing.
+- La landing tiene un script que redirige a `/app` si detecta sesión previa (excepto con `?show=1`).
+- El diamante 💎 en Ajustes usa `/?show=1` para forzar la landing incluso con sesión.
+- `check.sh` valida los .js contra `app.html` (no contra index.html).
+
+---
+
+## Lecciones incorporadas (v76–v112)
+
+Registradas durante la sesión del 3-4 de junio de 2026 con DeepSeek v4 Pro + Copilot en VS Code.
 
 | Versión | Lección |
 |---|---|
@@ -221,6 +238,15 @@ Registradas durante la sesión del 3 de junio de 2026 con DeepSeek v4 Pro + Copi
 | v93 | `contain: paint` en overlays recorta bottom sheets y banners. No usar en contenedores de modales. |
 | v94 | `transform: translateZ(0)` en el scroll container crea un containing block que rompe TODOS los `position: fixed` descendientes. **Nunca usar en `.scr`.** |
 | v95 | El estado conversacional del NLP debe resetearse al limpiar el chat (`/limpiar` → `aiResetConv()`). |
+| v96 | El respaldo de datos debe validar estructura (`app === 'mi-turno'`) antes de restaurar. |
+| v97 | Un build script sin tooling (`cat` en orden) reduce 56 requests a 1 sin complejidad. |
+| v98 | El onboarding debe usar `localStorage` flag para no repetirse. Spotlight via `getBoundingClientRect()` + ring animado. |
+| v106 | iOS: `-webkit-font-smoothing`, `touch-action:manipulation`, `font-size:16px` en inputs previene auto-zoom. |
+| v108 | Botón de acción: glass morphism + anillo pulsante. Sin rojo, sin sombra 3D dura. |
+| v109 | Landing page como `index.html`. Rewrites de Vercel no son confiables con CDN cache agresivo. |
+| v110 | Video demo en landing: `<video autoplay muted loop playsinline>`. iOS requiere los 4 atributos. |
+| v111 | La landing necesita parámetro `?show=1` para evitar redirect automático cuando se accede desde la app. |
+| v112 | **Swap nuclear:** `index.html` = landing, `app.html` = app. Cero dependencia de rewrites para la raíz. Vercel sirve `index.html` por defecto — imposible de fallar. `check.sh` actualizado para validar contra `app.html`. |
 | v96 | El respaldo de datos debe validar estructura (`app === 'mi-turno'`) antes de restaurar. |
 | v97 | Un build script sin tooling (`cat` en orden) reduce 56 requests a 1 sin complejidad. |
 | v98 | El onboarding debe usar `localStorage` flag para no repetirse. Spotlight via `getBoundingClientRect()` + ring animado. |
