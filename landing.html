@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mi Turno · Nómina inteligente para trabajadores colombianos</title>
+<meta name="description" content="Calculá tu salario real turno a turno. Recargos nocturnos, festivos, horas extra según la Ley 2101. Gratis, offline y accesible.">
+<meta property="og:title" content="Mi Turno · Nómina inteligente colombiana">
+<meta property="og:description" content="Calculá tu salario real turno a turno. Recargos nocturnos, festivos y horas extra. Gratis y funciona sin internet.">
+<meta property="og:image" content="https://miturno.one/icon-512.png">
+<meta name="theme-color" content="#f5f7fb">
+<link rel="icon" type="image/svg+xml" href="img/logo-mark.svg">
+<link rel="apple-touch-icon" href="icon-180.png">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #f5f7fb;
+    color: #1c1c1e;
+    line-height: 1.6;
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+  .hero {
+    text-align: center;
+    padding: 60px 24px 40px;
+  }
+  .hero-logo {
+    width: 80px;
+    height: 80px;
+    border-radius: 22px;
+    background: linear-gradient(135deg, #5b86e5, #7da8ff);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 24px;
+    box-shadow: 0 8px 30px rgba(91,134,229,0.3);
+  }
+  .hero-logo img { width: 48px; height: 48px; }
+  .hero h1 {
+    font-size: 38px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    margin-bottom: 8px;
+    color: #1c1c1e;
+  }
+  .hero .tagline {
+    font-size: 17px;
+    color: #5b86e5;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .hero .sub {
+    font-size: 15px;
+    color: #6e6e73;
+    max-width: 400px;
+    margin: 0 auto 28px;
+  }
+  .btn-enter {
+    display: inline-block;
+    padding: 16px 44px;
+    border-radius: 30px;
+    background: linear-gradient(135deg, #5b86e5, #4f73f8);
+    color: #fff;
+    font-size: 17px;
+    font-weight: 700;
+    text-decoration: none;
+    box-shadow: 0 6px 24px rgba(91,134,229,0.35);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .btn-enter:hover { transform: scale(1.04); box-shadow: 0 8px 32px rgba(91,134,229,0.45); }
+  .btn-enter:active { transform: scale(0.96); }
+
+  .features {
+    max-width: 460px;
+    margin: 0 auto;
+    padding: 8px 20px 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .feat {
+    background: rgba(255,255,255,0.7);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 18px;
+    padding: 20px 18px;
+    border: 1px solid rgba(0,0,0,0.05);
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+  }
+  .feat-ico {
+    font-size: 28px;
+    flex-shrink: 0;
+    width: 44px;
+    text-align: center;
+  }
+  .feat h3 { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
+  .feat p { font-size: 13px; color: #6e6e73; line-height: 1.45; }
+
+  .stats {
+    max-width: 460px;
+    margin: 0 auto;
+    padding: 0 20px 30px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    text-align: center;
+  }
+  .stat-val { font-size: 26px; font-weight: 800; color: #5b86e5; }
+  .stat-lbl { font-size: 11px; color: #8e8e93; }
+
+  .bottom {
+    text-align: center;
+    padding: 20px 24px 50px;
+    max-width: 460px;
+    margin: 0 auto;
+  }
+  .bottom p { font-size: 16px; font-weight: 600; color: #1c1c1e; margin-bottom: 20px; }
+
+  .footer {
+    text-align: center;
+    padding: 20px;
+    font-size: 11px;
+    color: #aeaeb2;
+  }
+  .footer a { color: #5b86e5; text-decoration: none; }
+
+  @media (prefers-color-scheme: dark) {
+    body { background: #0a0c12; color: #e5e5ea; }
+    .hero h1 { color: #e5e5ea; }
+    .hero .sub { color: #aeaeb2; }
+    .feat { background: rgba(30,30,35,0.7); border-color: rgba(255,255,255,0.06); }
+    .feat p { color: #aeaeb2; }
+    .stat-lbl { color: #636366; }
+    .bottom p { color: #e5e5ea; }
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-logo">
+    <img src="img/logo-mark.svg" alt="Mi Turno" draggable="false">
+  </div>
+  <h1>Mi Turno</h1>
+  <div class="tagline">Colombia · Nómina inteligente</div>
+  <p class="sub">Calculá tu salario real turno a turno con todos los recargos de ley. Sin internet, sin letra chica, sin errores.</p>
+  <a href="/app" class="btn-enter">Entrar a la app →</a>
+</div>
+
+<div class="stats">
+  <div><div class="stat-val">20-40%</div><div class="stat-lbl">del salario que pierden los trabajadores por no calcular recargos</div></div>
+  <div><div class="stat-val">100%</div><div class="stat-lbl">offline. Funciona sin internet ni señal</div></div>
+  <div><div class="stat-val">0</div><div class="stat-lbl">violaciones WCAG 2.1 AA · accesible con lector de pantalla</div></div>
+</div>
+
+<div class="features">
+  <div class="feat">
+    <div class="feat-ico">⚖️</div>
+    <div><h3>Cálculos con respaldo legal</h3><p> Recargos nocturnos (+35%), dominicales y festivos (+75%), horas extra y sus combinaciones. Todo según el CST colombiano y la Ley 2101/2021.</p></div>
+  </div>
+  <div class="feat">
+    <div class="feat-ico">📡</div>
+    <div><h3>100% offline-first</h3><p>Funciona sin internet. Tus datos se guardan en el dispositivo. Si querés, los sincronizás con la nube para usarlos en varios equipos.</p></div>
+  </div>
+  <div class="feat">
+    <div class="feat-ico">🤖</div>
+    <div><h3>Asistente IA local</h3><p>Preguntale "¿cuánto gané hoy?" o "¿cómo voy vs el mes pasado?". Responde al instante, sin enviar tus datos a ningún servidor.</p></div>
+  </div>
+  <div class="feat">
+    <div class="feat-ico">📱</div>
+    <div><h3>Instalable como app</h3><p>Agregala a la pantalla de inicio de tu celular. Se ve y se siente como una app nativa, con notificaciones y acceso rápido con PIN.</p></div>
+  </div>
+  <div class="feat">
+    <div class="feat-ico">📊</div>
+    <div><h3>Dashboard y exportación</h3><p>Proyecciones, KPIs, gráficos por recargo. Exportá tus turnos a PDF o Excel. Envialos por correo a tu jefe o empresa.</p></div>
+  </div>
+  <div class="feat">
+    <div class="feat-ico">♿</div>
+    <div><h3>Accesible para todos</h3><p>Auditada con axe-core: 0 violaciones WCAG 2.1 AA. Compatible con VoiceOver y TalkBack. Pensada para funcionar en Android de gama baja.</p></div>
+  </div>
+</div>
+
+<div class="bottom">
+  <p>Gratis. Sin anuncios. Sin tracking.</p>
+  <a href="/app" class="btn-enter">Empezar ahora →</a>
+</div>
+
+<div class="footer">
+  <a href="/privacy.html">Política de privacidad</a> · 
+  <a href="mailto:aedincen@gmail.com">Contacto</a> · 
+  Hecho en Colombia 🇨🇴
+</div>
+
+</body>
+</html>
