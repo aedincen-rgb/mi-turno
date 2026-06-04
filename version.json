@@ -1,4 +1,4 @@
 {
-  "v": "v94",
-  "label": "Fix raíz: translateZ(0) en .scr rompía position:fixed de overlays."
+  "v": "v95",
+  "label": "Potencia v76-v94: dark mode banner, auxilio 2026, NLP reset al limpiar"
 }
