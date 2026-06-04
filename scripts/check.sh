@@ -54,15 +54,14 @@ else
 fi
 
 echo
-echo "→ Archivos .js de la app referenciados en index.html y sw.js"
+echo "→ Archivos .js de la app referenciados en app.html y sw.js"
 MISSING_IN_HTML=0
 MISSING_IN_SW=0
 while IFS= read -r -d '' f; do
   rel="${f#./}"
-  # solo archivos bajo js/ (no node_modules ni nada raro)
   if [[ "$rel" != js/* ]]; then continue; fi
-  if ! grep -q "$rel" index.html 2>/dev/null; then
-    fail "$rel NO está en index.html"
+  if ! grep -q "$rel" app.html 2>/dev/null; then
+    fail "$rel NO está en app.html"
     MISSING_IN_HTML=$((MISSING_IN_HTML+1))
   fi
   if ! grep -q "$rel" sw.js 2>/dev/null; then
