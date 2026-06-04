@@ -35,6 +35,11 @@ function AsistenteTab(props) {
     setHeroIdx = hi[1];
   var endRef = useRef(null);
   var inputRef = useRef(null);
+  var recognitionRef = useRef(null);
+
+  // Estado de escucha por voz
+  var ls = useState(false);
+  var listening = ls[0], setListening = ls[1];
 
   var tieneConversacion = msgs.length > 0;
 
@@ -438,7 +443,45 @@ function AsistenteTab(props) {
           'aria-label': 'Enviar'
         },
         '↑'
-      )
+      ),
+      // Micrófono: voz a texto (SpeechRecognition)
+      (typeof SpeechRecognition !== 'undefined' || typeof webkitSpeechRecognition !== 'undefined')
+        ? h(
+            'button',
+            {
+              className: 'asistente-mic' + (listening ? ' listening' : ''),
+              onClick: function () {
+                haptic();
+                if (listening) {
+                  if (recognitionRef.current) recognitionRef.current.stop();
+                  setListening(false);
+                  return;
+                }
+                var SR = SpeechRecognition || webkitSpeechRecognition;
+                var rec = new SR();
+                rec.lang = 'es-CO';
+                rec.interimResults = false;
+                rec.continuous = false;
+                rec.onresult = function (e) {
+                  var text = e.results[0][0].transcript;
+                  setInput(text);
+                  setListening(false);
+                  // Auto-enviar después de breve pausa
+                  setTimeout(function () { send(text); }, 400);
+                };
+                rec.onerror = function () { setListening(false); };
+                rec.onend = function () { setListening(false); };
+                rec.start();
+                setListening(true);
+                recognitionRef.current = rec;
+              },
+              disabled: busy,
+              'aria-label': listening ? 'Escuchando...' : 'Hablar por voz',
+              title: listening ? 'Escuchando...' : 'Hablar'
+            },
+            listening ? '●' : '🎤'
+          )
+        : null
     ),
 
     // ═══ Reanudar / nueva conversación ═══
