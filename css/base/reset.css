@@ -3,6 +3,13 @@
    Reset CSS y normalización · optimizaciones iOS
    ════════════════════════════════════════════════════════════════ */
 
+/* Prevenir scroll horizontal (barras fixed se desplazan) */
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+  overscroll-behavior-x: none;
+}
+
 /* iOS font smoothing — texto más nítido en iPhone */
 html {
   -webkit-font-smoothing: antialiased;
