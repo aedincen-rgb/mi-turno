@@ -675,28 +675,23 @@ function AuthScreen(props) {
       { className: 'auth-hero' },
       h(
         'div',
-        {
-          className: 'auth-logo-box',
-          style: { width: '86px', height: '86px', marginBottom: '18px', borderRadius: '24px' }
-        },
+        { className: 'auth-logo-box' },
         h('img', {
           src: 'img/logo-mark.svg',
           alt: 'Mi Turno',
           draggable: false,
-          style: {
-            width: '54px',
-            height: '54px',
-            display: 'block'
-          }
+          style: { width: '48px', height: '48px', display: 'block' }
         })
       ),
-      h('div', { className: 'auth-app-name' }, 'Mi Turno'),
       h(
         'div',
-        { className: 'auth-tagline' },
-        modo === 'login'
-          ? 'Colombia · Entra con correo o PIN + contraseña'
-          : 'Colombia · Nómina inteligente'
+        { className: 'auth-hero-txt' },
+        h('div', { className: 'auth-app-name' }, 'Mi Turno'),
+        h(
+          'div',
+          { className: 'auth-tagline' },
+          modo === 'login' ? 'Colombia' : 'Colombia · Nómina inteligente'
+        )
       )
     ),
     h(
