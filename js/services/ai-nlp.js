@@ -519,6 +519,10 @@ var AI_INTENTS = [
     id: 'mejor_dia',
     kw: [
       ['mejor dia', 3],
+      ['cuando fue mi mejor dia', 3],
+      ['cual fue mi mejor dia', 3],
+      ['cuál fue mi mejor día', 3],
+      ['cuando fue el mejor dia', 3],
       ['dia mas productivo', 3],
       ['dia que mas gane', 3],
       ['dia que mas gané', 3],
@@ -531,6 +535,9 @@ var AI_INTENTS = [
     id: 'peor_dia',
     kw: [
       ['peor dia', 3],
+      ['cuando fue mi peor dia', 3],
+      ['cual fue mi peor dia', 3],
+      ['cuando fue el peor dia', 3],
       ['dia mas bajo', 3],
       ['dia que menos', 3],
       ['jornada mas corta', 3]
@@ -540,6 +547,8 @@ var AI_INTENTS = [
     id: 'turno_largo',
     kw: [
       ['turno mas largo', 3],
+      ['cual fue mi turno mas largo', 3],
+      ['cuando fue el turno mas largo', 3],
       ['jornada mas larga', 3],
       ['turno largo', 2],
       ['maxima duracion', 3]
@@ -549,6 +558,7 @@ var AI_INTENTS = [
     id: 'turno_corto',
     kw: [
       ['turno mas corto', 3],
+      ['cual fue mi turno mas corto', 3],
       ['turno mas breve', 3],
       ['jornada corta', 3],
       ['minima duracion', 3]
@@ -560,6 +570,8 @@ var AI_INTENTS = [
     id: 'racha',
     kw: [
       ['racha', 3],
+      ['cual es mi racha', 3],
+      ['cuanto llevo seguido', 3],
       ['dias seguidos', 3],
       ['dias consecutivos', 3],
       ['cuantos dias sin parar', 3],
@@ -570,6 +582,7 @@ var AI_INTENTS = [
     id: 'distribucion',
     kw: [
       ['distribucion', 3],
+      ['como se distribuye', 3],
       ['porcentaje', 2],
       ['desglose', 3],
       ['donde va', 3],
