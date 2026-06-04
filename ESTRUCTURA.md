@@ -1,4 +1,4 @@
-# Mi Turno · Estructura del proyecto (v115)
+# Mi Turno · Estructura del proyecto (v128)
 
 PWA de nómina inteligente para trabajadores por turnos en Colombia.
 Sin build tools — vanilla JS ES5, React 18 vía CDN, Supabase como backend.
