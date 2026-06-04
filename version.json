@@ -1,4 +1,4 @@
 {
-  "v": "v115",
-  "label": "Landing WCAG AA: contraste corregido en tagline/stats/footer (claro y oscuro)"
+  "v": "v116",
+  "label": "iOS standalone: banner del LED bajo el notch (safe-area-top) + html con gradiente (sin linea blanca abajo)"
 }
