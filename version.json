@@ -1,4 +1,4 @@
 {
-  "v": "v119",
-  "label": "Boton de turno activo (PARAR): indigo/morado -> azul profundo iOS de marca"
+  "v": "v120",
+  "label": "Ajustes: quitar subrayado del enlace 'Conocer Mi Turno' (text-decoration:none en .ajustes-row)"
 }
