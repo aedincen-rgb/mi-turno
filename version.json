@@ -1,4 +1,4 @@
 {
-  "v": "v102",
-  "label": "Web Share + Badge API + Lazy tabs: 3 optimizaciones."
+  "v": "v103",
+  "label": "Fix: React hooks orden correcto (onboarding useState antes de returns)."
 }
