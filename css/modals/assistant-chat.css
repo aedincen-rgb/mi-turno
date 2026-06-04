@@ -125,14 +125,12 @@
 
 /* Descripción fija, debajo de las categorías */
 .asistente-about {
-  text-align: center;
   font-size: 12.5px;
-  line-height: 1.6;
+  line-height: 1.55;
   color: var(--muted);
-  max-width: 330px;
-  margin: 0 auto;
-  padding: 4px 8px;
-  opacity: 0.85;
+  padding: 2px 4px 8px;
+  opacity: 0.8;
+  animation: fadeUp 0.5s var(--spring);
 }
 
 /* ─── CATEGORÍAS EXPANDIBLES ─── */
