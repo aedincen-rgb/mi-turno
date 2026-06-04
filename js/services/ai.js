@@ -548,6 +548,232 @@ function _trend(curr, prev) {
   return sig + pct.toFixed(1) + '%';
 }
 
+// ─── DESPACHADOR NLP (v76) ─────────────────────────────────────
+// Mapea intents clasificados por ai-nlp.js a respuestas.
+// Solo se invoca cuando la confianza del clasificador es ≥0.5.
+// Si un intent no está mapeado, devuelve null → cae al sistema clásico.
+function _aiDispatchNLP(intent, c, state, q, t) {
+  // ── Conversacionales ──
+  if (intent === 'saludo') {
+    var h = c.ahora.getHours();
+    var s = h < 12 ? '¡Buenos días' : h < 19 ? '¡Buenas tardes' : '¡Buenas noches';
+    var nm = state.session && state.session.email ? state.session.email.split('@')[0] : '';
+    var nombre = nm ? ', ' + nm.charAt(0).toUpperCase() + nm.slice(1) : '';
+    return s + nombre + '! ☀️ Soy tu copiloto de turno. Puedo decirte cómo vas este mes, proyectar tus ingresos, calcular tu liquidación o avisarte si necesitás un descanso. ¿Qué querés mirar hoy?';
+  }
+  if (intent === 'despedida') {
+    var despedidas = [
+      '¡Nos vemos! Cuidate y descansá cuando puedas. ✦',
+      'Chao, parce. Acá estoy cuando me necesités. 💪',
+      '¡Hasta luego! Que te rinda el día. 🌟'
+    ];
+    return despedidas[Math.floor(Math.random() * despedidas.length)];
+  }
+  if (intent === 'agradecimiento') {
+    var gracias = [
+      '¡Con gusto! Para eso estoy. 🙌',
+      'De nada, parce. Lo que necesités. ✨',
+      'A la orden. ¿Algo más en que te ayude?'
+    ];
+    return gracias[Math.floor(Math.random() * gracias.length)];
+  }
+  if (intent === 'identidad') {
+    return 'Soy tu asistente de nómina 100% local. Vivo en tu dispositivo, no envío tus datos a ningún lado. Conozco la Ley 2101/2021, los recargos colombianos, los festivos y tu historial de turnos. 🇨🇴';
+  }
+  if (intent === 'capacidades') {
+    return 'Estas son mis capacidades:\n\n💰 **Finanzas:** sueldo neto, liquidación, proyección\n⚖️ **Legal:** Ley 2101, recargos, auxilio de transporte\n📊 **Estadísticas:** KPIs, comparativas, rachas\n🔮 **Simulaciones:** ¿cuánto si trabajo X horas más?\n📅 **Festivos:** próximos, cuántos este mes\n🧘 **Bienestar:** análisis de fatiga, recomendaciones\n📧 **Reportes:** envío de PDF/Excel por correo';
+  }
+
+  // ── Dinero ──
+  if (intent === 'total_ganado') {
+    return 'Este mes llevás **' + fCOP(c.totalCOP) + '** brutos, en ' + c.diasTrab + ' turnos.\n\n' +
+      _bdLines(c.bd) + '\n\n' +
+      '📊 Vas al ' + c.pctSalario.toFixed(1) + '% de tu salario base.\n' +
+      '🔮 Proyección al cierre: **' + fCOP(c.proy) + '**\n\n' +
+      (typeof aiFollowUp === 'function' ? aiFollowUp('total_ganado') : '');
+  }
+  if (intent === 'hoy') {
+    if (c.turnosHoy === 0) return 'Hoy no registraste turnos todavía. ¿Arrancamos? 🚀';
+    return 'Hoy llevás **' + fCOP(c.copHoy) + '** en ' + fDur(c.minsHoy) + ' repartidos en ' + c.turnosHoy + ' turno' + (c.turnosHoy !== 1 ? 's' : '') + '.';
+  }
+  if (intent === 'ayer') {
+    if (c.turnosAyer === 0) return 'Ayer no tuviste turnos registrados.';
+    return 'Ayer hiciste **' + fCOP(c.copAyer) + '** en ' + fDur(c.minsAyer) + ' con ' + c.turnosAyer + ' turno' + (c.turnosAyer !== 1 ? 's' : '') + '.';
+  }
+  if (intent === 'proyeccion') {
+    return '🔮 Al cierre del mes proyectás **' + fCOP(c.proy) + '**.\n\n' +
+      '• Días trabajados: ' + c.diasTrab + ' de ' + c.diasMes + '\n' +
+      '• Promedio por turno: ' + fCOP(c.prom) + '\n' +
+      '• Días restantes: ' + c.diasRestantes + '\n\n' +
+      '💰 Eso es el ' + c.pctSalario.toFixed(1) + '% de tu salario base.';
+  }
+  if (intent === 'horas_trabajadas') {
+    return '⏱ Llevás **' + fDur(c.totalMins) + '** este mes (' + (c.totalMins / 60).toFixed(1) + ' horas).\n\n' +
+      '• Promedio por turno: ' + (c.promHoras).toFixed(1) + 'h\n' +
+      '• Horas nocturnas: ' + fDur(c.nocturnasMins) + '\n' +
+      '• Horas festivas: ' + fDur(c.festMins) + '\n' +
+      '• Horas extra: ' + fDur(c.extraMins);
+  }
+  if (intent === 'promedio') {
+    return '📊 Tu promedio es de **' + fCOP(c.prom) + '** por turno (' + c.promHoras.toFixed(1) + 'h).\n\n' +
+      '• Mejor día: ' + (c.mejor ? fCOP(c.mejor.cop) + ' el ' + _fechaLarga(c.mejor.fecha) : '—') + '\n' +
+      '• COP por hora real: ' + fCOP(c.copPorHoraReal);
+  }
+
+  // ── Comparativas ──
+  if (intent === 'comparativa_mes') {
+    if (c.totalCOPMesPasado === 0) return 'No tengo datos del mes pasado para comparar.';
+    return '📊 **Este mes vs mes pasado:**\n\n' +
+      '• Este mes: ' + fCOP(c.totalCOP) + ' en ' + fDur(c.totalMins) + '\n' +
+      '• Mes pasado: ' + fCOP(c.totalCOPMesPasado) + ' en ' + fDur(c.totalMinsMesPasado) + '\n' +
+      '• Tendencia: ' + _trend(c.totalCOP, c.totalCOPMesPasado);
+  }
+  if (intent === 'comparativa_semana') {
+    return '📊 **Esta semana vs pasada:**\n\n' +
+      '• Esta semana: ' + fCOP(c.totalCOPSemana) + ' en ' + fDur(c.totalMinsSemana) + '\n' +
+      '• Semana pasada: ' + fCOP(c.totalCOPSemPas) + ' en ' + fDur(c.totalMinsSemPas) + '\n' +
+      '• Tendencia: ' + _trend(c.totalCOPSemana, c.totalCOPSemPas);
+  }
+
+  // ── Patrones ──
+  if (intent === 'mejor_dia') {
+    if (!c.mejor) return 'Aún no tengo datos para identificar tu mejor día.';
+    return '🏆 Tu mejor día fue el **' + _fechaLarga(c.mejor.fecha) + '** con **' + fCOP(c.mejor.cop) + '**. ¡Qué jornada!';
+  }
+  if (intent === 'peor_dia') {
+    if (!c.peor) return 'Aún no tengo datos para identificar tu peor día.';
+    return 'Tu día más bajo fue el **' + _fechaLarga(c.peor.fecha) + '** con ' + fCOP(c.peor.cop) + '. Todos tenemos días así.';
+  }
+  if (intent === 'turno_largo') {
+    if (!c.tLargo) return 'No tengo turnos cerrados todavía.';
+    return 'Tu turno más largo duró **' + fDur(c.tLargo.dur) + '** el ' + _fechaLarga(c.tLargo.t.inicio) + '.';
+  }
+  if (intent === 'turno_corto') {
+    if (!c.tCorto) return 'No tengo turnos cerrados todavía.';
+    return 'Tu turno más corto duró **' + fDur(c.tCorto.dur) + '** el ' + _fechaLarga(c.tCorto.t.inicio) + '.';
+  }
+  if (intent === 'racha') {
+    if (c.rachaActual <= 1) return 'No tenés racha activa. Tu última jornada fue ' + (c.rachaActual === 1 ? 'hoy.' : 'hace más de un día.');
+    var rachaMsg = '🔥 Llevás **' + c.rachaActual + ' días consecutivos** trabajando. ';
+    rachaMsg += c.rachaActual >= 7 ? '⚠️ ¿Consideraste tomarte un día de descanso?' : '¡Buen ritmo!';
+    return rachaMsg;
+  }
+  if (intent === 'distribucion') {
+    var lines = Object.keys(c.bd).filter(function (k) { return c.bd[k].mins > 0; }).map(function (k) {
+      return '• ' + RC[k].label + ': ' + fCOP(c.bd[k].cop) + ' (' + fDur(c.bd[k].mins) + ')';
+    }).join('\n');
+    return '📊 **Distribución de tus ingresos:**\n\n' + lines;
+  }
+  if (intent === 'velocidad') {
+    return '⚡ Tu velocidad es de **' + fCOP(c.copPorHoraReal) + ' por hora** trabajada.\n\n' +
+      '• Valor hora base: ' + fCOP(c.vh) + '\n' +
+      '• Efectiva (con recargos): ' + fCOP(c.copPorHoraReal);
+  }
+
+  // ── Simulación ──
+  if (intent === 'simulacion') {
+    var hrs = _aiNum(t);
+    if (hrs === null) hrs = 4;
+    return '🔮 Si trabajás **' + hrs + 'h adicionales**:\n\n' +
+      '• Diurna ordinaria: +' + fCOP(hrs * c.vh * 1.0) + '\n' +
+      '• Nocturna: +' + fCOP(hrs * c.vh * 1.35) + '\n' +
+      '• Extra diurna: +' + fCOP(hrs * c.vh * 1.25) + '\n' +
+      '• Festiva diurna: +' + fCOP(hrs * c.vh * 1.75) + '\n' +
+      '• Festiva nocturna: +' + fCOP(hrs * c.vh * 2.1);
+  }
+
+  // ── Festivos ──
+  if (intent === 'festivos') {
+    if (!c.proxFests || !c.proxFests.length) return 'No hay más festivos este año.';
+    var flist = c.proxFests.map(function (d) {
+      return '• ' + d.toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' });
+    }).join('\n');
+    return '📅 **Próximos festivos:**\n\n' + flist + '\n\n⚠️ Recordá: los festivos pagan con recargo del 75%.';
+  }
+
+  // ── Bienestar ──
+  if (intent === 'bienestar') {
+    if (c.burnout) {
+      return '⚠️ **Alerta de fatiga:** Tu ritmo (' + c.hrsSemanales.toFixed(1) + 'h/sem) y racha de ' + c.rachaActual + ' días sugieren que necesitás un descanso.\n\n' +
+        '💡 **Recomendación:** Tomate al menos un día libre esta semana. Tu cuerpo y tu productividad te lo van a agradecer.';
+    }
+    return '✅ **Estado:** Tu carga está dentro de lo saludable (' + c.hrsSemanales.toFixed(1) + 'h/sem).\n\n' +
+      '💡 Mantené al menos un día de desconexión total a la semana.';
+  }
+
+  // ── Liquidación ──
+  if (intent === 'liquidacion') {
+    return '💰 **Tu liquidación estimada (día ' + c.diaActual + '):**\n\n' +
+      '**Neto a recibir: ' + fCOP(c.sueldoNeto) + '**\n' +
+      '• Bruto: ' + fCOP(c.totalCOP) + '\n' +
+      '• Salud + Pensión (8%): -' + fCOP(c.deducciones) + '\n' +
+      '• Auxilio transporte: +' + fCOP(c.estTransporte) + '\n\n' +
+      '📋 **Prestaciones acumuladas:**\n' +
+      '• Prima: ' + fCOP(c.estPrima) + '\n' +
+      '• Cesantías: ' + fCOP(c.estCesantias) + '\n' +
+      '• Vacaciones: ' + fCOP(c.estVacaciones);
+  }
+
+  // ── Ley ──
+  if (intent === 'ley') {
+    var hsemActual = typeof getHSEM === 'function' ? getHSEM(c.ahora) : 46;
+    return '⚖️ **Normativa laboral colombiana:**\n\n' +
+      '• Jornada máxima actual: **' + hsemActual + 'h/semana** (Ley 2101/2021)\n' +
+      '• Recargo nocturno (9pm-6am): **+35%**\n' +
+      '• Recargo dominical/festivo: **+75%**\n' +
+      '• Hora extra diurna: **+25%**\n' +
+      '• Hora extra nocturna: **+75%**\n' +
+      '• Extra festiva diurna: **+100%**\n' +
+      '• Extra festiva nocturna: **+150%**\n\n' +
+      '• Máximo 2h extra/día y 12h/semana\n' +
+      '• Descanso obligatorio tras 6 días de trabajo';
+  }
+
+  // ── Ahorro ──
+  if (intent === 'ahorro') {
+    var meta = _aiNum(t);
+    if (!meta || meta < 1000) meta = c.salario;
+    var faltaMeta = Math.max(0, meta - c.totalCOP);
+    if (faltaMeta === 0) return '🎉 ¡Ya alcanzaste la meta de ' + fCOP(meta) + '! Vas en ' + fCOP(c.totalCOP) + '.';
+    var turnosNec = c.prom > 0 ? Math.ceil(faltaMeta / c.prom) : '—';
+    return '🎯 Para llegar a **' + fCOP(meta) + '** te faltan **' + fCOP(faltaMeta) + '**.\n\n' +
+      '• A tu ritmo: ~' + turnosNec + ' turnos más\n' +
+      '• En horas base: ' + (faltaMeta / (c.vh || 1)).toFixed(1) + 'h';
+  }
+
+  // ── Stats ──
+  if (intent === 'stats') {
+    return '⚡ **Resumen rápido:**\n' +
+      '• ' + c.diasTrab + ' turnos · ' + fDur(c.totalMins) + '\n' +
+      '• ' + fCOP(c.totalCOP) + ' (' + c.pctSalario.toFixed(1) + '% de tu meta)\n' +
+      '• Mejor día: ' + (c.mejor ? _fechaLarga(c.mejor.fecha) + ' ' + fCOP(c.mejor.cop) : '—') + '\n' +
+      '• Proyección: ' + fCOP(c.proy);
+  }
+
+  // ── Email ──
+  if (intent === 'email') {
+    return '📧 Claro, puedo ayudarte a enviar tu reporte. Solo necesito que me digas:\n\n• ¿A qué correo lo mando?\n• ¿Preferís PDF o Excel?\n\nO si ya lo tenés claro, decime "enviá mi reporte a [correo]" y lo gestiono.';
+  }
+  if (intent === 'correo_formal') {
+    return '📝 **Redacté este borrador para tu jefe:**\n\n' +
+      '"Estimado/a,\n\nAdjunto el reporte de mis turnos del mes con el detalle de horas trabajadas, recargos aplicados y proyección al cierre. El total acumulado hasta hoy es de ' + fCOP(c.totalCOP) + '.\n\nQuedo atento/a a cualquier comentario.\nSaludos cordiales."\n\n¿Lo ajusto o así está bien?';
+  }
+
+  // ── Ayuda ──
+  if (intent === 'ayuda_app') {
+    return '📖 **¿Cómo usar Mi Turno?**\n\n' +
+      '1. **Inicio:** tocá "Iniciar turno" al llegar y "Finalizar" al irte\n' +
+      '2. **Análisis:** mirá tus KPIs, gráfico y proyección\n' +
+      '3. **Asistente:** preguntame lo que quieras (¡estamos acá!)\n' +
+      '4. **Historial:** revisá todos tus turnos pasados\n' +
+      '5. **Ajustes:** configurá tu salario, PIN, modo quincena\n\n' +
+      '💡 La app funciona sin internet. Tus datos se sincronizan cuando vuelve la conexión.';
+  }
+
+  // Intent no mapeado → devolver null para que el sistema clásico lo maneje
+  return null;
+}
+
 // ─── MOTOR PRINCIPAL ───────────────────────────────────────────
 
 function aiAnswer(question, state) {
@@ -607,6 +833,33 @@ function aiAnswer(question, state) {
 
     respuesta += '\nBasado en `ESTRUCTURA.md`, este cambio requiere editar el módulo mencionado y recargar la app.';
     return respuesta;
+  }
+
+  // ── NLP MEJORADO (v76): clasificación inteligente de intenciones ──
+  // Usa el motor ai-nlp.js para entender lenguaje natural con:
+  // · Tolerancia a typos y variaciones conversacionales
+  // · Sinónimos colombianos (plata=lucas=dinero, camello=trabajo)
+  // · Contexto multi-turno ("¿y ayer?" después de "¿cuánto gané?")
+  // · Detección de tono emocional para respuestas empáticas
+  // Solo se activa con confianza ≥0.5; si no, cae al sistema clásico.
+  var _nlp = typeof aiClassifyIntent === 'function'
+    ? aiClassifyIntent(question, aiGetConversation(), c)
+    : null;
+  if (_nlp && _nlp.confidence >= 0.5) {
+    aiUpdateConversation(_nlp.intent, _nlp.topic);
+    var _mood = typeof aiAnalyzeMood === 'function'
+      ? aiAnalyzeMood(question, c)
+      : { mood: 'neutral' };
+    var _pref = typeof aiEmpatheticPrefix === 'function'
+      ? aiEmpatheticPrefix(_mood.mood)
+      : '';
+    var _suff = typeof aiEmpatheticSuffix === 'function'
+      ? aiEmpatheticSuffix(_mood.mood)
+      : '';
+    var _resp = _aiDispatchNLP(_nlp.intent, c, state, q, t);
+    if (_resp) {
+      return _pref + _resp + _suff;
+    }
   }
 
   // ── SLASH COMMANDS ──
