@@ -344,8 +344,9 @@ function buildContext(state) {
     var trabajado = dias.some(function (d) {
       return d.fecha === keyR;
     });
-    if (trabajado) rachaActual++;
-    else if (rachaActual > 0) break;
+    // La racha se rompe al primer día sin trabajo registrado
+    if (!trabajado) break;
+    rachaActual++;
     probeR.setDate(probeR.getDate() - 1);
   }
 
@@ -355,8 +356,8 @@ function buildContext(state) {
   var estCesantias = (salario * diasMesEfectivos) / 360;
   var estIntereses = (estCesantias * diasMesEfectivos * 0.12) / 360;
   var estVacaciones = (salario * diasMesEfectivos) / 720;
-  // Auxilio transporte 2025: $182.140
-  var estTransporte = totalCOP > (SMIN * 2) ? 0 : (182140 * diasMesEfectivos / 30);
+  // Auxilio de transporte: usa la constante global definida en js/config/globals.js
+  var estTransporte = totalCOP > (SMIN * 2) ? 0 : (AUX_TRANSPORTE_2026 * diasMesEfectivos / 30);
   var totalLiq = estPrima + estCesantias + estIntereses + estVacaciones + estTransporte;
 
   // Descuentos de ley (Salud 4% + Pensión 4% = 8%)
@@ -962,8 +963,8 @@ function aiAnswer(question, state) {
   if (
     _aiHas(t, 'mejor caso', 'peor caso', 'escenario', 'si todo sale bien', 'optimista', 'pesimista')
   ) {
-    var optimista = c.totalCOP + (c.diasRestantes * c.mejor?.cop || 0);
-    var pesimista = c.totalCOP + (c.diasRestantes * c.peor?.cop || 0);
+    var optimista = c.totalCOP + (c.diasRestantes * ((c.mejor || {}).cop || 0));
+    var pesimista = c.totalCOP + (c.diasRestantes * ((c.peor || {}).cop || 0));
     return (
       '🔮 **Escenarios al cierre del mes** (' +
       c.diasRestantes +

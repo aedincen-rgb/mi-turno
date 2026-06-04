@@ -4,7 +4,7 @@
 // ════════════════════════════════════════════════════════════════
 // Versión visible de la app (mostrada en Ajustes → Acerca de).
 // Mantener sincronizada con CACHE en sw.js y "v" en version.json.
-var MT_APP_VERSION = 'v75';
+var MT_APP_VERSION = 'v76';
 
 // Variables globales de Supabase
 var SUPA = null;
@@ -163,5 +163,5 @@ if (typeof window.validarSesion === 'undefined')
   };
 if (typeof window.traducirError === 'undefined')
   window.traducirError = function (e) {
-    return e?.message || String(e);
+    return (e || {}).message || String(e);
   };
