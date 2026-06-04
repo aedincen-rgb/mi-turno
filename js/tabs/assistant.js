@@ -289,11 +289,17 @@ function AsistenteTab(props) {
                           className: 'asistente-speak-btn',
                           onClick: function () {
                             haptic();
-                            // Cancelar cualquier lectura previa
                             speechSynthesis.cancel();
-                            var utter = new SpeechSynthesisUtterance(
-                              m.content.replace(/\*\*|__|\*|`|📊|💰|📅|🎯|🔮|🚀|🤖|✨|📖|⚖️|📡|📱|♿|💡|🔗|📧|⚠️|✅|🔥|📋|⏱|💎|📤|💬/g, '')
-                            );
+                            // Limpiar markdown, emojis y adaptar texto para voz
+                            var clean = m.content
+                              .replace(/\*\*|__|\*|`/g, '')
+                              .replace(/[📊💰📅🎯🔮🚀🤖✨📖⚖️📡📱♿💡🔗📧⚠️✅🔥📋⏱💎📤💬🔊]/g, '')
+                              // Unidades: que el TTS lea correctamente
+                              .replace(/(\d+)mins\b/g, '$1 minutos')
+                              .replace(/\bmins\b/g, 'minutos')
+                              .replace(/\$|USD/g, ' pesos ')
+                              .replace(/\bCOP\b/g, 'pesos')
+                            var utter = new SpeechSynthesisUtterance(clean);
                             utter.lang = 'es-CO';
                             utter.rate = 1.1;
                             speechSynthesis.speak(utter);
