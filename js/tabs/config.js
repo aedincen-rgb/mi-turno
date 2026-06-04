@@ -990,6 +990,70 @@ function ConfigTabInner(props) {
       )
     ),
 
+    // ══════ DATOS · RESPALDO Y RESTAURACIÓN ══════
+    h(
+      'div',
+      { className: 'ajustes-section' },
+      h('div', { className: 'ajustes-section-ttl' }, 'Datos'),
+      h(
+        'div',
+        { className: 'ajustes-list' },
+        h(
+          'button',
+          {
+            className: 'ajustes-row ajustes-row-tap',
+            onClick: function () {
+              haptic();
+              if (typeof backupExport === 'function') {
+                var ok = backupExport();
+                if (ok) {
+                  backupMarkExported();
+                  showToast && showToast('Respaldo descargado 📦', 'success');
+                }
+              }
+            },
+            'aria-label': 'Respaldar datos'
+          },
+          h('div', { className: 'ajustes-row-ico' }, '📦'),
+          h(
+            'div',
+            { className: 'ajustes-row-mid' },
+            h('div', { className: 'ajustes-row-ttl' }, 'Respaldar datos'),
+            h('div', { className: 'ajustes-row-sub' }, 'Guardá una copia de tus turnos y ajustes')
+          ),
+          h('div', { className: 'ajustes-row-chev' }, '↓')
+        ),
+        h(
+          'button',
+          {
+            className: 'ajustes-row ajustes-row-tap',
+            onClick: function () {
+              haptic();
+              if (typeof backupImport === 'function') {
+                backupImport(function (ok, msg) {
+                  if (ok) {
+                    alert(msg + '\n\nLa app se recargará para aplicar los cambios.');
+                    window.location.reload();
+                  } else if (msg) {
+                    alert(msg);
+                  }
+                });
+              }
+            },
+            'aria-label': 'Restaurar datos'
+          },
+          h('div', { className: 'ajustes-row-ico' }, '📂'),
+          h(
+            'div',
+            { className: 'ajustes-row-mid' },
+            h('div', { className: 'ajustes-row-ttl' }, 'Restaurar datos'),
+            h('div', { className: 'ajustes-row-sub' }, 'Recuperá un respaldo anterior')
+          ),
+          h('div', { className: 'ajustes-row-chev' }, '↑')
+        )
+      )
+    ),
+
     // ══════ PANEL ADMINISTRADOR ══════
     session &&
       session.isAdmin &&
