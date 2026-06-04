@@ -227,19 +227,22 @@ function AsistenteTab(props) {
     'section',
     { className: 'fadeUp asistente-wrap', 'aria-label': 'Asistente AI' },
 
-    // ═══ HERO: saludo cálido (solo sin conversación) ═══
+    // ═══ HERO iOS STYLE: orb izq + texto der ═══
     !tieneConversacion &&
       h(
         'div',
         { className: 'asistente-hero' },
         h(
           'div',
-          { className: 'asistente-orb' },
-          h('div', { className: 'asistente-orb-glow' }),
-          h('div', { className: 'asistente-orb-symbol' }, '✦')
+          { className: 'asistente-hero-orb' },
+          h('div', { className: 'asistente-hero-orb-symbol' }, '✦')
         ),
-        h('h1', { className: 'asistente-greeting' }, saludo + '.'),
-        h('div', { className: 'asistente-phrase', key: heroIdx }, phrases[heroIdx % phrases.length])
+        h(
+          'div',
+          { className: 'asistente-hero-txt' },
+          h('h1', { className: 'asistente-greeting' }, saludo + '.'),
+          h('div', { className: 'asistente-phrase', key: heroIdx }, phrases[heroIdx % phrases.length])
+        )
       ),
 
     // ═══ CATEGORÍAS EXPANDIBLES (solo sin conversación) ═══
