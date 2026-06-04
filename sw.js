@@ -2,7 +2,7 @@
 //  MI TURNO · SERVICE WORKER
 //  Split cache: SHELL_CACHE (archivos de la app, se invalida en cada release)
 //               CDN_CACHE   (librerías externas, sobrevive entre releases)
-const SHELL_CACHE = 'mt-shell-v82'; // bump con scripts/bump.sh
+const SHELL_CACHE = 'mt-shell-v83'; // bump con scripts/bump.sh
 const CDN_CACHE   = 'mt-cdn-v1';    // solo bump cuando cambien URLs de CDN
 
 const CDN = [

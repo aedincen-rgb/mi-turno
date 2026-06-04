@@ -244,6 +244,15 @@ function AsistenteTab(props) {
       )
     ),
 
+    // ═══ ABOUT: puente entre el saludo y la casilla (desaparece al conversar) ═══
+    !tieneConversacion &&
+      h(
+        'p',
+        { className: 'asistente-about' },
+        'Soy tu asistente. Conozco tus turnos, recargos y movimientos del mes — ' +
+          'pregúntame en tus palabras o explorá las categorías.'
+      ),
+
     // ═══ CHAT (visible solo si hay conversación) ═══
     tieneConversacion
       ? h(
@@ -312,7 +321,7 @@ function AsistenteTab(props) {
         ref: inputRef,
         className: 'asistente-input',
         'aria-label': 'Tu mensaje al asistente',
-        placeholder: tieneConversacion ? 'Sigue preguntando…' : 'O escríbeme directamente…',
+        placeholder: tieneConversacion ? 'Seguí preguntando…' : 'Escribime tu pregunta…',
         value: input,
         onChange: function (e) { setInput(e.target.value); },
         onKeyDown: function (e) {
@@ -397,14 +406,6 @@ function AsistenteTab(props) {
             )
         );
       })
-    ),
-
-    // ═══ ABOUT (siempre visible, abajo del todo) ═══
-    h(
-      'p',
-      { className: 'asistente-about' },
-      'Soy tu asistente. Conozco tus turnos, recargos y movimientos del mes — ' +
-        'pregúntame en tus palabras o explorá las categorías.'
     )
   );
 }
