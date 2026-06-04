@@ -1,0 +1,84 @@
+/* ════════════════════════════════════════════════════════════════
+   MI TURNO · components/cards.css
+   iOS 26 Liquid Glass – tarjetas generales
+   ════════════════════════════════════════════════════════════════ */
+
+.card {
+  padding: var(--sz-3); /* 24px para un look más espacioso */
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.card-ttl {
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 600;
+  margin-bottom: 14px;
+  opacity: 0.82;
+}
+
+[data-theme='dark'] .card {
+  background: var(--glass-heavy);
+  border-color: var(--glass-border);
+  box-shadow:
+    inset 0 1.5px 0 var(--spec-top),
+    inset 0 -0.5px 0 var(--spec-bot),
+    var(--sh-2);
+}
+
+/* ═══════════════════════════════════════════════════════
+   Frase IA entre tarjetas · texto limpio, sin aspecto de botón
+   Estilo bienvenida (app de escritorio) · rota cada 7 s
+   ═══════════════════════════════════════════════════════ */
+
+.mood-line {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 6px 14px;
+  min-height: 44px;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: opacity 0.2s var(--ease);
+}
+
+.mood-line:active {
+  opacity: 0.55;
+}
+
+.mood-spark {
+  font-size: 13px;
+  color: var(--accent);
+  flex-shrink: 0;
+  line-height: 1;
+  filter: drop-shadow(0 1px 5px var(--accent-glow));
+}
+
+.mood-phrase {
+  font-size: 14.5px;
+  font-weight: 600;
+  letter-spacing: -0.1px;
+  color: var(--text);
+  line-height: 1.45;
+  text-align: center;
+  animation: moodPhraseIn 0.55s var(--ease);
+}
+
+@keyframes moodPhraseIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
