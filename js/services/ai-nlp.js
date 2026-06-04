@@ -278,6 +278,18 @@ var AI_INTENTS = [
   // ── Ayuda ──
   { id: 'ayuda_app', kw: [['como usar',3],['como funciona',3],['como inicio',3],['como registrar',3],['tutorial',3],['guia',3],['guía',3],['explicame',3],['explicame',3],['no entiendo',3]] },
 
+  // ── Ayuda de navegación (ai-help.js) ──
+  { id: 'ayuda_navegacion', kw: [
+    ['como hago para',3],['como se hace',3],['donde esta',3],['dónde está',3],
+    ['donde encuentro',3],['dónde encuentro',3],['como puedo',3],['como cambio',3],
+    ['como configuro',3],['como exporto',3],['como envio',3],['como borro',3],
+    ['como descargo',3],['como activo',3],['como recupero',3],['como cierro',3],
+    ['como respaldo',3],['como restauro',3],['como inicio sesion',3],
+    ['explicame como',3],['explicame cómo',3],['enseñame',3],['guíame',3],
+    ['pasos para',3],['que hago para',3],['donde se hace',3],['donde toco',3],
+    ['como accedo',3],['donde miro',3],['necesito ayuda',3],['no se como',3],['no sé cómo',3]
+  ] },
+
   // ── Stats rápido ──
   { id: 'stats', kw: [['stats',3],['estadisticas',3],['estadísticas',3],['datos rapidos',3],['datos rápidos',3],['resumen rapido',3],['resumen rápido',3],['cifras',3]] }
 ];

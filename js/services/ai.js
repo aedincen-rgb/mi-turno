@@ -581,7 +581,11 @@ function _aiDispatchNLP(intent, c, state, q, t) {
     return 'Soy tu asistente de nómina 100% local. Vivo en tu dispositivo, no envío tus datos a ningún lado. Conozco la Ley 2101/2021, los recargos colombianos, los festivos y tu historial de turnos. 🇨🇴';
   }
   if (intent === 'capacidades') {
-    return 'Estas son mis capacidades:\n\n💰 **Finanzas:** sueldo neto, liquidación, proyección\n⚖️ **Legal:** Ley 2101, recargos, auxilio de transporte\n📊 **Estadísticas:** KPIs, comparativas, rachas\n🔮 **Simulaciones:** ¿cuánto si trabajo X horas más?\n📅 **Festivos:** próximos, cuántos este mes\n🧘 **Bienestar:** análisis de fatiga, recomendaciones\n📧 **Reportes:** envío de PDF/Excel por correo';
+    // Si pregunta específicamente por guías, mostrar todas
+    if (typeof aiHelpListAll === 'function' && _aiHas(t, 'guia', 'guía', 'lista', 'todo', 'todas', 'sabes hacer', 'podes hacer')) {
+      return aiHelpListAll();
+    }
+    return 'Estas son mis capacidades:\n\n💰 **Finanzas:** sueldo neto, liquidación, proyección\n⚖️ **Legal:** Ley 2101, recargos, auxilio de transporte\n📊 **Estadísticas:** KPIs, comparativas, rachas\n🔮 **Simulaciones:** ¿cuánto si trabajo X horas más?\n📅 **Festivos:** próximos, cuántos este mes\n🧘 **Bienestar:** análisis de fatiga, recomendaciones\n📧 **Reportes:** envío de PDF/Excel por correo\n📖 **Guías:** preguntame "¿cómo exporto?" o "¿cómo cambio mi foto?" para ayuda paso a paso';
   }
 
   // ── Dinero ──
@@ -770,7 +774,18 @@ function _aiDispatchNLP(intent, c, state, q, t) {
       '3. **Asistente:** preguntame lo que quieras (¡estamos acá!)\n' +
       '4. **Historial:** revisá todos tus turnos pasados\n' +
       '5. **Ajustes:** configurá tu salario, PIN, modo quincena\n\n' +
-      '💡 La app funciona sin internet. Tus datos se sincronizan cuando vuelve la conexión.';
+      '💡 La app funciona sin internet. Tus datos se sincronizan cuando vuelve la conexión.\n\n' +
+      '📚 ¿Necesitás ayuda con algo específico? Decime "cómo exportar", "cómo respaldar", "cómo cambiar mi foto"...';
+  }
+
+  // ── Ayuda de navegación (ai-help.js) ──
+  if (intent === 'ayuda_navegacion') {
+    if (typeof aiHelpAnswer === 'function') {
+      var helpResp = aiHelpAnswer(q);
+      if (helpResp) return helpResp;
+    }
+    // Fallback si ai-help.js no está disponible
+    return '🤔 Contame qué querés hacer y te guío paso a paso. Por ejemplo:\n\n• "¿Cómo exporto mis turnos?"\n• "¿Cómo cambio mi foto?"\n• "¿Cómo configuro el PIN?"\n• "¿Cómo respaldo mis datos?"';
   }
 
   // Intent no mapeado → advertir en consola y delegar al sistema clásico
