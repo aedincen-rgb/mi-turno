@@ -41,7 +41,67 @@ function AsistenteTab(props) {
   var ls = useState(false);
   var listening = ls[0], setListening = ls[1];
 
+  // Estado de reproducción de voz (anillo de progreso)
+  var speakRef = useRef({ msgIdx: -1, status: 'idle', progress: 0, utterance: null, startTime: 0, pausedAt: 0 });
+  var sps = useState({ idx: -1, status: 'idle', progress: 0 });
+  var speakUI = sps[0], setSpeakUI = sps[1];
+
   var tieneConversacion = msgs.length > 0;
+
+  // ── Helpers de voz ──
+  function cleanSpeakText(text) {
+    return (text || '')
+      .replace(/\*\*|__|\*|`/g, '')
+      .replace(/🏆/g, ' ¡campeón! ')
+      .replace(/[🔥🚀✨💪🙌🎉🎯💡⚡🌟👑💎📊💰📅🔮🤖📖⚖️📡📱♿🔗📧⚠️✅📋⏱📤💬🔊🛡📦📂🔑🛠🐞👥◷✦🎬🍎🇨🇴]/g, '')
+      .replace(/(\d+)mins\b/g, '$1 minutos')
+      .replace(/\bmins\b/g, 'minutos')
+      .replace(/(\d+)m\b/g, '$1 minutos')
+      .replace(/(\d+)h\b/g, '$1 horas')
+      .replace(/\$|USD/g, ' pesos ')
+      .replace(/\bCOP\b/g, 'pesos');
+  }
+
+  function startSpeak(idx, text) {
+    var clean = cleanSpeakText(text);
+    var utter = new SpeechSynthesisUtterance(clean);
+    utter.lang = 'es-CO';
+    utter.rate = 1.1;
+    
+    var st = speakRef.current;
+    st.msgIdx = idx; st.status = 'speaking'; st.progress = 0;
+    st.startTime = Date.now(); st.pausedAt = 0; st.utterance = utter;
+    st._estimatedDuration = clean.length * 55; // ~55ms por carácter en español
+    
+    utter.onboundary = function (e) {
+      if (e.name === 'word' && st.status === 'speaking') {
+        var elapsed = Date.now() - st.startTime;
+        var progress = Math.min(0.95, elapsed / st._estimatedDuration);
+        st.progress = progress;
+        setSpeakUI({ idx: idx, status: 'speaking', progress: progress });
+      }
+    };
+    
+    utter.onend = function () {
+      if (st.msgIdx === idx) {
+        st.status = 'idle'; st.progress = 1;
+        setSpeakUI({ idx: idx, status: 'idle', progress: 0 });
+        setTimeout(function () {
+          if (speakRef.current.msgIdx === idx && speakRef.current.status === 'idle') {
+            setSpeakUI({ idx: -1, status: 'idle', progress: 0 });
+          }
+        }, 2000);
+      }
+    };
+    
+    utter.onerror = function () {
+      st.status = 'idle'; st.progress = 0;
+      setSpeakUI({ idx: -1, status: 'idle', progress: 0 });
+    };
+    
+    speechSynthesis.speak(utter);
+    setSpeakUI({ idx: idx, status: 'speaking', progress: 0 });
+  }
 
   // Recargar el historial al cambiar de usuario
   useEffect(
@@ -286,79 +346,96 @@ function AsistenteTab(props) {
                     className: 'asistente-bubble ai',
                     dangerouslySetInnerHTML: { __html: _aiFormat(m.content) }
                   }),
-                  // Botón de voz: leer respuesta en voz alta (Web Speech API)
+                  // Botón de voz: anillo de progreso con pausa/reinicio
                   typeof speechSynthesis !== 'undefined'
                     ? h(
                         'button',
                         {
-                          className: 'asistente-speak-btn',
+                          className: 'asistente-speak-btn' + 
+                            (speakUI.idx === i && speakUI.status !== 'idle' ? ' speaking' : ''),
                           onClick: function () {
                             haptic();
+                            var now = Date.now();
+                            var st = speakRef.current;
+                            
+                            // Double tap → reiniciar desde el principio
+                            if (st.msgIdx === i && now - (st._lastTap || 0) < 500) {
+                              speechSynthesis.cancel();
+                              st.status = 'idle'; st.progress = 0;
+                              setSpeakUI({ idx: i, status: 'idle', progress: 0 });
+                              startSpeak(i, m.content);
+                              return;
+                            }
+                            st._lastTap = now;
+                            
+                            // Si este mensaje está hablando → pausar/reanudar
+                            if (st.msgIdx === i && st.status === 'speaking') {
+                              speechSynthesis.pause();
+                              st.status = 'paused'; st.pausedAt = now;
+                              setSpeakUI({ idx: i, status: 'paused', progress: st.progress });
+                              return;
+                            }
+                            if (st.msgIdx === i && st.status === 'paused') {
+                              speechSynthesis.resume();
+                              st.status = 'speaking'; st.startTime += (now - st.pausedAt);
+                              setSpeakUI({ idx: i, status: 'speaking', progress: st.progress });
+                              return;
+                            }
+                            
+                            // Nuevo mensaje: cancelar anterior y empezar
                             speechSynthesis.cancel();
-                            // Limpiar markdown, emojis y adaptar texto para voz
-                            var clean = m.content
-                              .replace(/\*\*|__|\*|`/g, '')
-                              // Emojis → palabras motivadoras (no descripciones)
-                              .replace(/🏆/g, ' ¡campeón! ')
-                              .replace(/🔥/g, '')
-                              .replace(/🚀/g, '')
-                              .replace(/✨/g, '')
-                              .replace(/💪/g, '')
-                              .replace(/🙌/g, '')
-                              .replace(/🎉/g, '')
-                              .replace(/🎯/g, '')
-                              .replace(/💡/g, '')
-                              .replace(/⚡/g, '')
-                              .replace(/🌟/g, '')
-                              .replace(/👑/g, '')
-                              .replace(/💎/g, '')
-                              .replace(/📊/g, '')
-                              .replace(/💰/g, '')
-                              .replace(/📅/g, '')
-                              .replace(/🔮/g, '')
-                              .replace(/🤖/g, '')
-                              .replace(/📖/g, '')
-                              .replace(/⚖️/g, '')
-                              .replace(/📡/g, '')
-                              .replace(/📱/g, '')
-                              .replace(/♿/g, '')
-                              .replace(/🔗/g, '')
-                              .replace(/📧/g, '')
-                              .replace(/⚠️/g, 'atención: ')
-                              .replace(/✅/g, '')
-                              .replace(/📋/g, '')
-                              .replace(/⏱/g, '')
-                              .replace(/📤/g, '')
-                              .replace(/💬/g, '')
-                              .replace(/🔊/g, '')
-                              .replace(/🛡/g, '')
-                              .replace(/📦/g, '')
-                              .replace(/📂/g, '')
-                              .replace(/🔑/g, '')
-                              .replace(/🛠/g, '')
-                              .replace(/🐞/g, '')
-                              .replace(/👥/g, '')
-                              .replace(/◷/g, '')
-                              .replace(/✦/g, '')
-                              .replace(/🎬/g, '')
-                              .replace(/🍎/g, '')
-                              .replace(/🇨🇴/g, '')
-                              // Unidades: que el TTS lea correctamente
-                              .replace(/(\d+)mins\b/g, '$1 minutos')
-                              .replace(/\bmins\b/g, 'minutos')
-                              .replace(/(\d+)m\b/g, '$1 minutos')
-                              .replace(/(\d+)h\b/g, '$1 horas')
-                              .replace(/\$|USD/g, ' pesos ')
-                              .replace(/\bCOP\b/g, 'pesos')
-                            var utter = new SpeechSynthesisUtterance(clean);
-                            utter.lang = 'es-CO';
-                            utter.rate = 1.1;
-                            speechSynthesis.speak(utter);
+                            startSpeak(i, m.content);
                           },
-                          'aria-label': 'Escuchar respuesta',
-                          title: 'Escuchar'
+                          // Long press → parar y resetear
+                          onMouseDown: function () { speakRef.current._pressStart = Date.now(); },
+                          onMouseUp: function () {
+                            var held = Date.now() - (speakRef.current._pressStart || 0);
+                            if (held > 600 && speakRef.current.msgIdx === i) {
+                              speechSynthesis.cancel();
+                              speakRef.current.status = 'idle'; speakRef.current.progress = 0;
+                              setSpeakUI({ idx: i, status: 'idle', progress: 0 });
+                            }
+                          },
+                          onTouchStart: function () { speakRef.current._pressStart = Date.now(); },
+                          onTouchEnd: function () {
+                            var held = Date.now() - (speakRef.current._pressStart || 0);
+                            if (held > 600 && speakRef.current.msgIdx === i) {
+                              speechSynthesis.cancel();
+                              speakRef.current.status = 'idle'; speakRef.current.progress = 0;
+                              setSpeakUI({ idx: i, status: 'idle', progress: 0 });
+                            }
+                          },
+                          'aria-label': speakUI.idx === i && speakUI.status === 'speaking' ? 'Pausar voz' :
+                                       speakUI.idx === i && speakUI.status === 'paused' ? 'Reanudar voz' : 'Escuchar',
+                          title: 'Tocá: pausar · Doble toque: reiniciar · Sostené: parar'
                         },
-                        '🔊'
+                        h('svg', {
+                          viewBox: '0 0 36 36',
+                          width: 28, height: 28,
+                          style: { transform: 'rotate(-90deg)' }
+                        },
+                          h('circle', {
+                            cx: 18, cy: 18, r: 14,
+                            fill: 'none',
+                            stroke: 'var(--border)',
+                            'stroke-width': 3
+                          }),
+                          h('circle', {
+                            cx: 18, cy: 18, r: 14,
+                            fill: 'none',
+                            stroke: 'var(--accent)',
+                            'stroke-width': 3,
+                            strokeDasharray: 87.96,
+                            strokeDashoffset: 87.96 - (87.96 * (speakUI.idx === i ? speakUI.progress : 0)),
+                            strokeLinecap: 'round',
+                            style: { transition: 'stroke-dashoffset 0.3s linear' }
+                          })
+                        ),
+                        speakUI.idx === i && speakUI.status === 'paused'
+                          ? h('span', { className: 'asistente-speak-icon' }, '▶')
+                          : speakUI.idx !== i || speakUI.status === 'idle'
+                            ? h('span', { className: 'asistente-speak-icon' }, '🔊')
+                            : null
                       )
                     : null,
                   // Botones de acción rápida (ai-enhanced.js)

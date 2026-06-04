@@ -747,28 +747,38 @@
   border: 1px solid color-mix(in srgb, var(--danger) 22%, transparent);
 }
 
-/* Botón de voz (TTS) en mensajes del asistente */
+/* Botón de voz con anillo de progreso */
 .asistente-speak-btn {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  font-size: 13px;
+  border: none;
+  background: transparent;
   cursor: pointer;
   margin-top: 4px;
-  opacity: 0.6;
+  opacity: 0.7;
   transition: opacity 0.2s, transform 0.2s var(--spring);
+  -webkit-tap-highlight-color: transparent;
 }
+
 .asistente-speak-btn:hover,
-.asistente-speak-btn:active {
+.asistente-speak-btn:active,
+.asistente-speak-btn.speaking {
   opacity: 1;
-  transform: scale(1.12);
-  background: var(--accent-dim);
-  border-color: var(--accent);
+}
+
+.asistente-speak-btn.speaking {
+  transform: scale(1.08);
+}
+
+.asistente-speak-icon {
+  position: absolute;
+  font-size: 13px;
+  pointer-events: none;
 }
 
 /* Botones de acción rápida (ai-enhanced) */
