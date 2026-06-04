@@ -594,7 +594,8 @@ function _aiDispatchNLP(intent, c, state, q, t) {
   }
   if (intent === 'hoy') {
     if (c.turnosHoy === 0) return 'Hoy no registraste turnos todavía. ¿Arrancamos? 🚀';
-    return 'Hoy llevás **' + fCOP(c.copHoy) + '** en ' + fDur(c.minsHoy) + ' repartidos en ' + c.turnosHoy + ' turno' + (c.turnosHoy !== 1 ? 's' : '') + '.';
+    return 'Hoy llevás **' + fCOP(c.copHoy) + '** en ' + fDur(c.minsHoy) + ' repartidos en ' + c.turnosHoy + ' turno' + (c.turnosHoy !== 1 ? 's' : '') + '.\n\n' +
+      (typeof aiFollowUp === 'function' ? aiFollowUp('hoy') : '');
   }
   if (intent === 'ayer') {
     if (c.turnosAyer === 0) return 'Ayer no tuviste turnos registrados.';
@@ -605,7 +606,8 @@ function _aiDispatchNLP(intent, c, state, q, t) {
       '• Días trabajados: ' + c.diasTrab + ' de ' + c.diasMes + '\n' +
       '• Promedio por turno: ' + fCOP(c.prom) + '\n' +
       '• Días restantes: ' + c.diasRestantes + '\n\n' +
-      '💰 Eso es el ' + c.pctSalario.toFixed(1) + '% de tu salario base.';
+      '💰 Eso es el ' + c.pctSalario.toFixed(1) + '% de tu salario base.\n\n' +
+      (typeof aiFollowUp === 'function' ? aiFollowUp('proyeccion') : '');
   }
   if (intent === 'horas_trabajadas') {
     return '⏱ Llevás **' + fDur(c.totalMins) + '** este mes (' + (c.totalMins / 60).toFixed(1) + ' horas).\n\n' +
@@ -693,12 +695,13 @@ function _aiDispatchNLP(intent, c, state, q, t) {
 
   // ── Bienestar ──
   if (intent === 'bienestar') {
+    var _fu = typeof aiFollowUp === 'function' ? '\n\n' + aiFollowUp('bienestar') : '';
     if (c.burnout) {
       return '⚠️ **Alerta de fatiga:** Tu ritmo (' + c.hrsSemanales.toFixed(1) + 'h/sem) y racha de ' + c.rachaActual + ' días sugieren que necesitás un descanso.\n\n' +
-        '💡 **Recomendación:** Tomate al menos un día libre esta semana. Tu cuerpo y tu productividad te lo van a agradecer.';
+        '💡 **Recomendación:** Tomate al menos un día libre esta semana. Tu cuerpo y tu productividad te lo van a agradecer.' + _fu;
     }
     return '✅ **Estado:** Tu carga está dentro de lo saludable (' + c.hrsSemanales.toFixed(1) + 'h/sem).\n\n' +
-      '💡 Mantené al menos un día de desconexión total a la semana.';
+      '💡 Mantené al menos un día de desconexión total a la semana.' + _fu;
   }
 
   // ── Liquidación ──
@@ -886,7 +889,7 @@ function aiAnswer(question, state) {
 
   // ── INTENT: NORMATIVA LABORAL ──
   if (q === '/ley' || _aiHas(t, 'normativa', 'mis derechos', 'codigo sustantivo', 'cst', 'ley 2101', 'legal')) {
-    return '⚖️ **Normativa Laboral Colombia 2025:**\n\n' +
+    return '⚖️ **Normativa Laboral Colombia 2026:**\n\n' +
       '• **Jornada Máxima:** 46 horas semanales (Ley 2101 de 2021).\n' +
       '• **Recargo Nocturno:** +35% (9:00 PM a 6:00 AM).\n' +
       '• **Auxilio Transporte:** Tienes derecho si ganas menos de 2 SMMLV ($' + fCOP(SMIN * 2) + ').\n' +
@@ -898,8 +901,8 @@ function aiAnswer(question, state) {
   // ── INTENT: AUXILIO DE TRANSPORTE ──
   if (_aiHas(t, 'auxilio', 'transporte', 'subsidio transporte')) {
     var tieneDerecho = c.totalCOP <= (SMIN * 2);
-    return '🚌 **Auxilio de Transporte 2025:**\n\n' +
-      '• Valor mensual: **$182.140**.\n' +
+    return '🚌 **Auxilio de Transporte 2026:**\n\n' +
+      '• Valor mensual: **' + fCOP(AUX_TRANSPORTE_2026) + '**.\n' +
       '• Requisito: Ganar hasta 2 SMMLV.\n' +
       (tieneDerecho
         ? '✅ Según tus ingresos actuales, **tienes derecho** a percibirlo.'

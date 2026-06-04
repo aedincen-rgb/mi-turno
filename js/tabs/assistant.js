@@ -99,6 +99,7 @@ function AsistenteTab(props) {
       setMsgs([]);
       setOpenCat(null);
       _aiClearHistory(uid);
+      if (typeof aiResetConv === 'function') aiResetConv();
     },
     [uid]
   );
