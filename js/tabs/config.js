@@ -1282,6 +1282,28 @@ function ConfigTabInner(props) {
             ),
             h('div', { className: 'ajustes-row-val' }, 'PWA')
           ),
+          // Landing page
+          h(
+            'a',
+            {
+              className: 'ajustes-row ajustes-row-tap',
+              href: '/',
+              onClick: function (e) {
+                e.preventDefault();
+                haptic();
+                window.location.href = '/';
+              },
+              'aria-label': 'Ver presentación de Mi Turno'
+            },
+            h('div', { className: 'ajustes-row-ico' }, '💎'),
+            h(
+              'div',
+              { className: 'ajustes-row-mid' },
+              h('div', { className: 'ajustes-row-ttl' }, 'Conocer Mi Turno'),
+              h('div', { className: 'ajustes-row-sub' }, 'Ver la presentación de la app')
+            ),
+            h('div', { className: 'ajustes-row-chev' }, '→')
+          ),
           // Botón de chequeo dinámico
           h(
             'button',
