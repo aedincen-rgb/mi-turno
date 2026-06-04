@@ -58,45 +58,66 @@
   flex: 1;
 }
 
+/* ─── LED de estado Supabase · sutil y discreto ─── */
 .hdr-led {
-  width: 8px;
-  height: 8px;
-  background: #ff9500; /* fallback */
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
-  animation: ledPulse 2s ease-in-out infinite;
   flex-shrink: 0;
-  box-shadow: 0 0 6px rgba(255, 149, 0, 0.4);
   transition:
-    background 0.3s var(--ease),
-    box-shadow 0.3s var(--ease);
+    background 0.5s var(--ease),
+    box-shadow 0.5s var(--ease),
+    opacity 0.5s var(--ease);
 }
-/* Conectado a Supabase / internet ok */
+/* Conectado: verde muy sutil, casi invisible en reposo */
 .hdr-led.on {
-  background: #34c759; /* verde sistema iOS */
-  box-shadow: 0 0 6px rgba(52, 199, 89, 0.55);
+  background: #34c759;
+  box-shadow: 0 0 0 0 rgba(52,199,89,0);
+  opacity: 0.45;
 }
-/* Sin conexión */
-.hdr-led.off {
-  background: #ff3b30; /* rojo sistema iOS */
-  box-shadow: 0 0 6px rgba(255, 59, 48, 0.55);
-}
-/* Subiendo cambios a la nube (cola de sync con pendientes) */
-.hdr-led.syncing {
-  background: #ff9500; /* ámbar sistema iOS */
-  box-shadow: 0 0 7px rgba(255, 149, 0, 0.65);
-  animation: ledPulse 0.8s ease-in-out infinite;
+.hdr-led-btn:hover .hdr-led.on,
+.hdr-led-btn:active .hdr-led.on {
+  opacity: 0.85;
+  box-shadow: 0 0 8px rgba(52,199,89,0.5);
 }
 
-@keyframes ledPulse {
-  0%,
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.4;
-    transform: scale(0.9);
-  }
+/* Sin conexión: rojo tenue, pulso muy lento */
+.hdr-led.off {
+  background: #ff3b30;
+  box-shadow: 0 0 4px rgba(255,59,48,0.3);
+  opacity: 0.55;
+  animation: ledOffPulse 3.5s ease-in-out infinite;
+}
+.hdr-led-btn:hover .hdr-led.off,
+.hdr-led-btn:active .hdr-led.off {
+  opacity: 0.9;
+  box-shadow: 0 0 10px rgba(255,59,48,0.5);
+}
+
+/* Conectando / sincronizando: ámbar con pulso suave */
+.hdr-led.connecting {
+  background: #ff9500;
+  box-shadow: 0 0 6px rgba(255,149,0,0.5);
+  opacity: 0.9;
+  animation: ledConnectPulse 1.4s ease-in-out infinite;
+}
+
+/* Legacy syncing class (compatibilidad) */
+.hdr-led.syncing {
+  background: #ff9500;
+  box-shadow: 0 0 6px rgba(255,149,0,0.5);
+  opacity: 0.9;
+  animation: ledConnectPulse 1.4s ease-in-out infinite;
+}
+
+@keyframes ledOffPulse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 0.3; }
+}
+
+@keyframes ledConnectPulse {
+  0%, 100% { opacity: 0.9; box-shadow: 0 0 6px rgba(255,149,0,0.5); }
+  50% { opacity: 0.5; box-shadow: 0 0 12px rgba(255,149,0,0.25); }
 }
 
 .hdr-info {
@@ -231,9 +252,6 @@
   position: absolute;
   inset: -12px -10px;
 }
-.hdr-led {
-  display: block;
-}
 
 .hdr-led-pop {
   position: absolute;
@@ -283,7 +301,7 @@
 .hdr-led-pop.connecting .hdr-led-pop-dot {
   background: #ff9500;
   box-shadow: 0 0 7px rgba(255, 149, 0, 0.6);
-  animation: ledPulse 0.8s ease-in-out infinite;
+  animation: ledConnectPulse 0.8s ease-in-out infinite;
 }
 
 @keyframes ledPopInOut {
