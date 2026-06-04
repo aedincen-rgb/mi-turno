@@ -465,18 +465,30 @@ function AsistenteTab(props) {
                 try {
                   var rec = new SR();
                   rec.lang = 'es-CO';
-                  rec.interimResults = false;
+                  rec.interimResults = true;  // mostrar texto mientras se habla
                   rec.continuous = false;
                   rec.onresult = function (e) {
-                    var text = e.results[0][0].transcript;
-                    setInput(text);
-                    setListening(false);
-                    setTimeout(function () { send(text); }, 400);
+                    var transcript = '';
+                    for (var i = e.resultIndex; i < e.results.length; i++) {
+                      transcript += e.results[i][0].transcript;
+                    }
+                    setInput(transcript);
+                    // Solo enviar cuando el resultado es final
+                    if (e.results[0].isFinal) {
+                      setListening(false);
+                      var finalText = transcript.trim();
+                      if (finalText) {
+                        setTimeout(function () { send(finalText); }, 500);
+                      }
+                    }
                   };
                   rec.onerror = function (e) {
                     setListening(false);
                     if (e.error === 'not-allowed') {
                       alert('Permiso de micrófono denegado. Concedelo en Configuración del navegador.');
+                    } else if (e.error !== 'no-speech') {
+                      // 'no-speech' es normal, no mostrar error
+                      console.log('Mic error:', e.error);
                     }
                   };
                   rec.onend = function () { setListening(false); };
