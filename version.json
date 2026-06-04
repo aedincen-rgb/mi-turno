@@ -1,4 +1,4 @@
 {
-  "v": "v114",
-  "label": "Limpieza: 0 errores eslint (globals registrados + fixes), dist/ y landings duplicados fuera"
+  "v": "v115",
+  "label": "Landing WCAG AA: contraste corregido en tagline/stats/footer (claro y oscuro)"
 }

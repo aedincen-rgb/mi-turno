@@ -46,7 +46,8 @@
   }
   .hero .tagline {
     font-size: 17px;
-    color: #5b86e5;
+    /* #5b86e5 daba ~3:1 sobre el fondo claro. #3a5cb5 ≈ 6:1 (WCAG AA). */
+    color: #3a5cb5;
     font-weight: 600;
     margin-bottom: 6px;
   }
@@ -108,8 +109,9 @@
     gap: 10px;
     text-align: center;
   }
-  .stat-val { font-size: 26px; font-weight: 800; color: #5b86e5; }
-  .stat-lbl { font-size: 11px; color: #8e8e93; }
+  .stat-val { font-size: 26px; font-weight: 800; color: #3a5cb5; }
+  .stat-lbl { font-size: 11px; color: #646b7d; }
+  .demo-cap { font-size: 12px; color: #646b7d; margin-top: 8px; }
 
   .bottom {
     text-align: center;
@@ -123,9 +125,9 @@
     text-align: center;
     padding: 20px;
     font-size: 11px;
-    color: #aeaeb2;
+    color: #646b7d;
   }
-  .footer a { color: #5b86e5; text-decoration: none; }
+  .footer a { color: #3a5cb5; text-decoration: none; }
 
   @media (prefers-color-scheme: dark) {
     body { background: #0a0c12; color: #e5e5ea; }
@@ -133,7 +135,14 @@
     .hero .sub { color: #aeaeb2; }
     .feat { background: rgba(30,30,35,0.7); border-color: rgba(255,255,255,0.06); }
     .feat p { color: #aeaeb2; }
-    .stat-lbl { color: #636366; }
+    /* En oscuro hay que ACLARAR: los azules/grises oscuros del modo claro
+       no contrastan contra #0a0c12. Valores ≥ 4.5:1. */
+    .hero .tagline { color: #8fb3ff; }
+    .stat-val { color: #8fb3ff; }
+    .stat-lbl { color: #a0a0a6; }
+    .demo-cap { color: #98989d; }
+    .footer { color: #98989d; }
+    .footer a { color: #8fb3ff; }
     .bottom p { color: #e5e5ea; }
   }
 </style>
@@ -173,7 +182,7 @@
       Tu navegador no soporta video.
     </video>
   </div>
-  <p style="font-size:12px;color:#8e8e93;margin-top:8px;">Así de simple es calcular tu salario real.</p>
+  <p class="demo-cap">Así de simple es calcular tu salario real.</p>
 </div>
 
 <div class="stats">
