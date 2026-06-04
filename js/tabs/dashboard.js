@@ -356,24 +356,47 @@ function DashboardTab(props) {
 
     h('div', { className: 'tip-box', dangerouslySetInnerHTML: { __html: tip } }),
 
-    // Web Share API: compartir logros (degrade gracefully si no disponible)
-    typeof navigator !== 'undefined' && navigator.share
-      ? h(
-          'button',
-          {
-            className: 'dash-share-btn',
-            onClick: function () {
-              haptic();
-              navigator.share({
-                title: 'Mi Turno · Mis números del mes',
-                text: '📊 Llevo ' + fCOP(ctx.totalCOP) + ' en ' + ctx.diasTrab + ' turnos. ¡' + ctx.pctSalario.toFixed(0) + '% de mi meta! 🚀',
-                url: 'https://miturno.one'
-              }).catch(function () {});
+    // Botones de compartir
+    h(
+      'div',
+      { className: 'dash-share-group' },
+      typeof navigator !== 'undefined' && navigator.share
+        ? h(
+            'button',
+            {
+              className: 'dash-share-btn',
+              onClick: function () {
+                haptic();
+                navigator.share({
+                  title: 'Mi Turno · Mis números del mes',
+                  text: '📊 Llevo ' + fCOP(ctx.totalCOP) + ' en ' + ctx.diasTrab + ' turnos. ¡' + ctx.pctSalario.toFixed(0) + '% de mi meta! 🚀',
+                  url: 'https://miturno.one'
+                }).catch(function () {});
+              },
+              'aria-label': 'Compartir mis números'
             },
-            'aria-label': 'Compartir mis números'
-          },
-          '📤 Compartir'
-        )
-      : null
+            '📤 Compartir'
+          )
+        : null,
+      h(
+        'a',
+        {
+          className: 'dash-share-btn dash-share-wa',
+          href: 'https://api.whatsapp.com/send?text=' + encodeURIComponent(
+            '📊 *Mi Turno* · Mis números del mes\n\n' +
+            '💰 Llevo ' + fCOP(ctx.totalCOP) + '\n' +
+            '📅 ' + ctx.diasTrab + ' turnos\n' +
+            '🎯 ' + ctx.pctSalario.toFixed(0) + '% de mi meta\n' +
+            '🔮 Proyección: ' + fCOP(ctx.proy) + '\n\n' +
+            '🚀 Calculado con Mi Turno · miturno.one'
+          ),
+          target: '_blank',
+          rel: 'noopener',
+          onClick: function () { haptic(); },
+          'aria-label': 'Enviar por WhatsApp'
+        },
+        '💬 WhatsApp'
+      )
+    )
   );
 }
