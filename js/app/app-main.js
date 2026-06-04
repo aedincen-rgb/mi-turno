@@ -177,7 +177,6 @@ function App(props) {
     var st = _connState();
     var title = st.k === 'on' ? 'Conectado' : st.k === 'off' ? 'Sin conexión' : 'Conectando';
     var dotColor = st.k === 'on' ? '#34c759' : st.k === 'off' ? '#ff3b30' : '#ff9500';
-    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
 
     // Banner con estilos inline — garantizado, sin depender de CSS externo
     var wrap = document.createElement('div');
@@ -187,10 +186,8 @@ function App(props) {
 
     var card = document.createElement('div');
     card.style.cssText = 'display:flex;align-items:center;gap:12px;padding:14px 18px;border-radius:18px;' +
-      (isDark
-        ? 'background:rgba(28,28,32,0.88);backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);border:1px solid rgba(255,255,255,0.1);box-shadow:0 8px 32px rgba(0,0,0,0.5);'
-        : 'background:rgba(255,255,255,0.88);backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);border:1px solid rgba(0,0,0,0.06);box-shadow:0 8px 32px rgba(0,0,0,0.12);') +
-      'max-width:380px;';
+      'background:rgba(255,255,255,0.72);backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);' +
+      'border:1px solid rgba(0,0,0,0.06);box-shadow:0 8px 32px rgba(0,0,0,0.12);max-width:380px;';
 
     var dot = document.createElement('span');
     dot.setAttribute('aria-hidden', 'true');
@@ -200,11 +197,11 @@ function App(props) {
     txt.style.cssText = 'display:flex;flex-direction:column;gap:2px;';
 
     var ttl = document.createElement('span');
-    ttl.style.cssText = 'font-size:14px;font-weight:700;letter-spacing:-0.2px;color:' + (isDark ? '#f0f0f5' : '#1c1c1e') + ';';
+    ttl.style.cssText = 'font-size:14px;font-weight:700;color:#1c1c1e;letter-spacing:-0.2px;';
     ttl.textContent = title;
 
     var sub = document.createElement('span');
-    sub.style.cssText = 'font-size:12px;font-weight:500;color:' + (isDark ? '#a0a0b0' : '#6e6e73') + ';';
+    sub.style.cssText = 'font-size:12px;font-weight:500;color:#6e6e73;';
     sub.textContent = st.t;
 
     txt.appendChild(ttl);
@@ -817,6 +814,13 @@ function App(props) {
   var festHoy = esFest(ahoraDate);
 
   function onIni() {
+    // Guarda: no iniciar turno sin salario configurado
+    if (!salarioConfigured) {
+      haptic();
+      showToast('⚠️ Configurá tu salario en Ajustes primero', 'warning');
+      setTab('config');
+      return;
+    }
     haptic();
     var ini = new Date().toISOString();
     insertTurno(uid, ini).then(function (row) {
