@@ -21,14 +21,10 @@ body {
   height: 100%;
 }
 
-/* Extiende el gradiente hasta el borde físico del home indicator.
-   background-attachment:fixed + background-size:100% 100% renderiza el
-   gradiente relativo al viewport, no al elemento — la franja de 34 px
-   muestra la porción exacta del degradado correspondiente a esa posición
-   y queda completamente invisible. Un color sólido o un gradiente
-   reiniciado desde 0% siempre crea un escalón visible frente al cristal
-   de la tab bar (backdrop-filter:blur+saturate). var(--bg) ya cambia con
-   [data-theme='dark'] automáticamente — no se necesita override. */
+/* Cubre la franja del home indicator con el mismo vidrio que la tab bar.
+   La píldora flota sobre esta capa (z-index 99 < 100) — ambas usan los
+   mismos tokens glass, así el vidrio continúa sin corte por debajo de la
+   píldora y el gradiente claro nunca queda expuesto. */
 html::after {
   content: '';
   position: fixed;
@@ -36,11 +32,10 @@ html::after {
   left: 0;
   right: 0;
   height: env(safe-area-inset-bottom, 0px);
-  background: var(--bg);
-  background-attachment: fixed;
-  background-size: 100% 100%;
-  background-position: 0 0;
-  z-index: 0;
+  background: var(--glass-heavy);
+  backdrop-filter: var(--blur-xl);
+  -webkit-backdrop-filter: var(--blur-xl);
+  z-index: 99;
   pointer-events: none;
 }
 

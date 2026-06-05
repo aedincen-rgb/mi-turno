@@ -1,4 +1,4 @@
 {
-  "v": "v157",
-  "label": "Corrección de bugs ES5 + unificar glass header/tab-bar + fallback getHSEM 44h"
+  "v": "v158",
+  "label": "Fix barra inferior: píldora flotante + vidrio bajo home indicator"
 }

@@ -184,17 +184,17 @@ button:focus:not(:focus-visible) {
   width: calc(100% - 20px);
   max-width: 460px;
   z-index: 100;
-  border-radius: 32px 32px 0 0;
-  padding: 10px 8px calc(var(--sab) + 10px) 8px;
-  margin-bottom: 0;
-  /* Liquid Glass tab bar — se extiende hasta el borde físico del home indicator */
+  border-radius: 32px;
+  padding: 10px 8px;
+  margin-bottom: max(14px, var(--sab));
+  /* Liquid Glass — píldora flotante idéntica al header */
   background: var(--glass-heavy);
   backdrop-filter: var(--blur-xl);
   -webkit-backdrop-filter: var(--blur-xl);
   border: 1px solid var(--glass-border);
-  border-bottom: none;
   box-shadow:
     inset 0 1.5px 0 var(--spec-top),
+    inset 0 -0.5px 0 var(--spec-bot),
     0 8px 40px rgba(20, 30, 80, 0.12),
     0 2px 12px rgba(91, 134, 229, 0.08);
   display: flex;
@@ -203,7 +203,7 @@ button:focus:not(:focus-visible) {
 .tab-indicator {
   position: absolute;
   top: 10px;
-  bottom: calc(var(--sab) + 10px);
+  bottom: 10px;
   left: 8px;
   width: calc((100% - 16px) / 5);
   border-radius: 24px;
