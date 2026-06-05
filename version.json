@@ -1,4 +1,4 @@
 {
-  "v": "v145",
-  "label": "Fix definitivo franja inferior: gradiente viewport-relative + scroll fade"
+  "v": "v146",
+  "label": "Fix franja inferior: extender glass de barra flotante hasta home indicator"
 }
