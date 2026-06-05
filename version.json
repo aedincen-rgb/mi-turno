@@ -1,4 +1,4 @@
 {
-  "v": "v137",
-  "label": "fix: eliminar franja blanca inferior en iOS"
+  "v": "v138",
+  "label": "fix: revertir tabs a original + html::after con color sólido"
 }
