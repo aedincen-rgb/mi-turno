@@ -21,10 +21,11 @@ body {
   height: 100%;
 }
 
-/* Cubre la franja del home indicator con el mismo vidrio que la tab bar.
-   La píldora flota sobre esta capa (z-index 99 < 100) — ambas usan los
-   mismos tokens glass, así el vidrio continúa sin corte por debajo de la
-   píldora y el gradiente claro nunca queda expuesto. */
+/* Cubre las esquinas curvas del home indicator que la píldora no alcanza
+   a rellenar (border-radius: 32px deja huecos en las esquinas inferiores).
+   Sin backdrop-filter: evita el doble-blur que causaba diferencia de color
+   entre la píldora y esta capa. El color sólido de var(--glass-heavy)
+   coincide visualmente con lo que la píldora produce en esa zona. */
 html::after {
   content: '';
   position: fixed;
@@ -33,8 +34,6 @@ html::after {
   right: 0;
   height: env(safe-area-inset-bottom, 0px);
   background: var(--glass-heavy);
-  backdrop-filter: var(--blur-xl);
-  -webkit-backdrop-filter: var(--blur-xl);
   z-index: 99;
   pointer-events: none;
 }

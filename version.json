@@ -1,4 +1,4 @@
 {
-  "v": "v158",
-  "label": "Fix barra inferior: píldora flotante + vidrio bajo home indicator"
+  "v": "v159",
+  "label": "Fix barra inferior: píldora extiende al borde, sin doble-blur"
 }
