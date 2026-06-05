@@ -1,4 +1,4 @@
 {
-  "v": "v153",
-  "label": "LED info: banner de estado con texto legible al tocar"
+  "v": "v154",
+  "label": "LED fix: banner ahora usa estado React, no DOM directo"
 }
