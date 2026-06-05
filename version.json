@@ -1,4 +1,4 @@
 {
-  "v": "v151",
-  "label": "LED: rediseño sutil — 6px, respiración unificada, estados Supabase reales"
+  "v": "v152",
+  "label": "LED popover: animación 4.5s + fade out más suave para lectura"
 }
