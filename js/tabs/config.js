@@ -430,7 +430,7 @@ function ConfigTabInner(props) {
             photo ? '📷' : '+'
           )
         ),
-        h('span', { className: 'ajustes-profile-av-hint' }, 'Tocá para cambiar')
+        h('span', { className: 'ajustes-profile-av-hint' }, 'Tocá para cambiar tu foto 📷')
       ),
 
       // ── Columna derecha: nombre + email + estado ──

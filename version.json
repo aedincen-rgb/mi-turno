@@ -1,4 +1,4 @@
 {
-  "v": "v146",
-  "label": "NLP 2.0: clasificación semántica con stemming español + 3 bug fixes (festivos off-by-one, hrsSemanales NaN, getHSEM fallback)"
+  "v": "v147",
+  "label": "fix UX: badge foto +40% más grande con pulso visible, lápiz nombre +30% más grande, hint descriptivo"
 }
