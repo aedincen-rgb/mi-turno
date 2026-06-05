@@ -1,4 +1,4 @@
 {
-  "v": "v143",
-  "label": "Consolidación: barra inferior + perfil iOS + build fix (recuperación de versiones)"
+  "v": "v144",
+  "label": "Fix escalón visual entre scroll y barra inferior (mask fade)"
 }
