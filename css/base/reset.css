@@ -21,11 +21,14 @@ body {
   height: 100%;
 }
 
-/* Extiende el fondo hasta el borde físico del home indicator.
-   Color = último stop del gradiente --bg, que es el color que aparece
-   en la parte inferior de la pantalla. El primer stop (#c8dfff) causaba
-   un escalón visible. Se usa [data-theme='dark'] para respetar el toggle
-   in-app, no solo el modo del sistema. */
+/* Extiende el gradiente hasta el borde físico del home indicator.
+   background-attachment:fixed + background-size:100% 100% renderiza el
+   gradiente relativo al viewport, no al elemento — la franja de 34 px
+   muestra la porción exacta del degradado correspondiente a esa posición
+   y queda completamente invisible. Un color sólido o un gradiente
+   reiniciado desde 0% siempre crea un escalón visible frente al cristal
+   de la tab bar (backdrop-filter:blur+saturate). var(--bg) ya cambia con
+   [data-theme='dark'] automáticamente — no se necesita override. */
 html::after {
   content: '';
   position: fixed;
@@ -33,13 +36,12 @@ html::after {
   left: 0;
   right: 0;
   height: env(safe-area-inset-bottom, 0px);
-  background: #f5f8ff;
+  background: var(--bg);
+  background-attachment: fixed;
+  background-size: 100% 100%;
+  background-position: 0 0;
   z-index: 0;
   pointer-events: none;
-}
-
-[data-theme='dark'] html::after {
-  background: #040810;
 }
 
 /* iOS font smoothing — texto más nítido en iPhone */

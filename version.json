@@ -1,4 +1,4 @@
 {
-  "v": "v144",
-  "label": "Fix escalón visual entre scroll y barra inferior (mask fade)"
+  "v": "v145",
+  "label": "Fix definitivo franja inferior: gradiente viewport-relative + scroll fade"
 }
