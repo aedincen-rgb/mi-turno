@@ -167,8 +167,8 @@ Si CI falla, los artifacts (videos del navegador en el momento del bug) están e
 - `aiResetConv()` — resetea el estado conversacional (v95)
 - `backupExport()` / `backupImport(cb)` — respaldo/restauración (v96)
 - `onboardingDone()` / `onboardingMarkDone()` — flag de tour guiado (v98)
-- `_connState()` → `{ k, t }` — estado real de conexión a Supabase (v84)
-- `revealConn()` — toggle del banner de conexión (v89, DOM directo)
+- `_connState()` → `{ k, t }` — estado de conexión: `navigator.onLine` como primer filtro de red, luego `getRealtimeStatus()` para el estado real de Supabase. Los dos checks en cascada son **correctos e intencionales**. Implementación estable — no reescribir.
+- `revealConn()` — toggle del banner de conexión. Usa DOM directo intencionalmente (React state causaba re-renders que rompían el overlay, v89). Estable — no refactorizar a estado React.
 
 ## Cosas a evitar
 
@@ -230,7 +230,7 @@ Registradas durante la sesión del 3-4 de junio de 2026 con DeepSeek v4 Pro + Co
 | v76 | Optional chaining (`?.`) y destructuring rompen en Android gama baja. ES5 estricto. |
 | v76 | Auxilio de transporte debe usar constante global (`AUX_TRANSPORTE_2026`), nunca hardcodeado. |
 | v79 | `overflow: hidden` en avatar recorta el badge de cámara. Usar `overflow: visible`. |
-| v84 | El LED de conexión debe reflejar el estado real de Supabase (Realtime status), no solo `navigator.onLine`. |
+| v84 | LED de conexión: usa `navigator.onLine` primero (filtro de red rápido) **y luego** `getRealtimeStatus()` para el estado real de Supabase. Los dos checks en cascada son correctos e intencionales — `_connState()` los implementa bien. **No es un bug, no reescribir.** |
 | v87 | `position: fixed` no funciona dentro de contenedores con `transform`, `backdrop-filter` o `will-change`. Renderizar overlays como siblings, no como children. |
 | v89 | Para overlays críticos que se rompen con React state + re-render, usar DOM directo (`document.createElement` + `appendChild`). |
 | v91 | `<input type="file">` con `display: none` no responde a `.click()` en muchos navegadores. Usar `position:absolute;opacity:0`. |

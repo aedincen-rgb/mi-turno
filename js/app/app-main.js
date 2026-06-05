@@ -186,6 +186,7 @@ function App(props) {
     if (esLocal) return { k: 'on', t: 'Conectado (modo local)' };
     if (typeof CLOUD_MODE === 'undefined' || !CLOUD_MODE)
       return { k: 'off', t: 'Sin conexión a la nube' };
+    // guard intencional: getRealtimeStatus lo define supabase.js; puede no estar listo en el primer render
     var rt = typeof getRealtimeStatus === 'function' ? getRealtimeStatus() : null;
     if (rt === 'SUBSCRIBED') return { k: 'on', t: 'Conectado a Supabase' };
     if (rt === 'CHANNEL_ERROR' || rt === 'TIMED_OUT' || rt === 'CLOSED')
