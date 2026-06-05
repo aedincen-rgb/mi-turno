@@ -1,4 +1,8 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://mi-turno-beta.vercel.app/sitemap.xml
+# Sitemap
+Sitemap: https://miturno.one/sitemap.xml
+
+# Host canonical (evita duplicado con mi-turno-beta.vercel.app)
+Host: miturno.one

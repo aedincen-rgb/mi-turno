@@ -1,12 +1,10 @@
-[
-  {
-    "relation": ["delegate_permission/common.handle_all_urls"],
-    "target": {
-      "namespace": "android_app",
-      "package_name": "one.miturno.twa",
-      "sha256_cert_fingerprints": [
-        "REEMPLAZAR_CON_TU_SHA256_FINGERPRINT"
-      ]
-    }
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "one.miturno.twa",
+    "sha256_cert_fingerprints": [
+      "8F:98:E2:11:ED:17:5F:51:FA:AD:E2:58:E8:87:A7:AA:48:00:C5:26:72:25:93:C0:AD:19:91:B3:A2:52:18:7C"
+    ]
   }
-]
+}]

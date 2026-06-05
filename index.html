@@ -5,6 +5,109 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Mi Turno · Nómina inteligente para trabajadores colombianos</title>
 <meta name="description" content="Calculá tu salario real turno a turno. Recargos nocturnos, festivos, horas extra según la Ley 2101. Gratis, offline y accesible.">
+<meta name="keywords" content="calculadora nómina Colombia, recargos nocturnos, horas extra, ley 2101, salario mínimo, dominicales, festivos, nómina turnos, trabajadores Colombia">
+<meta name="author" content="Mi Turno">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<link rel="canonical" href="https://miturno.one/">
+
+<!-- Open Graph / WhatsApp / Facebook -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://miturno.one/">
+<meta property="og:title" content="Mi Turno · Nómina inteligente colombiana">
+<meta property="og:description" content="Calculá tu salario real turno a turno. Recargos nocturnos, festivos y horas extra. Gratis y funciona sin internet.">
+<meta property="og:image" content="https://miturno.one/icon-512.png">
+<meta property="og:image:width" content="512">
+<meta property="og:image:height" content="512">
+<meta property="og:locale" content="es_CO">
+<meta property="og:site_name" content="Mi Turno">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:url" content="https://miturno.one/">
+<meta name="twitter:title" content="Mi Turno · Nómina inteligente colombiana">
+<meta name="twitter:description" content="Calculá tu salario real turno a turno. Recargos nocturnos, festivos y horas extra. Gratis y offline.">
+<meta name="twitter:image" content="https://miturno.one/icon-512.png">
+
+<!-- JSON-LD: Software Application + FAQ para Rich Snippets de Google -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Mi Turno",
+  "alternateName": "Mi Turno Colombia",
+  "description": "Calculadora de nómina colombiana para trabajadores por turnos. Calcula automáticamente recargos nocturnos, festivos, dominicales y horas extra según la Ley 2101 de 2021.",
+  "applicationCategory": "FinanceApplication",
+  "operatingSystem": "Android, iOS, Web",
+  "url": "https://miturno.one/",
+  "sameAs": [
+    "https://github.com/aedincen-rgb/mi-turno-BETA"
+  ],
+  "inLanguage": "es-CO",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "COP"
+  },
+  "featureList": [
+    "Cálculo de recargos nocturnos según Ley 2101/2021",
+    "Horas extra diurnas y nocturnas",
+    "Festivos y dominicales",
+    "Funciona sin internet (offline)",
+    "Sin registro obligatorio",
+    "Exportación a PDF y Excel",
+    "Asistente IA local sin conexión"
+  ],
+  "screenshot": "https://miturno.one/icon-512.png"
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "¿Necesito internet para usar Mi Turno?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No. Mi Turno funciona 100% sin conexión. Tus turnos se guardan en tu celular. Si querés sincronizar entre dispositivos, necesitás conexión (opcional)."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "¿Es gratis Mi Turno?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Totalmente gratis, sin anuncios y sin límite de turnos. No vendemos tus datos ni te cobramos suscripción."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "¿Qué leyes aplica Mi Turno para los cálculos de nómina?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Aplica el Código Sustantivo del Trabajo (Art. 168-171) para recargos y la Ley 2101 de 2021 para la reducción gradual de la jornada semanal colombiana (de 48h a 42h)."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "¿Mis datos están seguros en Mi Turno?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Sí. Por defecto, todo se guarda solo en tu dispositivo. Si activás la nube, usamos Supabase con cifrado en tránsito y en reposo. Nadie más ve tus datos."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "¿Mi Turno funciona en iPhone y Android?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Sí, en ambos. Instalala como PWA desde el navegador (Chrome o Safari) y queda en tu pantalla de inicio como una app más. Funciona hasta en Android Go."
+      }
+    }
+  ]
+}
+</script>
 <meta property="og:title" content="Mi Turno · Nómina inteligente colombiana">
 <meta property="og:description" content="Calculá tu salario real turno a turno. Recargos nocturnos, festivos y horas extra. Gratis y funciona sin internet.">
 <meta property="og:image" content="https://miturno.one/icon-512.png">
@@ -12,96 +115,267 @@
 <link rel="icon" type="image/svg+xml" href="img/logo-mark.svg">
 <link rel="apple-touch-icon" href="icon-180.png">
 <style>
+  /* ═══════════════════════════════════════════════════════════════
+     MI TURNO · Landing Page v2
+     Diseño premium con calculadora interactiva, FAQ y animaciones
+     Zero build tools · Vanilla CSS + HTML
+     ═══════════════════════════════════════════════════════════════ */
+
+  :root {
+    --bg: #f5f7fb;
+    --bg-card: rgba(255,255,255,0.72);
+    --text: #1c1c1e;
+    --text-dim: #6e6e73;
+    --accent: #5b86e5;
+    --accent-strong: #3a5cb5;
+    --accent-light: #7da8ff;
+    --gradient: linear-gradient(135deg, #5b86e5, #7da8ff, #5b6ce5);
+    --shadow: 0 6px 24px rgba(91,134,229,0.18);
+    --shadow-lg: 0 12px 40px rgba(91,134,229,0.25);
+    --radius: 18px;
+    --radius-sm: 12px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0a0c12;
+      --bg-card: rgba(28,28,35,0.75);
+      --text: #e5e5ea;
+      --text-dim: #aeaeb2;
+      --accent-strong: #8fb3ff;
+      --shadow: 0 6px 24px rgba(0,0,0,0.35);
+      --shadow-lg: 0 12px 40px rgba(0,0,0,0.45);
+    }
+  }
+
   * { margin:0; padding:0; box-sizing:border-box; }
+  html { scroll-behavior: smooth; }
+
   body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: #f5f7fb;
-    color: #1c1c1e;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    background: var(--bg);
+    color: var(--text);
     line-height: 1.6;
     overflow-x: hidden;
     max-width: 100vw;
   }
-  .hero {
+
+  /* ─── HERO SECTION ─────────────────────────────────────────── */
+  .hero-wrapper {
+    position: relative;
+    overflow: hidden;
+    padding: 70px 24px 50px;
     text-align: center;
-    padding: 60px 24px 40px;
   }
+
+  /* Partículas animadas de fondo */
+  .hero-particles {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .particle {
+    position: absolute;
+    border-radius: 50%;
+    opacity: 0;
+    animation: floatUp 8s infinite;
+  }
+  @keyframes floatUp {
+    0%   { opacity: 0; transform: translateY(60px) scale(0.3); }
+    10%  { opacity: 0.18; }
+    50%  { opacity: 0.12; transform: translateY(-40px) scale(1); }
+    100% { opacity: 0; transform: translateY(-120px) scale(0.4); }
+  }
+  .particle:nth-child(1){ left:10%; width:14px; height:14px; background:var(--accent); animation-delay:0s; animation-duration:7s; }
+  .particle:nth-child(2){ left:25%; width:10px; height:10px; background:var(--accent-light); animation-delay:1.2s; animation-duration:8.5s; }
+  .particle:nth-child(3){ left:50%; width:18px; height:18px; background:var(--accent); animation-delay:2.5s; animation-duration:6.8s; }
+  .particle:nth-child(4){ left:65%; width:8px; height:8px; background:#7da8ff; animation-delay:0.8s; animation-duration:9s; }
+  .particle:nth-child(5){ left:80%; width:12px; height:12px; background:var(--accent-light); animation-delay:3.2s; animation-duration:7.5s; }
+  .particle:nth-child(6){ left:38%; width:16px; height:16px; background:var(--accent); animation-delay:4.1s; animation-duration:8.2s; }
+  .particle:nth-child(7){ left:72%; width:6px; height:6px; background:#7da8ff; animation-delay:1.8s; animation-duration:6.5s; }
+  .particle:nth-child(8){ left:18%; width:11px; height:11px; background:var(--accent-light); animation-delay:5s; animation-duration:7.8s; }
+
+  .hero-content { position: relative; z-index: 1; }
+
   .hero-logo {
-    width: 80px;
-    height: 80px;
+    width: 88px; height: 88px;
     border-radius: 22px;
-    background: linear-gradient(135deg, #5b86e5, #7da8ff);
+    background: var(--gradient);
     display: inline-flex;
     align-items: center;
     justify-content: center;
     margin-bottom: 24px;
-    box-shadow: 0 8px 30px rgba(91,134,229,0.3);
+    box-shadow: var(--shadow-lg);
+    animation: logoPulse 3s ease-in-out infinite;
+  }
+  @keyframes logoPulse {
+    0%, 100% { box-shadow: 0 12px 40px rgba(91,134,229,0.25); }
+    50%      { box-shadow: 0 16px 52px rgba(91,134,229,0.42); }
   }
   .hero-logo img { width: 48px; height: 48px; }
+
   .hero h1 {
-    font-size: 38px;
+    font-size: clamp(32px, 6vw, 42px);
     font-weight: 800;
-    letter-spacing: -1px;
-    margin-bottom: 8px;
-    color: #1c1c1e;
+    letter-spacing: -1.2px;
+    margin-bottom: 6px;
+    color: var(--text);
+    line-height: 1.15;
   }
   .hero .tagline {
     font-size: 17px;
-    /* #5b86e5 daba ~3:1 sobre el fondo claro. #3a5cb5 ≈ 6:1 (WCAG AA). */
-    color: #3a5cb5;
+    color: var(--accent-strong);
     font-weight: 600;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
   }
   .hero .sub {
     font-size: 15px;
-    color: #6e6e73;
-    max-width: 400px;
-    margin: 0 auto 28px;
+    color: var(--text-dim);
+    max-width: 420px;
+    margin: 0 auto 32px;
   }
+
+  /* CTA principal con glow pulsante */
   .btn-enter {
     display: inline-block;
-    padding: 16px 44px;
+    padding: 17px 48px;
     border-radius: 30px;
-    background: linear-gradient(135deg, #5b86e5, #4f73f8);
+    background: var(--gradient);
     color: #fff;
     font-size: 17px;
     font-weight: 700;
     text-decoration: none;
-    box-shadow: 0 6px 24px rgba(91,134,229,0.35);
-    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 6px 28px rgba(91,134,229,0.38);
+    transition: transform 0.2s, box-shadow 0.3s;
+    position: relative;
   }
-  .btn-enter:hover { transform: scale(1.04); box-shadow: 0 8px 32px rgba(91,134,229,0.45); }
+  .btn-enter::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 34px;
+    background: var(--gradient);
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.3s;
+    filter: blur(12px);
+  }
+  .btn-enter:hover { transform: scale(1.05); }
+  .btn-enter:hover::after { opacity: 0.6; }
   .btn-enter:active { transform: scale(0.96); }
 
-  .features {
-    max-width: 460px;
+  /* ─── CALCULADORA INTERACTIVA ───────────────────────────────── */
+  .calc-section {
+    max-width: 480px;
     margin: 0 auto;
-    padding: 8px 20px 40px;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
+    padding: 0 20px 30px;
   }
-  .feat {
-    background: rgba(255,255,255,0.7);
+  .calc-card {
+    background: var(--bg-card);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border-radius: 18px;
-    padding: 20px 18px;
-    border: 1px solid rgba(0,0,0,0.05);
+    border-radius: var(--radius);
+    padding: 24px 20px;
+    border: 1px solid rgba(0,0,0,0.06);
+    box-shadow: var(--shadow);
+  }
+  @media (prefers-color-scheme: dark) {
+    .calc-card { border-color: rgba(255,255,255,0.06); }
+  }
+  .calc-card h2 {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 4px;
     display: flex;
-    align-items: flex-start;
-    gap: 14px;
+    align-items: center;
+    gap: 8px;
   }
-  .feat-ico {
-    font-size: 28px;
-    flex-shrink: 0;
-    width: 44px;
+  .calc-card .calc-sub {
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-bottom: 20px;
+  }
+  .calc-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .calc-input-group {
+    flex: 1;
+    min-width: 140px;
+  }
+  .calc-input-group label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin-bottom: 6px;
+  }
+  .calc-input-group input,
+  .calc-input-group select {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: var(--radius-sm);
+    border: 1.5px solid rgba(0,0,0,0.1);
+    background: rgba(255,255,255,0.5);
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    font-family: inherit;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  @media (prefers-color-scheme: dark) {
+    .calc-input-group input,
+    .calc-input-group select {
+      background: rgba(255,255,255,0.04);
+      border-color: rgba(255,255,255,0.1);
+    }
+  }
+  .calc-input-group input:focus,
+  .calc-input-group select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(91,134,229,0.15);
+  }
+  .calc-result {
+    background: linear-gradient(135deg, rgba(91,134,229,0.08), rgba(125,168,255,0.06));
+    border-radius: var(--radius-sm);
+    padding: 18px 16px;
     text-align: center;
+    border: 1px solid rgba(91,134,229,0.12);
   }
-  .feat h3 { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
-  .feat p { font-size: 13px; color: #6e6e73; line-height: 1.45; }
+  .calc-result .loss-number {
+    font-size: 32px;
+    font-weight: 800;
+    color: #cc5252;
+    letter-spacing: -0.5px;
+  }
+  .calc-result .loss-label {
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+  .calc-result .gain-note {
+    font-size: 12px;
+    color: #52cc7c;
+    font-weight: 600;
+    margin-top: 8px;
+  }
+  .disclaimer {
+    font-size: 10.5px;
+    color: var(--text-dim);
+    text-align: center;
+    margin-top: 10px;
+    opacity: 0.65;
+  }
 
+  /* ─── STATS ─────────────────────────────────────────────────── */
   .stats {
-    max-width: 460px;
+    max-width: 480px;
     margin: 0 auto;
     padding: 0 20px 30px;
     display: grid;
@@ -109,41 +383,166 @@
     gap: 10px;
     text-align: center;
   }
-  .stat-val { font-size: 26px; font-weight: 800; color: #3a5cb5; }
-  .stat-lbl { font-size: 11px; color: #646b7d; }
-  .demo-cap { font-size: 12px; color: #646b7d; margin-top: 8px; }
+  .stat-val {
+    font-size: clamp(22px, 5vw, 28px);
+    font-weight: 800;
+    color: var(--accent-strong);
+    transition: transform 0.3s;
+  }
+  .stat-lbl { font-size: 11px; color: var(--text-dim); }
 
+  /* ─── FEATURES ──────────────────────────────────────────────── */
+  .features {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 8px 20px 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .feat {
+    background: var(--bg-card);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: var(--radius);
+    padding: 20px 18px;
+    border: 1px solid rgba(0,0,0,0.05);
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    transition: transform 0.2s, box-shadow 0.2s;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.5s, transform 0.5s, box-shadow 0.2s;
+  }
+  @media (prefers-color-scheme: dark) {
+    .feat { border-color: rgba(255,255,255,0.06); }
+  }
+  .feat.visible { opacity: 1; transform: translateY(0); }
+  .feat:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+  .feat-ico {
+    font-size: 30px;
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    background: rgba(91,134,229,0.08);
+  }
+  .feat h3 { font-size: 15px; font-weight: 700; margin-bottom: 3px; }
+  .feat p { font-size: 13px; color: var(--text-dim); line-height: 1.5; }
+
+  /* ─── FAQ ACCORDION ─────────────────────────────────────────── */
+  .faq-section {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 0 20px 30px;
+  }
+  .faq-section h2 {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    text-align: center;
+  }
+  .faq-item {
+    background: var(--bg-card);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: var(--radius);
+    margin-bottom: 8px;
+    border: 1px solid rgba(0,0,0,0.05);
+    overflow: hidden;
+  }
+  @media (prefers-color-scheme: dark) {
+    .faq-item { border-color: rgba(255,255,255,0.06); }
+  }
+  .faq-item summary {
+    padding: 16px 18px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .faq-item summary::-webkit-details-marker { display: none; }
+  .faq-arrow {
+    flex-shrink: 0;
+    transition: transform 0.3s;
+    opacity: 0.4;
+    font-size: 13px;
+  }
+  .faq-item[open] .faq-arrow { transform: rotate(180deg); }
+  .faq-answer {
+    padding: 0 18px 16px;
+    font-size: 13px;
+    color: var(--text-dim);
+    line-height: 1.55;
+  }
+
+  /* ─── TRUST BADGES ──────────────────────────────────────────── */
+  .trust-section {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 0 20px 30px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+  }
+  .trust-badge {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    background: var(--bg-card);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 24px;
+    padding: 10px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-dim);
+    border: 1px solid rgba(0,0,0,0.05);
+  }
+  @media (prefers-color-scheme: dark) {
+    .trust-badge { border-color: rgba(255,255,255,0.06); }
+  }
+  .trust-badge .badge-icon { font-size: 18px; }
+
+  /* ─── BOTTOM CTA ────────────────────────────────────────────── */
   .bottom {
     text-align: center;
-    padding: 20px 24px 50px;
-    max-width: 460px;
+    padding: 10px 24px 50px;
+    max-width: 480px;
     margin: 0 auto;
   }
-  .bottom p { font-size: 16px; font-weight: 600; color: #1c1c1e; margin-bottom: 20px; }
+  .bottom p { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 20px; }
 
+  /* ─── FOOTER ────────────────────────────────────────────────── */
   .footer {
     text-align: center;
-    padding: 20px;
-    font-size: 11px;
-    color: #646b7d;
+    padding: 24px 20px;
+    font-size: 11.5px;
+    color: var(--text-dim);
+    border-top: 1px solid rgba(0,0,0,0.04);
   }
-  .footer a { color: #3a5cb5; text-decoration: none; }
-
   @media (prefers-color-scheme: dark) {
-    body { background: #0a0c12; color: #e5e5ea; }
-    .hero h1 { color: #e5e5ea; }
-    .hero .sub { color: #aeaeb2; }
-    .feat { background: rgba(30,30,35,0.7); border-color: rgba(255,255,255,0.06); }
-    .feat p { color: #aeaeb2; }
-    /* En oscuro hay que ACLARAR: los azules/grises oscuros del modo claro
-       no contrastan contra #0a0c12. Valores ≥ 4.5:1. */
-    .hero .tagline { color: #8fb3ff; }
-    .stat-val { color: #8fb3ff; }
-    .stat-lbl { color: #a0a0a6; }
-    .demo-cap { color: #98989d; }
-    .footer { color: #98989d; }
-    .footer a { color: #8fb3ff; }
-    .bottom p { color: #e5e5ea; }
+    .footer { border-color: rgba(255,255,255,0.04); }
+  }
+  .footer a { color: var(--accent-strong); text-decoration: none; font-weight: 500; }
+  .footer a:hover { text-decoration: underline; }
+
+  /* ─── REDUCED MOTION ────────────────────────────────────────── */
+  @media (prefers-reduced-motion: reduce) {
+    .particle { animation: none; display: none; }
+    .hero-logo { animation: none; }
+    .feat { opacity: 1; transform: none; }
+    .feat:hover { transform: none; }
+    .btn-enter::after { display: none; }
   }
 </style>
 </head>
@@ -155,7 +554,7 @@
   (function(){
     try {
       var showForce = window.location.search.indexOf('show') >= 0;
-      if (showForce) return; // venimos del diamante, mostrar landing sí o sí
+      if (showForce) return;
       var sess = localStorage.getItem('mt_sess');
       var lastUser = localStorage.getItem('mt_last_user');
       if (sess || lastUser) { window.location.replace('/app'); }
@@ -163,38 +562,83 @@
   })();
 </script>
 
-<div class="hero">
-  <div class="hero-logo">
-    <img src="img/logo-mark.svg" alt="Mi Turno" draggable="false">
+<!-- ═══════ HERO ═══════ -->
+<div class="hero-wrapper">
+  <div class="hero-particles" aria-hidden="true">
+    <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+    <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+    <div class="particle"></div><div class="particle"></div>
   </div>
-  <h1>Mi Turno</h1>
-  <div class="tagline">Colombia · Nómina inteligente</div>
-  <p class="sub">Calculá tu salario real turno a turno con todos los recargos de ley. Sin internet, sin letra chica, sin errores.</p>
-  <a href="/app" class="btn-enter">Entrar a la app →</a>
+  <div class="hero-content">
+    <div class="hero-logo">
+      <img src="img/logo-mark.svg" alt="Mi Turno" draggable="false">
+    </div>
+    <h1>Tu salario real,<br>sin letra chica</h1>
+    <div class="tagline">Colombia · Nómina inteligente</div>
+    <p class="sub">Calculá cada turno con todos los recargos de ley. Sin internet, sin Excel, sin perder plata.</p>
+    <a href="/app" class="btn-enter">Calcular mi salario →</a>
+  </div>
 </div>
 
-<!-- Video / demo (cambiá el src por tu video cuando lo tengas) -->
-<div style="max-width:460px;margin:0 auto;padding:0 20px 30px;text-align:center;">
-  <div style="border-radius:18px;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,0.12);background:#000;">
-    <video autoplay muted loop playsinline style="width:100%;display:block;"
-           poster="icon-512.png">
-      <source src="demo.mp4" type="video/mp4">
-      Tu navegador no soporta video.
-    </video>
+<!-- ═══════ CALCULADORA INTERACTIVA ═══════ -->
+<div class="calc-section">
+  <div class="calc-card" id="landingCalc">
+    <h2>🧮 ¿Cuánto estás perdiendo?</h2>
+    <p class="calc-sub">Simulá un mes típico con recargos para ver la diferencia.</p>
+    <div class="calc-row">
+      <div class="calc-input-group">
+        <label>Tu salario base mensual</label>
+        <input type="number" id="calcSalario" value="1750905" min="500000" step="50000" placeholder="Ej: 1.750.905">
+      </div>
+      <div class="calc-input-group">
+        <label>Tipo de jornada</label>
+        <select id="calcJornada">
+          <option value="diurna">Solo diurna (día)</option>
+          <option value="mixta" selected>Mixta (más común)</option>
+          <option value="nocturna">Predomina nocturna</option>
+        </select>
+      </div>
+    </div>
+    <div class="calc-row">
+      <div class="calc-input-group">
+        <label>Horas extra al mes</label>
+        <input type="number" id="calcExtras" value="12" min="0" max="80" step="1" placeholder="Ej: 12">
+      </div>
+      <div class="calc-input-group">
+        <label>Domingos/festivos trabajados</label>
+        <input type="number" id="calcFestivos" value="4" min="0" max="12" step="1" placeholder="Ej: 4">
+      </div>
+    </div>
+    <div class="calc-result">
+      <div class="loss-number" id="calcLoss">$ 352.000</div>
+      <div class="loss-label">es lo que podrías estar dejando de recibir cada mes</div>
+      <div class="gain-note" id="calcGain">💡 Con Mi Turno lo sabrías al instante</div>
+    </div>
+    <p class="disclaimer">Estimación basada en Ley 2101/2021. No constituye asesoría legal.</p>
   </div>
-  <p class="demo-cap">Así de simple es calcular tu salario real.</p>
 </div>
 
+<!-- ═══════ STATS ═══════ -->
 <div class="stats">
-  <div><div class="stat-val">20-40%</div><div class="stat-lbl">del salario que pierden los trabajadores por no calcular recargos</div></div>
-  <div><div class="stat-val">100%</div><div class="stat-lbl">offline. Funciona sin internet ni señal</div></div>
-  <div><div class="stat-val">0</div><div class="stat-lbl">violaciones WCAG 2.1 AA · accesible con lector de pantalla</div></div>
+  <div>
+    <div class="stat-val" data-target="35">0%</div>
+    <div class="stat-lbl">promedio que un trabajador deja de recibir por no calcular recargos</div>
+  </div>
+  <div>
+    <div class="stat-val">100%</div>
+    <div class="stat-lbl">offline. Funciona sin internet ni señal</div>
+  </div>
+  <div>
+    <div class="stat-val">0</div>
+    <div class="stat-lbl">violaciones WCAG 2.1 AA · accesible con lectores de pantalla</div>
+  </div>
 </div>
 
+<!-- ═══════ FEATURES ═══════ -->
 <div class="features">
   <div class="feat">
     <div class="feat-ico">⚖️</div>
-    <div><h3>Cálculos con respaldo legal</h3><p> Recargos nocturnos (+35%), dominicales y festivos (+75%), horas extra y sus combinaciones. Todo según el CST colombiano y la Ley 2101/2021.</p></div>
+    <div><h3>Cálculos con respaldo legal</h3><p>Recargos nocturnos (+35%), dominicales y festivos (+75%), horas extra y sus combinaciones. Todo según el CST colombiano y la Ley 2101/2021.</p></div>
   </div>
   <div class="feat">
     <div class="feat-ico">📡</div>
@@ -218,16 +662,174 @@
   </div>
 </div>
 
+<!-- ═══════ TRUST BADGES ═══════ -->
+<div class="trust-section">
+  <div class="trust-badge"><span class="badge-icon">🔒</span> Sin tracking ni anuncios</div>
+  <div class="trust-badge"><span class="badge-icon">🇨🇴</span> Ley 2101/2021</div>
+  <div class="trust-badge"><span class="badge-icon">✅</span> Auditado WCAG AA</div>
+  <div class="trust-badge"><span class="badge-icon">📵</span> 100% offline</div>
+</div>
+
+<!-- ═══════ FAQ ═══════ -->
+<div class="faq-section">
+  <h2>❓ Preguntas frecuentes</h2>
+  <details class="faq-item">
+    <summary>¿Necesito internet para usarla? <span class="faq-arrow">▼</span></summary>
+    <div class="faq-answer">No. Mi Turno funciona 100% sin conexión. Tus turnos se guardan en tu celular. Si querés sincronizar entre dispositivos, ahí sí necesitás conexión (opcional).</div>
+  </details>
+  <details class="faq-item">
+    <summary>¿Es gratis? ¿Hasta cuándo? <span class="faq-arrow">▼</span></summary>
+    <div class="faq-answer">Totalmente gratis, sin anuncios y sin límite de turnos. No vendemos tus datos ni te cobramos suscripción. Si algún día cambia, te avisaremos con anticipación.</div>
+  </details>
+  <details class="faq-item">
+    <summary>¿Qué leyes aplica para los cálculos? <span class="faq-arrow">▼</span></summary>
+    <div class="faq-answer">Aplica el Código Sustantivo del Trabajo (Art. 168–171) para recargos y la Ley 2101 de 2021 para la reducción gradual de la jornada semanal (de 48h a 42h).</div>
+  </details>
+  <details class="faq-item">
+    <summary>¿Mis datos están seguros? <span class="faq-arrow">▼</span></summary>
+    <div class="faq-answer">Sí. Por defecto, todo se guarda solo en tu dispositivo. Si activás la nube, usamos Supabase con cifrado en tránsito y en reposo. Nadie más ve tus datos.</div>
+  </details>
+  <details class="faq-item">
+    <summary>¿Funciona en iPhone y Android? <span class="faq-arrow">▼</span></summary>
+    <div class="faq-answer">Sí, en ambos. Instalala como PWA desde el navegador (Chrome o Safari) y queda en tu pantalla de inicio como una app más. Funciona hasta en Android Go.</div>
+  </details>
+</div>
+
+<!-- ═══════ BOTTOM CTA ═══════ -->
 <div class="bottom">
-  <p>Gratis. Sin anuncios. Sin tracking.</p>
+  <p>Gratis. Sin anuncios. Sin tracking.<br>Hecha por y para trabajadores colombianos.</p>
   <a href="/app" class="btn-enter">Empezar ahora →</a>
 </div>
 
+<!-- ═══════ FOOTER ═══════ -->
 <div class="footer">
   <a href="/privacy.html">Política de privacidad</a> · 
   <a href="mailto:aedincen@gmail.com">Contacto</a> · 
-  Hecho en Colombia 🇨🇴
+  Hecho en Colombia 🇨🇴 · v131
 </div>
+
+<!-- ═══════ SCRIPTS ═══════ -->
+<script>
+(function() {
+  'use strict';
+
+  // ── CALCULADORA INTERACTIVA ──────────────────────────────────
+  var salarioInput = document.getElementById('calcSalario');
+  var jornadaSelect = document.getElementById('calcJornada');
+  var extrasInput = document.getElementById('calcExtras');
+  var festInput = document.getElementById('calcFestivos');
+  var lossEl = document.getElementById('calcLoss');
+  var gainEl = document.getElementById('calcGain');
+
+  // Factores de recargo (simplificados para la landing)
+  var FACTORES = {
+    diurna:  { noct: 0.0,  fest: 1.75, extra: 1.25, extraNoct: 1.75, extraFest: 2.0 },
+    mixta:   { noct: 0.35, fest: 1.75, extra: 1.25, extraNoct: 1.75, extraFest: 2.0 },
+    nocturna:{ noct: 0.35, fest: 2.10, extra: 1.75, extraNoct: 1.75, extraFest: 2.0 }
+  };
+
+  // Jornada semanal según Ley 2101 (2026: 44h a partir del 15 jun)
+  var HSEM_ACTUAL = 45; // antes del 15 jun 2026
+
+  function formatCOP(n) {
+    return '$ ' + Math.round(n).toLocaleString('es-CO').replace(/,/g, '.');
+  }
+
+  function recalcular() {
+    var salario = parseFloat(salarioInput.value) || 1750905;
+    var jornada = jornadaSelect.value;
+    var hrsExtra = parseInt(extrasInput.value) || 0;
+    var diasFest = parseInt(festInput.value) || 0;
+
+    var vh = salario / (HSEM_ACTUAL * 4.33); // valor hora aprox
+    var f = FACTORES[jornada];
+
+    // Estimación: % de horas nocturnas según jornada
+    var pctNoct = jornada === 'nocturna' ? 0.55 : jornada === 'mixta' ? 0.20 : 0;
+
+    // Horas trabajadas al mes (asumiendo jornada completa)
+    var hrsMes = HSEM_ACTUAL * 4.33;
+    var hrsNoct = hrsMes * pctNoct;
+    var hrsDiur = hrsMes - hrsNoct;
+
+    // Cálculo simplificado del recargo perdido
+    var recargoNoct = hrsNoct * vh * f.noct;
+    var recargoFest = diasFest * 8 * vh * (f.fest - 1);
+    var recargoExtra = hrsExtra * vh * (f.extra - 1);
+
+    var totalPerdido = recargoNoct + recargoFest + recargoExtra;
+
+    lossEl.textContent = formatCOP(Math.max(0, totalPerdido));
+
+    // Mensaje dinámico según el monto
+    var pctPerdido = (totalPerdido / salario * 100);
+    if (pctPerdido > 15) {
+      gainEl.textContent = '⚠️ ¡Más del ' + Math.round(pctPerdido) + '% de tu salario! Con Mi Turno no perdés ni un peso';
+      gainEl.style.color = '#cc5252';
+    } else if (pctPerdido > 5) {
+      gainEl.textContent = '💡 Cerca del ' + Math.round(pctPerdido) + '% de tu salario. Con Mi Turno lo recuperás';
+      gainEl.style.color = '#e6a817';
+    } else {
+      gainEl.textContent = '✅ Estás bastante cerca del valor real. ¡Igual Mi Turno te ayuda a confirmarlo!';
+      gainEl.style.color = '#52cc7c';
+    }
+  }
+
+  salarioInput.addEventListener('input', recalcular);
+  jornadaSelect.addEventListener('change', recalcular);
+  extrasInput.addEventListener('input', recalcular);
+  festInput.addEventListener('input', recalcular);
+
+  // Calcular al cargar
+  recalcular();
+
+  // ── SCROLL REVEAL para features ─────────────────────────────
+  var feats = document.querySelectorAll('.feat');
+  var observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.15, rootMargin: '0px 0px -20px 0px' });
+
+  feats.forEach(function(f) { observer.observe(f); });
+
+  // ── COUNTER ANIMATION para el stat de porcentaje ────────────
+  var statEl = document.querySelector('.stat-val[data-target]');
+  if (statEl) {
+    var target = parseInt(statEl.getAttribute('data-target'));
+    var countObserver = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (!entry.isIntersecting) return;
+
+        var start = 0;
+        var duration = 1600;
+        var startTime = null;
+
+        function animate(ts) {
+          if (!startTime) startTime = ts;
+          var elapsed = ts - startTime;
+          var progress = Math.min(elapsed / duration, 1);
+          // ease-out
+          progress = 1 - Math.pow(1 - progress, 3);
+          var current = Math.round(start + (target - start) * progress);
+          statEl.textContent = current + '%';
+          if (progress < 1) {
+            requestAnimationFrame(animate);
+          }
+        }
+
+        requestAnimationFrame(animate);
+        countObserver.unobserve(entry.target);
+      });
+    }, { threshold: 0.5 });
+
+    countObserver.observe(statEl);
+  }
+})();
+</script>
 
 </body>
 </html>

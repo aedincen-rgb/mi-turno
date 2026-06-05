@@ -1,0 +1,25 @@
+{
+  "packageId": "one.miturno.twa",
+  "host": "miturno.one",
+  "name": "Mi Turno",
+  "shortName": "Mi Turno",
+  "launcherName": "Mi Turno",
+  "display": "standalone",
+  "themeColor": "#5b86e5",
+  "navigationColor": "#0a0c12",
+  "backgroundColor": "#f5f7fb",
+  "startUrl": "/app",
+  "iconUrl": "https://miturno.one/icon-512.png",
+  "maskableIconUrl": "https://miturno.one/icon-512.png",
+  "splashScreenFadeOutDuration": 300,
+  "enableNotifications": true,
+  "features": {
+    "locationDelegation": { "enabled": false }
+  },
+  "signingKey": {
+    "path": "./android.keystore",
+    "alias": "miturno"
+  },
+  "appVersionCode": 1,
+  "appVersionName": "1.0.0"
+}
