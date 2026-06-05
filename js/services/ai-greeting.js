@@ -274,7 +274,7 @@ function _aiHeroPhrases(props) {
   }
 
   // ══════ 3. HORAS SEMANALES ══════
-  var hsemActual = typeof getHSEM === 'function' ? getHSEM(ahora) : 46;
+  var hsemActual = typeof getHSEM === 'function' ? getHSEM(ahora) : 44;
   if (horasSemana >= hsemActual) {
     f.push(
       Math.round(horasSemana) +

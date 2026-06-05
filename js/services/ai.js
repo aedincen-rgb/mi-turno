@@ -723,7 +723,7 @@ function _aiDispatchNLP(intent, c, state, q, t) {
 
   // ── Ley ──
   if (intent === 'ley') {
-    var hsemActual = typeof getHSEM === 'function' ? getHSEM(c.ahora) : 45;
+    var hsemActual = typeof getHSEM === 'function' ? getHSEM(c.ahora) : 44;
     return '⚖️ **Normativa laboral colombiana:**\n\n' +
       '• Jornada máxima actual: **' + hsemActual + 'h/semana** (Ley 2101/2021)\n' +
       '• Recargo nocturno (9pm-6am): **+35%**\n' +
