@@ -24,6 +24,27 @@
   flex-direction: column;
   gap: var(--sz-2); /* 16px de separación constante */
   scrollbar-width: none;
+
+  /* Desvanecido inferior: funde el contenido hacia el fondo antes de
+     llegar a la barra de tabs flotante, eliminando el corte/“escalón”
+     duro entre el scroll y la barra. mask NO crea containing block, así
+     que es seguro para los position:fixed (a diferencia de transform/
+     filter/will-change — ver advertencia arriba). v94/v87. */
+  --fade-bottom: calc(96px + var(--sab));
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    #000 0,
+    #000 calc(100% - var(--fade-bottom)),
+    rgba(0, 0, 0, 0.35) calc(100% - var(--fade-bottom) + 28px),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    #000 0,
+    #000 calc(100% - var(--fade-bottom)),
+    rgba(0, 0, 0, 0.35) calc(100% - var(--fade-bottom) + 28px),
+    transparent 100%
+  );
 }
 
 .scr::-webkit-scrollbar {
