@@ -19,6 +19,26 @@ body {
   /* Fija el viewport — evita zoom/reflow al cambiar de pantalla */
   width: 100%;
   height: 100%;
+  /* iOS safe area: extiende el color de fondo hasta el borde físico,
+     cubriendo la barra del home indicator que iOS pinta por defecto
+     en blanco (modo claro) o negro (modo oscuro). */
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Extender el fondo real hasta el borde: un pseudo-elemento fijo
+   que cubre EXACTAMENTE la franja del home indicator de iOS con
+   el mismo color de fondo que el body. Resuelve el rectángulo
+   blanco/negro que iOS pone detrás de la barra de gestos. */
+html::after {
+  content: '';
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: env(safe-area-inset-bottom, 0px);
+  background: var(--bg);
+  z-index: 0;
+  pointer-events: none;
 }
 
 /* iOS font smoothing — texto más nítido en iPhone */
