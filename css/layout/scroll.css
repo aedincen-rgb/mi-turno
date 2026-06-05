@@ -19,7 +19,7 @@
   overscroll-behavior: contain;
   touch-action: pan-y;
   padding: calc(var(--safe-top) + 88px) max(var(--sz-2), env(safe-area-inset-right, 0px))
-    calc(96px + var(--sab)) max(var(--sz-2), env(safe-area-inset-left, 0px));
+    calc(108px + var(--sab)) max(var(--sz-2), env(safe-area-inset-left, 0px));
   display: flex;
   flex-direction: column;
   gap: var(--sz-2); /* 16px de separación constante */
@@ -30,7 +30,7 @@
      duro entre el scroll y la barra. mask NO crea containing block, así
      que es seguro para los position:fixed (a diferencia de transform/
      filter/will-change — ver advertencia arriba). v94/v87. */
-  --fade-bottom: calc(96px + var(--sab));
+  --fade-bottom: calc(108px + var(--sab));
   -webkit-mask-image: linear-gradient(
     to bottom,
     #000 0,

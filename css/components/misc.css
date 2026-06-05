@@ -178,19 +178,14 @@ button:focus:not(:focus-visible) {
 
 .tabs {
   position: fixed;
-  bottom: 0;
+  bottom: calc(var(--sab) + 12px);
   left: 50%;
   transform: translateX(-50%);
   width: calc(100% - 20px);
   max-width: 460px;
   z-index: 100;
   border-radius: 32px;
-  /* El padding absorbe la safe area: los botones quedan arriba del home
-     indicator y el glass de la píldora cubre la zona completa hasta el
-     borde físico — el borde/sombra inferior queda fuera de la pantalla,
-     invisible. */
-  padding: 10px 8px calc(var(--sab) + 10px) 8px;
-  margin-bottom: 0;
+  padding: 10px 8px;
   background: var(--glass-heavy);
   backdrop-filter: var(--blur-xl);
   -webkit-backdrop-filter: var(--blur-xl);
@@ -206,7 +201,7 @@ button:focus:not(:focus-visible) {
 .tab-indicator {
   position: absolute;
   top: 10px;
-  bottom: calc(var(--sab) + 10px);
+  bottom: 10px;
   left: 8px;
   width: calc((100% - 16px) / 5);
   border-radius: 24px;

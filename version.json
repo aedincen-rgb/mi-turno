@@ -1,4 +1,4 @@
 {
-  "v": "v159",
-  "label": "Fix barra inferior: píldora extiende al borde, sin doble-blur"
+  "v": "v160",
+  "label": "Píldora flotante idéntica al header — sin html::after"
 }

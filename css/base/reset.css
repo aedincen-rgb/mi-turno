@@ -21,22 +21,10 @@ body {
   height: 100%;
 }
 
-/* Cubre las esquinas curvas del home indicator que la píldora no alcanza
-   a rellenar (border-radius: 32px deja huecos en las esquinas inferiores).
-   Sin backdrop-filter: evita el doble-blur que causaba diferencia de color
-   entre la píldora y esta capa. El color sólido de var(--glass-heavy)
-   coincide visualmente con lo que la píldora produce en esa zona. */
-html::after {
-  content: '';
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: env(safe-area-inset-bottom, 0px);
-  background: var(--glass-heavy);
-  z-index: 99;
-  pointer-events: none;
-}
+/* La píldora flota sobre el home indicator (bottom: var(--sab) + 12px),
+   igual que el header flota sobre la barra de estado. La zona del home
+   indicator muestra el fondo natural (gradiente + orbs animados) sin
+   ninguna capa intermedia — mismo efecto visual que la zona superior. */
 
 /* iOS font smoothing — texto más nítido en iPhone */
 html {
