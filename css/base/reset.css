@@ -21,6 +21,27 @@ body {
   height: 100%;
 }
 
+/* Extiende el fondo hasta el borde físico del home indicator.
+   Usa el color sólido de fondo (no gradiente) para evitar
+   bandas de color visibles en la franja del safe area. */
+html::after {
+  content: '';
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: env(safe-area-inset-bottom, 0px);
+  background: #c8dfff;
+  z-index: 0;
+  pointer-events: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  html::after {
+    background: #0a0c12;
+  }
+}
+
 /* iOS font smoothing — texto más nítido en iPhone */
 html {
   -webkit-font-smoothing: antialiased;
