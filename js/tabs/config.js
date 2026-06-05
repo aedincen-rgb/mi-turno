@@ -504,13 +504,13 @@ function ConfigTabInner(props) {
       )
     ),
 
-    // Input file oculto (visibility hidden para que .click() funcione)
+    // Input file oculto (fuera de vista pero funcional para .click())
     h('input', {
       ref: fileInputRef,
       type: 'file',
       accept: 'image/*',
       'aria-label': 'Seleccionar foto de perfil',
-      style: { position: 'absolute', opacity: 0, width: 0, height: 0, overflow: 'hidden' },
+      style: { position: 'fixed', top: '-100px', left: '-100px', visibility: 'hidden' },
       onChange: function (e) {
         var f = e.target.files && e.target.files[0];
         if (f) onPickPhoto(f);
