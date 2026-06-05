@@ -335,14 +335,14 @@
    ═══════════════════════════════════════════════════════════ */
 
 .conn-banner {
-  position: fixed;
-  top: 16px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 9999;
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  right: 0;
+  z-index: 110;
   display: flex;
   justify-content: center;
-  pointer-events: none;
+  pointer-events: auto;
   animation: connBannerIn 4.5s var(--ios-ease) forwards;
 }
 

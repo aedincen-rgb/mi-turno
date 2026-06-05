@@ -1,4 +1,4 @@
 {
-  "v": "v154",
-  "label": "LED fix: banner ahora usa estado React, no DOM directo"
+  "v": "v155",
+  "label": "LED fix: banner movido fuera del header — ahora sí visible"
 }
