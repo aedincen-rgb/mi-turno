@@ -522,6 +522,10 @@
   }
   .bottom p { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 20px; }
 
+  /* ─── ANDROID DOWNLOAD BUTTON ───────────────────────────────── */
+  .btn-download:hover { transform: scale(1.04); box-shadow: 0 6px 22px rgba(52,199,89,0.45); }
+  .btn-download:active { transform: scale(0.96); }
+
   /* ─── FOOTER ────────────────────────────────────────────────── */
   .footer {
     text-align: center;
@@ -694,6 +698,32 @@
     <div class="faq-answer">Sí, en ambos. Instalala como PWA desde el navegador (Chrome o Safari) y queda en tu pantalla de inicio como una app más. Funciona hasta en Android Go.</div>
   </details>
 </div>
+
+<!-- ═══════ ANDROID DOWNLOAD ═══════ -->
+<div class="android-section" id="androidSection" style="display:none">
+  <div style="text-align:center;padding:0 20px 20px;max-width:480px;margin:0 auto;">
+    <div style="background:var(--bg-card);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-radius:var(--radius);padding:22px 18px;border:1px solid rgba(0,0,0,0.06);text-align:center;">
+      <div style="font-size:36px;margin-bottom:8px;">📱</div>
+      <h3 style="font-size:16px;font-weight:700;margin-bottom:4px;">Disponible para Android</h3>
+      <p style="font-size:13px;color:var(--text-dim);margin-bottom:16px;">Descargá la app directo, sin Play Store.</p>
+      <a href="https://github.com/aedincen-rgb/mi-turno-BETA/releases/latest/download/app-release-signed.apk" class="btn-download" id="btnDownload" style="display:inline-block;padding:13px 28px;border-radius:26px;background:linear-gradient(135deg,#34c759,#30b350);color:#fff;font-size:15px;font-weight:700;text-decoration:none;box-shadow:0 4px 16px rgba(52,199,89,0.3);transition:transform 0.2s,box-shadow 0.2s;">
+        ⬇️ Descargar APK · 1.6 MB
+      </a>
+      <p style="font-size:10.5px;color:var(--text-dim);margin-top:12px;opacity:0.65;">También disponible como PWA desde el navegador · v132</p>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Mostrar sección Android solo si el usuario está en Android
+  (function(){
+    var ua = navigator.userAgent || '';
+    if (/android/i.test(ua)) {
+      var el = document.getElementById('androidSection');
+      if (el) el.style.display = 'block';
+    }
+  })();
+</script>
 
 <!-- ═══════ BOTTOM CTA ═══════ -->
 <div class="bottom">
