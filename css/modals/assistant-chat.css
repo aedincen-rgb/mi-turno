@@ -125,12 +125,12 @@
 
 /* Descripción fija, debajo de las categorías */
 .asistente-about {
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.5;
   color: var(--muted);
   padding: 0;
-  margin-top: 16px;
-  opacity: 0.7;
+  margin: 0 0 4px;
+  opacity: 0.75;
   animation: fadeUp 0.5s var(--spring);
 }
 

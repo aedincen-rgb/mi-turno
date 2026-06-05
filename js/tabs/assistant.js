@@ -314,6 +314,7 @@ function AsistenteTab(props) {
     ),
 
     // ═══ ABOUT: puente entre el saludo y la casilla (desaparece al conversar) ═══
+    // Se inserta aquí para contextualizar la invitación a escribir en el composer.
     !tieneConversacion &&
       h(
         'p',
@@ -500,7 +501,7 @@ function AsistenteTab(props) {
         ref: inputRef,
         className: 'asistente-input',
         'aria-label': 'Tu mensaje al asistente',
-        placeholder: tieneConversacion ? 'Seguí preguntando…' : 'Escribime tu pregunta…',
+        placeholder: tieneConversacion ? 'Seguí preguntando…' : 'O escribime directamente…',
         value: input,
         onChange: function (e) { setInput(e.target.value); },
         onKeyDown: function (e) {
