@@ -321,7 +321,7 @@ function buildContext(state) {
   probe.setHours(0, 0, 0, 0);
   probe.setDate(probe.getDate() + 1);
   for (var n = 0; n < 366 && proxFests.length < 5; n++) {
-    var key = probe.getFullYear() + '-' + probe.getMonth() + '-' + probe.getDate();
+    var key = probe.getFullYear() + '-' + String(probe.getMonth() + 1).padStart(2, '0') + '-' + String(probe.getDate()).padStart(2, '0');
     if (festSet.has(key) && probe.getDay() !== 0) proxFests.push(new Date(probe));
     probe.setDate(probe.getDate() + 1);
     if (probe.getFullYear() !== ahora.getFullYear()) break;
@@ -366,7 +366,7 @@ function buildContext(state) {
 
   // ── Análisis de Bienestar ──
   // Alerta si el promedio semanal supera las 46h o si hay racha de 6+ días
-  var hrsSemanales = (totalMins / 60) / (diaActual / 7);
+  var hrsSemanales = diaActual > 0 ? (totalMins / 60) / (diaActual / 7) : 0;
   var alertaFatiga = hrsSemanales > 48 || rachaActual >= 6;
 
   // ── Días hábiles restantes (no domingos ni festivos del calendario laboral, contando todos) ──
@@ -723,7 +723,7 @@ function _aiDispatchNLP(intent, c, state, q, t) {
 
   // ── Ley ──
   if (intent === 'ley') {
-    var hsemActual = typeof getHSEM === 'function' ? getHSEM(c.ahora) : 46;
+    var hsemActual = typeof getHSEM === 'function' ? getHSEM(c.ahora) : 45;
     return '⚖️ **Normativa laboral colombiana:**\n\n' +
       '• Jornada máxima actual: **' + hsemActual + 'h/semana** (Ley 2101/2021)\n' +
       '• Recargo nocturno (9pm-6am): **+35%**\n' +

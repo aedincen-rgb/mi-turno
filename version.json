@@ -1,4 +1,4 @@
 {
-  "v": "v145",
-  "label": "Fix definitivo franja inferior: gradiente viewport-relative + scroll fade"
+  "v": "v146",
+  "label": "NLP 2.0: clasificación semántica con stemming español + 3 bug fixes (festivos off-by-one, hrsSemanales NaN, getHSEM fallback)"
 }
