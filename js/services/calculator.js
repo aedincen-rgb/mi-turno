@@ -6,6 +6,82 @@
 // NOTA: El objeto RC ya está definido globalmente en js/config/globals.js
 // No se debe re-definir aquí para evitar sobrescribir la configuración.
 
+/**
+ * @typedef {Object} CategoriaMinutos
+ * @property {number} diurnaOrd     - Minutos ordinarios diurnos (6:00–21:00, día hábil)
+ * @property {number} noctOrd       - Minutos ordinarios nocturnos (21:00–6:00, día hábil)
+ * @property {number} diurnaFest    - Minutos ordinarios diurnos en festivo/domingo
+ * @property {number} noctFest      - Minutos ordinarios nocturnos en festivo/domingo
+ * @property {number} extraDiurna   - Minutos extra diurnos
+ * @property {number} extraNoct     - Minutos extra nocturnos
+ * @property {number} extraFestDiur - Minutos extra diurnos en festivo/domingo
+ * @property {number} extraFestNoct - Minutos extra nocturnos en festivo/domingo
+ */
+
+/**
+ * @typedef {Object} TurnoRegistro
+ * @property {string|number} [id]     - ID único del turno
+ * @property {string}        inicio  - ISO 8601 datetime de inicio
+ * @property {string}        [fin]   - ISO 8601 datetime de fin (omitido si está activo)
+ */
+
+/**
+ * @typedef {Object} TurnoActivo
+ * @property {string|number} id     - ID del turno activo
+ * @property {string}        inicio - ISO 8601 datetime de inicio
+ */
+
+/**
+ * @typedef {Object} DesgloseCategoria
+ * @property {number} mins - Minutos acumulados en esta categoría
+ * @property {number} cop  - Pesos colombianos (COP) acumulados
+ */
+
+/**
+ * @typedef {Object.<string, DesgloseCategoria>} BreakdownPorCategoria
+ * Mapa donde cada key es una categoría de recargo (diurnaOrd, noctOrd, etc.)
+ * y el valor es { mins, cop }.
+ */
+
+/**
+ * @typedef {Object} ResultadoCalculo
+ * @property {number}                totalMins - Minutos totales trabajados
+ * @property {number}                totalCOP  - COP totales ganados
+ * @property {BreakdownPorCategoria} bd        - Desglose minucioso por categoría
+ */
+
+/**
+ * @typedef {Object} ResultadoPorTurno
+ * @property {Object.<string, {cop: number, mins: number, bd: BreakdownPorCategoria}>} byId
+ * @property {number} total - COP totales de todos los turnos
+ */
+
+/**
+ * @typedef {Object} ResultadoPorDia
+ * @property {string}  fecha  - Fecha ISO YYYY-MM-DD
+ * @property {number}  mins   - Minutos trabajados ese día
+ * @property {number}  cop    - COP ganados ese día
+ * @property {boolean} fest   - true si el día es festivo o domingo
+ * @property {boolean} noct   - true si el turno incluye horas nocturnas
+ * @property {number}  turnos - Cantidad de turnos ese día
+ */
+
+/**
+ * Clasifica los minutos de un turno en las 8 categorías de recargo.
+ *
+ * Algoritmo: recorre el turno minuto a minuto (en realidad por bloques
+ * limitados por las 6:00, 21:00 y medianoche). En cada bloque determina
+ * si es nocturno (21:00–6:00), festivo/dominical, y si ya se agotaron
+ * las horas ordinarias disponibles (máx 8 h/día o saldo semanal).
+ *
+ * @param {Date}   inicio  - Fecha/hora de inicio del turno
+ * @param {Date}   fin     - Fecha/hora de fin del turno
+ * @param {number} minsOrd - Minutos ordinarios disponibles (min(480, saldo semanal))
+ * @returns {CategoriaMinutos} Minutos clasificados en cada categoría
+ *
+ * @see CST Art. 159 (jornada máxima diaria)
+ * @see Ley 2101/2021 (reducción gradual de jornada semanal)
+ */
 function calcCats(inicio, fin, minsOrd) {
   var cats = {
     diurnaOrd: 0,
@@ -49,6 +125,24 @@ function calcCats(inicio, fin, minsOrd) {
   return cats;
 }
 
+/**
+ * Calcula el salario total del período aplicando TODOS los recargos
+ * de la ley colombiana: nocturno, dominical, festivo, horas extra y
+ * sus combinaciones (ej. hora extra nocturna dominical).
+ *
+ * Agrupa turnos por semana ISO (lunes a domingo). El límite ordinario
+ * es min(8 h/día, saldo semanal según Ley 2101/2021). El que se agote
+ * primero determina cuándo empiezan a correr las horas extra.
+ *
+ * Si hay un turno activo (abierto, sin hora de fin), se usa `ahoraRef`
+ * como cierre provisional para proyectar el acumulado en tiempo real.
+ *
+ * @param {TurnoRegistro[]} turnos   - Array de turnos cerrados
+ * @param {TurnoActivo|null} activo  - Turno actualmente activo o null
+ * @param {Date}            ahoraRef - Momento de referencia (Date.now() para proyección en vivo)
+ * @param {number}          vh       - Valor hora ordinario del trabajador (COP/h)
+ * @returns {ResultadoCalculo} Totales y desglose por categoría
+ */
 function doCalc(turnos, activo, ahoraRef, vh) {
   var todos = activo
     ? turnos.concat([{ id: activo.id, inicio: activo.inicio, fin: ahoraRef.toISOString() }])
@@ -97,12 +191,19 @@ function doCalc(turnos, activo, ahoraRef, vh) {
   return { totalMins: tMins, totalCOP: tCOP, bd: bd };
 }
 
-// Ingreso por turno respetando el límite semanal (mismo algoritmo y orden
-// que doCalc). Cada turno recibe su contribución marginal: el primero de la
-// semana consume las horas ordinarias y los siguientes caen en extra. Por
-// eso la suma de todos los turnos COINCIDE con doCalc — a diferencia de
-// calcular cada turno aislado (que reinicia el saldo semanal y subestima
-// los recargos). Devuelve { byId, total }.
+/**
+ * Calcula el ingreso por turno individual respetando el límite semanal.
+ *
+ * ¡IMPORTANTE! Cada turno recibe su contribución MARGINAL: el primer
+ * turno de la semana consume horas ordinarias, los siguientes caen en
+ * horas extra. Por eso la suma de todos los turnos COINCIDE con doCalc(),
+ * a diferencia de calcular cada turno aislado (que reiniciaría el saldo
+ * semanal y subestimaría los recargos).
+ *
+ * @param {TurnoRegistro[]} turnos - Array de turnos cerrados (ya deben tener fin)
+ * @param {number}          vh     - Valor hora ordinario (COP/h)
+ * @returns {ResultadoPorTurno} Desglose por turno + total
+ */
 function doCalcPerTurno(turnos, vh) {
   var byId = {};
   var total = 0;
@@ -148,6 +249,16 @@ function doCalcPerTurno(turnos, vh) {
   return { byId: byId, total: total };
 }
 
+/**
+ * Desglose diario: cuántos minutos y cuánto dinero se generó cada día.
+ *
+ * Agrupa turnos por fecha (YYYY-MM-DD) y acumula minutos + COP.
+ * También indica si el día fue festivo/dominical y si incluyó horas nocturnas.
+ *
+ * @param {TurnoRegistro[]} turnos - Array de turnos cerrados
+ * @param {number}          vh     - Valor hora ordinario (COP/h)
+ * @returns {ResultadoPorDia[]} Array de días ordenados cronológicamente
+ */
 function calcPorDia(turnos, vh) {
   var dias = {};
   // Mismo enfoque combinado: min(8h/día, saldo semanal 46h)
