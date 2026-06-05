@@ -13,7 +13,9 @@ function _loadLogs() {
     var stored = leer(_errorLogsKey, []);
     _errors = Array.isArray(stored) ? stored : [];
     // Asegurarse de que los errores tengan un ID único si no lo tienen
-    _errors.forEach(e => { if (!e.id) e.id = generateUUID(); });
+    _errors.forEach(function (e) {
+      if (!e.id) e.id = generateUUID();
+    });
     _errors = _errors.slice(-_maxLogs); // Mantener el límite
   } catch (e) {
     console.error('[ErrorLogger] Error al cargar logs:', e);
@@ -30,7 +32,9 @@ function _saveLogs() {
 }
 
 function _notifyListeners() {
-  _listeners.forEach(cb => cb(_errors));
+  _listeners.forEach(function (cb) {
+    cb(_errors);
+  });
 }
 
 function logError(errorObj) {
@@ -48,7 +52,7 @@ function logError(errorObj) {
     url: window.location.href,
     ua: navigator.userAgent.split(' ').pop()
   };
-  
+
   _errors.push(newError);
   _errors = _errors.slice(-_maxLogs); // Mantener el límite
   _saveLogs();
@@ -71,12 +75,36 @@ function addErrorListener(callback) {
 }
 
 function removeErrorListener(callback) {
-  _listeners = _listeners.filter(cb => cb !== callback);
+  _listeners = _listeners.filter(function (cb) {
+    return cb !== callback;
+  });
 }
 
 function initErrorLogger() {
   _loadLogs(); // Cargar logs existentes al iniciar
-  window.onerror = function (message, source, lineno, colno, error) { logError({ message: message, filename: source, lineno: lineno, colno: colno, stack: error ? error.stack : 'No stack trace available', type: 'error' }); return false; };
-  window.onunhandledrejection = function (event) { logError({ message: event.reason ? event.reason.message || event.reason.toString() : 'Unhandled Rejection', stack: event.reason ? event.reason.stack : 'No stack trace available', filename: 'Promise Rejection', lineno: 0, colno: 0, type: 'unhandledrejection' }); return false; };
+  window.onerror = function (message, source, lineno, colno, error) {
+    logError({
+      message: message,
+      filename: source,
+      lineno: lineno,
+      colno: colno,
+      stack: error ? error.stack : 'No stack trace available',
+      type: 'error'
+    });
+    return false;
+  };
+  window.onunhandledrejection = function (event) {
+    logError({
+      message: event.reason
+        ? event.reason.message || event.reason.toString()
+        : 'Unhandled Rejection',
+      stack: event.reason ? event.reason.stack : 'No stack trace available',
+      filename: 'Promise Rejection',
+      lineno: 0,
+      colno: 0,
+      type: 'unhandledrejection'
+    });
+    return false;
+  };
 }
 initErrorLogger(); // Inicializar el logger al cargar el script

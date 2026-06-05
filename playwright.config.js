@@ -32,10 +32,12 @@ export default defineConfig({
 
   use: {
     baseURL: BASE_URL,
-    // Trace + video solo cuando un test falla (ahorra GB en CI)
-    trace: 'retain-on-failure',
-    video: 'retain-on-failure',
-    screenshot: 'only-on-failure',
+    // Trace + video + screenshot: desactivados porque Playwright 1.56 no tiene
+    // builds para ubuntu 26.04 (ni chromium, ni ffmpeg, ni webkit).
+    // Mientras tanto, usamos chromium snap del sistema con --headless=old.
+    trace: 'off',
+    video: 'off',
+    screenshot: 'off',
     // La app usa localStorage; no compartir entre tests
     storageState: undefined
   },
@@ -43,16 +45,24 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium-desktop',
-      use: { ...devices['Desktop Chrome'], viewport: { width: 1280, height: 800 } }
+      use: {
+        ...devices['Desktop Chrome'],
+        viewport: { width: 1280, height: 800 },
+        // Usar chromium snap del sistema porque ubuntu 26.04 no tiene
+        // builds oficiales de Playwright todavía (jun 2026).
+        // --headless=old fuerza el modo clásico sin headless_shell separado.
+        launchOptions: {
+          executablePath: '/snap/chromium/current/usr/lib/chromium-browser/chrome',
+          args: ['--headless=old', '--no-sandbox']
+        }
+      }
     },
-    {
-      name: 'webkit-iphone',
-      // Motor de Safari iOS — IMPORTANTE porque tu PWA pinned al home
-      // lo usa, y a veces se comporta distinto a Chrome (PWA suspende
-      // sockets, visibilitychange dispara más seguido, etc.).
-      // Re-habilitado en v50 una vez que el baseline (chromium) está verde.
-      use: { ...devices['iPhone 14'] }
-    }
+    // WebKit no disponible en ubuntu 26.04 sin build de Playwright.
+    // Se reactivará cuando Playwright agregue soporte para ubuntu 26.04.
+    // {
+    //   name: 'webkit-iphone',
+    //   use: { ...devices['iPhone 14'] }
+    // }
   ],
 
   webServer: {

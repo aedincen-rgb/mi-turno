@@ -401,31 +401,36 @@ function ConfigTabInner(props) {
       'div',
       { className: 'ajustes-profile' },
 
-      // ── Avatar con badge ──
+      // ── Avatar con badge + pista ──
       h(
-        'button',
-        {
-          className: 'ajustes-profile-av' + (photo ? ' has-photo' : ''),
-          onClick: function () {
-            haptic();
-            if (photo) setShowPhotoSheet(true);
-            else if (fileInputRef.current) fileInputRef.current.click();
-          },
-          'aria-label': photo ? 'Cambiar o eliminar foto' : 'Elegir foto de perfil'
-        },
-        photo
-          ? h('img', {
-              src: photo,
-              alt: '',
-              className: 'ajustes-profile-av-img',
-              draggable: false
-            })
-          : h('span', { className: 'ajustes-profile-av-ini' }, inicial),
+        'div',
+        { className: 'ajustes-profile-av-wrap' },
         h(
-          'span',
-          { className: 'ajustes-profile-av-badge', 'aria-hidden': 'true' },
-          photo ? '📷' : '+'
-        )
+          'button',
+          {
+            className: 'ajustes-profile-av' + (photo ? ' has-photo' : ''),
+            onClick: function () {
+              haptic();
+              if (photo) setShowPhotoSheet(true);
+              else if (fileInputRef.current) fileInputRef.current.click();
+            },
+            'aria-label': photo ? 'Cambiar o eliminar foto' : 'Elegir foto de perfil'
+          },
+          photo
+            ? h('img', {
+                src: photo,
+                alt: '',
+                className: 'ajustes-profile-av-img',
+                draggable: false
+              })
+            : h('span', { className: 'ajustes-profile-av-ini' }, inicial),
+          h(
+            'span',
+            { className: 'ajustes-profile-av-badge', 'aria-hidden': 'true' },
+            photo ? '📷' : '+'
+          )
+        ),
+        h('span', { className: 'ajustes-profile-av-hint' }, 'Tocá para cambiar')
       ),
 
       // ── Columna derecha: nombre + email + estado ──
