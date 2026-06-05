@@ -232,37 +232,15 @@
   gap: 8px;
   width: 100%;
 }
-.ajustes-hero-name-edit {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  max-width: 320px;
-  margin: 0 auto 10px;
-  padding: 0 16px;
-  box-sizing: border-box;
-}
-.ajustes-hero-name-edit .ajustes-edit-input,
 .ajustes-profile-name-edit .ajustes-edit-input {
   flex: 1;
   font-size: 17px;
   font-weight: 600;
 }
-.ajustes-hero-name-edit .ajustes-edit-save,
 .ajustes-profile-name-edit .ajustes-edit-save {
   width: 38px;
   height: 38px;
   font-size: 16px;
-}
-.ajustes-hero-email {
-  font-size: 12px;
-  color: var(--muted);
-  margin-bottom: 8px;
-  word-break: break-word;
-  max-width: 280px;
-  margin-left: auto;
-  margin-right: auto;
-  opacity: 0.85;
 }
 
 /* ─── Action sheet de foto (estilo iOS) ─── */
