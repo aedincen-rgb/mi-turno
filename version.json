@@ -1,4 +1,4 @@
 {
-  "v": "v165",
-  "label": "Purgar keystore viejo del historial con git filter-branch"
+  "v": "v166",
+  "label": "Fix: CDN cache v2 + script error handlers + mejor diagnóstico de errores"
 }

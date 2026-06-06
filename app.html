@@ -13,8 +13,25 @@
   // Captura errores críticos de carga inmediatamente
   window.onerror = function(msg, url, line, col, error) {
     var div = document.createElement('div');
-    div.style = "position:fixed;top:0;left:0;background:#b91c1c;color:white;z-index:999999;padding:12px;font-size:11px;width:100%;font-family:monospace;box-shadow:0 4px 12px rgba(0,0,0,0.3)";
-    div.innerText = "🚨 FALLO DE CARGA: " + msg + "\nArchivo: " + (url ? url.split('/').pop() : 'desconocido') + ":" + line;
+    div.style = "position:fixed;top:0;left:0;background:#b91c1c;color:white;z-index:999999;padding:12px;font-size:11px;width:100%;font-family:monospace;box-shadow:0 4px 12px rgba(0,0,0,0.3);word-break:break-all";
+    var origen = url || 'desconocido';
+    // Mostrar URL completa para diagnóstico — el split obscurecía el origen real
+    if (url && url.indexOf('supabase') >= 0) origen = 'SDK Supabase';
+    else if (url && url.indexOf('react') >= 0) origen = 'SDK React';
+    else if (url && url.indexOf('cdn') >= 0) origen = url.split('/').pop() || url;
+    else if (url) origen = url.split('/').pop() || url;
+    div.innerText = "FALLO DE CARGA: " + msg + "\nOrigen: " + origen + " (línea " + line + ")" + "\n\nProbá recargar la página o limpiar datos del sitio.";
+    document.body.appendChild(div);
+  };
+
+  // Detecta fallos de carga de <script> (network error, SRI mismatch, etc.)
+  // window.onerror NO atrapa estos — solo atrapa errores de ejecución JS.
+  window.__scriptLoadErrors = [];
+  window.__onScriptError = function(el, src) {
+    window.__scriptLoadErrors.push(src);
+    var div = document.createElement('div');
+    div.style = "position:fixed;top:0;left:0;background:#b91c1c;color:white;z-index:999998;padding:10px;font-size:10px;width:100%;font-family:monospace;word-break:break-all";
+    div.innerText = "NO SE PUDO CARGAR: " + (src || 'script desconocido') + "\nRevisá tu conexión o limpiá los datos del sitio en Ajustes > Safari > Datos de sitios.";
     document.body.appendChild(div);
   };
 </script>
@@ -161,13 +178,13 @@
 <link rel="stylesheet" href="css/animations/keyframes.css">
 
 <!-- Librerías externas -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" integrity="sha384-o+Hkm/usHFhCEWo1Ae1cLsOLiQQNrD2UfI424QDAaiZR7URnC8v35ey7s2sbGZHB" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js" integrity="sha384-tMH8h3BGESGckSAVGZ82T9n90ztNXxvdwvdM6UoR56cYcf+0iGXBliJ29D+wZ/x8" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js" integrity="sha384-bm7MnzvK++ykSwVJ2tynSE5TRdN+xL418osEVF2DE/L/gfWHj91J2Sphe582B1Bh" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" integrity="sha384-JcnsjUPPylna1s1fvi1u12X5qjY5OL56iySh75FdtrwhO/SWXgMjoVqcKyIIWOLk" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js" integrity="sha384-vxxMdt1K6XlME6zkLsgFrrHIeC7XIdAo1GW/uhhObjJXnymxiIi/eoMXsKJA13ZJ" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" integrity="sha384-vtjasyidUo0kW94K5MXDXntzOJpQgBKXmE7e2Ga4LG0skTTLeBi97eFAXsqewJjw" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js" integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" integrity="sha384-o+Hkm/usHFhCEWo1Ae1cLsOLiQQNrD2UfI424QDAaiZR7URnC8v35ey7s2sbGZHB" crossorigin="anonymous" onerror="window.__onScriptError && window.__onScriptError(this, 'Supabase SDK (jsdelivr)')"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js" integrity="sha384-tMH8h3BGESGckSAVGZ82T9n90ztNXxvdwvdM6UoR56cYcf+0iGXBliJ29D+wZ/x8" crossorigin="anonymous" onerror="window.__onScriptError && window.__onScriptError(this, 'React 18 (cdnjs)')"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js" integrity="sha384-bm7MnzvK++ykSwVJ2tynSE5TRdN+xL418osEVF2DE/L/gfWHj91J2Sphe582B1Bh" crossorigin="anonymous" onerror="window.__onScriptError && window.__onScriptError(this, 'ReactDOM 18 (cdnjs)')"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" integrity="sha384-JcnsjUPPylna1s1fvi1u12X5qjY5OL56iySh75FdtrwhO/SWXgMjoVqcKyIIWOLk" crossorigin="anonymous" onerror="window.__onScriptError && window.__onScriptError(this, 'jsPDF (cdnjs)')"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js" integrity="sha384-vxxMdt1K6XlME6zkLsgFrrHIeC7XIdAo1GW/uhhObjJXnymxiIi/eoMXsKJA13ZJ" crossorigin="anonymous" onerror="window.__onScriptError && window.__onScriptError(this, 'jsPDF AutoTable (cdnjs)')"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" integrity="sha384-vtjasyidUo0kW94K5MXDXntzOJpQgBKXmE7e2Ga4LG0skTTLeBi97eFAXsqewJjw" crossorigin="anonymous" onerror="window.__onScriptError && window.__onScriptError(this, 'XLSX (cdnjs)')"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js" integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ" crossorigin="anonymous" onerror="window.__onScriptError && window.__onScriptError(this, 'Chart.js (jsdelivr)')"></script>
 
 </head>
 <body>
