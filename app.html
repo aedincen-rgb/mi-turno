@@ -10,18 +10,25 @@
 <meta name="theme-color" id="metaThemeColor" content="#f5f7fb"/>
 
 <script>
+  // Helper: inserta un banner de error en el DOM, con fallback
+  // si document.body todavía no existe (scripts en <head>).
+  function _mtShowErrorBanner(div) {
+    var parent = document.body || document.documentElement;
+    if (parent) parent.appendChild(div);
+    else setTimeout(function () { (document.body || document.documentElement).appendChild(div); }, 0);
+  }
+
   // Captura errores críticos de carga inmediatamente
   window.onerror = function(msg, url, line, col, error) {
     var div = document.createElement('div');
     div.style = "position:fixed;top:0;left:0;background:#b91c1c;color:white;z-index:999999;padding:12px;font-size:11px;width:100%;font-family:monospace;box-shadow:0 4px 12px rgba(0,0,0,0.3);word-break:break-all";
     var origen = url || 'desconocido';
-    // Mostrar URL completa para diagnóstico — el split obscurecía el origen real
     if (url && url.indexOf('supabase') >= 0) origen = 'SDK Supabase';
     else if (url && url.indexOf('react') >= 0) origen = 'SDK React';
     else if (url && url.indexOf('cdn') >= 0) origen = url.split('/').pop() || url;
     else if (url) origen = url.split('/').pop() || url;
     div.innerText = "FALLO DE CARGA: " + msg + "\nOrigen: " + origen + " (línea " + line + ")" + "\n\nProbá recargar la página o limpiar datos del sitio.";
-    document.body.appendChild(div);
+    _mtShowErrorBanner(div);
   };
 
   // Detecta fallos de carga de <script> (network error, SRI mismatch, etc.)
@@ -32,7 +39,7 @@
     var div = document.createElement('div');
     div.style = "position:fixed;top:0;left:0;background:#b91c1c;color:white;z-index:999998;padding:10px;font-size:10px;width:100%;font-family:monospace;word-break:break-all";
     div.innerText = "NO SE PUDO CARGAR: " + (src || 'script desconocido') + "\nRevisá tu conexión o limpiá los datos del sitio en Ajustes > Safari > Datos de sitios.";
-    document.body.appendChild(div);
+    _mtShowErrorBanner(div);
   };
 </script>
 
