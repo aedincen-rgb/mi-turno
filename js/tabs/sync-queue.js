@@ -14,6 +14,7 @@
 var _SYNC_QUEUE_KEY = 'mt_sync_queue';
 var _flushTimers = {}; // uid → timeout id (debounce)
 var _processingFlags = {}; // uid → bool (IN_FLIGHT)
+var MAX_SYNC_RETRIES = 5; // Máximo de reintentos por acción antes de descartarla
 
 // Carga la cola de sincronización para un UID específico
 function _loadSyncQueue(uid) {
@@ -168,16 +169,54 @@ async function processQueue(uid) {
           }, 600);
         } catch (_) {}
       } else {
-        console.warn(
-          '[SyncQueue] Fallo al sincronizar acción:',
-          action.actionType,
-          result.error || 'Error desconocido'
-        );
-        // Si falla, no la eliminamos de la cola para reintentar más tarde
+        // Fallo transitorio: incrementar contador de reintentos.
+        // Si excede MAX_SYNC_RETRIES, descartar la acción para no
+        // entrar en bucle infinito (ej. token expirado sin posibilidad
+        // de refresh, o Supabase caído por tiempo prolongado).
+        action.retries = (action.retries || 0) + 1;
+        if (action.retries >= MAX_SYNC_RETRIES) {
+          successfulActions.push(action.id);
+          console.warn(
+            '[SyncQueue] Acción DESCARTADA tras',
+            MAX_SYNC_RETRIES,
+            'reintentos:',
+            action.actionType
+          );
+          try {
+            var discardMsg =
+              'No se pudo sincronizar «' +
+              (action.actionType === 'setSalario'
+                ? 'Salario'
+                : action.actionType === 'insertTurno'
+                  ? 'Turno'
+                  : action.actionType === 'setActivo'
+                    ? 'Turno activo'
+                    : action.actionType) +
+              '» tras varios intentos. Tocá "Sincronizar" en Diagnóstico para reintentar.';
+            setTimeout(function () {
+              if (typeof window.showToast === 'function') window.showToast(discardMsg, 'warning');
+            }, 600);
+          } catch (_) {}
+        } else {
+          console.warn(
+            '[SyncQueue] Fallo al sincronizar acción (intento ' +
+              action.retries +
+              '/' +
+              MAX_SYNC_RETRIES +
+              '):',
+            action.actionType,
+            result ? result.error || 'Error desconocido' : 'Sin respuesta'
+          );
+        }
       }
     } catch (e) {
       console.error('[SyncQueue] Error al ejecutar acción de cola:', action.actionType, e);
-      // Si hay un error, no la eliminamos de la cola para reintentar más tarde
+      // Incrementar contador de reintentos también en excepciones
+      action.retries = (action.retries || 0) + 1;
+      if (action.retries >= MAX_SYNC_RETRIES) {
+        successfulActions.push(action.id);
+        console.warn('[SyncQueue] Acción DESCARTADA por excepción tras', MAX_SYNC_RETRIES, 'reintentos:', action.actionType);
+      }
     }
   }
 

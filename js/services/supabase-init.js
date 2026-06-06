@@ -51,17 +51,43 @@ window.__cloudReady = (function () {
   if (!CLOUD_MODE || !SUPA) return Promise.resolve(false);
   var timeout = IS_IOS_SAFARI ? 15000 : 6000;
   var maxRetries = IS_IOS_SAFARI ? 2 : 1;
+
+  // Detecta errores de autenticación (token expirado, anon key inválida).
+  // Distinto de errores de red: un 401/403 es permanente hasta que el
+  // usuario vuelva a loguearse; un error de fetch es temporal.
+  function _esErrorDeAuthCloud(err) {
+    if (!err) return false;
+    var code = err.code || err.status || 0;
+    if (code === 400 || code === 401 || code === 403) return true;
+    var msg = (err.message || err.toString() || '').toLowerCase();
+    return (
+      msg.indexOf('jwt expired') >= 0 ||
+      msg.indexOf('invalid api key') >= 0 ||
+      msg.indexOf('invalid jwt') >= 0 ||
+      msg.indexOf('token') >= 0 ||
+      msg.indexOf('auth') >= 0 ||
+      msg.indexOf('unauthorized') >= 0 ||
+      msg.indexOf('forbidden') >= 0 ||
+      msg.indexOf('not found') >= 0
+    );
+  }
+
+  // Prueba real de conectividad: hace una consulta ligera a la API REST
+  // para verificar que el token es válido y Supabase responde. Un simple
+  // getSession() no basta porque retorna datos cacheados aunque el token
+  // esté expirado y el refresh haya fallado — eso dejaba CLOUD_MODE=true
+  // con la API realmente rota y la cola de sync en bucle infinito.
+  function _probarConexionReal() {
+    return SUPA.from('perfiles').select('id', { count: 'exact', head: true });
+  }
+
   function intentar(retries) {
     return withTimeout(
-      SUPA.auth.getSession().then(function () {
-        return true;
-      }),
+      _probarConexionReal().then(function () { return true; }),
       timeout,
       'Conexión Supabase'
     )
-      .then(function () {
-        return true;
-      })
+      .then(function () { return true; })
       .catch(function (e) {
         if (retries > 0) {
           return new Promise(function (resolve) {
@@ -70,9 +96,14 @@ window.__cloudReady = (function () {
             }, 1500);
           });
         }
-        CLOUD_MODE = false;
-        SUPA = null;
-        CLOUD_ERROR = traducirError(e);
+        // Solo desactivamos CLOUD_MODE si el fallo es de autenticación.
+        // Un fallo de red es temporal: mantenemos CLOUD_MODE=true para
+        // que la cola de sync se procese cuando vuelva la conexión.
+        if (_esErrorDeAuthCloud(e)) {
+          CLOUD_MODE = false;
+          SUPA = null;
+          CLOUD_ERROR = traducirError(e);
+        }
         return false;
       });
   }

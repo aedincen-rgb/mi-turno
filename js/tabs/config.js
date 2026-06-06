@@ -384,11 +384,29 @@ function ConfigTabInner(props) {
         : session.email
           ? session.email[0].toUpperCase()
           : 'U';
+  // Determinar estado de sincronización: el texto debe reflejar si
+  // hay cambios pendientes en la cola, no solo si CLOUD_MODE está
+  // activo. Antes decía "Sincronizado en la nube" aunque hubiera
+  // acciones sin subir — el usuario creía que su cambio de salario
+  // ya estaba guardado cuando en realidad seguía en cola.
+  var syncPendingCount = 0;
+  try {
+    if (uid && uid !== 'guest') {
+      var _allSyncQueues = leer('mt_sync_queue', {});
+      var _myQueue = _allSyncQueues && _allSyncQueues[uid] ? _allSyncQueues[uid] : [];
+      syncPendingCount = _myQueue.length;
+    }
+  } catch (_) {}
+
   var estado = isGuest
     ? 'Datos en este dispositivo'
     : typeof CLOUD_MODE !== 'undefined' && CLOUD_MODE
-      ? 'Sincronizado en la nube'
-      : 'Datos locales';
+      ? syncPendingCount > 0
+        ? 'Sincronizando ' + syncPendingCount + ' cambio' + (syncPendingCount !== 1 ? 's' : '') + '…'
+        : 'Sincronizado en la nube'
+      : syncPendingCount > 0
+        ? 'Sin conexión · ' + syncPendingCount + ' cambio' + (syncPendingCount !== 1 ? 's' : '') + ' pendiente' + (syncPendingCount !== 1 ? 's' : '')
+        : 'Datos locales';
 
   return h(
     'section',
