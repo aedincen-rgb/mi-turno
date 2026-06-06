@@ -16,6 +16,7 @@ App PWA de cálculo de nómina para trabajadores por turnos en Colombia. Vanilla
 - Usar `var`, NUNCA `let`/`const` (excepto en `sw.js`/`init.js` que sí usan `const`).
 - Usar `function (x) { return ... }`, NUNCA arrow functions (`x => ...`) — rompe la consistencia con el codebase y v37 ya tuvo que revertir una.
 - Usar `h(tag, props, ...children)`, NUNCA JSX.
+- `async`/`await` y `Promise` SÍ están permitidos (usados en `services/sync-queue.js`, `services/export-email.js`, `utils/otp.js`, `utils/password-hash.js`). Mantener `.then(function (res) {})` cuando la consistencia con el archivo lo requiera, pero `async function foo() { var x = await bar(); }` es válido.
 - Sin emojis en código a menos que el usuario los pida explícitamente para UX.
 - Comentarios solo cuando el **porqué** no es obvio; nunca explicar **qué** hace el código.
 

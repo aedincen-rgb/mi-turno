@@ -1,4 +1,4 @@
-# Mi Turno · Estructura del proyecto (v128)
+# Mi Turno · Estructura del proyecto (v161)
 
 PWA de nómina inteligente para trabajadores por turnos en Colombia.
 Sin build tools — vanilla JS ES5, React 18 vía CDN, Supabase como backend.
@@ -134,6 +134,8 @@ mi-turno-BETA/
 │   │   ├── data.js             cargarDatos(), setTurnos(), setSalario() — fuente de verdad local
 │   │   ├── ai.js               Asistente IA offline: NLP, respuestas, contexto
 │   │   ├── ai-nlp.js           Motor NLP mejorado (v77): clasificación por puntaje, stemming, empatía
+│   │   ├── ai-enhanced.js      IA potenciada (v125): memoria, sugerencias, personalidad
+│   │   ├── ai-help.js          Guías y ayuda contextual (v107)
 │   │   ├── ai-history.js       Persistencia del historial de chat del asistente
 │   │   ├── ai-greeting.js      Saludo personalizado según hora y contexto del turno
 │   │   ├── backup.js           Respaldo/restauración de datos locales (export/import JSON)
@@ -168,7 +170,8 @@ mi-turno-BETA/
 │       ├── app-main.js         Componente App principal — router de tabs + modales
 │       ├── root.js             Componente Root — sesión, splash, modo offline
 │       ├── sw-register.js      Registro del SW + updates silenciosos
-│       └── init.js             ReactDOM.createRoot('#root').render(<Root/>)
+│       ├── init.js             ReactDOM.createRoot('#root').render(<Root/>)
+│       └── install-prompt.js   Banner de instalación PWA (v98+)
 │
 ├── supabase/
 │   └── functions/

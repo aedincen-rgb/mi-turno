@@ -6,7 +6,7 @@
 ![No build](https://img.shields.io/badge/build-zero_tooling-555)
 ![Ley 2101/2021](https://img.shields.io/badge/Ley_2101%2F2021-cumplimiento_automático-dc6b65)
 ![License: MIT](https://img.shields.io/badge/license-MIT-blue)
-![v128](https://img.shields.io/badge/version-v128-5b86e5)
+![v161](https://img.shields.io/badge/version-v161-5b86e5)
 
 **Nómina inteligente para trabajadores por turnos.**
 

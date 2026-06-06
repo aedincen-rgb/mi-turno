@@ -1,4 +1,4 @@
 {
-  "v": "v161",
-  "label": "Fix conexión Supabase real + anti-bucle sync + SRI CDN"
+  "v": "v162",
+  "label": "Docs: badge README, ESTRUCTURA completa, regla async/await en CLAUDE"
 }
