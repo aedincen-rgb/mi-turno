@@ -1,4 +1,4 @@
 {
-  "v": "v160",
-  "label": "Píldora flotante idéntica al header — sin html::after"
+  "v": "v161",
+  "label": "Fix conexión Supabase real + anti-bucle sync + SRI CDN"
 }
