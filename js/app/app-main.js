@@ -466,6 +466,16 @@ function App(props) {
     function () {
       if (!uid) return;
       function resync() {
+        // Si CLOUD_MODE está apagado pero hay red y SUPA existe, intentamos
+        // reconectar: un __cloudReady falló antes por timeout de red, pero
+        // ahora la conexión volvió. Revalidamos sin bloquear la UI.
+        if (!CLOUD_MODE && isOnline() && typeof SUPA !== 'undefined' && SUPA && window.__cloudReady) {
+          window.__cloudReady.then(function (ok) {
+            if (ok) {
+              try { processQueue(uid); } catch (_) {}
+            }
+          });
+        }
         var pending = 0;
         try {
           var all = leer('mt_sync_queue', {});

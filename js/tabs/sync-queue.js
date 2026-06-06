@@ -93,12 +93,31 @@ async function processQueue(uid) {
     var _authed = await withTimeout(SUPA.auth.getSession(), 6000, 'auth-gate cola');
     if (!_authed || !_authed.data || !_authed.data.session) {
       _processingFlags[uid] = false;
+      // Sin sesión: si CLOUD_MODE sigue encendido pero no hay auth,
+      // es que los tokens expiraron. Desactivamos CLOUD_MODE para que
+      // el LED refleje la realidad y no se reintente en bucle.
+      if (CLOUD_MODE) {
+        CLOUD_MODE = false;
+        CLOUD_ERROR = 'Sesión expirada — iniciá sesión de nuevo';
+        console.warn('[SyncQueue] CLOUD_MODE desactivado: sin sesión válida');
+      }
       return;
     }
-  } catch (_) {
+  } catch (e) {
     _processingFlags[uid] = false;
+    // Error de red en el auth-gate: no desactivamos CLOUD_MODE todavía;
+    // dejamos que __cloudReady maneje la desactivación tras reintentos.
+    // Pero si ya viene fallando consistentemente, bajamos CLOUD_MODE.
+    if (CLOUD_MODE && _esAuthGateFalloRepetido(uid)) {
+      CLOUD_MODE = false;
+      CLOUD_ERROR = 'Servidor inalcanzable — reintentá más tarde';
+      console.warn('[SyncQueue] CLOUD_MODE desactivado: auth-gate falla repetidamente');
+    }
     return;
   }
+
+  // Auth-gate superado: reseteamos contador de fallos consecutivos
+  _resetAuthGateFails(uid);
 
   var queue = _loadSyncQueue(uid);
   if (queue.length === 0) {
@@ -246,4 +265,24 @@ function clearSyncQueue(uid) {
   delete allQueues[uid];
   grabar(_SYNC_QUEUE_KEY, allQueues);
   console.log('[SyncQueue] Cola de sincronización limpiada para UID:', uid);
+}
+
+// ── Detección de fallos repetidos en el auth-gate ─────────────
+// Si processQueue falla el auth-gate 3+ veces consecutivas sin éxito,
+// es síntoma de que Supabase está caído o la red no funciona. En ese
+// caso bajamos CLOUD_MODE para que el LED lo refleje y la cola deje de
+// reintentar en bucle. Se reinicia con la próxima reconexión (resync).
+var _authGateFails = {}; // uid → contador consecutivo
+
+function _esAuthGateFalloRepetido(uid) {
+  if (!uid) return false;
+  _authGateFails[uid] = (_authGateFails[uid] || 0) + 1;
+  if (_authGateFails[uid] >= 3) return true;
+  return false;
+}
+
+// Resetea el contador cuando hay éxito en el auth-gate (se llama desde
+// processQueue después de pasar el gate exitosamente).
+function _resetAuthGateFails(uid) {
+  if (uid) _authGateFails[uid] = 0;
 }

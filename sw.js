@@ -28,6 +28,7 @@ const appResources = [
   './icon-180.png',
   './icon-192.png',
   './icon-512.png',
+  './img/logo-mark.svg',
   // CSS (38 archivos)
   './css/base/variables.css',
   './css/base/reset.css',
@@ -92,7 +93,6 @@ const appResources = [
   './js/utils/password-hash.js',
   './js/services/supabase.js',
   './js/services/supabase-init.js',
-  './js/services/error-logger.js',
   './js/services/calculator.js',
   './js/services/quincena.js',
   './js/services/data.js',

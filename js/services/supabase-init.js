@@ -72,6 +72,19 @@ window.__cloudReady = (function () {
     );
   }
 
+  // Detecta errores de red (fetch, timeout, DNS).
+  function _esErrorDeRedCloud(err) {
+    if (!err) return false;
+    var msg = (err.message || err.toString() || '').toLowerCase();
+    return (
+      msg.indexOf('fetch') >= 0 ||
+      msg.indexOf('network') >= 0 ||
+      msg.indexOf('timeout') >= 0 ||
+      msg.indexOf('tiempo de espera') >= 0 ||
+      msg.indexOf('load failed') >= 0
+    );
+  }
+
   // Prueba real de conectividad: hace una consulta ligera a la API REST
   // para verificar que el token es válido y Supabase responde. Un simple
   // getSession() no basta porque retorna datos cacheados aunque el token
@@ -96,12 +109,22 @@ window.__cloudReady = (function () {
             }, 1500);
           });
         }
-        // Solo desactivamos CLOUD_MODE si el fallo es de autenticación.
-        // Un fallo de red es temporal: mantenemos CLOUD_MODE=true para
-        // que la cola de sync se procese cuando vuelva la conexión.
+        // Error de autenticación → desactivar todo (sin sesión válida
+        // no se puede hacer nada contra Supabase hasta re-login).
         if (_esErrorDeAuthCloud(e)) {
           CLOUD_MODE = false;
           SUPA = null;
+          CLOUD_ERROR = traducirError(e);
+        } else if (_esErrorDeRedCloud(e)) {
+          // Error de red: mantenemos SUPA vivo pero desactivamos
+          // CLOUD_MODE para que la cola de sync no intente en bucle
+          // infinito contra un backend inalcanzable. Cuando la red
+          // vuelva, onOnline rehabilita el flujo.
+          CLOUD_MODE = false;
+          CLOUD_ERROR = 'Sin conexión al servidor';
+        } else {
+          // Fallo desconocido: ser conservadores y desactivar
+          CLOUD_MODE = false;
           CLOUD_ERROR = traducirError(e);
         }
         return false;
