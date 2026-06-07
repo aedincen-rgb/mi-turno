@@ -61,31 +61,81 @@ function AsistenteTab(props) {
 
   var tieneConversacion = msgs.length > 0;
 
-  // ── Comandos de voz para navegación ──
+  // ── Comandos de voz (usa voice-agent.js si está disponible) ──
   function detectVoiceCommand(text) {
+    // Usar el motor de voz avanzado si está cargado
+    if (typeof voiceDetect === 'function') {
+      var cmd = voiceDetect(text);
+      if (cmd) {
+        var ctx = {
+          setHandsFree: setHandsFree,
+          setAutoRead: setAutoRead,
+          onNavigate: props.onNavigate,
+          onStartTurno: props.onStartTurno,
+          onStopTurno: props.onStopTurno
+        };
+        var result = voiceExecute(cmd, ctx);
+        if (result && result.type === 'ask') {
+          return { action: 'ask', query: result.query };
+        }
+        if (result && result.type === 'local') {
+          if (result.msg) {
+            setInput(result.msg);
+            setTimeout(function () { setInput(''); }, 4000);
+          }
+          return { action: 'local' };
+        }
+        if (result && result.type === 'error') {
+          setInput(result.msg || 'Error al ejecutar comando');
+          setTimeout(function () { setInput(''); }, 4000);
+          return { action: 'local' };
+        }
+        if (result && result.type === 'success') {
+          setInput(result.msg || 'Listo');
+          setTimeout(function () { setInput(''); }, 3000);
+          return { action: 'local' };
+        }
+        if (result && result.type === 'navigate') {
+          return { action: 'nav', tab: result.tab, sub: result.sub };
+        }
+        if (result && result.type === 'export') {
+          // Ejecutar exportación con los datos actuales
+          if (result.format === 'pdf' && typeof exportPDF === 'function') {
+            setTimeout(function () { exportPDF(props.turnos, props.calc, props.salario); }, 300);
+          } else if (result.format === 'excel' && typeof exportExcel === 'function') {
+            setTimeout(function () { exportExcel(props.turnos, props.calc, props.salario); }, 300);
+          }
+          return { action: 'local' };
+        }
+        return null;
+      }
+    }
+    // Fallback: comandos básicos si el módulo no está disponible
     var t = (text || '').toLowerCase().trim();
-    // Navegación por pestañas
-    if (t.indexOf('ir a inicio') >= 0 || t === 'inicio') return { action: 'nav', tab: 'home' };
-    if (t.indexOf('ir a análisis') >= 0 || t.indexOf('ir a analisis') >= 0 || t === 'análisis' || t === 'analisis') return { action: 'nav', tab: 'dashboard' };
-    if (t.indexOf('ir a asistente') >= 0 || t === 'asistente') return { action: 'nav', tab: 'ai' };
-    if (t.indexOf('ir a historial') >= 0 || t === 'historial') return { action: 'nav', tab: 'history' };
-    if (t.indexOf('ir a ajustes') >= 0 || t === 'ajustes') return { action: 'nav', tab: 'config' };
-    // Acciones rápidas
-    if (t.indexOf('iniciar turno') >= 0 || t.indexOf('empezar turno') >= 0) return { action: 'nav', tab: 'home', sub: 'start' };
-    if (t.indexOf('finalizar turno') >= 0 || t.indexOf('terminar turno') >= 0) return { action: 'nav', tab: 'home', sub: 'stop' };
-    if (t.indexOf('activar manos libres') >= 0 || t.indexOf('modo manos libres') >= 0) { setHandsFree(true); return { action: 'local', msg: '🔊 Modo manos libres activado. Te escucho.' }; }
-    if (t.indexOf('desactivar manos libres') >= 0 || t.indexOf('salir de manos libres') >= 0) { setHandsFree(false); return { action: 'local', msg: '🔇 Modo manos libres desactivado.' }; }
-    if (t.indexOf('leer respuestas') >= 0 || t.indexOf('activar voz') >= 0) { setAutoRead(true); return { action: 'local', msg: '🔊 Lectura automática activada.' }; }
-    if (t.indexOf('silencio') >= 0 || t.indexOf('no leer') >= 0 || t.indexOf('desactivar voz') >= 0) { setAutoRead(false); setHandsFree(false); return { action: 'local', msg: '🔇 Voz desactivada.' }; }
+    if (t.indexOf('ir a inicio') >= 0) return { action: 'nav', tab: 'home' };
+    if (t.indexOf('ir a análisis') >= 0 || t.indexOf('ir a analisis') >= 0) return { action: 'nav', tab: 'dashboard' };
+    if (t.indexOf('ir a asistente') >= 0) return { action: 'nav', tab: 'ai' };
+    if (t.indexOf('ir a historial') >= 0) return { action: 'nav', tab: 'history' };
+    if (t.indexOf('ir a ajustes') >= 0) return { action: 'nav', tab: 'config' };
+    if (t.indexOf('iniciar turno') >= 0) return { action: 'nav', tab: 'home', sub: 'start' };
+    if (t.indexOf('finalizar turno') >= 0) return { action: 'nav', tab: 'home', sub: 'stop' };
     return null;
   }
 
-  // ── Iniciar escucha (reutilizable) ──
+  // ── Iniciar escucha (reutilizable, con protección anti-bucle) ──
+  var _micBusy = useRef(false);
   function startListening() {
-    if (listening || busy) return;
+    // Protección: no iniciar si ya está escuchando, ocupado, o en plena operación
+    if (listening || busy || _micBusy.current) return;
     var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) return;
+    _micBusy.current = true;
     try {
+      // Limpiar cualquier sesión anterior
+      if (recognitionRef.current) {
+        try { recognitionRef.current.abort(); } catch (_) {}
+        recognitionRef.current = null;
+      }
       var rec = new SR();
       rec.lang = 'es-CO';
       rec.interimResults = true;
@@ -95,7 +145,7 @@ function AsistenteTab(props) {
       if (audioAnimRef.current) clearInterval(audioAnimRef.current);
       audioAnimRef.current = setInterval(function () {
         setAudioLevel(Math.random() * 0.6 + 0.2);
-      }, 120);
+      }, 150);
 
       rec.onresult = function (e) {
         var transcript = '';
@@ -103,68 +153,96 @@ function AsistenteTab(props) {
           transcript += e.results[i][0].transcript;
         }
         setInput(transcript);
-        // Mostrar nivel alto cuando detecta voz
         setAudioLevel(0.8);
         if (e.results[0].isFinal) {
-          if (audioAnimRef.current) { clearInterval(audioAnimRef.current); audioAnimRef.current = null; }
-          setAudioLevel(0);
-          setListening(false);
+          // Limpiar estado de escucha
+          _cleanupRecording();
           var finalText = transcript.trim();
           if (finalText) {
-            // Detectar comandos de voz
             var cmd = detectVoiceCommand(finalText);
             if (cmd) {
               if (cmd.action === 'nav') {
                 if (props.onNavigate) props.onNavigate(cmd.tab, cmd.sub || null);
                 if (handsFree) {
-                  setTimeout(function () { startListening(); }, 1500);
+                  setTimeout(function () { _micBusy.current = false; startListening(); }, 1800);
+                } else {
+                  _micBusy.current = false;
                 }
                 return;
               }
               if (cmd.action === 'local') {
                 setInput('');
-                alert(cmd.msg);
+                if (cmd.msg) {
+                  setInput(cmd.msg);
+                  setTimeout(function () { setInput(''); }, 4000);
+                }
                 if (handsFree) {
-                  setTimeout(function () { startListening(); }, 1200);
+                  setTimeout(function () { _micBusy.current = false; startListening(); }, 1400);
+                } else {
+                  _micBusy.current = false;
                 }
                 return;
               }
             }
             // Enviar a la IA normalmente
             setTimeout(function () { send(finalText); }, 400);
+            _micBusy.current = false;
+          } else {
+            _micBusy.current = false;
           }
         }
       };
+
       rec.onerror = function (e) {
-        if (audioAnimRef.current) { clearInterval(audioAnimRef.current); audioAnimRef.current = null; }
-        setAudioLevel(0);
-        setListening(false);
+        _cleanupRecording();
+        _micBusy.current = false;
         if (e.error === 'not-allowed') {
-          alert('Permiso de micrófono denegado. Concedelo en Configuración del navegador.');
-        } else if (e.error !== 'no-speech') {
-          console.log('Mic error:', e.error);
+          setHandsFree(false);
+          setAutoRead(false);
+          return;
         }
-        // En modo manos libres, reintentar tras error
-        if (handsFree && e.error !== 'not-allowed') {
-          setTimeout(function () { startListening(); }, 1000);
+        // Reintento suave en manos libres (solo si no fue cancelado manual)
+        if (handsFree && e.error !== 'aborted') {
+          setTimeout(function () { startListening(); }, 2000);
         }
       };
+
       rec.onend = function () {
-        if (audioAnimRef.current) { clearInterval(audioAnimRef.current); audioAnimRef.current = null; }
-        setAudioLevel(0);
-        setListening(false);
-        // En modo manos libres, re-escuchar al terminar
-        if (handsFree && !busy) {
-          setTimeout(function () { startListening(); }, 800);
+        _cleanupRecording();
+        // Solo re-escuchar si handsFree está activo Y no se detuvo manualmente
+        // Y no estamos en medio de enviar un mensaje (busy)
+        if (handsFree && !busy && _micBusy.current === false) {
+          // _micBusy ya fue liberado por onresult o onerror
+          // Solo reintentar si no hay un proceso en curso
+          setTimeout(function () { startListening(); }, 600);
         }
       };
+
       rec.start();
       setListening(true);
       recognitionRef.current = rec;
     } catch (err) {
+      _cleanupRecording();
+      _micBusy.current = false;
       setListening(false);
-      alert('No se pudo iniciar el micrófono: ' + (err.message || 'error desconocido'));
+      setHandsFree(false);
     }
+  }
+
+  function _cleanupRecording() {
+    if (audioAnimRef.current) { clearInterval(audioAnimRef.current); audioAnimRef.current = null; }
+    setAudioLevel(0);
+    setListening(false);
+    if (recognitionRef.current) {
+      try { recognitionRef.current.stop(); } catch (_) {}
+      recognitionRef.current = null;
+    }
+  }
+
+  function stopListening() {
+    setHandsFree(false);
+    _micBusy.current = false;
+    _cleanupRecording();
   }
 
   // ── Helpers de voz ──
@@ -207,15 +285,10 @@ function AsistenteTab(props) {
       if (st.msgIdx === idx) {
         st.status = 'idle'; st.progress = 1;
         setSpeakUI({ idx: idx, status: 'idle', progress: 0 });
-        // En modo manos libres, volver a escuchar tras leer respuesta
-        if (handsFree) {
-          setTimeout(function () { startListening(); }, 600);
+        // Solo re-escuchar si manos libres sigue activo y no estamos ocupados
+        if (handsFree && !busy && !listening && !_micBusy.current) {
+          setTimeout(function () { startListening(); }, 800);
         }
-        setTimeout(function () {
-          if (speakRef.current.msgIdx === idx && speakRef.current.status === 'idle') {
-            setSpeakUI({ idx: -1, status: 'idle', progress: 0 });
-          }
-        }, 2000);
       }
     };
 
@@ -787,15 +860,12 @@ function AsistenteTab(props) {
               onClick: function () {
                 haptic();
                 if (listening) {
-                  if (recognitionRef.current) recognitionRef.current.stop();
-                  setListening(false);
-                  if (audioAnimRef.current) { clearInterval(audioAnimRef.current); audioAnimRef.current = null; }
-                  setAudioLevel(0);
+                  stopListening();
                   return;
                 }
                 startListening();
               },
-              disabled: busy,
+              disabled: busy && !listening,
               'aria-label': listening ? 'Grabando… tocá para detener' : 'Hablar por voz',
               title: listening ? 'Grabando… tocá para detener' : 'Hablar por voz'
             },
@@ -850,11 +920,9 @@ function AsistenteTab(props) {
               if (!handsFree) {
                 setAutoRead(true);
                 setHandsFree(true);
-                setTimeout(function () { startListening(); }, 400);
+                setTimeout(function () { startListening(); }, 500);
               } else {
-                setHandsFree(false);
-                if (recognitionRef.current) recognitionRef.current.stop();
-                setListening(false);
+                stopListening();
               }
             },
             'aria-label': handsFree ? 'Desactivar modo manos libres' : 'Activar modo manos libres',
