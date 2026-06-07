@@ -362,6 +362,14 @@ function aiEnhancedRespond(originalResponse, intent, topic, question, userContex
   // 2. Expandir respuesta con más contexto y tips
   var expanded = _aiExpandir(originalResponse, intent, userContext);
 
+  // 2.5. Análisis financiero profundo (ai-insights.js)
+  if (typeof aiInsightFull === 'function') {
+    var insightText = aiInsightFull(userContext, intent);
+    if (insightText) {
+      expanded += insightText;
+    }
+  }
+
   // 3. Enriquecer con acciones rápidas
   var enriched = aiEnrichResponse(expanded, intent, userContext);
 
