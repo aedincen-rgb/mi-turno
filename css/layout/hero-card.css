@@ -15,6 +15,7 @@
   overflow: hidden;
   -webkit-tap-highlight-color: transparent;
   transition: transform 0.2s var(--ios-ease);
+  padding-bottom: var(--sab); /* Safe area bottom para iOS */
 }
 
 /* Orb de luz interna – efecto lupa iOS 26 */
@@ -71,15 +72,17 @@
   border-radius: 32px;
   margin: 0;
   /* Sombra neutral y profunda para efecto flotante real */
-  box-shadow: 
-    0 12px 30px rgba(0, 0, 0, 0.12), 
+  box-shadow:
+    0 12px 30px rgba(0, 0, 0, 0.12),
     inset 0 1px 0 rgba(255, 255, 255, 0.45);
 }
 
 [data-theme='dark'] .num-glass-card {
   background: rgba(255, 255, 255, 0.08);
   border-color: rgba(255, 255, 255, 0.12);
-  box-shadow: 0 15px 45px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  box-shadow:
+    0 15px 45px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .hero-amount {

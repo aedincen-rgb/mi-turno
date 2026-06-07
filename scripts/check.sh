@@ -57,20 +57,46 @@ echo
 echo "→ Archivos .js de la app referenciados en app.html y sw.js"
 MISSING_IN_HTML=0
 MISSING_IN_SW=0
+MISSING_HTML_FILES=()
+MISSING_SW_FILES=()
 while IFS= read -r -d '' f; do
   rel="${f#./}"
   if [[ "$rel" != js/* ]]; then continue; fi
   if ! grep -q "$rel" app.html 2>/dev/null; then
     fail "$rel NO está en app.html"
     MISSING_IN_HTML=$((MISSING_IN_HTML+1))
+    MISSING_HTML_FILES+=("$rel")
   fi
   if ! grep -q "$rel" sw.js 2>/dev/null; then
     fail "$rel NO está en sw.js precache"
     MISSING_IN_SW=$((MISSING_IN_SW+1))
+    MISSING_SW_FILES+=("$rel")
   fi
 done < <(find js -name '*.js' -print0)
 if [ $MISSING_IN_HTML -eq 0 ] && [ $MISSING_IN_SW -eq 0 ]; then
   ok "todos los .js están registrados"
+fi
+
+# ── Modo --fix: imprime las líneas exactas para copiar/pegar ──
+if [ "${1:-}" = "--fix" ] || [ "${1:-}" = "-f" ]; then
+  if [ ${#MISSING_SW_FILES[@]} -gt 0 ]; then
+    echo ""
+    echo "  ── Pegar en sw.js (array appResources, orden alfabético): ──"
+    for f in "${MISSING_SW_FILES[@]}"; do
+      echo "  './$f',"
+    done | sort
+  fi
+  if [ ${#MISSING_HTML_FILES[@]} -gt 0 ]; then
+    echo ""
+    echo "  ── Pegar en app.html (bloque JS FRAGMENTADO, sección que corresponda): ──"
+    for f in "${MISSING_HTML_FILES[@]}"; do
+      echo "  <script src=\"$f\"></script>"
+    done
+  fi
+  if [ ${#MISSING_SW_FILES[@]} -eq 0 ] && [ ${#MISSING_HTML_FILES[@]} -eq 0 ]; then
+    echo ""
+    echo "  ✓ Nada que arreglar — todos los archivos están registrados."
+  fi
 fi
 
 echo

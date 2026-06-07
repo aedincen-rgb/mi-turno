@@ -73,6 +73,7 @@
   ],
   "rewrites": [
     { "source": "/app", "destination": "/app.html" },
+    { "source": "/health", "destination": "/health.json" },
     {
       "source": "/(.*)",
       "destination": "/app.html"
