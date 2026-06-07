@@ -1054,15 +1054,17 @@ function aiAnswer(question, state) {
     if (!metaVal || metaVal <= 0) {
       return '💡 Usá **/meta 2500000** para calcular cuánto te falta. También podés escribir "¿cuánto necesito para llegar a 2 millones?"';
     }
-    var falta = Math.max(0, metaVal - c.totalCOP);
-    var horasFaltan = c.copPorHoraReal > 0 ? falta / c.copPorHoraReal : 0;
-    var diasFaltan = c.prom > 0 ? Math.ceil(falta / c.prom) : 0;
+    var _copHora = (c && c.copPorHoraReal) ? c.copPorHoraReal : (vh || 0);
+    var _promDia = (c && c.prom) ? c.prom : 0;
+    var falta = Math.max(0, metaVal - ((c && c.totalCOP) || 0));
+    var horasFaltan = _copHora > 0 ? falta / _copHora : 0;
+    var diasFaltan = _promDia > 0 ? Math.ceil(falta / _promDia) : 0;
     var resp = '🎯 **Meta: ' + fCOP(metaVal) + '**\n\n';
-    resp += '• Llevás: ' + fCOP(c.totalCOP) + ' (' + c.pctSalario.toFixed(1) + '% de tu salario base)\n';
+    resp += '• Llevás: ' + fCOP((c && c.totalCOP) || 0) + ' (' + ((c && c.pctSalario) || 0).toFixed(1) + '% de tu salario base)\n';
     resp += '• Te faltan: ' + fCOP(falta) + '\n';
-    resp += '• Necesitás ≈ ' + horasFaltan.toFixed(1) + ' horas más (≈ ' + fCOP(c.copPorHoraReal) + '/h)\n';
-    resp += '• A tu ritmo actual (' + fCOP(c.prom) + '/día), te tomaría unos **' + diasFaltan + ' días**\n';
-    if (c.diasRestantes > 0) {
+    resp += '• Necesitás ≈ ' + horasFaltan.toFixed(1) + ' horas más (≈ ' + fCOP(_copHora) + '/h)\n';
+    if (_promDia > 0) resp += '• A tu ritmo actual (' + fCOP(_promDia) + '/día), te tomaría unos **' + diasFaltan + ' días**\n';
+    if ((c && c.diasRestantes) > 0) {
       var diarioNecesario = falta / c.diasRestantes;
       resp += '• Quedan ' + c.diasRestantes + ' días del mes → necesitás ' + fCOP(diarioNecesario) + '/día para llegar\n';
     }
@@ -1084,54 +1086,74 @@ function aiAnswer(question, state) {
       return '💡 Usá **/simular 4h** o **/simular 4h nocturnas** para calcular un escenario.\n\nEjemplos:\n• "/simular 4h" → 4 horas diurnas extra\n• "/simular 4h nocturnas" → 4 horas extra de noche';
     }
     var esNocturno = _aiHas(t, 'nocturn', 'noche', 'noct');
-    var factor = esNocturno ? 1.75 : 1.25; // extra diurna 25% o extra nocturna 75%
-    var extraEstimado = numHoras * c.vh * factor;
-    var nuevoTotal = c.totalCOP + extraEstimado;
+    var _vh = vh || 0;
+    var factor = esNocturno ? 1.75 : 1.25;
+    var extraEstimado = numHoras * _vh * factor;
+    var nuevoTotal = ((c && c.totalCOP) || 0) + extraEstimado;
+    var _sal = (c && c.salario) || 1;
     var respSim = '🔮 **Simulación: +' + numHoras + 'h' + (esNocturno ? ' nocturnas' : ' diurnas') + '**\n\n';
-    respSim += '• Valor hora base: ' + fCOP(c.vh) + '\n';
+    respSim += '• Valor hora base: ' + fCOP(_vh) + '\n';
     respSim += '• Factor recargo: ' + (factor * 100).toFixed(0) + '%\n';
     respSim += '• Extra estimado: ≈ ' + fCOP(extraEstimado) + '\n';
-    respSim += '• Nuevo total: ≈ ' + fCOP(nuevoTotal) + ' (' + ((nuevoTotal / c.salario) * 100).toFixed(1) + '% del salario)\n';
+    respSim += '• Nuevo total: ≈ ' + fCOP(nuevoTotal) + ' (' + ((nuevoTotal / _sal) * 100).toFixed(1) + '% del salario)\n';
     respSim += '\n💡 Probá también **/meta ' + Math.round(nuevoTotal / 100000) * 100000 + '** para ver si llegás.';
     return respSim;
   }
 
   // ── /TENDENCIA ──
   if (q === '/tendencia' || _aiHas(t, 'tendencia', 'evolucion', 'como voy vs antes', 'historico')) {
-    // Buscar datos de meses anteriores en los turnos
-    var ahoraMes = c.ahora.getMonth();
-    var ahoraAno = c.ahora.getFullYear();
-    var mesesNombres = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-    var mesesData = [];
-    for (var mi = 0; mi < 3; mi++) {
-      var mIdx = ahoraMes - mi;
-      var aIdx = ahoraAno;
-      if (mIdx < 0) { mIdx += 12; aIdx--; }
-      var iniM = new Date(aIdx, mIdx, 1);
-      var finM = new Date(aIdx, mIdx + 1, 0);
-      var turnosM = (state.turnosAll || state.turnos || []).filter(function (t) {
-        var d = new Date(t.inicio);
-        return d >= iniM && d < finM && t.fin;
-      });
-      if (turnosM.length === 0 && mi > 0) continue;
-      var calcM = mi === 0 ? { totalMins: c.totalMins, totalCOP: c.totalCOP } : doCalc(turnosM, null, finM, vh);
-      var diasM = mi === 0 ? c.diasTrab : calcPorDia(turnosM, vh).length;
-      mesesData.push({ label: mesesNombres[mIdx], cop: Math.round(calcM.totalCOP), mins: Math.round(calcM.totalMins), dias: diasM });
+    try {
+      var tvh = vh || 0;
+      var _ahora = (c && c.ahora) ? c.ahora : new Date();
+      var ahoraMes = _ahora.getMonth();
+      var ahoraAno = _ahora.getFullYear();
+      var mesesNombres = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+      var mesesData = [];
+      var allTurnos = state.turnosAll || state.turnos || [];
+      for (var mi = 0; mi < 3; mi++) {
+        var mIdx = ahoraMes - mi;
+        var aIdx = ahoraAno;
+        if (mIdx < 0) { mIdx += 12; aIdx--; }
+        var iniM = new Date(aIdx, mIdx, 1);
+        var finM = new Date(aIdx, mIdx + 1, 0);
+        var turnosM = [];
+        for (var tj = 0; tj < allTurnos.length; tj++) {
+          var t = allTurnos[tj];
+          if (!t || !t.inicio || !t.fin) continue;
+          var d = new Date(t.inicio);
+          if (d >= iniM && d <= finM) turnosM.push(t);
+          if (turnosM.length > 500) break;
+        }
+        if (turnosM.length === 0 && mi > 0) continue;
+        var calcM, diasM;
+        if (mi === 0) {
+          calcM = { totalMins: c.totalMins || 0, totalCOP: c.totalCOP || 0 };
+          diasM = c.diasTrab || 0;
+        } else {
+          calcM = doCalc(turnosM, null, finM, tvh);
+          var diasArr = calcPorDia(turnosM, tvh);
+          diasM = (diasArr && diasArr.length) ? diasArr.length : 0;
+        }
+        mesesData.push({ label: mesesNombres[mIdx], cop: Math.round(calcM.totalCOP || 0), mins: Math.round(calcM.totalMins || 0), dias: diasM });
+      }
+      if (mesesData.length < 2) {
+        return '📊 Necesito al menos 2 meses de datos para mostrar una tendencia. ¡Seguí trabajando! 💪';
+      }
+      var respTen = '📈 **Tendencia**\n\n';
+      for (var ti = 0; ti < mesesData.length; ti++) {
+        var flecha = ti === 0 ? '📍 ' : (mesesData[ti].cop > (mesesData[ti - 1] || mesesData[ti]).cop ? '📈 ' : '📉 ');
+        respTen += flecha + mesesData[ti].label + ': ' + fCOP(mesesData[ti].cop) + ' · ' + fDur(mesesData[ti].mins) + ' · ' + mesesData[ti].dias + ' días\n';
+      }
+      if (mesesData.length >= 2) {
+        var dif = mesesData[0].cop - mesesData[1].cop;
+        var pctCambio = mesesData[1].cop > 0 ? ((dif / mesesData[1].cop) * 100) : 0;
+        respTen += '\n' + (dif >= 0 ? '📈 ' : '📉 ') + 'vs mes pasado: ' + (dif >= 0 ? '+' : '') + fCOP(Math.abs(dif)) + ' (' + (pctCambio >= 0 ? '+' : '') + pctCambio.toFixed(1) + '%)';
+      }
+      return respTen;
+    } catch (err) {
+      console.error('[MT] /tendencia error:', err);
+      return '⚠️ No se pudo calcular la tendencia en este momento. Intentá de nuevo más tarde.';
     }
-    if (mesesData.length < 2) {
-      return '📊 Necesito al menos 2 meses de datos para mostrar una tendencia. ¡Seguí trabajando! 💪';
-    }
-    var respTen = '📈 **Tendencia**\n\n';
-    for (var ti = 0; ti < mesesData.length; ti++) {
-      var flecha = ti === 0 ? '📍 ' : (mesesData[ti].cop > mesesData[ti - 1].cop ? '📈 ' : '📉 ');
-      respTen += flecha + mesesData[ti].label + ': ' + fCOP(mesesData[ti].cop) + ' · ' + fDur(mesesData[ti].mins) + ' · ' + mesesData[ti].dias + ' días\n';
-    }
-    if (mesesData.length >= 2) {
-      var dif = mesesData[0].cop - mesesData[1].cop;
-      var pctCambio = mesesData[1].cop > 0 ? ((dif / mesesData[1].cop) * 100) : 0;
-      respTen += '\n' + (dif >= 0 ? '📈 ' : '📉 ') + 'vs mes pasado: ' + (dif >= 0 ? '+' : '') + fCOP(Math.abs(dif)) + ' (' + (pctCambio >= 0 ? '+' : '') + pctCambio.toFixed(1) + '%)';
-    }
-    return respTen;
   }
 
   // ── /SEMANA ──

@@ -1,4 +1,4 @@
 {
-  "v": "v177",
-  "label": "Logros + comandos slash: /meta, /simular, /tendencia, /semana, /dia, /logros. 20 logros desbloqueables. Predicción inteligente."
+  "v": "v178",
+  "label": "Hotfix: /tendencia crash — try-catch + null-safety en todos los comandos slash"
 }
