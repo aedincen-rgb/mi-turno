@@ -906,3 +906,160 @@
       0 14px 38px rgba(255,69,58,0.4);
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   ASISTENTE IA — v181 modernización
+   Quick chips, scroll-to-bottom, timestamps, burbujas mejoradas
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Quick chips (scroll horizontal de acciones rápidas) ── */
+.asistente-chips {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  padding: 4px 0 8px;
+  margin: 0 -2px;
+  flex-wrap: nowrap;
+}
+.asistente-chips::-webkit-scrollbar { display: none; }
+
+.asistente-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border-radius: var(--r-pill);
+  border: 1.5px solid var(--border);
+  background: var(--glass-mid);
+  backdrop-filter: var(--blur-sm);
+  -webkit-backdrop-filter: var(--blur-sm);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition:
+    background 0.22s var(--ease),
+    border-color 0.22s var(--ease),
+    transform 0.18s var(--spring),
+    box-shadow 0.22s var(--ease);
+  -webkit-tap-highlight-color: transparent;
+}
+.asistente-chip:active {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  transform: scale(0.95);
+  box-shadow: 0 0 0 4px var(--accent-dim);
+}
+.asistente-chip-ico {
+  font-size: 15px;
+  flex-shrink: 0;
+}
+[data-theme='dark'] .asistente-chip {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.1);
+}
+
+/* ── Scroll-to-bottom floating button ── */
+.asistente-scroll-btn {
+  position: sticky;
+  bottom: 12px;
+  align-self: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  cursor: pointer;
+  box-shadow:
+    0 4px 16px var(--accent-glow),
+    0 0 0 4px var(--surface);
+  z-index: 10;
+  animation: asistenteScrollIn 0.3s var(--spring);
+  margin-top: -8px;
+}
+@keyframes asistenteScrollIn {
+  from { opacity: 0; transform: translateY(10px) scale(0.8); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ── Timestamps ── */
+.asistente-time {
+  text-align: center;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--muted);
+  opacity: 0.65;
+  margin: 8px 0 2px;
+  letter-spacing: 0.04em;
+}
+
+/* ── Auto-read toggle ── */
+.asistente-autoread {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 2px 0;
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 500;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.asistente-autoread-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+  transition: background 0.2s var(--ease);
+}
+.asistente-autoread.active .asistente-autoread-dot {
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent-glow);
+}
+
+/* ── Mejora de burbuja AI (más glass) ── */
+.asistente-bubble.ai {
+  background: var(--glass-mid);
+  backdrop-filter: var(--blur-md);
+  -webkit-backdrop-filter: var(--blur-md);
+  border: 1px solid var(--glass-border-sm);
+}
+
+/* ── Hero compacto cuando hay conversación ── */
+.asistente-wrap.has-chat .asistente-hero {
+  padding: 4px 0 0;
+  gap: 10px;
+}
+.asistente-wrap.has-chat .asistente-hero-orb {
+  width: 40px;
+  height: 40px;
+}
+.asistente-wrap.has-chat .asistente-hero-orb-symbol {
+  font-size: 20px;
+}
+.asistente-wrap.has-chat .asistente-greeting {
+  font-size: 14px;
+}
+.asistente-wrap.has-chat .asistente-phrase {
+  font-size: 11px;
+}
+
+/* ── Mejor espaciado del composer ── */
+.asistente-composer {
+  padding: 10px 2px 6px;
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+}
+[data-theme='dark'] .asistente-composer {
+  border-top-color: rgba(255,255,255,0.06);
+}

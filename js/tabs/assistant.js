@@ -46,6 +46,10 @@ function AsistenteTab(props) {
   var sps = useState({ idx: -1, status: 'idle', progress: 0 });
   var speakUI = sps[0], setSpeakUI = sps[1];
 
+  // Auto-leer respuestas de la IA
+  var ar = useState(false);
+  var autoRead = ar[0], setAutoRead = ar[1];
+
   var tieneConversacion = msgs.length > 0;
 
   // ── Helpers de voz ──
@@ -230,6 +234,13 @@ function AsistenteTab(props) {
             return p.concat([newMsg]);
           });
           setBusy(false);
+          // Auto-leer respuesta si está activado
+          if (autoRead && typeof speechSynthesis !== 'undefined') {
+            setTimeout(function () {
+              var idx = msgs.length; // el nuevo mensaje es el último
+              startSpeak(idx, newMsg.content);
+            }, 600);
+          }
         },
         350 + Math.random() * 250
       );
@@ -361,7 +372,7 @@ function AsistenteTab(props) {
 
   return h(
     'section',
-    { className: 'fadeUp asistente-wrap', 'aria-label': 'Asistente AI' },
+    { className: 'asistente-wrap' + (tieneConversacion ? ' has-chat' : ''), 'aria-label': 'Asistente AI' },
 
     // ═══ HERO iOS STYLE: orb izq + texto der (siempre visible) ═══
     h(
@@ -389,6 +400,48 @@ function AsistenteTab(props) {
         'Soy tu asistente. Conozco tus turnos, recargos y movimientos del mes — ' +
           'pregúntame en tus palabras o explorá las categorías.'
       ),
+
+    // ═══ QUICK CHIPS (acciones rápidas, siempre visibles) ═══
+    h(
+      'div',
+      { className: 'asistente-chips' },
+      h(
+        'button',
+        { className: 'asistente-chip', onClick: function () { send('¿Cuánto gané ayer?'); } },
+        h('span', { className: 'asistente-chip-ico' }, '📅'),
+        'Ayer'
+      ),
+      h(
+        'button',
+        { className: 'asistente-chip', onClick: function () { send('¿Cuánto gané este mes?'); } },
+        h('span', { className: 'asistente-chip-ico' }, '💰'),
+        'Este mes'
+      ),
+      h(
+        'button',
+        { className: 'asistente-chip', onClick: function () { send('Proyección al cierre'); } },
+        h('span', { className: 'asistente-chip-ico' }, '🔮'),
+        'Proyección'
+      ),
+      h(
+        'button',
+        { className: 'asistente-chip', onClick: function () { send('¿VS mes pasado?'); } },
+        h('span', { className: 'asistente-chip-ico' }, '⚖'),
+        'VS mes pasado'
+      ),
+      h(
+        'button',
+        { className: 'asistente-chip', onClick: function () { send('¿Cuánto si trabajo 4h más?'); } },
+        h('span', { className: 'asistente-chip-ico' }, '🧮'),
+        'Simular'
+      ),
+      h(
+        'button',
+        { className: 'asistente-chip', onClick: function () { send('/tendencia'); } },
+        h('span', { className: 'asistente-chip-ico' }, '📈'),
+        'Tendencia'
+      )
+    ),
 
     // ═══ CHAT (visible solo si hay conversación) ═══
     tieneConversacion
@@ -560,6 +613,23 @@ function AsistenteTab(props) {
         )
       : null,
 
+    // ═══ SCROLL-TO-BOTTOM ═══
+    tieneConversacion &&
+      h(
+        'button',
+        {
+          className: 'asistente-scroll-btn',
+          onClick: function () {
+            if (endRef.current) {
+              endRef.current.scrollIntoView({ block: 'end', behavior: 'smooth' });
+            }
+          },
+          'aria-label': 'Ir al último mensaje',
+          title: 'Ir al final'
+        },
+        '↓'
+      ),
+
     // ═══ COMPOSER ═══
     h(
       'div',
@@ -668,6 +738,23 @@ function AsistenteTab(props) {
           )
         : null
     ),
+
+    // ═══ AUTO-READ TOGGLE ═══
+    typeof speechSynthesis !== 'undefined' &&
+      h(
+        'button',
+        {
+          className: 'asistente-autoread' + (autoRead ? ' active' : ''),
+          onClick: function () {
+            haptic();
+            setAutoRead(!autoRead);
+          },
+          'aria-label': autoRead ? 'Desactivar lectura automática' : 'Activar lectura automática de respuestas',
+          title: autoRead ? 'Lectura automática activada' : 'Activar lectura automática'
+        },
+        h('span', { className: 'asistente-autoread-dot' }),
+        autoRead ? 'Lectura automática activada' : 'Leer respuestas en voz alta'
+      ),
 
     // ═══ Reanudar / nueva conversación ═══
     tieneConversacion &&
