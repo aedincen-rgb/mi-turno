@@ -50,7 +50,122 @@ function AsistenteTab(props) {
   var ar = useState(false);
   var autoRead = ar[0], setAutoRead = ar[1];
 
+  // Modo manos libres: conversación continua escuchar→responder→leer→repetir
+  var hf = useState(false);
+  var handsFree = hf[0], setHandsFree = hf[1];
+
+  // Nivel de audio (para visualización mientras graba)
+  var al = useState(0);
+  var audioLevel = al[0], setAudioLevel = al[1];
+  var audioAnimRef = useRef(null);
+
   var tieneConversacion = msgs.length > 0;
+
+  // ── Comandos de voz para navegación ──
+  function detectVoiceCommand(text) {
+    var t = (text || '').toLowerCase().trim();
+    // Navegación por pestañas
+    if (t.indexOf('ir a inicio') >= 0 || t === 'inicio') return { action: 'nav', tab: 'home' };
+    if (t.indexOf('ir a análisis') >= 0 || t.indexOf('ir a analisis') >= 0 || t === 'análisis' || t === 'analisis') return { action: 'nav', tab: 'dashboard' };
+    if (t.indexOf('ir a asistente') >= 0 || t === 'asistente') return { action: 'nav', tab: 'ai' };
+    if (t.indexOf('ir a historial') >= 0 || t === 'historial') return { action: 'nav', tab: 'history' };
+    if (t.indexOf('ir a ajustes') >= 0 || t === 'ajustes') return { action: 'nav', tab: 'config' };
+    // Acciones rápidas
+    if (t.indexOf('iniciar turno') >= 0 || t.indexOf('empezar turno') >= 0) return { action: 'nav', tab: 'home', sub: 'start' };
+    if (t.indexOf('finalizar turno') >= 0 || t.indexOf('terminar turno') >= 0) return { action: 'nav', tab: 'home', sub: 'stop' };
+    if (t.indexOf('activar manos libres') >= 0 || t.indexOf('modo manos libres') >= 0) { setHandsFree(true); return { action: 'local', msg: '🔊 Modo manos libres activado. Te escucho.' }; }
+    if (t.indexOf('desactivar manos libres') >= 0 || t.indexOf('salir de manos libres') >= 0) { setHandsFree(false); return { action: 'local', msg: '🔇 Modo manos libres desactivado.' }; }
+    if (t.indexOf('leer respuestas') >= 0 || t.indexOf('activar voz') >= 0) { setAutoRead(true); return { action: 'local', msg: '🔊 Lectura automática activada.' }; }
+    if (t.indexOf('silencio') >= 0 || t.indexOf('no leer') >= 0 || t.indexOf('desactivar voz') >= 0) { setAutoRead(false); setHandsFree(false); return { action: 'local', msg: '🔇 Voz desactivada.' }; }
+    return null;
+  }
+
+  // ── Iniciar escucha (reutilizable) ──
+  function startListening() {
+    if (listening || busy) return;
+    var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) return;
+    try {
+      var rec = new SR();
+      rec.lang = 'es-CO';
+      rec.interimResults = true;
+      rec.continuous = false;
+
+      // Simular nivel de audio mientras graba
+      if (audioAnimRef.current) clearInterval(audioAnimRef.current);
+      audioAnimRef.current = setInterval(function () {
+        setAudioLevel(Math.random() * 0.6 + 0.2);
+      }, 120);
+
+      rec.onresult = function (e) {
+        var transcript = '';
+        for (var i = e.resultIndex; i < e.results.length; i++) {
+          transcript += e.results[i][0].transcript;
+        }
+        setInput(transcript);
+        // Mostrar nivel alto cuando detecta voz
+        setAudioLevel(0.8);
+        if (e.results[0].isFinal) {
+          if (audioAnimRef.current) { clearInterval(audioAnimRef.current); audioAnimRef.current = null; }
+          setAudioLevel(0);
+          setListening(false);
+          var finalText = transcript.trim();
+          if (finalText) {
+            // Detectar comandos de voz
+            var cmd = detectVoiceCommand(finalText);
+            if (cmd) {
+              if (cmd.action === 'nav') {
+                if (props.onNavigate) props.onNavigate(cmd.tab, cmd.sub || null);
+                if (handsFree) {
+                  setTimeout(function () { startListening(); }, 1500);
+                }
+                return;
+              }
+              if (cmd.action === 'local') {
+                setInput('');
+                alert(cmd.msg);
+                if (handsFree) {
+                  setTimeout(function () { startListening(); }, 1200);
+                }
+                return;
+              }
+            }
+            // Enviar a la IA normalmente
+            setTimeout(function () { send(finalText); }, 400);
+          }
+        }
+      };
+      rec.onerror = function (e) {
+        if (audioAnimRef.current) { clearInterval(audioAnimRef.current); audioAnimRef.current = null; }
+        setAudioLevel(0);
+        setListening(false);
+        if (e.error === 'not-allowed') {
+          alert('Permiso de micrófono denegado. Concedelo en Configuración del navegador.');
+        } else if (e.error !== 'no-speech') {
+          console.log('Mic error:', e.error);
+        }
+        // En modo manos libres, reintentar tras error
+        if (handsFree && e.error !== 'not-allowed') {
+          setTimeout(function () { startListening(); }, 1000);
+        }
+      };
+      rec.onend = function () {
+        if (audioAnimRef.current) { clearInterval(audioAnimRef.current); audioAnimRef.current = null; }
+        setAudioLevel(0);
+        setListening(false);
+        // En modo manos libres, re-escuchar al terminar
+        if (handsFree && !busy) {
+          setTimeout(function () { startListening(); }, 800);
+        }
+      };
+      rec.start();
+      setListening(true);
+      recognitionRef.current = rec;
+    } catch (err) {
+      setListening(false);
+      alert('No se pudo iniciar el micrófono: ' + (err.message || 'error desconocido'));
+    }
+  }
 
   // ── Helpers de voz ──
   function cleanSpeakText(text) {
@@ -92,6 +207,10 @@ function AsistenteTab(props) {
       if (st.msgIdx === idx) {
         st.status = 'idle'; st.progress = 1;
         setSpeakUI({ idx: idx, status: 'idle', progress: 0 });
+        // En modo manos libres, volver a escuchar tras leer respuesta
+        if (handsFree) {
+          setTimeout(function () { startListening(); }, 600);
+        }
         setTimeout(function () {
           if (speakRef.current.msgIdx === idx && speakRef.current.status === 'idle') {
             setSpeakUI({ idx: -1, status: 'idle', progress: 0 });
@@ -99,7 +218,7 @@ function AsistenteTab(props) {
         }, 2000);
       }
     };
-    
+
     utter.onerror = function () {
       st.status = 'idle'; st.progress = 0;
       setSpeakUI({ idx: -1, status: 'idle', progress: 0 });
@@ -670,48 +789,11 @@ function AsistenteTab(props) {
                 if (listening) {
                   if (recognitionRef.current) recognitionRef.current.stop();
                   setListening(false);
+                  if (audioAnimRef.current) { clearInterval(audioAnimRef.current); audioAnimRef.current = null; }
+                  setAudioLevel(0);
                   return;
                 }
-                var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-                if (!SR) {
-                  alert('Reconocimiento de voz no disponible en este navegador. Probá con Chrome o Edge.');
-                  return;
-                }
-                try {
-                  var rec = new SR();
-                  rec.lang = 'es-CO';
-                  rec.interimResults = true;
-                  rec.continuous = false;
-                  rec.onresult = function (e) {
-                    var transcript = '';
-                    for (var i = e.resultIndex; i < e.results.length; i++) {
-                      transcript += e.results[i][0].transcript;
-                    }
-                    setInput(transcript);
-                    if (e.results[0].isFinal) {
-                      setListening(false);
-                      var finalText = transcript.trim();
-                      if (finalText) {
-                        setTimeout(function () { send(finalText); }, 500);
-                      }
-                    }
-                  };
-                  rec.onerror = function (e) {
-                    setListening(false);
-                    if (e.error === 'not-allowed') {
-                      alert('Permiso de micrófono denegado. Concedelo en Configuración del navegador.');
-                    } else if (e.error !== 'no-speech') {
-                      console.log('Mic error:', e.error);
-                    }
-                  };
-                  rec.onend = function () { setListening(false); };
-                  rec.start();
-                  setListening(true);
-                  recognitionRef.current = rec;
-                } catch (err) {
-                  setListening(false);
-                  alert('No se pudo iniciar el micrófono: ' + (err.message || 'error desconocido'));
-                }
+                startListening();
               },
               disabled: busy,
               'aria-label': listening ? 'Grabando… tocá para detener' : 'Hablar por voz',
@@ -748,6 +830,7 @@ function AsistenteTab(props) {
           onClick: function () {
             haptic();
             setAutoRead(!autoRead);
+            if (!autoRead && handsFree) setHandsFree(false);
           },
           'aria-label': autoRead ? 'Desactivar lectura automática' : 'Activar lectura automática de respuestas',
           title: autoRead ? 'Lectura automática activada' : 'Activar lectura automática'
@@ -755,6 +838,45 @@ function AsistenteTab(props) {
         h('span', { className: 'asistente-autoread-dot' }),
         autoRead ? 'Lectura automática activada' : 'Leer respuestas en voz alta'
       ),
+
+    // ═══ MODO MANOS LIBRES ═══
+    typeof SpeechRecognition !== 'undefined' || typeof webkitSpeechRecognition !== 'undefined'
+      ? h(
+          'button',
+          {
+            className: 'asistente-handsfree' + (handsFree ? ' active' : ''),
+            onClick: function () {
+              haptic();
+              if (!handsFree) {
+                setAutoRead(true);
+                setHandsFree(true);
+                setTimeout(function () { startListening(); }, 400);
+              } else {
+                setHandsFree(false);
+                if (recognitionRef.current) recognitionRef.current.stop();
+                setListening(false);
+              }
+            },
+            'aria-label': handsFree ? 'Desactivar modo manos libres' : 'Activar modo manos libres',
+            title: handsFree ? 'Modo conversación continua activado' : 'Activar conversación por voz'
+          },
+          h('span', { className: 'asistente-handsfree-dot' }),
+          handsFree ? '🗣 Modo manos libres activo' : '🎙 Activar manos libres'
+        )
+      : null,
+
+    // ═══ VISUALIZADOR DE AUDIO ═══
+    listening
+      ? h(
+          'div',
+          { className: 'asistente-audio-viz' },
+          h('div', { className: 'asistente-audio-bar', style: { height: (20 + audioLevel * 60) + 'px', animationDelay: '0s' } }),
+          h('div', { className: 'asistente-audio-bar', style: { height: (20 + audioLevel * 80) + 'px', animationDelay: '0.1s' } }),
+          h('div', { className: 'asistente-audio-bar', style: { height: (20 + audioLevel * 90) + 'px', animationDelay: '0.2s' } }),
+          h('div', { className: 'asistente-audio-bar', style: { height: (20 + audioLevel * 70) + 'px', animationDelay: '0.15s' } }),
+          h('div', { className: 'asistente-audio-bar', style: { height: (20 + audioLevel * 50) + 'px', animationDelay: '0.05s' } })
+        )
+      : null,
 
     // ═══ Reanudar / nueva conversación ═══
     tieneConversacion &&

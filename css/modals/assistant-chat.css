@@ -1063,3 +1063,56 @@
 [data-theme='dark'] .asistente-composer {
   border-top-color: rgba(255,255,255,0.06);
 }
+
+/* ── Modo manos libres ── */
+.asistente-handsfree {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 2px 2px;
+  font-size: 11.5px;
+  color: var(--muted);
+  font-weight: 600;
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-family: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+.asistente-handsfree-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+  transition: background 0.2s var(--ease);
+}
+.asistente-handsfree.active .asistente-handsfree-dot {
+  background: #34c759;
+  box-shadow: 0 0 10px rgba(52,199,89,0.5);
+  animation: handsfreePulse 1.2s ease-in-out infinite;
+}
+@keyframes handsfreePulse {
+  0%, 100% { box-shadow: 0 0 6px rgba(52,199,89,0.4); }
+  50% { box-shadow: 0 0 14px rgba(52,199,89,0.7); }
+}
+.asistente-handsfree.active {
+  color: #34c759;
+}
+
+/* ── Visualizador de audio ── */
+.asistente-audio-viz {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 3px;
+  height: 50px;
+  padding: 4px 0;
+  margin: 4px 0;
+}
+.asistente-audio-bar {
+  width: 5px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, #ff3b30 0%, #ff6b6b 100%);
+  transition: height 0.12s ease;
+  min-height: 3px;
+}

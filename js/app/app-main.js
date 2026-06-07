@@ -1217,7 +1217,14 @@ function App(props) {
             calc: calc,
             salario: salario,
             vh: vh,
-            session: session
+            session: session,
+            onNavigate: function (tabId, subAction) {
+              haptic();
+              setTab(tabId);
+              // subAction: 'start' o 'stop' para iniciar/finalizar turno
+              if (subAction === 'start' && typeof onIni === 'function') onIni();
+              if (subAction === 'stop' && typeof onFin === 'function') onFin();
+            }
           })
         ),
         _lazy(
