@@ -971,22 +971,20 @@ var AI_INTENTS = [
   {
     id: 'laboral',
     kw: [
-      ['cuanto pagan', 3],
-      ['cuanto vale la hora', 3],
-      ['cuanto vale hora', 3],
+      ['vale hora domingo', 3],
+      ['vale hora dominical', 3],
+      ['pagan domingo', 3],
+      ['pagan dominical', 3],
       ['recargo dominical', 3],
       ['recargo nocturno', 3],
       ['recargo festivo', 3],
-      ['cuanto se paga', 3],
-      ['tabla recargos', 3],
-      ['que es recargo', 3],
-      ['como se calcula recargo', 3],
-      ['cuanto pagan festivo', 3],
-      ['cuanto pagan domingo', 3],
-      ['cuanto pagan nocturno', 3],
-      ['cuanto pagan extra', 3],
+      ['cuanto pagan hora', 3],
+      ['cuanto vale hora', 3],
+      ['precio hora domingo', 3],
+      ['tarifa dominical', 3],
       ['conocimiento laboral', 3],
-      ['derechos laborales', 3]
+      ['pregunta laboral', 3],
+      ['consulta laboral', 2]
     ]
   },
 
