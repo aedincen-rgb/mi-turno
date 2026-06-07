@@ -53,6 +53,16 @@ var ONBOARDING_STEPS = [
       return tabs && tabs.length >= 3 ? tabs[2] : null;
     },
     ringColor: '#007aff'
+  },
+  {
+    id: 'hands-free',
+    title: '🎙 Modo manos libres',
+    body: 'Tocá el botón 🎙 "Activar manos libres" y hablale a la app. Ella te responde en voz alta y vuelve a escuchar. Ideal para cuando estás ocupado, manejando o cocinando. Decí "ir a inicio", "cuánto gané ayer" o "iniciar turno".',
+    target: function () {
+      return document.querySelector('.asistente-handsfree') ||
+             document.querySelector('.asistente-mic');
+    },
+    ringColor: '#34c759'
   }
 ];
 
