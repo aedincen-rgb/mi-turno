@@ -782,12 +782,14 @@ function _aiDispatchNLP(intent, c, state, q, t) {
     // Usar el mismo builder que el sistema clásico para acción real
     if (typeof _aiBuildEmail === 'function') {
       var emailAction = _aiBuildEmail(q, t, c, state);
-      return {
-        text: emailAction.preview,
-        action: { type: 'email_compose', data: emailAction.data }
-      };
+      if (emailAction && emailAction.preview) {
+        return {
+          text: emailAction.preview + '\n\n💡 **¿Sabías que...?** También podés **compartir por WhatsApp** desde la pestaña Análisis (es más rápido, solo un mensaje de texto), o **exportar PDF** desde Historial si necesitás un archivo.',
+          action: emailAction.data ? { type: 'email_compose', data: emailAction.data } : undefined
+        };
+      }
     }
-    return '📧 Claro, puedo ayudarte a enviar tu reporte. Solo necesito que me digas:\n\n• ¿A qué correo lo mando?\n• ¿Preferís PDF o Excel?\n\nO si ya lo tenés claro, decime "enviá mi reporte a [correo]" y lo gestiono.';
+    return '📧 Claro, puedo ayudarte a enviar tu reporte por correo.\n\n💡 **Alternativas:**\n• **WhatsApp:** más rápido, sin archivo — decí "compartir por WhatsApp"\n• **PDF/Excel:** archivo descargable — decí "exportar PDF" o "exportar Excel"\n• **Email:** documento adjunto — decime "enviá mi reporte a [correo]"';
   }
   if (intent === 'correo_formal') {
     return '📝 **Redacté este borrador para tu jefe:**\n\n' +
@@ -836,7 +838,7 @@ function _aiDispatchNLP(intent, c, state, q, t) {
 
   // ── WhatsApp Share ──
   if (intent === 'whatsapp_share') {
-    return '📱 Podés compartir tus números por WhatsApp desde la pestaña **Análisis**. Bajá hasta el final y tocá el botón verde **💬 WhatsApp**.\n\nTambién podés usar **📤 Compartir** para enviarlo por cualquier otra app (Telegram, correo, etc).\n\n¿Querés que te lleve al Análisis?';
+    return '📱 **Compartir por WhatsApp**\n\nPodés compartir tus números desde la pestaña **Análisis** (📊). Bajá hasta el final y tocá el botón verde **💬 WhatsApp**. Se abre directo con un mensaje pre-formateado.\n\nTambién podés usar **📤 Compartir** para enviarlo por Telegram, correo u otras apps.\n\n💡 **¿Sabías que...?** Esto es un mensaje de texto, no un archivo. Si necesitás un PDF o Excel descargable, decime **"exportar PDF"** o andá a **Historial > Exportar**.';
   }
 
   // Intent no mapeado → advertir en consola y delegar al sistema clásico

@@ -1,4 +1,4 @@
 {
-  "v": "v188",
-  "label": "Fix: exportación por voz ahora genera PDF/Excel directo con validación. Sin alert() ni diálogos intermedios."
+  "v": "v189",
+  "label": "Clarificar: Análisis (compartir) vs Reporte (exportar PDF/Excel) vs Email en IA, voz y guías"
 }

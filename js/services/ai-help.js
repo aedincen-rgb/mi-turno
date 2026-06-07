@@ -521,30 +521,33 @@ var AI_HELP_GUIDES = [
   // ═══ COMPARTIR ═══
   {
     id: 'compartir_whatsapp',
-    title: 'Compartir por WhatsApp',
+    title: 'Compartir por WhatsApp (desde Análisis)',
     keywords: [
+      'compartir whatsapp',
       'whatsapp',
-      'compartir',
-      'enviar whatsapp',
-      'mandar whatsapp',
       'compartir analisis',
-      'comparto whatsapp',
-      'comparto por whatsapp',
-      'compartir por whatsapp',
-      'como comparto',
-      'enviar analisis',
-      'mandar informe',
+      'compartir mis numeros',
+      'mandar whatsapp',
+      'enviar por whatsapp',
+      'compartir desde analisis',
       'compartir numeros',
-      'compartir informe'
+      'boton whatsapp',
+      'compartir informe',
+      'comparto analisis',
+      'comparto mis numeros',
+      'compartir resumen',
+      'compartir dashboard'
     ],
     steps: [
-      'Tocá la pestaña **Análisis**.',
+      'Tocá la pestaña **Análisis** (ícono de gráfico 📊).',
       'Bajá hasta el final donde dice "💬 WhatsApp".',
-      'Se abre WhatsApp con un resumen de tus números del mes.',
+      'Se abre WhatsApp con un mensaje pre-formateado con tus números.',
       'También podés tocar "📤 Compartir" para enviarlo por Telegram, correo u otras apps.',
-      'El mensaje incluye: total ganado, turnos, proyección, promedio por hora y desglose de recargos.'
+      '**Importante:** esto NO genera un archivo PDF. Es solo un mensaje de texto.',
+      'Si querés un archivo descargable, andá a **Historial > Exportar** y elegí PDF o Excel.',
+      'El mensaje incluye: total ganado, turnos, horas, proyección, promedio y desglose de recargos.'
     ],
-    related: ['entender_dashboard', 'exportar_datos']
+    related: ['entender_dashboard', 'exportar_datos', 'enviar_reporte']
   },
 
   // ═══ CONFIGURACIÓN AVANZADA ═══
