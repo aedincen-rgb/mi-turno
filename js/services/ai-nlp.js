@@ -955,7 +955,38 @@ var AI_INTENTS = [
       ['legal', 2],
       ['2101', 3],
       ['cst', 3],
-      ['codigo laboral', 3]
+      ['codigo laboral', 3],
+      ['cuanto pagan', 2],
+      ['cuanto vale la hora', 3],
+      ['cuanto vale hora', 3],
+      ['cuanto vale el dia', 2],
+      ['recargo', 2],
+      ['domingo', 2],
+      ['dominical', 2],
+      ['cuanto se paga', 3],
+      ['que recargo', 3],
+      ['tabla de recargos', 3]
+    ]
+  },
+  {
+    id: 'laboral',
+    kw: [
+      ['cuanto pagan', 3],
+      ['cuanto vale la hora', 3],
+      ['cuanto vale hora', 3],
+      ['recargo dominical', 3],
+      ['recargo nocturno', 3],
+      ['recargo festivo', 3],
+      ['cuanto se paga', 3],
+      ['tabla recargos', 3],
+      ['que es recargo', 3],
+      ['como se calcula recargo', 3],
+      ['cuanto pagan festivo', 3],
+      ['cuanto pagan domingo', 3],
+      ['cuanto pagan nocturno', 3],
+      ['cuanto pagan extra', 3],
+      ['conocimiento laboral', 3],
+      ['derechos laborales', 3]
     ]
   },
 
@@ -1274,6 +1305,7 @@ function _aiIntentTopic(intentId) {
     bienestar: 'salud',
     liquidacion: 'dinero',
     ley: 'informacion',
+    laboral: 'informacion',
     ahorro: 'dinero',
     email: 'accion',
     correo_formal: 'accion',
