@@ -1057,6 +1057,27 @@ function aiAnswer(question, state) {
     return '🏅 Sistema de logros no disponible.';
   }
 
+  // ── /INFORME ──
+  if (q === '/informe') {
+    if (typeof aiAdvisorInforme === 'function') {
+      return aiAdvisorInforme(c);
+    }
+    return '📊 Informe no disponible.';
+  }
+
+  // ── /AHORRO ──
+  if (q.indexOf('/ahorro') === 0) {
+    var ahorroNum = _aiNum(t);
+    if (!ahorroNum && q.split(' ').length > 1) ahorroNum = parseFloat(q.split(' ')[1].replace(/[^0-9]/g, ''));
+    if (!ahorroNum || ahorroNum <= 0) {
+      return '💡 Usá **/ahorro 5000000** para calcular un plan de ahorro. También podés decir "quiero ahorrar 5 millones en 12 meses".';
+    }
+    if (typeof aiAdvisorAhorro === 'function') {
+      return aiAdvisorAhorro(c, ahorroNum, 12);
+    }
+    return 'Calculadora de ahorro no disponible.';
+  }
+
   // ── /METAS ──
   if (q === '/metas') {
     var goalsText = '';
