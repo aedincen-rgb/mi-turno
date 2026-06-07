@@ -392,6 +392,29 @@ function aiEnhancedRespond(originalResponse, intent, topic, question, userContex
     }
   }
 
+  // 4.5. Inteligencia proactiva: alertas y metas
+  if (typeof aiPsychRespond === 'function') {
+    var psychText = aiPsychRespond(userContext, intent);
+    if (psychText) enriched.text += psychText;
+  }
+  if (typeof aiProactive === 'function') {
+    var proactiveText = aiProactive(userContext, intent);
+    if (proactiveText) {
+      enriched.text += proactiveText;
+    }
+  }
+
+  // 4.6. Asesor financiero (reemplaza ai-insights.js)
+  if (typeof aiAdvisorRespond === 'function') {
+    var advisorText = aiAdvisorRespond(intent, userContext, null);
+    if (advisorText) {
+      // Solo agregar si no es un informe completo (que ya es muy largo)
+      if (intent !== 'total_ganado' && intent !== 'stats') {
+        enriched.text += '\n\n' + advisorText;
+      }
+    }
+  }
+
   // 5. Colombianizar
   var mood = typeof aiAnalyzeMood === 'function' ? aiAnalyzeMood(question, userContext) : { mood: 'neutral' };
   enriched.text = aiColombianizar(enriched.text, mood.mood);
