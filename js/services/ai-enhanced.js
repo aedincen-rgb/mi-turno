@@ -370,6 +370,14 @@ function aiEnhancedRespond(originalResponse, intent, topic, question, userContex
     }
   }
 
+  // 2.6. Inteligencia proactiva: alertas y metas
+  if (typeof aiProactive === 'function') {
+    var proactiveText = aiProactive(userContext, intent);
+    if (proactiveText) {
+      enriched.text += proactiveText;
+    }
+  }
+
   // 3. Enriquecer con acciones rápidas
   var enriched = aiEnrichResponse(expanded, intent, userContext);
 
