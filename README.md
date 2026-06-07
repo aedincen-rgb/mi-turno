@@ -6,7 +6,7 @@
 ![No build](https://img.shields.io/badge/build-zero_tooling-555)
 ![Ley 2101/2021](https://img.shields.io/badge/Ley_2101%2F2021-cumplimiento_automático-dc6b65)
 ![License: MIT](https://img.shields.io/badge/license-MIT-blue)
-![v161](https://img.shields.io/badge/version-v161-5b86e5)
+![v200](https://img.shields.io/badge/version-v200-5b86e5)
 
 **Nómina inteligente para trabajadores por turnos.**
 
@@ -26,7 +26,7 @@ Los trabajadores por turnos en Colombia (salud, seguridad, logística, manufactu
 |---|---|---|
 | UI | React 18 (UMD/CDN) | Sin transpilación; carga directa en el browser |
 | Renderizado | `h = React.createElement` (sin JSX) | Compatible con ES5 sin build step |
-| Estilo | CSS modular (40 archivos) | Un archivo por responsabilidad; edición quirúrgica |
+| Estilo | CSS modular (44 archivos) | Un archivo por responsabilidad; Liquid Glass iOS 26 |
 | Estado | `localStorage` via `leer()`/`grabar()` | Offline-first; datos disponibles sin red |
 | Backend | Supabase (Auth + Postgres + Realtime) | BaaS gestionado; Realtime para sync cross-device |
 | Deploy | Vercel (auto-deploy desde `master`) | Zero-config; CDN edge global |
@@ -302,22 +302,25 @@ Implementado con overlay + spotlight ring animado + tarjeta glass-morphism. Se g
 
 ---
 
-## Asistente IA con NLP mejorado (v77)
+## Asistente IA con NLP mejorado (v77→v200)
 
-El asistente usa un **motor de comprensión de lenguaje natural 100% offline** (`js/services/ai-nlp.js`) con:
+El asistente cuenta con **13 módulos de IA trabajando en cadena**, 100% offline:
 
-| Técnica | Descripción |
-|---|---|
-| Clasificación por puntaje | 25+ intents con keywords ponderadas. El de mayor score gana |
-| Stemming español | Reduce palabras a raíz ("trabajé" → "trabaj") |
-| Stop words (150+) | Filtra palabras vacías ("el, la, de, que...") |
-| Similitud Jaccard | Matching difuso entre tokens |
-| Levenshtein | Tolerancia a typos en palabras cortas |
-| Sinónimos colombianos | 60+ términos ("plata"="lucas"="dinero", "camello"="trabajo") |
-| Estado multi-turno | Bonus por contexto conversacional |
-| Empatía contextual | Detecta frustración, alegría, preocupación y ajusta el tono |
-
-El sistema clásico (`_aiHas`) sigue como fallback. Cero código eliminado.
+| Módulo | Archivo | Función |
+|---|---|---|
+| 🧠 NLP | `ai-nlp.js` | 50+ intents con stemming, sinónimos y time anchoring |
+| 🎯 Core | `ai.js` | Dispatch principal + comandos slash |
+| ✨ Enriquecimiento | `ai-enhanced.js` | Acciones rápidas, personalidad colombiana, orquestación |
+| 📊 Insights | `ai-insights.js` | Desglose de recargos, proyecciones múltiples, eficiencia |
+| 🧮 Asesor | `ai-advisor.js` | 10 calculadoras: liquidación, simulación, ahorro, fiscal, optimizador, ofertas, informe, histórico, descanso, anual |
+| 🔮 Proactivo | `ai-proactive.js` | Briefing diario, alertas inteligentes, seguimiento de metas |
+| 🧠 Psicología | `ai-psychology.js` | Mensajes por hora crítica, framing positivo, apoyo emocional |
+| 🗣 Conversación | `ai-conversation.js` | Niveles progresivos (0→3), sin abrumar al usuario |
+| 📚 Ayuda | `ai-help.js` | 38 guías paso a paso sobre toda la app |
+| 🏅 Logros | `ai-achievements.js` | 20 logros desbloqueables (rachas, hitos, récords) |
+| 🎤 Voz | `voice-agent.js` | 30+ comandos de voz, exportación por voz, navegación |
+| 👤 Género | `gender-lang.js` | Vocabulario adaptativo (masculino/femenino/neutro) |
+| 📅 Calendario | `ai-calendar.js` | Festivos, recordatorios, planificación |
 
 ---
 
