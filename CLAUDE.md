@@ -150,6 +150,40 @@ La app pasa auditoría **axe-core** con **0 violaciones** en las 6 pantallas (re
 
 Si CI falla, los artifacts (videos del navegador en el momento del bug) están en la pestaña "Artifacts" del workflow run en GitHub Actions.
 
+## Arquitectura de IA (14 módulos, v202)
+
+El asistente usa un **pipeline de 6 etapas**:
+
+```
+ai-nlp.js → ai.js → ai-enhanced.js [ORQUESTADOR]
+  │
+  ├─ 1. Expandir: tips + contexto
+  ├─ 2. Analizar: ai-insights.js (desglose, eficiencia, escenarios, legal)
+  ├─ 3. Enriquecer: acciones rápidas + follow-ups
+  ├─ 4. Personalizar: ai-achievements.js + ai-psychology.js + ai-proactive.js + ai-advisor.js
+  └─ 5. Pulir: ai-conversation.js + gender-lang.js + ai-knowledge.js
+```
+
+Los 14 módulos son:
+- `ai-nlp.js` — clasificación 50+ intents, stemming, sinónimos
+- `ai.js` — dispatch principal, comandos slash, fallback clásico
+- `ai-enhanced.js` — orquestador central del pipeline
+- `ai-insights.js` — desglose de recargos, proyecciones, eficiencia, legal
+- `ai-advisor.js` — 10 calculadoras (liquidación, simulación, ahorro, fiscal, optimizador, ofertas, informe, histórico, descanso, anual)
+- `ai-proactive.js` — briefing diario, alertas, seguimiento de metas
+- `ai-psychology.js` — mensajes por hora crítica, framing positivo, apoyo
+- `ai-conversation.js` — niveles progresivos 0→3, sin abrumar
+- `ai-knowledge.js` — base de conocimiento laboral (recargos, leyes, valores)
+- `ai-help.js` — 38 guías paso a paso
+- `ai-achievements.js` — 20 logros desbloqueables
+- `voice-agent.js` — 30+ comandos de voz
+- `gender-lang.js` — vocabulario adaptativo M/F/N
+- `ai-greeting.js` — frases del hero + nombre personal
+
+**Pipeline unificado:** todos los módulos reciben `userContext` (objeto `c` de `buildContext`). Cada etapa envuelta en try-catch independiente. Si un módulo falla, los demás siguen. El orden siempre es: `ai-nlp → ai.js → ai-enhanced.js → respuesta`.
+
+**Variables globales de IA:** `aiClassifyIntent`, `aiAnswer`, `aiEnhancedRespond`, `aiHelpAnswer`, `aiKnowledgeSearch`, `aiCheckAchievements`, etc. Todas en `window.*`.
+
 ## Helpers útiles
 
 - `leer(key, fallback)` / `grabar(key, val)` / `borrarKey(key)` — wrappers de localStorage con try/catch
