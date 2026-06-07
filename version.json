@@ -1,4 +1,4 @@
 {
-  "v": "v197",
-  "label": "Psicología laboral aplicada: timing circadiano, framing positivo, apoyo en consultas críticas, reconocimiento post-esfuerzo"
+  "v": "v198",
+  "label": "Hotfix: respuestas vacías cuando no hay turnos. try-catch en todos los módulos IA. Sin congelamiento."
 }

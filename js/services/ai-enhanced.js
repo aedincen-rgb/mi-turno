@@ -416,7 +416,8 @@ function aiEnhancedRespond(originalResponse, intent, topic, question, userContex
   }
 
   // 5. Colombianizar
-  var mood = typeof aiAnalyzeMood === 'function' ? aiAnalyzeMood(question, userContext) : { mood: 'neutral' };
+  var mood = { mood: 'neutral' };
+  try { mood = typeof aiAnalyzeMood === 'function' ? aiAnalyzeMood(question, userContext) : { mood: 'neutral' }; } catch (_) {}
   enriched.text = aiColombianizar(enriched.text, mood.mood);
 
   return enriched;
