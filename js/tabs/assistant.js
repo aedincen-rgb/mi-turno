@@ -324,6 +324,21 @@ function AsistenteTab(props) {
         '¿Cuánto es el auxilio de transporte?',
         '¿Cómo exporto mis datos?'
       ]
+    },
+    {
+      id: 'usarapp',
+      icono: '📱',
+      titulo: 'Usar la app',
+      desc: 'Guías paso a paso para cada función',
+      preguntas: [
+        '¿Estoy conectado a Supabase?',
+        '¿Cómo funciona sin internet?',
+        '¿Cómo modifico los días de la quincena?',
+        '¿Cómo cambio mi foto de perfil?',
+        '¿Cómo instalo la app en mi celular?',
+        '¿Cómo comparto por WhatsApp?',
+        '¿Cómo respaldo mis datos?'
+      ]
     }
   ];
 

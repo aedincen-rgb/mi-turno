@@ -391,6 +391,390 @@ var AI_HELP_GUIDES = [
       'La app pasa auditoría WCAG 2.1 AA con 0 violaciones.'
     ],
     related: ['usar_asistente']
+  },
+
+  // ═══ CONEXIÓN Y SINCRONIZACIÓN ═══
+  {
+    id: 'estado_conexion',
+    title: 'Verificar el estado de conexión',
+    keywords: [
+      'conexion',
+      'conectado',
+      'supabase',
+      'nube',
+      'online',
+      'offline',
+      'sin conexion',
+      'estoy conectado',
+      'hay conexion',
+      'funciona internet',
+      'sincronizando',
+      'sync'
+    ],
+    steps: [
+      'En la pestaña **Ajustes**, arriba de todo, ves tu estado de conexión.',
+      '🟢 **Verde:** conectado a Supabase, todo sincronizado.',
+      '🟡 **Ámbar:** sincronizando cambios pendientes.',
+      '⚪ **Gris:** modo local (invitado) o sin conexión a nube.',
+      'La app funciona 100% sin internet. Tus datos se guardan localmente y se sincronizan cuando vuelve la conexión.'
+    ],
+    related: ['sincronizacion', 'modo_offline']
+  },
+  {
+    id: 'sincronizacion',
+    title: 'Cómo funciona la sincronización',
+    keywords: [
+      'sincronizar',
+      'sincronizacion',
+      'nube',
+      'varios dispositivos',
+      'multi dispositivo',
+      'sync',
+      'datos en la nube',
+      'respaldo automatico'
+    ],
+    steps: [
+      'Cuando creás una cuenta con email y contraseña, tus datos se sincronizan con Supabase.',
+      '**Offline-first:** primero se guarda en tu dispositivo, luego se sube a la nube.',
+      'Si no hay internet, los cambios quedan en cola y se envían cuando vuelve la conexión.',
+      '**Multi-dispositivo:** iniciá sesión en otro celular con la misma cuenta y ves todo igual.',
+      'Los cambios de un dispositivo se reflejan en el otro en menos de 1 segundo (tiempo real).'
+    ],
+    related: ['estado_conexion', 'modo_offline', 'configurar_pin']
+  },
+  {
+    id: 'modo_offline',
+    title: 'Usar la app sin internet',
+    keywords: [
+      'offline',
+      'sin internet',
+      'modo avion',
+      'funciona sin datos',
+      'no tengo internet',
+      'sin red',
+      'desconectado'
+    ],
+    steps: [
+      '**Sí, Mi Turno funciona completamente sin internet.**',
+      'Todos los cálculos son locales: no necesitás conexión para iniciar o finalizar turnos.',
+      'El asistente IA también es 100% offline — no depende de servidores externos.',
+      'Si tenés cuenta, los cambios se encolan y se suben cuando vuelva la conexión.',
+      'El ícono de conexión en Ajustes te muestra el estado en tiempo real.'
+    ],
+    related: ['estado_conexion', 'sincronizacion']
+  },
+
+  // ═══ INSTALACIÓN ═══
+  {
+    id: 'instalar_pwa',
+    title: 'Instalar la app en tu celular',
+    keywords: [
+      'instalar',
+      'pwa',
+      'pantalla inicio',
+      'icono',
+      'aplicacion',
+      'descargar app',
+      'play store',
+      'app store',
+      'instalar app'
+    ],
+    steps: [
+      '**Android (Chrome):** Tocá los 3 puntitos ⋮ > "Añadir a pantalla de inicio".',
+      '**iPhone (Safari):** Tocá el botón Compartir (cuadro con flecha) > "Añadir a inicio".',
+      'La app se instala como cualquier otra, con su ícono y nombre.',
+      'También está disponible en Google Play Store como "Mi Turno — Nómina Colombia".',
+      'La PWA se actualiza automáticamente cuando abrís la app.'
+    ],
+    related: ['exportar_datos', 'respaldar_datos']
+  },
+
+  // ═══ COMPARTIR ═══
+  {
+    id: 'compartir_whatsapp',
+    title: 'Compartir por WhatsApp',
+    keywords: [
+      'whatsapp',
+      'compartir',
+      'enviar whatsapp',
+      'mandar whatsapp',
+      'compartir analisis'
+    ],
+    steps: [
+      'Tocá la pestaña **Análisis**.',
+      'Bajá hasta el final donde dice "💬 WhatsApp".',
+      'Se abre WhatsApp con un resumen de tus números del mes.',
+      'También podés tocar "📤 Compartir" para enviarlo por Telegram, correo u otras apps.',
+      'El mensaje incluye: total ganado, turnos, proyección, promedio por hora y desglose de recargos.'
+    ],
+    related: ['entender_dashboard', 'exportar_datos']
+  },
+
+  // ═══ CONFIGURACIÓN AVANZADA ═══
+  {
+    id: 'configurar_quincena',
+    title: 'Configurar los días de la quincena',
+    keywords: [
+      'dias quincena',
+      'cambiar quincena',
+      'configurar quincena',
+      'periodo quincena',
+      'q1 q2',
+      'cuando empieza quincena',
+      'modificar quincena'
+    ],
+    steps: [
+      'Andá a la pestaña **Ajustes**.',
+      'Buscá la sección **Preferencias de pago**.',
+      'Activá el switch **Calcular por quincena**.',
+      'Se desplegarán dos campos: **Día de inicio Q1** y **Día de inicio Q2**.',
+      'Por defecto: Q1 arranca el día 1 y Q2 el día 16.',
+      'Podés cambiarlos. Ejemplo: Q1 día 10, Q2 día 25.',
+      'Los totales en Inicio y Dashboard se separan por cada quincena configurada.'
+    ],
+    related: ['configurar_salario', 'modo_quincena', 'entender_dashboard']
+  },
+  {
+    id: 'configurar_genero',
+    title: 'Seleccionar tu género en la app',
+    keywords: [
+      'genero',
+      'hombre',
+      'mujer',
+      'sexo',
+      'masculino',
+      'femenino',
+      'cambiar genero'
+    ],
+    steps: [
+      'Andá a la pestaña **Ajustes**.',
+      'En la parte superior, debajo de tu email, verás dos botones: ♂ Hombre y ♀ Mujer.',
+      'Tocá el que corresponda. Se ilumina en azul.',
+      'La IA adapta su lenguaje: usa "parce" para hombres, "amiga" para mujeres.',
+      'Podés cambiar la selección en cualquier momento.'
+    ],
+    related: ['cambiar_nombre', 'cambiar_foto']
+  },
+
+  // ═══ CÁLCULOS ═══
+  {
+    id: 'como_calcula_recargos',
+    title: 'Cómo calcula los recargos la app',
+    keywords: [
+      'como calcula',
+      'recargos',
+      'formula',
+      'calculo',
+      'metodo',
+      'como se calcula',
+      'logica calculo'
+    ],
+    steps: [
+      'La app usa la legislación colombiana vigente (Código Sustantivo del Trabajo + Ley 2101 de 2021).',
+      '**Valor hora:** salario base ÷ 240 horas (jornada máxima legal).',
+      '**Recargos:** nocturno 35%, extra diurno 25%, extra nocturno 75%, dominical/festivo 75%, extra dominical 100%.',
+      'Los minutos se clasifican en 8 categorías según el momento del día y tipo de día.',
+      'El límite ordinario es 8h/día o la jornada semanal (44h en 2026), lo que se agote primero determina las extras.',
+      'El cálculo es 100% local — no depende de internet ni de servidores externos.'
+    ],
+    related: ['ley_2101', 'configurar_salario']
+  },
+  {
+    id: 'ley_2101',
+    title: 'Ley 2101 de 2021 — Jornada laboral',
+    keywords: [
+      'ley',
+      '2101',
+      'jornada maxima',
+      'horas semanales',
+      'cst',
+      'codigo laboral',
+      'legislacion',
+      'ley laboral',
+      'derechos'
+    ],
+    steps: [
+      'La Ley 2101 de 2021 reduce gradualmente la jornada laboral en Colombia.',
+      '**2023:** 47h/semana | **2024:** 46h | **2025:** 45h | **2026:** 44h | **2027:** 42h (meta final).',
+      'La app ajusta automáticamente el límite según la fecha del turno.',
+      'El auxilio de transporte es de $249,095 para 2026 (Decreto 1470 de 2025).',
+      'El salario mínimo 2026 es de $1,750,905.',
+      'Estos valores se actualizan automáticamente en la app cada año.'
+    ],
+    related: ['como_calcula_recargos', 'configurar_salario']
+  },
+  {
+    id: 'auxilio_transporte',
+    title: 'Auxilio de transporte',
+    keywords: [
+      'auxilio',
+      'transporte',
+      'subsidio',
+      'auxilio transporte',
+      'cuanto es auxilio'
+    ],
+    steps: [
+      'El auxilio de transporte para 2026 es de **$249,095** mensuales.',
+      'Para activarlo: Ajustes > Preferencias de pago > activá el switch **Auxilio de transporte**.',
+      'Si usás modo quincena, se prorratea automáticamente a la mitad.',
+      'Este valor se suma a tus ingresos proyectados en Inicio y Dashboard.',
+      'Fuente: Decreto 1470 del 29 de diciembre de 2025.'
+    ],
+    related: ['configurar_salario', 'modo_quincena', 'ley_2101']
+  },
+  {
+    id: 'prestaciones',
+    title: 'Prestaciones sociales',
+    keywords: [
+      'prestaciones',
+      'prima',
+      'cesantias',
+      'vacaciones',
+      'liquidacion',
+      'cuanto me liquidan'
+    ],
+    steps: [
+      'La app estima tus prestaciones con un ~21.8% sobre tu salario.',
+      'Incluye: cesantías (8.33%), prima (8.33%), vacaciones (4.17%), intereses de cesantías (~1%).',
+      'Para activarlo: Ajustes > Preferencias de pago > activá el switch **Prestaciones**.',
+      'Este es un estimado — los valores exactos dependen de tu contrato y antigüedad.',
+      'Para una liquidación completa, consultá con un contador o usá la calculadora del Ministerio de Trabajo.'
+    ],
+    related: ['configurar_salario', 'auxilio_transporte']
+  },
+
+  // ═══ GESTIÓN DE CUENTA ═══
+  {
+    id: 'gestionar_cuenta',
+    title: 'Gestionar tu cuenta (PIN, email, contraseña)',
+    keywords: [
+      'gestionar cuenta',
+      'cambiar email',
+      'cambiar contraseña',
+      'cambiar password',
+      'cuenta',
+      'administrar cuenta'
+    ],
+    steps: [
+      'Andá a la pestaña **Ajustes** > sección **Cuenta**.',
+      'Tocá **Gestionar cuenta** > se abre un panel con 3 pestañas.',
+      '**PIN:** cambiá tu código de acceso de 4 dígitos.',
+      '**Email:** cambiá tu correo. Se enviará una verificación.',
+      '**Contraseña:** cambiá tu clave (mínimo 6 caracteres).',
+      'Cada cambio requiere confirmación con un código de seguridad.'
+    ],
+    related: ['configurar_pin', 'cambiar_password', 'recuperar_pin']
+  },
+
+  // ═══ DIAGNÓSTICO ═══
+  {
+    id: 'diagnostico',
+    title: 'Diagnóstico de la app',
+    keywords: [
+      'diagnostico',
+      'solucionar',
+      'arreglar',
+      'no funciona',
+      'error',
+      'falla',
+      'bug',
+      'problema'
+    ],
+    steps: [
+      'Si algo no funciona, primero verificá tu conexión en Ajustes.',
+      '**Recargá la app:** arrastrá hacia abajo para refrescar.',
+      'Si el problema persiste, andá a Ajustes > Administrador (solo admin) > **Diagnóstico**.',
+      'Ahí ves el estado de sesiones, base de datos local y cola de sincronización.',
+      'También podés usar el comando **/reset** en el chat del asistente.',
+      'Como último recurso, cerrá sesión y volvé a entrar.'
+    ],
+    related: ['estado_conexion', 'sincronizacion']
+  },
+
+  // ═══ VERSIONES ═══
+  {
+    id: 'version_app',
+    title: 'Versión de la app y actualizaciones',
+    keywords: [
+      'version',
+      'actualizar',
+      'update',
+      'nueva version',
+      'que version',
+      'cambios'
+    ],
+    steps: [
+      'Tu versión actual aparece al final de la pestaña **Ajustes** (ej: "Colombia · Nómina inteligente · v175").',
+      'La PWA se actualiza automáticamente: al abrir la app, descarga la última versión.',
+      'Si tenés la app de Play Store, actualizala desde allí.',
+      'No es necesario hacer nada: tus datos se conservan entre versiones.'
+    ],
+    related: ['instalar_pwa', 'diagnostico']
+  },
+
+  // ═══ RECARGOS ESPECÍFICOS ═══
+  {
+    id: 'recargo_nocturno',
+    title: 'Recargo nocturno',
+    keywords: [
+      'nocturno',
+      'noche',
+      'recargo noche',
+      'horario nocturno',
+      'desde que hora nocturno',
+      'cuanto pagan nocturno'
+    ],
+    steps: [
+      'El recargo nocturno en Colombia es del **35%** sobre el valor hora ordinario.',
+      'Aplica entre las **9:00 PM y las 6:00 AM**.',
+      'Si trabajás de noche, cada hora vale 1.35 veces más.',
+      'Si además es festivo o domingo, se acumula con el recargo festivo (75%).',
+      'Total nocturno + festivo: 210% del valor hora (2.1x).',
+      'La app detecta automáticamente las horas nocturnas de cada turno.'
+    ],
+    related: ['como_calcula_recargos', 'ley_2101']
+  },
+  {
+    id: 'recargo_festivo',
+    title: 'Recargo dominical y festivo',
+    keywords: [
+      'festivo',
+      'domingo',
+      'dominical',
+      'recargo festivo',
+      'cuanto pagan festivo',
+      'cuanto pagan domingo'
+    ],
+    steps: [
+      'El recargo dominical/festivo es del **75%** sobre el valor hora ordinario.',
+      'Aplica todo el día (24h) del domingo o festivo.',
+      'Si el turno empieza un día hábil y termina en festivo, la parte festiva se calcula aparte.',
+      'Los festivos colombianos se determinan por la ley Emiliani (algunos se trasladan al lunes).',
+      'La app tiene todos los festivos precargados hasta 2030.'
+    ],
+    related: ['recargo_nocturno', 'como_calcula_recargos']
+  },
+  {
+    id: 'horas_extras',
+    title: 'Horas extras',
+    keywords: [
+      'extra',
+      'extras',
+      'hora extra',
+      'sobretiempo',
+      'como funcionan extras',
+      'cuando son extras'
+    ],
+    steps: [
+      'Las horas extra se disparan cuando superás la jornada ordinaria.',
+      'Límite diario: 8 horas. Límite semanal: 44h (2026).',
+      '**Extra diurna:** 25% adicional (1.25x).',
+      '**Extra nocturna:** 75% adicional (1.75x).',
+      '**Extra festiva diurna:** 100% adicional (2.0x).',
+      '**Extra festiva nocturna:** 150% adicional (2.5x).',
+      'El que se agote primero (diario o semanal) determina el inicio de las extras.'
+    ],
+    related: ['como_calcula_recargos', 'recargo_nocturno', 'ley_2101']
   }
 ];
 
@@ -470,14 +854,18 @@ function aiHelpListAll() {
   var resp = '📚 **Guías disponibles**\n\n';
   var cats = {
     Turnos: ['iniciar_turno', 'finalizar_turno'],
-    Salario: ['configurar_salario', 'modo_quincena'],
+    Salario: ['configurar_salario', 'modo_quincena', 'configurar_quincena'],
     Historial: ['ver_historial', 'exportar_datos', 'enviar_reporte', 'borrar_turno'],
-    Perfil: ['cambiar_foto', 'cambiar_nombre'],
-    Seguridad: ['configurar_pin', 'cambiar_password', 'recuperar_pin', 'cerrar_sesion'],
+    Perfil: ['cambiar_foto', 'cambiar_nombre', 'configurar_genero'],
+    Seguridad: ['configurar_pin', 'cambiar_password', 'recuperar_pin', 'cerrar_sesion', 'gestionar_cuenta'],
     Datos: ['respaldar_datos', 'restaurar_datos'],
-    Análisis: ['entender_dashboard'],
+    'Conexión': ['estado_conexion', 'sincronizacion', 'modo_offline'],
+    Análisis: ['entender_dashboard', 'compartir_whatsapp'],
     Asistente: ['usar_asistente'],
+    'Cálculos y Leyes': ['como_calcula_recargos', 'ley_2101', 'auxilio_transporte', 'prestaciones', 'recargo_nocturno', 'recargo_festivo', 'horas_extras'],
     Apariencia: ['modo_oscuro'],
+    Instalación: ['instalar_pwa', 'version_app'],
+    Soporte: ['diagnostico'],
     Accesibilidad: ['accesibilidad']
   };
 

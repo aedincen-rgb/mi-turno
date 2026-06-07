@@ -1072,7 +1072,30 @@ var AI_INTENTS = [
       ['donde miro', 3],
       ['necesito ayuda', 3],
       ['no se como', 3],
-      ['no sé cómo', 3]
+      ['no sé cómo', 3],
+      // Nuevas: preguntas sobre la app misma
+      ['como funciona', 2],
+      ['que es', 2],
+      ['para que sirve', 2],
+      ['como instalo', 3],
+      ['como comparto', 3],
+      ['como modifico', 3],
+      ['como funciona offline', 3],
+      ['como sincronizo', 3],
+      ['estoy conectado', 3],
+      ['hay conexion', 3],
+      ['como se sincroniza', 3],
+      ['donde veo', 2],
+      ['donde esta la opcion', 3],
+      ['donde configuro', 3],
+      ['donde cambio', 3],
+      ['como se calcula', 2],
+      ['como calcula', 2],
+      ['que version', 2],
+      ['como actualizo', 2],
+      ['como se usa', 3],
+      ['guia de uso', 3],
+      ['tutorial', 3]
     ]
   },
 

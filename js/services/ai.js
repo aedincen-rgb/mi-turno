@@ -788,11 +788,29 @@ function _aiDispatchNLP(intent, c, state, q, t) {
 
   // ── Ayuda de navegación (ai-help.js) ──
   if (intent === 'ayuda_navegacion') {
+    // Diagnóstico rápido de conexión: "estoy conectado", "hay conexion"
+    if (_aiHas(t, 'conectado', 'conexion', 'supabase', 'nube', 'online', 'offline', 'sincronizando', 'sync', 'hay internet', 'funciona internet')) {
+      var _onlineStatus = typeof navigator !== 'undefined' && navigator.onLine;
+      var _cloudOK = typeof CLOUD_MODE !== 'undefined' && CLOUD_MODE;
+      var _rtStatus = typeof getRealtimeStatus === 'function' ? getRealtimeStatus() : null;
+      var _syncPending = 0;
+      try {
+        var _sq = leer('mt_sync_queue', {});
+        var _uid = state.session && state.session.uid;
+        if (_uid && _sq[_uid]) _syncPending = _sq[_uid].length;
+      } catch (_) {}
+      var _resp = '📡 **Estado de conexión**\n\n';
+      _resp += _onlineStatus ? '✅ **Internet:** Conectado\n' : '❌ **Internet:** Sin conexión\n';
+      _resp += _cloudOK ? '☁️ **Supabase:** Conectado' + (_rtStatus ? ' (' + _rtStatus + ')' : '') + '\n' : '⚠️ **Supabase:** No conectado\n';
+      if (_syncPending > 0) _resp += '🔄 **Pendiente:** ' + _syncPending + ' cambio' + (_syncPending !== 1 ? 's' : '') + ' por sincronizar\n';
+      _resp += '\n💡 La app funciona 100% sin internet. Tus datos se guardan localmente y se sincronizan cuando vuelve la conexión.';
+      return _resp;
+    }
+
     if (typeof aiHelpAnswer === 'function') {
       var helpResp = aiHelpAnswer(q);
       if (helpResp) return helpResp;
     }
-    // Fallback si ai-help.js no está disponible
     return '🤔 Contame qué querés hacer y te guío paso a paso. Por ejemplo:\n\n• "¿Cómo exporto mis turnos?"\n• "¿Cómo cambio mi foto?"\n• "¿Cómo configuro el PIN?"\n• "¿Cómo respaldo mis datos?"';
   }
 
