@@ -352,69 +352,64 @@ function _aiExpandir(original, intent, userContext) {
 }
 
 // ─── API PÚBLICA ──────────────────────────────────────────────
-// Wrapper que integra todo: memoria + enriquecimiento + personalidad.
+// Pipeline unificado de enriquecimiento con contexto compartido.
 
 function aiEnhancedRespond(originalResponse, intent, topic, question, userContext) {
-  // 1. Registrar en memoria
-  aiRemember('user', question, intent, topic, userContext);
-  aiRemember('ai', originalResponse.substring(0, 120), intent, topic, userContext);
+  // Contexto unificado — todos los módulos reciben lo mismo
+  var shared = {
+    c: userContext || {},
+    intent: intent || '',
+    topic: topic || '',
+    question: question || '',
+    baseResponse: originalResponse || ''
+  };
 
-  // 2. Expandir respuesta con más contexto y tips
-  var expanded = originalResponse;
-  try { expanded = _aiExpandir(originalResponse, intent, userContext); } catch (_) {}
+  // 1. Memoria
+  try { aiRemember('user', question, intent, topic, userContext); } catch (_) {}
+  try { aiRemember('ai', (originalResponse || '').substring(0, 120), intent, topic, userContext); } catch (_) {}
 
-  // 2.5. Análisis financiero profundo
+  // 2. Expansión base (tips + contexto)
+  var text = originalResponse;
+  try { text = _aiExpandir(text, intent, userContext); } catch (_) {}
+
+  // 3. Análisis financiero
   try {
     if (typeof aiInsightFull === 'function') {
-      var insightText = aiInsightFull(userContext, intent);
-      if (insightText) expanded += insightText;
+      var insight = aiInsightFull(userContext, intent);
+      if (insight) text += insight;
     }
   } catch (_) {}
 
-  // 2.6. Inteligencia proactiva: alertas y metas
-  if (typeof aiProactive === 'function') {
-    var proactiveText = aiProactive(userContext, intent);
-    if (proactiveText) {
-      enriched.text += proactiveText;
-    }
-  }
+  // 4. Enriquecimiento (acciones + follow-ups)
+  var enriched = aiEnrichResponse(text, intent, userContext);
+  text = enriched.text; // ahora text tiene acciones
 
-  // 3. Enriquecer con acciones rápidas
-  var enriched = aiEnrichResponse(expanded, intent, userContext);
-
-  // 4. Logros desbloqueados
+  // 5. Capa personal: logros + psicología + proactivo + asesor
   try {
     if (intent === 'total_ganado' || intent === 'hoy' || intent === 'stats' || intent === 'proyeccion') {
       if (typeof aiCheckAchievements === 'function') {
-        var achievements = aiCheckAchievements(userContext);
-        var formatted = typeof aiFormatAchievements === 'function' ? aiFormatAchievements(achievements) : null;
-        if (formatted) enriched.text += formatted;
+        var ach = aiFormatAchievements ? aiFormatAchievements(aiCheckAchievements(userContext)) : null;
+        if (ach) text += ach;
       }
     }
   } catch (_) {}
 
-  // 4.5. Psicología + Proactivo + Asesor (todos protegidos)
-  try { if (typeof aiPsychRespond === 'function') { var pt = aiPsychRespond(userContext, intent); if (pt) enriched.text += pt; } } catch (_) {}
-  try { if (typeof aiProactive === 'function') { var prt = aiProactive(userContext, intent); if (prt) enriched.text += prt; } } catch (_) {}
+  try { if (typeof aiPsychRespond === 'function') { var pt = aiPsychRespond(userContext, intent); if (pt) text += pt; } } catch (_) {}
+  try { if (typeof aiProactive === 'function') { var prt = aiProactive(userContext, intent); if (prt) text += prt; } } catch (_) {}
   try {
-    if (typeof aiAdvisorRespond === 'function') {
+    if (typeof aiAdvisorRespond === 'function' && intent !== 'total_ganado' && intent !== 'stats') {
       var at = aiAdvisorRespond(intent, userContext, null);
-      if (at && intent !== 'total_ganado' && intent !== 'stats') enriched.text += '\n\n' + at;
+      if (at) text += '\n\n' + at;
     }
   } catch (_) {}
 
-  // 5. Colombianizar
+  // 6. Pulido final: personalidad + conversación
   var mood = { mood: 'neutral' };
   try { mood = typeof aiAnalyzeMood === 'function' ? aiAnalyzeMood(question, userContext) : { mood: 'neutral' }; } catch (_) {}
-  try { enriched.text = aiColombianizar(enriched.text, mood.mood); } catch (_) {}
+  try { text = aiColombianizar(text, mood.mood); } catch (_) {}
+  try { if (typeof aiConvOrchestrate === 'function') text = aiConvOrchestrate(text, intent, userContext); } catch (_) {}
 
-  // 6. Envoltorio de conversación progresiva (niveles 0→3)
-  try {
-    if (typeof aiConvOrchestrate === 'function') {
-      enriched.text = aiConvOrchestrate(enriched.text, intent, userContext);
-    }
-  } catch (_) {}
-
+  enriched.text = text;
   return enriched;
 }
 
