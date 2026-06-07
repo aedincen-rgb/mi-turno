@@ -198,21 +198,24 @@ function aiEnrichResponse(originalText, intent, userContext) {
 
 // ─── PERSONALIDAD COLOMBIANA ──────────────────────────────────
 // Enriquece las respuestas con expresiones más naturales y cálidas.
+// Ahora adapta el vocabulario al género del usuario (v172).
 
 var _aiColombianismo = {
-  greetings: ['parce', 'vecino', 'compadre', 'socio', 'mi llave', 'hermano'],
-  encouragements: [
-    '¡Así se hace!', 'Con toda, parce.', 'Vamos por más.', 'Esa es la actitud.',
-    'Sin miedo al éxito.', 'Dándole con toda.', 'A fuego, mi llave.'
-  ],
-  empathy: [
-    'Tranqui, todo bien.', 'Así es la vuelta.', 'No pasa nada, socio.',
-    'Fresco, que vamos bien.', 'Relajado, aquí estoy.'
-  ],
-  closings: [
-    '¿Algo más en que te colabore?', '¿Qué más necesitás, parce?',
-    'Decime si querés que profundice en algo.', 'Aquí sigo por si necesitás otra cosa.'
-  ]
+  // NOTA: Estos arrays ahora se pueblan dinámicamente desde
+  // _gl() en gender-lang.js. Se mantienen como fallback por
+  // si el módulo no está cargado (degradación elegante).
+  get greetings() {
+    return typeof _gl === 'function' ? _gl('greetings') : ['parce', 'vecino', 'compadre', 'socio', 'mi llave', 'hermano'];
+  },
+  get encouragements() {
+    return typeof _gl === 'function' ? _gl('enthusiasm') : ['¡Así se hace!', 'Con toda, parce.', 'Vamos por más.', 'Esa es la actitud.', 'Sin miedo al éxito.', 'Dándole con toda.', 'A fuego, mi llave.'];
+  },
+  get empathy() {
+    return typeof _gl === 'function' ? _gl('consolation') : ['Tranqui, todo bien.', 'Así es la vuelta.', 'No pasa nada, socio.', 'Fresco, que vamos bien.', 'Relajado, aquí estoy.'];
+  },
+  get closings() {
+    return typeof _gl === 'function' ? _gl('followUp') : ['¿Algo más en que te colabore?', '¿Qué más necesitás, parce?', 'Decime si querés que profundice en algo.', 'Aquí sigo por si necesitás otra cosa.'];
+  }
 };
 
 function aiRandomPick(arr) {

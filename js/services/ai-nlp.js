@@ -1394,7 +1394,7 @@ var AI_EMPATHY = {
   frustrado: {
     prefixes: [
       'Te escucho. ',
-      'Qué duro, parce. ',
+      function () { return typeof _glPick === 'function' ? _glPick('frustration') : 'Qué duro, parce. '; },
       'Uff, te entiendo. ',
       'Fuerza con eso. ',
       'No es fácil, lo sé. ',
@@ -1441,7 +1441,8 @@ var AI_EMPATHY = {
 };
 
 function aiPickEmpathy(prefixes) {
-  return prefixes[Math.floor(Math.random() * prefixes.length)];
+  var item = prefixes[Math.floor(Math.random() * prefixes.length)];
+  return typeof item === 'function' ? item() : item;
 }
 
 // ─── RESPUESTA CONVERSACIONAL (FALLBACK) ──────────────────────

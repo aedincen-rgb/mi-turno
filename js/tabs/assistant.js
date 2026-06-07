@@ -52,7 +52,9 @@ function AsistenteTab(props) {
   function cleanSpeakText(text) {
     return (text || '')
       .replace(/\*\*|__|\*|`/g, '')
-      .replace(/🏆/g, ' ¡campeón! ')
+      .replace(/🏆/g, function () {
+        return ' ¡' + (typeof _glTerm === 'function' ? _glTerm('champion') : 'campeón') + '! ';
+      })
       .replace(/[🔥🚀✨💪🙌🎉🎯💡⚡🌟👑💎📊💰📅🔮🤖📖⚖️📡📱♿🔗📧⚠️✅📋⏱📤💬🔊🛡📦📂🔑🛠🐞👥◷✦🎬🍎🇨🇴]/g, '')
       .replace(/(\d+)mins\b/g, '$1 minutos')
       .replace(/\bmins\b/g, 'minutos')

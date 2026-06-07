@@ -2,7 +2,7 @@
 //  MI TURNO · SERVICE WORKER
 //  Split cache: SHELL_CACHE (archivos de la app, se invalida en cada release)
 //               CDN_CACHE   (librerías externas, sobrevive entre releases)
-const SHELL_CACHE = 'mt-shell-v172'; // bump con scripts/bump.sh
+const SHELL_CACHE = 'mt-shell-v173'; // bump con scripts/bump.sh
 const CDN_CACHE   = 'mt-cdn-v2';    // solo bump cuando cambien URLs de CDN
 
 const CDN = [
@@ -110,6 +110,7 @@ const appResources = [
   './js/services/ai-help.js',
   './js/services/ai-history.js',
   './js/services/ai-greeting.js',
+  './js/services/gender-lang.js',
   './js/tabs/home.js',
   './js/tabs/dashboard.js',
   './js/tabs/assistant.js',

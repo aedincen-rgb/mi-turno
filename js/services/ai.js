@@ -562,7 +562,7 @@ function _aiDispatchNLP(intent, c, state, q, t) {
     return s + nombre + '! ☀️ Soy tu copiloto de turno. Puedo decirte cómo vas este mes, proyectar tus ingresos, calcular tu liquidación o avisarte si necesitás un descanso. ¿Qué querés mirar hoy?';
   }
   if (intent === 'despedida') {
-    var despedidas = [
+    var despedidas = typeof _gl === 'function' ? _gl('goodbye') : [
       '¡Nos vemos! Cuidate y descansá cuando puedas. ✦',
       'Chao, parce. Acá estoy cuando me necesités. 💪',
       '¡Hasta luego! Que te rinda el día. 🌟'
@@ -570,7 +570,7 @@ function _aiDispatchNLP(intent, c, state, q, t) {
     return despedidas[Math.floor(Math.random() * despedidas.length)];
   }
   if (intent === 'agradecimiento') {
-    var gracias = [
+    var gracias = typeof _gl === 'function' ? _gl('thanks') : [
       '¡Con gusto! Para eso estoy. 🙌',
       'De nada, parce. Lo que necesités. ✨',
       'A la orden. ¿Algo más en que te ayude?'
