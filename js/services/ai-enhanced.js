@@ -153,20 +153,67 @@ function aiEnrichResponse(originalText, intent, userContext) {
       { label: '📧 Enviar reporte', query: 'Enviame el reporte por correo' }
     ],
     'hoy': [
-      { label: '📅 ¿Y ayer?', query: '¿y ayer?' },
+      { label: '📅 ¿Y ayer?', query: '¿Cuánto gané ayer?' },
+      { label: '🏆 Mejor día', query: 'Mi mejor día' },
+      { label: '⏱ Horas hoy', query: '¿Cuántas horas trabajé hoy?' }
+    ],
+    'ayer': [
+      { label: '📅 ¿Y hoy?', query: '¿Cuánto gané hoy?' },
+      { label: '📊 VS mes pasado', query: '¿vs mes pasado?' },
       { label: '🏆 Mejor día', query: 'Mi mejor día' }
     ],
     'proyeccion': [
       { label: '🔮 Simular extra', query: '¿Cuánto si trabajo 4h más?' },
-      { label: '📊 Distribución', query: 'Distribución por recargo' }
+      { label: '📊 Distribución', query: 'Distribución por recargo' },
+      { label: '💰 ¿Cuánto falta?', query: '¿Cuánto me falta para llegar al salario base?' }
     ],
     'bienestar': [
       { label: '📅 Próximo descanso', query: '¿Cuándo fue mi último descanso?' },
-      { label: '📊 Mi ritmo', query: '¿Cómo voy de ritmo?' }
+      { label: '📊 Mi ritmo', query: '¿Cómo voy de ritmo?' },
+      { label: '🧘 Consejo', query: '¿Cómo puedo descansar mejor?' }
     ],
     'comparativa_mes': [
       { label: '📅 VS semana pasada', query: '¿vs semana pasada?' },
+      { label: '🔮 Proyección', query: 'Proyección al cierre' },
+      { label: '📊 Distribución', query: 'Distribución por recargo' }
+    ],
+    'comparativa_semana': [
+      { label: '📅 VS mes pasado', query: '¿vs mes pasado?' },
       { label: '🔮 Proyección', query: 'Proyección al cierre' }
+    ],
+    'horas_trabajadas': [
+      { label: '⏱ Horas extra', query: '¿Cuántas horas extra llevo?' },
+      { label: '🌙 Horas nocturnas', query: '¿Cuántas horas nocturnas?' },
+      { label: '📊 Distribución', query: 'Distribución por recargo' }
+    ],
+    'promedio': [
+      { label: '💵 Por hora', query: '¿Cuánto gano por hora?' },
+      { label: '📊 VS mes pasado', query: '¿vs mes pasado?' }
+    ],
+    'mejor_dia': [
+      { label: '📉 Peor día', query: '¿Cuál fue mi peor día?' },
+      { label: '📊 Promedio', query: '¿Cuál es mi promedio diario?' }
+    ],
+    'racha': [
+      { label: '🧘 Descanso', query: '¿Cuánto descanso he tenido?' },
+      { label: '📊 Mi ritmo', query: '¿Cómo voy de ritmo?' }
+    ],
+    'distribucion': [
+      { label: '💰 Total ganado', query: '¿Cuánto gané este mes?' },
+      { label: '🔮 Proyección', query: 'Proyección al cierre' }
+    ],
+    'simulacion': [
+      { label: '🌙 Solo nocturnas', query: '¿Cuánto ganaría si solo hago nocturnas?' },
+      { label: '📅 Un turno más', query: '¿Cuánto si hago 1 turno extra?' },
+      { label: '🎯 Meta', query: '¿Cuánto necesito para llegar a 2 millones?' }
+    ],
+    'festivos': [
+      { label: '📅 Próximos', query: '¿Cuáles son los próximos festivos?' },
+      { label: '💰 Ya trabajados', query: '¿Cuánto gané en festivos este mes?' }
+    ],
+    'velocidad': [
+      { label: '📊 Promedio', query: '¿Cuál es mi promedio por turno?' },
+      { label: '🔮 Simular', query: '¿Cuánto si trabajo 4h más?' }
     ],
     'email': [
       { label: '📧 Enviar ahora', query: 'Enviame el reporte' },

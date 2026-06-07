@@ -240,7 +240,7 @@ function AsistenteTab(props) {
   // Saludo según la hora del día (mismo helper que usa el historial)
   var saludo = _saludoHora(new Date());
 
-  // Categorías: lista expandible (una abierta a la vez), nada de botonera
+  // Categorías: lista expandible (una abierta a la vez)
   var categorias = [
     {
       id: 'ingresos',
@@ -249,7 +249,10 @@ function AsistenteTab(props) {
       desc: 'Cuánto llevas, tu mejor día y proyecciones',
       preguntas: [
         '¿Cuánto gané este mes?',
+        '¿Cuánto gané ayer?',
+        '¿Cuánto gané hoy?',
         'Mi mejor día',
+        '¿Cuál fue mi peor día?',
         'Proyección de fin de mes',
         'Envía mi reporte por correo'
       ]
@@ -261,33 +264,65 @@ function AsistenteTab(props) {
       desc: 'Horas trabajadas, ritmo y descansos',
       preguntas: [
         '¿Cuántas horas llevo?',
+        '¿Cuántas horas trabajé ayer?',
         '¿Cómo voy de ritmo?',
         'Días trabajados este mes',
-        '¿Cuánto descanso he tenido?'
+        '¿Cuánto descanso he tenido?',
+        '¿Cuánto gano por hora?'
       ]
     },
     {
       id: 'analisis',
       icono: '✦',
       titulo: 'Análisis',
-      desc: 'Festivos, horas extras y recargos',
+      desc: 'Festivos, horas extras, recargos y distribuciones',
       preguntas: [
         'Festivos trabajados',
         'Horas extras',
+        'Horas nocturnas',
         'Resumen general',
-        'Distribución por recargo'
+        'Distribución por recargo',
+        '¿Cuántos días seguidos llevo?'
+      ]
+    },
+    {
+      id: 'comparar',
+      icono: '⚖',
+      titulo: 'Comparativas',
+      desc: 'Compara periodos y mira tendencias',
+      preguntas: [
+        '¿VS mes pasado?',
+        '¿VS semana pasada?',
+        '¿Mejor que el mes pasado?',
+        '¿Cómo voy vs mi meta?',
+        '¿Promedio diario este mes?'
+      ]
+    },
+    {
+      id: 'simular',
+      icono: '🔮',
+      titulo: 'Simulaciones',
+      desc: 'Proyectá escenarios hipotéticos',
+      preguntas: [
+        '¿Cuánto si trabajo 4h más?',
+        '¿Cuánto si hago 1 turno extra?',
+        '¿Cuánto necesito para llegar a 2 millones?',
+        '¿Cuánto ganaría si solo hago nocturnas?',
+        'Escenario optimista y pesimista'
       ]
     },
     {
       id: 'ayuda',
       icono: '?',
       titulo: 'Cómo funciona',
-      desc: 'Entiende cómo calculo todo',
+      desc: 'Entiende cómo calculo todo, leyes y más',
       preguntas: [
         '¿Cómo se calculan los recargos?',
         '¿Qué es el recargo nocturno?',
         '¿Cómo cuentan los festivos?',
-        '¿Qué incluye el sueldo base?'
+        '¿Qué incluye el sueldo base?',
+        '¿Cuánto es el auxilio de transporte?',
+        '¿Cómo exporto mis datos?'
       ]
     }
   ];

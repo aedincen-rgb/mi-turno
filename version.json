@@ -1,4 +1,4 @@
 {
-  "v": "v174",
-  "label": "Fix: gender-lang.js cargado antes de ai-enhanced.js + getters robustecidos"
+  "v": "v175",
+  "label": "IA maximizada: 6 categorías (35 preguntas), 17 intents con follow-ups, nuevas frases precargadas"
 }
