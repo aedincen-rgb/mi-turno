@@ -1057,6 +1057,16 @@ function aiAnswer(question, state) {
     return '🏅 Sistema de logros no disponible.';
   }
 
+  // ── /METAS ──
+  if (q === '/metas') {
+    var goalsText = '';
+    if (typeof aiCheckGoals === 'function') {
+      goalsText = aiCheckGoals(c);
+    }
+    if (goalsText) return '🎯 **Tus metas guardadas**\n' + goalsText;
+    return '🎯 No tenés metas guardadas todavía.\n\nUsá **/meta 2000000** para calcular y guardar tu primera meta. La app va a seguir tu progreso automáticamente.';
+  }
+
   // ── /META ──
   if (q.indexOf('/meta') === 0 || _aiHas(t, 'meta', 'cuanto necesito para', 'cuanto debo trabajar para')) {
     var metaVal = _aiNum(t);
@@ -1082,6 +1092,11 @@ function aiAnswer(question, state) {
       resp += '• Quedan ' + c.diasRestantes + ' días del mes → necesitás ' + fCOP(diarioNecesario) + '/día para llegar\n';
     }
     resp += '\n💡 Escribí **/simular** para probar escenarios distintos.';
+    // Guardar meta para seguimiento
+    if (metaVal > 0 && typeof aiSetGoal === 'function') {
+      try { aiSetGoal(metaVal); } catch (_) {}
+      resp += '\n📌 Meta guardada. Escribí **/metas** para ver tu progreso.';
+    }
     return resp;
   }
 

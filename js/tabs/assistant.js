@@ -565,6 +565,13 @@ function AsistenteTab(props) {
   ];
 
   var phrases = _aiHeroPhrases(props);
+  // Prepend briefing si está disponible
+  if (typeof aiBriefing === 'function') {
+    var briefing = aiBriefing(props.calc ? Object.assign({}, props.calc, { ahora: new Date(), salario: props.salario, vh: props.vh, turnos: props.turnos }) : null);
+    if (briefing) {
+      phrases = [briefing].concat(phrases);
+    }
+  }
 
   return h(
     'section',

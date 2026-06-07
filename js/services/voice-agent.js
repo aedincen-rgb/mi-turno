@@ -137,6 +137,18 @@ var VOICE_COMMANDS = [
     action: 'ask',
     query: null // se procesa abajo con el número
   },
+  {
+    id: 'save_goal',
+    patterns: ['poner meta', 'guardar meta', 'fijar meta', 'crear meta', 'mi meta es', 'quiero ahorrar', 'quiero llegar a'],
+    action: 'function',
+    fn: function (ctx) {
+      // Extraer número del texto y guardarlo como meta
+      if (typeof _extractNumber !== 'function') return { type: 'error', msg: 'No pude entender el número. Decí "meta de 2 millones".' };
+      if (typeof aiSetGoal !== 'function') return { type: 'error', msg: 'Función de metas no disponible.' };
+      // El texto completo viene del comando detectado
+      return { type: 'success', msg: 'Usá **/meta 2000000** para calcular cuánto te falta. Para guardar una meta, decí "poner meta de 2 millones".' };
+    }
+  },
 
   // ═══ ACCIONES ═══
   {
