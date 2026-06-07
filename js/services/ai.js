@@ -1065,6 +1065,15 @@ function aiAnswer(question, state) {
     return '📊 Informe no disponible.';
   }
 
+  // ── /HISTORIAL ──
+  if (q === '/historial') {
+    if (typeof aiAdvisorHistorico === 'function') {
+      var histText = aiAdvisorHistorico(state.turnosAll || state.turnos || [], vh, c.salario);
+      if (histText) return histText;
+    }
+    return '📈 Necesito al menos 5 turnos en meses distintos para generar un análisis histórico. ¡Seguí registrando!';
+  }
+
   // ── /AHORRO ──
   if (q.indexOf('/ahorro') === 0) {
     var ahorroNum = _aiNum(t);

@@ -408,6 +408,13 @@ function aiEnhancedRespond(originalResponse, intent, topic, question, userContex
   try { mood = typeof aiAnalyzeMood === 'function' ? aiAnalyzeMood(question, userContext) : { mood: 'neutral' }; } catch (_) {}
   try { enriched.text = aiColombianizar(enriched.text, mood.mood); } catch (_) {}
 
+  // 6. Envoltorio de conversación progresiva (niveles 0→3)
+  try {
+    if (typeof aiConvOrchestrate === 'function') {
+      enriched.text = aiConvOrchestrate(enriched.text, intent, userContext);
+    }
+  } catch (_) {}
+
   return enriched;
 }
 
