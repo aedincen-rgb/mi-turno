@@ -335,6 +335,135 @@ function aiAdvisorInforme(c) {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// 8. ANÁLISIS HISTÓRICO DE PATRONES
+// ═══════════════════════════════════════════════════════════════
+
+function aiAdvisorHistorico(turnosAll, vh, salario) {
+  if (!turnosAll || turnosAll.length < 5) return '';
+  var turnos = turnosAll || [];
+  var meses = {};
+
+  for (var i = 0; i < turnos.length; i++) {
+    var t = turnos[i];
+    if (!t.inicio || !t.fin) continue;
+    var d = new Date(t.inicio);
+    var key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+    if (!meses[key]) meses[key] = { turnos: [], dias: {} };
+    meses[key].turnos.push(t);
+    meses[key].dias[d.getDate()] = true;
+  }
+
+  var keys = Object.keys(meses).sort();
+  if (keys.length < 2) return '';
+
+  var datos = [];
+  for (var m = 0; m < keys.length; m++) {
+    var k = keys[m];
+    var mes = meses[k];
+    var calc = doCalc(mes.turnos, null, new Date(parseInt(k.split('-')[0]), parseInt(k.split('-')[1]) - 1, 28), vh);
+    datos.push({ label: k, cop: Math.round(calc.totalCOP), mins: Math.round(calc.totalMins) });
+  }
+
+  var mejor = datos[0], peor = datos[0];
+  var total = 0;
+  for (var n = 0; n < datos.length; n++) {
+    total += datos[n].cop;
+    if (datos[n].cop > mejor.cop) mejor = datos[n];
+    if (datos[n].cop < peor.cop) peor = datos[n];
+  }
+  var prom = Math.round(total / datos.length);
+
+  var resp = '\n\n📈 **Análisis histórico** (' + keys.length + ' meses)\n\n';
+  resp += '• 🏆 Mejor mes: ' + mejor.label + ' — ' + fCOP(mejor.cop) + '\n';
+  resp += '• 📉 Mes más bajo: ' + peor.label + ' — ' + fCOP(peor.cop) + '\n';
+  resp += '• 📊 Promedio mensual: ' + fCOP(prom) + '\n';
+  resp += '• 💰 Total acumulado: ' + fCOP(total) + '\n\n';
+
+  var restantes = 12 - datos.length;
+  if (restantes > 0 && prom > 0) {
+    var anual = total + prom * restantes;
+    resp += '🔮 Proyección 12 meses: ≈' + fCOP(anual) + ' (' + (anual / Math.max(1, salario) / 12).toFixed(1) + 'x salario base mensual)\n';
+  }
+
+  return resp;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 9. OPTIMIZADOR DE DESCANSO
+// ═══════════════════════════════════════════════════════════════
+
+function aiAdvisorDescansoOptimo(c) {
+  if (!c || !c.dias || c.dias.length < 5) return '';
+  var dias = c.dias;
+  var diasSem = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+  var porDia = [{ t: 0, c: 0 }, { t: 0, c: 0 }, { t: 0, c: 0 }, { t: 0, c: 0 }, { t: 0, c: 0 }, { t: 0, c: 0 }, { t: 0, c: 0 }];
+
+  for (var i = 0; i < dias.length; i++) {
+    var d = dias[i];
+    var dia = new Date(d.fecha + 'T12:00:00').getDay();
+    porDia[dia].t += d.cop;
+    porDia[dia].c++;
+  }
+
+  var mejorD = -1, peorD = -1;
+  var mejorV = 0, peorV = Infinity;
+  for (var j = 0; j < 7; j++) {
+    if (porDia[j].c > 0) {
+      var prom = porDia[j].t / porDia[j].c;
+      if (prom > mejorV) { mejorV = prom; mejorD = j; }
+      if (prom < peorV) { peorV = prom; peorD = j; }
+    }
+  }
+
+  if (peorD < 0) return '';
+
+  var resp = '\n\n🧘 **Optimizador de descanso**\n\n';
+  resp += '• 📅 Día más flojo: **' + diasSem[peorD] + '** (promedio ' + fCOP(peorV) + '/día)\n';
+  resp += '• 💡 Descansar ese día te cuesta ≈' + fCOP(peorV) + ' pero ganás en salud.\n';
+  if (mejorD !== peorD && mejorD >= 0) {
+    resp += '• 🏆 Día más rentable: **' + diasSem[mejorD] + '** (promedio ' + fCOP(mejorV) + '/día)\n';
+  }
+
+  return resp;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 10. PROYECCIÓN ANUAL
+// ═══════════════════════════════════════════════════════════════
+
+function aiAdvisorAnual(c, turnosAll, vh) {
+  if (!c || !turnosAll || turnosAll.length < 10) return '';
+  var meses = {};
+  for (var i = 0; i < turnosAll.length; i++) {
+    var t = turnosAll[i];
+    if (!t.inicio || !t.fin) continue;
+    var d = new Date(t.inicio);
+    var key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+    if (!meses[key]) meses[key] = [];
+    meses[key].push(t);
+  }
+  var keys = Object.keys(meses).sort();
+  if (keys.length < 2) return '';
+
+  var anual = 0;
+  for (var m = 0; m < keys.length; m++) {
+    var calc = doCalc(meses[keys[m]], null, new Date(2026, m, 28), vh);
+    anual += calc.totalCOP || 0;
+  }
+  var prom = Math.round(anual / keys.length);
+  var proy = prom * 12;
+
+  var resp = '\n\n📆 **Proyección anual**\n\n';
+  resp += '• 📊 Promedio mensual (últimos ' + keys.length + ' meses): ' + fCOP(prom) + '\n';
+  resp += '• 💰 Proyección 12 meses: ≈' + fCOP(proy) + '\n';
+  if (c.salario > 0) {
+    resp += '• 📈 vs salario base: ' + (proy / (c.salario * 12) * 100).toFixed(1) + '%\n';
+  }
+
+  return resp;
+}
+
+// ═══════════════════════════════════════════════════════════════
 // 8. RESPONDEDOR PRINCIPAL
 // ═══════════════════════════════════════════════════════════════
 
@@ -364,11 +493,11 @@ function aiAdvisorRespond(intent, c, state) {
       return aiAdvisorFiscal(c);
 
     case 'optimizar':
-      return aiAdvisorOptimizar(c);
+      return aiAdvisorOptimizar(c) + aiAdvisorDescansoOptimo(c);
 
     case 'total_ganado':
     case 'stats':
-      return aiAdvisorInforme(c);
+      return aiAdvisorInforme(c) + aiAdvisorDescansoOptimo(c);
 
     default:
       return null;
@@ -384,5 +513,8 @@ window.aiAdvisorOptimizar = aiAdvisorOptimizar;
 window.aiAdvisorCompararOfertas = aiAdvisorCompararOfertas;
 window.aiAdvisorInforme = aiAdvisorInforme;
 window.aiAdvisorRespond = aiAdvisorRespond;
+window.aiAdvisorHistorico = aiAdvisorHistorico;
+window.aiAdvisorDescansoOptimo = aiAdvisorDescansoOptimo;
+window.aiAdvisorAnual = aiAdvisorAnual;
 
 console.log('[MT] ai-advisor.js cargado — asesor financiero offline completo ✓');
