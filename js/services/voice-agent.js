@@ -316,10 +316,12 @@ var VOICE_COMMANDS = [
         '💰 **Consultar:** "cuánto gané hoy", "cuánto gané ayer", "cuánto gané este mes"\n' +
         '📊 **Comparar:** "vs mes pasado", "vs semana pasada", "tendencia"\n' +
         '🔮 **Simular:** "simular horas extra", "cuánto falta para 2 millones"\n' +
-        '📧 **Exportar:** "exportar pdf", "enviar por correo"\n' +
+        '� **Exportar archivos:** "exportar pdf" (descargable), "exportar excel" (hoja de cálculo)\n' +
+        '💬 **Compartir:** "compartir por WhatsApp" (mensaje de texto, sin archivo)\n' +
+        '📧 **Enviar por correo:** "enviar por correo" (documento adjunto)\n' +
         '🌙 **Tema:** "modo oscuro", "modo claro"\n' +
         '🎙 **Control:** "activar manos libres", "silencio", "ayuda de voz"\n\n' +
-        '💡 También podés preguntar cualquier cosa en lenguaje natural.';
+        '💡 Si decís "compartir reporte", te llevo a Análisis (WhatsApp). Si querés un archivo, decí "exportar pdf".';
     }
   },
   {
