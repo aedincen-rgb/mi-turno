@@ -1,0 +1,290 @@
+/* ════════════════════════════════════════════════════════════════
+   MI TURNO · modals/manage-account.css
+   Panel profesional de gestión de cuenta — estilo Ajustes iOS
+   ════════════════════════════════════════════════════════════════ */
+
+/* ── Header ── */
+.mgmt-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.mgmt-header-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, var(--accent2), var(--accent));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: #fff;
+  flex-shrink: 0;
+  box-shadow: 0 4px 16px var(--accent-glow);
+}
+.mgmt-header-info {
+  flex: 1;
+  min-width: 0;
+}
+.mgmt-header-title {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -0.3px;
+  line-height: 1.2;
+}
+.mgmt-header-sub {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.mgmt-header-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: var(--r-pill);
+  font-size: 10px;
+  font-weight: 700;
+  background: var(--accent-dim);
+  color: var(--accent);
+  white-space: nowrap;
+  margin-top: 3px;
+}
+
+/* ── Info banner (modo local) ── */
+.mgmt-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--accent-dim);
+  border: 1px solid color-mix(in srgb, var(--accent) 18%, transparent);
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--accent-deep);
+  margin-bottom: 14px;
+}
+.mgmt-banner-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+[data-theme='dark'] .mgmt-banner {
+  background: rgba(125,168,255,0.12);
+  border-color: rgba(125,168,255,0.18);
+  color: #9fbeff;
+}
+
+/* ── Segmented control (iOS style) ── */
+.mgmt-segmented {
+  display: flex;
+  background: var(--bg-secondary);
+  border-radius: 10px;
+  padding: 3px;
+  margin-bottom: 18px;
+  gap: 2px;
+}
+.mgmt-seg-btn {
+  flex: 1;
+  padding: 9px 8px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s var(--ease);
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  -webkit-tap-highlight-color: transparent;
+}
+.mgmt-seg-btn.active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow:
+    0 1px 3px rgba(0,0,0,0.08),
+    0 1px 2px rgba(0,0,0,0.04);
+}
+.mgmt-seg-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+[data-theme='dark'] .mgmt-segmented {
+  background: rgba(255,255,255,0.06);
+}
+[data-theme='dark'] .mgmt-seg-btn.active {
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+  box-shadow:
+    0 1px 3px rgba(0,0,0,0.3),
+    0 1px 2px rgba(0,0,0,0.2);
+}
+
+/* ── Card de campo ── */
+.mgmt-field {
+  margin-bottom: 14px;
+}
+.mgmt-field-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 7px;
+}
+.mgmt-field-current {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--surface2);
+  border-radius: var(--radius-sm);
+  font-size: 12.5px;
+  color: var(--text);
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+.mgmt-field-current-val {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+.mgmt-field-current-icon {
+  font-size: 14px;
+  opacity: 0.6;
+}
+.mgmt-field-hint {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.45;
+  margin-bottom: 8px;
+  padding: 8px 12px;
+  background: var(--surface2);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--accent);
+}
+[data-theme='dark'] .mgmt-field-current,
+[data-theme='dark'] .mgmt-field-hint {
+  background: rgba(255,255,255,0.04);
+}
+
+/* ── Input en el modal ── */
+.mgmt-input {
+  width: 100%;
+  padding: 14px 16px;
+  background: var(--glass-mid);
+  backdrop-filter: var(--blur-sm);
+  -webkit-backdrop-filter: var(--blur-sm);
+  border: 1.5px solid var(--glass-border-sm);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 600;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s var(--ease), box-shadow 0.2s var(--ease);
+}
+.mgmt-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-dim);
+}
+.mgmt-input.pin-style {
+  text-align: center;
+  font-size: 22px;
+  letter-spacing: 10px;
+  padding: 16px 20px;
+}
+.mgmt-input::placeholder {
+  color: var(--muted);
+  opacity: 0.5;
+  font-weight: 400;
+}
+
+/* ── Botón de acción ── */
+.mgmt-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+.mgmt-btn-save {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, var(--accent2), var(--accent));
+  color: #fff;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    opacity 0.2s var(--ease),
+    transform 0.18s var(--spring),
+    box-shadow 0.2s var(--ease);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.25),
+    0 6px 18px var(--accent-glow);
+  -webkit-tap-highlight-color: transparent;
+}
+.mgmt-btn-save:active {
+  transform: scale(0.97);
+}
+.mgmt-btn-save:disabled {
+  opacity: 0.4;
+  cursor: default;
+  transform: none;
+}
+
+/* ── Feedback del resultado ── */
+.mgmt-feedback {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  animation: mgmtFadeIn 0.25s var(--ease);
+}
+.mgmt-feedback.ok {
+  background: var(--success-dim);
+  color: var(--success);
+  border: 1px solid color-mix(in srgb, var(--success) 22%, transparent);
+}
+.mgmt-feedback.err {
+  background: var(--danger-dim);
+  color: var(--danger);
+  border: 1px solid color-mix(in srgb, var(--danger) 22%, transparent);
+}
+@keyframes mgmtFadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Responsive ── */
+@media (max-width: 380px) {
+  .mgmt-seg-btn {
+    font-size: 10.5px;
+    padding: 8px 6px;
+  }
+}

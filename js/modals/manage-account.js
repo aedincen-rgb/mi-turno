@@ -781,283 +781,211 @@ function ManageAccountModal(props) {
   return h(
     'div',
     { className: 'modal-card' },
+
+    // ── Header profesional ──
     h(
       'div',
-      { style: { fontSize: 18, fontWeight: 800, color: 'var(--text)', marginBottom: 14 } },
-      'Gestionar cuenta'
+      { className: 'mgmt-header' },
+      h('div', { className: 'mgmt-header-icon' }, '⚙'),
+      h(
+        'div',
+        { className: 'mgmt-header-info' },
+        h('div', { className: 'mgmt-header-title' }, 'Gestionar cuenta'),
+        h(
+          'div',
+          { className: 'mgmt-header-sub' },
+          isPinOnly ? 'Modo local' : (session.email || 'Usuario')
+        ),
+        isPinOnly
+          ? h('span', { className: 'mgmt-header-badge' }, '📌 Sin nube')
+          : null
+      )
     ),
+
+    // ── Banner modo local ──
     isPinOnly
       ? h(
           'div',
-          {
-            style: {
-              background: 'var(--accent-dim)',
-              color: 'var(--accent)',
-              padding: '10px 12px',
-              borderRadius: 'var(--radius-sm)',
-              fontSize: 11.5,
-              marginBottom: 12,
-              lineHeight: 1.55,
-              border: '1px solid color-mix(in srgb, var(--accent) 22%, transparent)'
-            }
-          },
-          '📌 Modo local. Añade email y contraseña para sincronizar en nube.'
+          { className: 'mgmt-banner' },
+          h('span', { className: 'mgmt-banner-icon' }, '💡'),
+          h(
+            'span',
+            null,
+            'Registrate con email y contraseña para activar la sincronización en la nube y respaldo automático.'
+          )
         )
       : null,
 
+    // ── Segmented control (iOS style) ──
     h(
       'div',
-      {
-        style: {
-          display: 'flex',
-          gap: 6,
-          marginBottom: 16,
-          borderBottom: '1px solid var(--border)',
-          paddingBottom: 8
-        }
-      },
+      { className: 'mgmt-segmented' },
       h(
         'button',
         {
-          className: 'btn',
-          onClick: function () {
-            setTab(0);
-            setFeedback(null);
-          },
-          style: {
-            flex: 1,
-            padding: '8px 10px',
-            fontSize: 11.5,
-            borderRadius: 'var(--radius-sm)',
-            background: tab === 0 ? 'var(--text)' : 'transparent',
-            color: tab === 0 ? 'var(--surface)' : 'var(--muted)',
-            border: tab === 0 ? 'none' : '1px solid var(--border)'
-          }
+          className: 'mgmt-seg-btn' + (tab === 0 ? ' active' : ''),
+          onClick: function () { setTab(0); setFeedback(null); }
         },
         '🔐 PIN'
       ),
       h(
         'button',
         {
-          className: 'btn',
-          onClick: function () {
-            setTab(1);
-            setFeedback(null);
-          },
-          disabled: isPinOnly,
-          style: {
-            flex: 1,
-            padding: '8px 10px',
-            fontSize: 11.5,
-            borderRadius: 'var(--radius-sm)',
-            background: tab === 1 ? 'var(--text)' : 'transparent',
-            color: tab === 1 ? 'var(--surface)' : 'var(--muted)',
-            border: tab === 1 ? 'none' : '1px solid var(--border)',
-            opacity: isPinOnly ? 0.4 : 1
-          }
+          className: 'mgmt-seg-btn' + (tab === 1 ? ' active' : ''),
+          onClick: function () { setTab(1); setFeedback(null); },
+          disabled: isPinOnly
         },
         '✉ Email'
       ),
       h(
         'button',
         {
-          className: 'btn',
-          onClick: function () {
-            setTab(2);
-            setFeedback(null);
-          },
-          disabled: isPinOnly,
-          style: {
-            flex: 1,
-            padding: '8px 10px',
-            fontSize: 11.5,
-            borderRadius: 'var(--radius-sm)',
-            background: tab === 2 ? 'var(--text)' : 'transparent',
-            color: tab === 2 ? 'var(--surface)' : 'var(--muted)',
-            border: tab === 2 ? 'none' : '1px solid var(--border)',
-            opacity: isPinOnly ? 0.4 : 1
-          }
+          className: 'mgmt-seg-btn' + (tab === 2 ? ' active' : ''),
+          onClick: function () { setTab(2); setFeedback(null); },
+          disabled: isPinOnly
         },
         '🔑 Contraseña'
       )
     ),
 
+    // ── Tab: PIN ──
     tab === 0
       ? h(
           'div',
-          null,
-          h(
-            'div',
-            {
-              style: {
-                fontSize: 12,
-                color: 'var(--muted)',
-                marginBottom: 12,
-                lineHeight: 1.5,
-                background: 'var(--surface2)',
-                padding: '10px 12px',
-                borderRadius: 'var(--radius-sm)'
-              }
-            },
-            '🔒 ' +
-              (hasPassword
-                ? 'Confirma con contraseña y recibirás un código en tu email.'
-                : 'Confirma con tu PIN actual para cambiar.')
-          ),
+          { className: 'mgmt-field' },
+          h('div', { className: 'mgmt-field-label' }, '🔐 ', 'Cambiar PIN'),
+          storedPin
+            ? h(
+                'div',
+                { className: 'mgmt-field-current' },
+                h('span', { className: 'mgmt-field-current-icon' }, '🔒'),
+                'PIN actual: ',
+                h('span', { className: 'mgmt-field-current-val' }, '••••')
+              )
+            : h(
+                'div',
+                { className: 'mgmt-field-hint' },
+                'No tenés PIN configurado. Creá uno de 4 dígitos para acceso rápido.'
+              ),
           h('input', {
             type: 'tel',
             inputMode: 'numeric',
             maxLength: '4',
-            placeholder: '°°°°',
-            className: 'inp',
+            placeholder: 'Nuevo PIN',
+            className: 'mgmt-input pin-style',
             value: pinVal,
-            onChange: function (e) {
-              setPinVal(e.target.value.replace(/\D/g, ''));
-            },
-            style: {
-              marginBottom: feedback ? 8 : 12,
-              textAlign: 'center',
-              fontSize: 20,
-              letterSpacing: '8px'
-            }
+            onChange: function (e) { setPinVal(e.target.value.replace(/\D/g, '')); }
           }),
           feedback
-            ? h(
-                'div',
-                {
-                  style: {
-                    fontSize: 11.5,
-                    color: feedback[0] === '✓' ? 'var(--success)' : 'var(--danger)',
-                    background: feedback[0] === '✓' ? 'var(--success-dim)' : 'var(--danger-dim)',
-                    padding: '8px 12px',
-                    borderRadius: 'var(--radius-sm)',
-                    marginBottom: 12
-                  }
-                },
-                feedback
-              )
+            ? h('div', { className: 'mgmt-feedback ' + (feedback[0] === '✓' ? 'ok' : 'err') }, feedback)
             : null,
           h(
-            'button',
-            { className: 'btn btn-accent btn-block', onClick: savePIN, disabled: busy },
-            'Cambiar PIN'
-          )
-        )
-      : tab === 1
-        ? h(
             'div',
-            null,
-            h(
-              'div',
-              {
-                style: {
-                  fontSize: 12,
-                  color: 'var(--muted)',
-                  marginBottom: 12,
-                  lineHeight: 1.5,
-                  background: 'var(--surface2)',
-                  padding: '10px 12px',
-                  borderRadius: 'var(--radius-sm)'
-                }
-              },
-              '🔒 Confirma con contraseña y luego un código llegará a tu email.'
-            ),
-            h('input', {
-              type: 'email',
-              placeholder: 'Nuevo correo electrónico',
-              inputMode: 'email',
-              className: 'inp',
-              value: emailVal,
-              onChange: function (e) {
-                setEmailVal(e.target.value);
-              },
-              style: { marginBottom: feedback ? 8 : 12 }
-            }),
-            feedback
-              ? h(
-                  'div',
-                  {
-                    style: {
-                      fontSize: 11.5,
-                      color: feedback[0] === '✓' ? 'var(--success)' : 'var(--danger)',
-                      background: feedback[0] === '✓' ? 'var(--success-dim)' : 'var(--danger-dim)',
-                      padding: '8px 12px',
-                      borderRadius: 'var(--radius-sm)',
-                      marginBottom: 12
-                    }
-                  },
-                  feedback
-                )
-              : null,
+            { className: 'mgmt-actions' },
             h(
               'button',
               {
-                className: 'btn btn-accent btn-block',
+                className: 'mgmt-btn-save',
+                onClick: savePIN,
+                disabled: busy
+              },
+              busy ? h('span', { className: 'sp-in' }) : null,
+              busy ? 'Guardando…' : 'Guardar nuevo PIN'
+            )
+          )
+        )
+      : null,
+
+    // ── Tab: Email ──
+    tab === 1
+      ? h(
+          'div',
+          { className: 'mgmt-field' },
+          h('div', { className: 'mgmt-field-label' }, '✉ ', 'Cambiar correo electrónico'),
+          session.email
+            ? h(
+                'div',
+                { className: 'mgmt-field-current' },
+                h('span', { className: 'mgmt-field-current-icon' }, '📧'),
+                'Actual: ',
+                h('span', { className: 'mgmt-field-current-val', style: { letterSpacing: '0' } }, session.email)
+              )
+            : null,
+          h(
+            'div',
+            { className: 'mgmt-field-hint' },
+            'Se enviará un código de verificación a tu nuevo correo. El cambio se reflejará en todos tus dispositivos.'
+          ),
+          h('input', {
+            type: 'email',
+            inputMode: 'email',
+            placeholder: 'nuevo@correo.com',
+            className: 'mgmt-input',
+            value: emailVal,
+            onChange: function (e) { setEmailVal(e.target.value); },
+            autoComplete: 'off',
+            spellCheck: false
+          }),
+          feedback
+            ? h('div', { className: 'mgmt-feedback ' + (feedback[0] === '✓' ? 'ok' : 'err') }, feedback)
+            : null,
+          h(
+            'div',
+            { className: 'mgmt-actions' },
+            h(
+              'button',
+              {
+                className: 'mgmt-btn-save',
                 onClick: saveEmail,
                 disabled: busy || !CLOUD_MODE || isPinOnly
               },
-              'Cambiar Email'
+              busy ? h('span', { className: 'sp-in' }) : null,
+              busy ? 'Cambiando…' : 'Cambiar correo'
             )
           )
-        : tab === 2
-          ? h(
-              'div',
-              null,
-              h(
-                'div',
-                {
-                  style: {
-                    fontSize: 12,
-                    color: 'var(--muted)',
-                    marginBottom: 12,
-                    lineHeight: 1.5,
-                    background: 'var(--surface2)',
-                    padding: '10px 12px',
-                    borderRadius: 'var(--radius-sm)'
-                  }
-                },
-                '🔒 Confirma con contraseña y luego un código llegará a tu email.'
-              ),
-              h('input', {
-                type: 'password',
-                placeholder: 'Nueva contraseña (mín. 6 caracteres)',
-                autoComplete: 'new-password',
-                className: 'inp',
-                value: passVal,
-                onChange: function (e) {
-                  setPassVal(e.target.value);
-                },
-                style: { marginBottom: feedback ? 8 : 12 }
-              }),
-              feedback
-                ? h(
-                    'div',
-                    {
-                      style: {
-                        fontSize: 11.5,
-                        color: feedback[0] === '✓' ? 'var(--success)' : 'var(--danger)',
-                        background:
-                          feedback[0] === '✓' ? 'var(--success-dim)' : 'var(--danger-dim)',
-                        padding: '8px 12px',
-                        borderRadius: 'var(--radius-sm)',
-                        marginBottom: 12
-                      }
-                    },
-                    feedback
-                  )
-                : null,
-              h(
-                'button',
-                {
-                  className: 'btn btn-accent btn-block',
-                  onClick: savePassword,
-                  disabled: busy || !CLOUD_MODE || isPinOnly
-                },
-                'Cambiar Contraseña'
-              )
-            )
-          : null,
+        )
+      : null,
 
+    // ── Tab: Contraseña ──
+    tab === 2
+      ? h(
+          'div',
+          { className: 'mgmt-field' },
+          h('div', { className: 'mgmt-field-label' }, '🔑 ', 'Cambiar contraseña'),
+          h(
+            'div',
+            { className: 'mgmt-field-hint' },
+            'Mínimo 6 caracteres. Se requiere conexión a internet para este cambio.'
+          ),
+          h('input', {
+            type: 'password',
+            placeholder: 'Nueva contraseña (mín. 6 caracteres)',
+            autoComplete: 'new-password',
+            className: 'mgmt-input',
+            value: passVal,
+            onChange: function (e) { setPassVal(e.target.value); }
+          }),
+          feedback
+            ? h('div', { className: 'mgmt-feedback ' + (feedback[0] === '✓' ? 'ok' : 'err') }, feedback)
+            : null,
+          h(
+            'div',
+            { className: 'mgmt-actions' },
+            h(
+              'button',
+              {
+                className: 'mgmt-btn-save',
+                onClick: savePassword,
+                disabled: busy || !CLOUD_MODE || isPinOnly
+              },
+              busy ? h('span', { className: 'sp-in' }) : null,
+              busy ? 'Cambiando…' : 'Cambiar contraseña'
+            )
+          )
+        )
+      : null,
+
+    // ── Botón cerrar ──
     h(
       'button',
       {
@@ -1067,7 +995,7 @@ function ManageAccountModal(props) {
           resetVf();
           props.onClose();
         },
-        style: { marginTop: 12 }
+        style: { marginTop: 14 }
       },
       'Cerrar'
     )
