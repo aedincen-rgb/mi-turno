@@ -1,0 +1,353 @@
+/* ════════════════════════════════════════════════════════════════
+   MI TURNO · components/dashboard-enhance.css
+   iOS 26 Liquid Glass – análisis financiero ampliado
+   Anillo de progreso, línea acumulada, desglose, medidores
+   ════════════════════════════════════════════════════════════════ */
+
+/* ── Mini KPI strip (3 columnas) ── */
+.dash-mini-strip {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.dash-mini-stat {
+  position: relative;
+  border-radius: var(--radius-sm);
+  padding: 12px 10px 10px;
+  background: var(--glass-mid);
+  backdrop-filter: var(--blur-md);
+  -webkit-backdrop-filter: var(--blur-md);
+  border: 1px solid var(--glass-border-sm);
+  box-shadow:
+    inset 0 1px 0 var(--spec-top),
+    var(--sh-1);
+  text-align: center;
+}
+
+.dash-mini-stat-val {
+  font-family: var(--font-sans);
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  line-height: 1;
+  color: var(--text);
+  margin-bottom: 3px;
+}
+
+.dash-mini-stat-val.accent {
+  background: linear-gradient(135deg, #4166d4 0%, #5b86e5 50%, #7da8ff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+[data-theme='dark'] .dash-mini-stat-val.accent {
+  background: linear-gradient(135deg, #7da8ff 0%, #9fbeff 50%, #b3cdff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.dash-mini-stat-lbl {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  opacity: 0.78;
+}
+
+[data-theme='dark'] .dash-mini-stat {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+/* ── Anillo de progreso (salario base %) ── */
+.progress-ring-card {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 16px 18px;
+}
+
+.progress-ring-wrap {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  flex-shrink: 0;
+}
+
+.progress-ring-svg {
+  transform: rotate(-90deg);
+  width: 100px;
+  height: 100px;
+}
+
+.progress-ring-bg {
+  fill: none;
+  stroke: var(--bg-secondary);
+  stroke-width: 8;
+}
+
+.progress-ring-fg {
+  fill: none;
+  stroke: url(#prGrad);
+  stroke-width: 8;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 1.2s var(--ease);
+}
+
+.progress-ring-pct {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-sans);
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.6px;
+  background: linear-gradient(135deg, #4166d4 0%, #5b86e5 50%, #7da8ff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+[data-theme='dark'] .progress-ring-pct {
+  background: linear-gradient(135deg, #7da8ff 0%, #9fbeff 50%, #b3cdff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.progress-ring-label {
+  font-size: 10px;
+  color: var(--muted);
+  font-weight: 500;
+  margin-top: -2px;
+}
+
+.progress-ring-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.progress-ring-info-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.progress-ring-info-sub {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+/* ── Gráfica de línea (ingreso acumulado) ── */
+.line-chart-wrap {
+  height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 0 4px;
+}
+
+/* ── Desglose financiero ── */
+.breakdown-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.breakdown-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+}
+
+.breakdown-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 6px currentColor;
+}
+
+.breakdown-name {
+  flex: 1;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.breakdown-hrs {
+  font-size: 11px;
+  color: var(--muted);
+  margin-right: 8px;
+  white-space: nowrap;
+}
+
+.breakdown-cop {
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+/* ── Medidor de eficiencia (COP/hora) ── */
+.eff-gauge {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+}
+
+.eff-gauge-bar {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--bg-secondary);
+  overflow: hidden;
+}
+
+.eff-gauge-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #5ba88e, #52cc7c, #7da8ff);
+  transition: width 1s var(--ease);
+}
+
+.eff-gauge-val {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+/* ── Resumen financiero card ── */
+.fin-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.fin-summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+}
+
+.fin-summary-lbl {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.fin-summary-val {
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+.fin-summary-val.good {
+  color: #5ba88e;
+}
+
+.fin-summary-val.warn {
+  color: #f5a623;
+}
+
+.fin-summary-div {
+  height: 1px;
+  background: var(--border);
+  margin: 2px 0;
+}
+
+[data-theme='dark'] .fin-summary-div {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* ── WhatsApp share mejorado ── */
+.dash-share-preview {
+  margin-top: 10px;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  background: rgba(220, 248, 198, 0.35);
+  border: 1px solid rgba(37, 211, 102, 0.25);
+  font-size: 11px;
+  line-height: 1.5;
+  color: #075e54;
+  white-space: pre-line;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+[data-theme='dark'] .dash-share-preview {
+  background: rgba(37, 211, 102, 0.08);
+  border-color: rgba(37, 211, 102, 0.18);
+  color: #6fcf97;
+}
+
+/* ── Card header con icono ── */
+.card-ttl-ico {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.card-ttl-ico span {
+  font-size: 16px;
+}
+
+/* ── Leyenda del gráfico de barras ── */
+.bar-legend {
+  display: flex;
+  gap: 14px;
+  margin-top: 8px;
+  font-size: 10px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.bar-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.bar-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.bar-legend-dot.ld-fest {
+  background: #f5a623;
+}
+
+.bar-legend-dot.ld-noc {
+  background: #4f6bbf;
+}
+
+.bar-legend-dot.ld-reg {
+  background: #5b86e5;
+}
