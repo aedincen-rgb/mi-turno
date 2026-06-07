@@ -360,15 +360,16 @@ function aiEnhancedRespond(originalResponse, intent, topic, question, userContex
   aiRemember('ai', originalResponse.substring(0, 120), intent, topic, userContext);
 
   // 2. Expandir respuesta con más contexto y tips
-  var expanded = _aiExpandir(originalResponse, intent, userContext);
+  var expanded = originalResponse;
+  try { expanded = _aiExpandir(originalResponse, intent, userContext); } catch (_) {}
 
-  // 2.5. Análisis financiero profundo (ai-insights.js)
-  if (typeof aiInsightFull === 'function') {
-    var insightText = aiInsightFull(userContext, intent);
-    if (insightText) {
-      expanded += insightText;
+  // 2.5. Análisis financiero profundo
+  try {
+    if (typeof aiInsightFull === 'function') {
+      var insightText = aiInsightFull(userContext, intent);
+      if (insightText) expanded += insightText;
     }
-  }
+  } catch (_) {}
 
   // 2.6. Inteligencia proactiva: alertas y metas
   if (typeof aiProactive === 'function') {
@@ -381,44 +382,31 @@ function aiEnhancedRespond(originalResponse, intent, topic, question, userContex
   // 3. Enriquecer con acciones rápidas
   var enriched = aiEnrichResponse(expanded, intent, userContext);
 
-  // 4. Logros desbloqueados (solo en respuestas principales)
-  if (intent === 'total_ganado' || intent === 'hoy' || intent === 'stats' || intent === 'proyeccion') {
-    if (typeof aiCheckAchievements === 'function') {
-      var achievements = aiCheckAchievements(userContext);
-      var formatted = typeof aiFormatAchievements === 'function' ? aiFormatAchievements(achievements) : null;
-      if (formatted) {
-        enriched.text += formatted;
+  // 4. Logros desbloqueados
+  try {
+    if (intent === 'total_ganado' || intent === 'hoy' || intent === 'stats' || intent === 'proyeccion') {
+      if (typeof aiCheckAchievements === 'function') {
+        var achievements = aiCheckAchievements(userContext);
+        var formatted = typeof aiFormatAchievements === 'function' ? aiFormatAchievements(achievements) : null;
+        if (formatted) enriched.text += formatted;
       }
     }
-  }
+  } catch (_) {}
 
-  // 4.5. Inteligencia proactiva: alertas y metas
-  if (typeof aiPsychRespond === 'function') {
-    var psychText = aiPsychRespond(userContext, intent);
-    if (psychText) enriched.text += psychText;
-  }
-  if (typeof aiProactive === 'function') {
-    var proactiveText = aiProactive(userContext, intent);
-    if (proactiveText) {
-      enriched.text += proactiveText;
+  // 4.5. Psicología + Proactivo + Asesor (todos protegidos)
+  try { if (typeof aiPsychRespond === 'function') { var pt = aiPsychRespond(userContext, intent); if (pt) enriched.text += pt; } } catch (_) {}
+  try { if (typeof aiProactive === 'function') { var prt = aiProactive(userContext, intent); if (prt) enriched.text += prt; } } catch (_) {}
+  try {
+    if (typeof aiAdvisorRespond === 'function') {
+      var at = aiAdvisorRespond(intent, userContext, null);
+      if (at && intent !== 'total_ganado' && intent !== 'stats') enriched.text += '\n\n' + at;
     }
-  }
-
-  // 4.6. Asesor financiero (reemplaza ai-insights.js)
-  if (typeof aiAdvisorRespond === 'function') {
-    var advisorText = aiAdvisorRespond(intent, userContext, null);
-    if (advisorText) {
-      // Solo agregar si no es un informe completo (que ya es muy largo)
-      if (intent !== 'total_ganado' && intent !== 'stats') {
-        enriched.text += '\n\n' + advisorText;
-      }
-    }
-  }
+  } catch (_) {}
 
   // 5. Colombianizar
   var mood = { mood: 'neutral' };
   try { mood = typeof aiAnalyzeMood === 'function' ? aiAnalyzeMood(question, userContext) : { mood: 'neutral' }; } catch (_) {}
-  enriched.text = aiColombianizar(enriched.text, mood.mood);
+  try { enriched.text = aiColombianizar(enriched.text, mood.mood); } catch (_) {}
 
   return enriched;
 }
