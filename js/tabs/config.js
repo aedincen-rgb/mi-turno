@@ -145,6 +145,11 @@ function ConfigTabInner(props) {
   });
   var pname = pn[0],
     setPname = pn[1];
+  var pg = useState(function () {
+    return leer(dk(uid, 'gender'), null); // null | 'male' | 'female'
+  });
+  var gender = pg[0],
+    setGender = pg[1];
   var ne = useState(false);
   var editName = ne[0],
     setEditName = ne[1];
@@ -509,6 +514,44 @@ function ConfigTabInner(props) {
           : !editName && isGuest
             ? h('div', { className: 'ajustes-profile-email' }, 'Modo invitado')
             : null,
+
+        // ── Selector de género ──
+        !editName
+          ? h(
+              'div',
+              { className: 'ajustes-gender' },
+              h(
+                'button',
+                {
+                  className: 'ajustes-gender-btn' + (gender === 'male' ? ' active' : ''),
+                  onClick: function () {
+                    haptic();
+                    var newVal = gender === 'male' ? null : 'male';
+                    setGender(newVal);
+                    grabar(dk(uid, 'gender'), newVal);
+                  },
+                  'aria-label': 'Hombre' + (gender === 'male' ? ' (seleccionado)' : ''),
+                  'aria-pressed': gender === 'male'
+                },
+                '♂ Hombre'
+              ),
+              h(
+                'button',
+                {
+                  className: 'ajustes-gender-btn' + (gender === 'female' ? ' active' : ''),
+                  onClick: function () {
+                    haptic();
+                    var newVal = gender === 'female' ? null : 'female';
+                    setGender(newVal);
+                    grabar(dk(uid, 'gender'), newVal);
+                  },
+                  'aria-label': 'Mujer' + (gender === 'female' ? ' (seleccionado)' : ''),
+                  'aria-pressed': gender === 'female'
+                },
+                '♀ Mujer'
+              )
+            )
+          : null,
 
         // Estado de sincronización — tappable, muestra banner de conexión
         h(
