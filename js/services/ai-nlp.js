@@ -1,17 +1,21 @@
 // ════════════════════════════════════════════════════════════════
 //  MI TURNO · services/ai-nlp.js
-//  Motor NLP mejorado — v76
+//  Motor NLP mejorado — v169
 //  Comprensión de lenguaje natural en español colombiano.
 //  100% offline · ES5 · sin dependencias externas.
 //
 //  Capacidades:
 //    · Clasificación de intenciones por puntaje ponderado
 //    · Stemming español simplificado
-//    · Stop words + tokenización
+//    · Stop words + tokenización (respeta palabras de tiempo)
+//    · Preprocesador de frases conversacionales (quita muletillas)
+//    · Compound matching: dinero+tiempo, acción+objeto
+//    · Diccionario de sinónimos expandido (80+ entradas)
 //    · Similitud de Jaccard para matching difuso
 //    · Tolerancia a typos (Levenshtein para palabras cortas)
 //    · Estado conversacional multi-turno
 //    · Detección de tono emocional (empatía contextual)
+//    · Bonus por anclaje temporal (detecta ayer/hoy/semana/mes)
 // ════════════════════════════════════════════════════════════════
 
 // ─── STOP WORDS ESPAÑOL ───────────────────────────────────────
@@ -114,12 +118,9 @@ var AI_STOP = {
   aunque: 1,
   asi: 1,
   así: 1,
-  ahora: 1,
-  hoy: 1,
-  ayer: 1,
-  mañana: 1,
-  siempre: 1,
-  nunca: 1,
+  // NOTA: ahora, hoy, ayer, mañana, siempre, nunca NO son stop words.
+  // Son palabras de anclaje temporal críticas para entender
+  // preguntas como "cuanto dinero gane ayer" vs "cuanto gane".
   bueno: 1,
   buena: 1,
   mal: 1,
@@ -152,6 +153,80 @@ var AI_STOP = {
   al: 1
 };
 
+// ─── PREPROCESADOR CONVERSACIONAL ──────────────────────────────
+// Elimina muletillas y frases de cortesía que no aportan
+// significado a la intención real del usuario.
+// Ej: "dime cuanto dinero gane ayer" → "cuanto dinero gane ayer"
+// Ej: "quisiera saber como me fue hoy" → "como me fue hoy"
+var AI_PREFIX_PATTERNS = [
+  'dime ',
+  'dime cuanto ',
+  'decime ',
+  'decime cuanto ',
+  'di ',
+  'di cuanto ',
+  'quisiera saber ',
+  'quisiera saber cuanto ',
+  'quiero saber ',
+  'quiero saber cuanto ',
+  'necesito saber ',
+  'me preguntaba ',
+  'me preguntaba si ',
+  'me gustaria saber ',
+  'me gustaría saber ',
+  'podrias decirme ',
+  'podrías decirme ',
+  'podrias decirme cuanto ',
+  'podés decirme ',
+  'podes decirme ',
+  'podés decirme cuanto ',
+  'puedes decirme ',
+  'puedes decirme cuanto ',
+  'me dices ',
+  'me decis ',
+  'me puedes decir ',
+  'me podés decir ',
+  'me podrias decir ',
+  'me podrías decir ',
+  'averiguame ',
+  'averíguame ',
+  'consultame ',
+  'buscame ',
+  'chequeame ',
+  'fijate ',
+  'fijate cuanto ',
+  'mira ',
+  'mira cuanto ',
+  'mirá ',
+  'mirá cuanto ',
+  'decime porfa ',
+  'dime porfa ',
+  'dime porfi ',
+  'decime porfi ',
+  'porfa ',
+  'porfi ',
+  'por favor ',
+  'a ver ',
+  'a ver cuanto ',
+  'veamos ',
+  'cuentame ',
+  'cuéntame ',
+  'contame '
+];
+
+function aiPreprocess(text) {
+  var t = (text || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, ''); // quitar tildes para matching
+  for (var i = 0; i < AI_PREFIX_PATTERNS.length; i++) {
+    if (t.indexOf(AI_PREFIX_PATTERNS[i]) === 0) {
+      return t.slice(AI_PREFIX_PATTERNS[i].length);
+    }
+  }
+  return text; // sin cambios si no matchea
+}
+
 // ─── STEMMING ESPAÑOL SIMPLIFICADO ─────────────────────────────
 // Reduce palabras a su raíz aproximada para mejorar matching.
 // No es un stemmer completo (Porter), pero cubre los sufijos
@@ -179,9 +254,11 @@ function aiStem(w) {
 }
 
 // ─── TOKENIZACIÓN ──────────────────────────────────────────────
-// Convierte texto en array de stems, filtrando stop words
+// Convierte texto en array de stems, filtrando stop words.
+// Primero aplica el preprocesador para quitar muletillas.
 function aiTokenize(text) {
-  var raw = (text || '')
+  var clean = aiPreprocess(text);
+  var raw = clean
     .toLowerCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '') // quitar tildes
@@ -261,49 +338,124 @@ function aiFuzzyMatch(word, target) {
 }
 
 // ─── DICCIONARIO DE SINÓNIMOS ────────────────────────────────
-// Expande términos a su forma canónica para mejorar matching
+// Expande términos a su forma canónica para mejorar matching.
+// Incluye expresiones colombianas, jerga laboral y variaciones.
 var AI_SYNONYMS = {
+  // Dinero
   plata: 'dinero',
   billete: 'dinero',
   lucas: 'dinero',
   guita: 'dinero',
-  cobro: 'pago',
-  cobre: 'pago',
+  money: 'dinero',
+  cash: 'dinero',
+  efectivo: 'dinero',
+  pago: 'dinero',
+  cobro: 'dinero',
+  cobre: 'dinero',
+  pagaron: 'dinero',
+  cobraron: 'dinero',
+  gane: 'dinero',
+  gané: 'dinero',
+  ganancia: 'dinero',
+  ganancias: 'dinero',
+  ingreso: 'dinero',
+  ingresos: 'dinero',
+  devengado: 'dinero',
+  remuneracion: 'dinero',
+  remuneración: 'dinero',
+  // Salario
   sueldo: 'salario',
   nomina: 'salario',
+  nómina: 'salario',
+  basico: 'salario',
+  básico: 'salario',
+  mensual: 'salario',
+  fijo: 'salario',
+  // Trabajo
   laburo: 'trabajo',
   chamba: 'trabajo',
   camello: 'trabajo',
+  curro: 'trabajo',
+  brete: 'trabajo',
+  labor: 'trabajo',
+  empleo: 'trabajo',
+  // Turno / jornada
   jornada: 'turno',
+  dia: 'turno',
+  días: 'turno',
+  dias: 'turno',
+  guardia: 'turno',
+  guardias: 'turno',
+  // Descanso
   descanso: 'descansar',
+  descansar: 'descansar',
   pausa: 'descansar',
   reposo: 'descansar',
+  libre: 'descansar',
+  vacaciones: 'descansar',
+  // Fatiga
   cansado: 'fatiga',
   agotado: 'fatiga',
   reventado: 'fatiga',
   mamado: 'fatiga',
+  fundido: 'fatiga',
+  muerto: 'fatiga',
+  exhausto: 'fatiga',
+  estres: 'fatiga',
+  estresado: 'fatiga',
+  burnout: 'fatiga',
+  quemado: 'fatiga',
+  // Productividad
   rendir: 'productividad',
   rendimiento: 'productividad',
+  eficiencia: 'productividad',
+  eficaz: 'productividad',
+  // Fin de semana
   finde: 'fin de semana',
   findesemana: 'fin de semana',
   'finde semana': 'fin de semana',
+  'fin semana': 'fin de semana',
+  sabado: 'fin de semana',
+  domingo: 'fin de semana',
+  // Festivo
   feriado: 'festivo',
   festividad: 'festivo',
+  fest: 'festivo',
+  fiesta: 'festivo',
+  // Proyección
   proye: 'proyeccion',
+  proyección: 'proyeccion',
   proyecto: 'proyeccion',
   estimado: 'proyeccion',
+  estimacion: 'proyeccion',
+  estimación: 'proyeccion',
+  pronostico: 'proyeccion',
+  // Comparativa
   comparar: 'comparativa',
   comparacion: 'comparativa',
+  comparación: 'comparativa',
   diferencia: 'comparativa',
   vs: 'comparativa',
   versus: 'comparativa',
+  contra: 'comparativa',
+  cotejar: 'comparativa',
+  // Total / resumen
   resumen: 'total',
   balance: 'total',
   cuentas: 'total',
   numeros: 'total',
+  números: 'total',
+  cifras: 'total',
+  consolidado: 'total',
+  acumulado: 'total',
+  // Estadísticas
   estadisticas: 'stats',
+  estadísticas: 'stats',
   datos: 'stats',
   info: 'stats',
+  informacion: 'stats',
+  información: 'stats',
+  // Email
   envio: 'email',
   correo: 'email',
   mandar: 'email',
@@ -312,19 +464,78 @@ var AI_SYNONYMS = {
   jefe: 'email',
   empresa: 'email',
   admin: 'email',
+  enviar: 'email',
+  envia: 'email',
+  envío: 'email',
+  // Bienestar
   salud: 'bienestar',
   bien: 'bienestar',
   sano: 'bienestar',
+  tranquilo: 'bienestar',
+  // Consejo
   consejo: 'tip',
   recomendacion: 'tip',
+  recomendación: 'tip',
   sugerencia: 'tip',
   aconsejar: 'tip',
+  sugiero: 'tip',
+  // Ahorro
   ahorrar: 'ahorro',
+  ahorro: 'ahorro',
   meta: 'ahorro',
   objetivo: 'ahorro',
   llegar: 'ahorro',
   falta: 'ahorro',
-  'cuanto falta': 'ahorro'
+  'cuanto falta': 'ahorro',
+  // Horas
+  horas: 'horas',
+  hora: 'horas',
+  tiempo: 'horas',
+  duracion: 'horas',
+  duración: 'horas',
+  // Extra
+  extra: 'extra',
+  extras: 'extra',
+  sobretiempo: 'extra',
+  adicional: 'extra',
+  adicionales: 'extra',
+  // Nocturno
+  nocturna: 'nocturno',
+  nocturnas: 'nocturno',
+  noche: 'nocturno',
+  madrugada: 'nocturno',
+  // Ley
+  normativa: 'ley',
+  legislacion: 'ley',
+  legislación: 'ley',
+  codigo: 'ley',
+  código: 'ley',
+  articulo: 'ley',
+  artículo: 'ley',
+  legal: 'ley',
+  // Liquidación
+  liquidacion: 'liquidacion',
+  liquidación: 'liquidacion',
+  prestaciones: 'liquidacion',
+  cesantias: 'liquidacion',
+  cesantías: 'liquidacion',
+  prima: 'liquidacion',
+  // Preguntas
+  pregunta: 'pregunta',
+  consulta: 'pregunta',
+  duda: 'pregunta',
+  consultar: 'pregunta',
+  // Acciones
+  calcular: 'calcular',
+  calcula: 'calcular',
+  saca: 'calcular',
+  dame: 'calcular',
+  decime: 'calcular',
+  dime: 'calcular',
+  mostrar: 'calcular',
+  mostra: 'calcular',
+  enseñame: 'calcular',
+  ensename: 'calcular'
 };
 
 function aiExpandSynonym(w) {
@@ -426,7 +637,28 @@ var AI_INTENTS = [
       ['cuanto cobre', 3],
       ['balance', 2],
       ['resumen', 2],
-      ['mis numeros', 3]
+      ['mis numeros', 3],
+      // Compound: dinero + tiempo
+      ['cuanto gane ayer', 3],
+      ['cuanto gane hoy', 3],
+      ['cuanto dinero ayer', 3],
+      ['cuanto dinero hoy', 3],
+      ['cuanta plata ayer', 3],
+      ['cuanta plata hoy', 3],
+      ['cuanto cobro ayer', 3],
+      ['cuanto cobro hoy', 3],
+      ['dinero ayer', 2],
+      ['dinero hoy', 2],
+      ['plata ayer', 2],
+      ['plata hoy', 2],
+      ['gane ayer', 2],
+      ['gane hoy', 2],
+      ['cobre ayer', 2],
+      ['cobre hoy', 2],
+      ['cuanto llevo ayer', 3],
+      ['cuanto llevo hoy', 3],
+      ['como voy hoy', 2],
+      ['como voy ayer', 2]
     ]
   },
   {
@@ -437,7 +669,14 @@ var AI_INTENTS = [
       ['que tal hoy', 3],
       ['como me fue hoy', 3],
       ['cuanto hoy', 3],
-      ['dia de hoy', 3]
+      ['dia de hoy', 3],
+      ['hoy gane', 3],
+      ['hoy gané', 3],
+      ['hoy cobre', 3],
+      ['hoy cobré', 3],
+      ['resumen hoy', 3],
+      ['balance hoy', 3],
+      ['turnos hoy', 2]
     ]
   },
   {
@@ -447,7 +686,15 @@ var AI_INTENTS = [
       ['dia anterior', 3],
       ['como me fue ayer', 3],
       ['cuanto ayer', 3],
-      ['y ayer', 3]
+      ['y ayer', 3],
+      ['ayer gane', 3],
+      ['ayer gané', 3],
+      ['ayer cobre', 3],
+      ['ayer cobré', 3],
+      ['resumen ayer', 3],
+      ['balance ayer', 3],
+      ['turnos ayer', 2],
+      ['antier', 3]
     ]
   },
   {
@@ -461,7 +708,15 @@ var AI_INTENTS = [
       ['cuanto voy a ganar', 3],
       ['fin de mes', 2],
       ['cuanto al terminar', 3],
-      ['al final del mes', 3]
+      ['al final del mes', 3],
+      ['proyectame', 3],
+      ['proyecta', 3],
+      ['cuanto me hago', 3],
+      ['cuanto hare', 3],
+      ['cuanto haré', 3],
+      ['cuanto recibire', 3],
+      ['cuanto recibiré', 3],
+      ['cuanto me llega', 3]
     ]
   },
   {
@@ -472,7 +727,14 @@ var AI_INTENTS = [
       ['tiempo trabajado', 3],
       ['total horas', 3],
       ['cuanto tiempo', 2],
-      ['horas totales', 3]
+      ['horas totales', 3],
+      ['cuantas horas llevo', 3],
+      ['cuanto llevo trabajado', 3],
+      ['horas acumuladas', 3],
+      ['tiempo total', 2],
+      ['horas hoy', 3],
+      ['horas ayer', 3],
+      ['horas esta semana', 3]
     ]
   },
   {
@@ -484,7 +746,11 @@ var AI_INTENTS = [
       ['promedio diario', 3],
       ['cuanto gano por dia', 3],
       ['por turno', 2],
-      ['por dia', 2]
+      ['por dia', 2],
+      ['promedio por hora', 3],
+      ['cuanto gano en promedio', 3],
+      ['promedio de ingresos', 3],
+      ['promedio de ganancias', 3]
     ]
   },
 
@@ -907,6 +1173,26 @@ function aiClassify(text, convState, userContext) {
       score += topicBonus;
     }
 
+    // ── BONUS POR ANCLAJE TEMPORAL ──
+    // Si el texto contiene palabras de tiempo (ayer, hoy, mañana,
+    // semana, mes) y el intent es de tipo "dinero", se boostea.
+    // Esto resuelve: "cuanto dinero gane ayer" → intent ayer/hoy
+    // en vez de caer en total_ganado genérico.
+    var _raw = text.toLowerCase();
+    var _hasTimeWord =
+      _raw.indexOf('ayer') >= 0 || _raw.indexOf('antier') >= 0 ||
+      _raw.indexOf('hoy') >= 0 || _raw.indexOf('mañana') >= 0 ||
+      _raw.indexOf('semana') >= 0 || _raw.indexOf('finde') >= 0;
+    var _timeIntentIds = { hoy: 1, ayer: 1, comparativa_semana: 1 };
+    if (_hasTimeWord && _timeIntentIds[intent.id]) {
+      score += 4; // boost fuerte: si el usuario menciona tiempo, priorizar intents temporales
+    }
+    // Si hay palabra de mes y es intent de proyección o comparativa_mes
+    if ((_raw.indexOf('mes') >= 0 || _raw.indexOf('mensual') >= 0) &&
+        (intent.id === 'proyeccion' || intent.id === 'comparativa_mes')) {
+      score += 2;
+    }
+
     if (score > bestScore) {
       secondScore = bestScore;
       bestScore = score;
@@ -1288,5 +1574,29 @@ function aiDebugTokens(text) {
   return aiTokenize(text);
 }
 
+// Preprocesar (quitar muletillas) — expuesto para debug
+function aiDebugPreprocess(text) {
+  return aiPreprocess(text);
+}
+
+// ─── EXPORT ──────────────────────────────────────────────────
+// Exponer todas las funciones públicas como globales
+window.aiClassifyIntent = aiClassifyIntent;
+window.aiGetConversation = aiGetConversation;
+window.aiUpdateConversation = aiUpdateConversation;
+window.aiAnalyzeMood = aiAnalyzeMood;
+window.aiEmpatheticPrefix = aiEmpatheticPrefix;
+window.aiEmpatheticSuffix = aiEmpatheticSuffix;
+window.aiFallbackResponse = aiFallbackResponse;
+window.aiFollowUp = aiFollowUp;
+window.aiDebugTokens = aiDebugTokens;
+window.aiDebugPreprocess = aiDebugPreprocess;
+window.aiPreprocess = aiPreprocess;
+window.aiTokenize = aiTokenize;
+window.aiStem = aiStem;
+window.aiExpandSynonym = aiExpandSynonym;
+window.AI_SYNONYMS = AI_SYNONYMS;
+window.AI_STOP = AI_STOP;
+
 // ─── INICIALIZACIÓN ──────────────────────────────────────────
-console.log('[MT] ai-nlp.js cargado — NLP mejorado v76');
+console.log('[MT] ai-nlp.js cargado — NLP mejorado v169 (compound matching + time anchoring + 80+ sinónimos)');
