@@ -822,7 +822,7 @@ function AsistenteTab(props) {
       { className: 'asistente-composer' },
       h('textarea', {
         ref: inputRef,
-        className: 'asistente-input',
+        className: 'asistente-input' + (listening ? ' listening' : ''),
         'aria-label': 'Tu mensaje al asistente',
         placeholder: 'Escribe…',
         value: input,
@@ -927,17 +927,9 @@ function AsistenteTab(props) {
         )
       : null,
 
-    // ═══ VISUALIZADOR DE AUDIO ═══
-    listening
-      ? h(
-          'div',
-          { className: 'asistente-audio-viz' },
-          h('div', { className: 'asistente-audio-bar', style: { height: (20 + audioLevel * 60) + 'px', animationDelay: '0s' } }),
-          h('div', { className: 'asistente-audio-bar', style: { height: (20 + audioLevel * 80) + 'px', animationDelay: '0.1s' } }),
-          h('div', { className: 'asistente-audio-bar', style: { height: (20 + audioLevel * 90) + 'px', animationDelay: '0.2s' } }),
-          h('div', { className: 'asistente-audio-bar', style: { height: (20 + audioLevel * 70) + 'px', animationDelay: '0.15s' } }),
-          h('div', { className: 'asistente-audio-bar', style: { height: (20 + audioLevel * 50) + 'px', animationDelay: '0.05s' } })
-        )
+    // ═══ VISUALIZADOR DE AUDIO (sutil: solo un puntito en el input) ═══
+    handsFree && !listening
+      ? h('div', { className: 'asistente-handsfree-dot-active', 'aria-hidden': 'true' })
       : null,
 
     // ═══ Reanudar / nueva conversación ═══

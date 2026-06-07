@@ -1099,20 +1099,32 @@
   color: #34c759;
 }
 
-/* ── Visualizador de audio ── */
-.asistente-audio-viz {
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  gap: 3px;
-  height: 50px;
-  padding: 4px 0;
-  margin: 4px 0;
+/* ── Indicador sutil de escucha (borde animado en el input) ── */
+.asistente-input.listening {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim), 0 0 20px var(--accent-glow);
+  animation: inputListenPulse 2s ease-in-out infinite;
 }
-.asistente-audio-bar {
-  width: 5px;
-  border-radius: 3px;
-  background: linear-gradient(180deg, #ff3b30 0%, #ff6b6b 100%);
-  transition: height 0.12s ease;
-  min-height: 3px;
+@keyframes inputListenPulse {
+  0%, 100% { box-shadow: 0 0 0 3px var(--accent-dim), 0 0 20px var(--accent-glow); }
+  50% { box-shadow: 0 0 0 5px var(--accent-dim), 0 0 28px var(--accent-glow); }
+}
+
+/* ── Mini indicador de manos libres activo (puntito verde sutil) ── */
+.asistente-handsfree-dot-active {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #34c759;
+  opacity: 0.8;
+  animation: dotPulse 2s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 2;
+}
+@keyframes dotPulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
 }
