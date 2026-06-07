@@ -343,16 +343,16 @@ function AsistenteTab(props) {
     {
       id: 'logros',
       icono: '🏅',
-      titulo: 'Logros y comandos',
-      desc: 'Tus insignias, metas, simulaciones y tendencias',
+      titulo: 'Comandos rápidos',
+      desc: 'Insignias, metas, simulaciones y tendencias',
       preguntas: [
-        '/logros — Ver mis insignias desbloqueadas',
-        '/meta 2000000 — ¿Cuánto falta para 2 millones?',
-        '/simular 4h nocturnas — Simular horas extra',
-        '/tendencia — Últimos 3 meses comparados',
-        '/semana — Resumen de esta semana',
-        '/dia — Lo que gané hoy',
-        '/stats — Resumen exprés'
+        { label: 'Ver mis insignias', query: '/logros' },
+        { label: '¿Cuánto falta para 2 millones?', query: '/meta 2000000' },
+        { label: 'Simular 4 horas extra nocturnas', query: '/simular 4h nocturnas' },
+        { label: 'Comparar últimos 3 meses', query: '/tendencia' },
+        { label: 'Resumen de esta semana', query: '/semana' },
+        { label: 'Lo que gané hoy', query: '/dia' },
+        { label: 'Resumen exprés del mes', query: '/stats' }
       ]
     }
   ];
@@ -714,17 +714,25 @@ function AsistenteTab(props) {
               'div',
               { className: 'asistente-cat-body' },
               cat.preguntas.map(function (q, i) {
+                var label, query;
+                if (typeof q === 'object' && q.label && q.query) {
+                  label = q.label;
+                  query = q.query;
+                } else {
+                  label = q;
+                  query = q;
+                }
                 return h(
                   'button',
                   {
                     key: i,
                     className: 'asistente-cat-q',
-                    'aria-label': 'Preguntar: ' + q,
+                    'aria-label': 'Preguntar: ' + label,
                     onClick: function () {
-                      send(q);
+                      send(query);
                     }
                   },
-                  h('span', { className: 'asistente-cat-q-txt' }, q),
+                  h('span', { className: 'asistente-cat-q-txt' }, label),
                   h('span', { className: 'asistente-cat-q-arr' }, '→')
                 );
               })
