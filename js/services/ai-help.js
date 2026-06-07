@@ -162,7 +162,14 @@ var AI_HELP_GUIDES = [
       'foto perfil',
       'imagen perfil',
       'avatar',
-      'fotografia'
+      'fotografia',
+      'cambio foto',
+      'cambio mi foto',
+      'cambiar mi foto',
+      'cambiar imagen',
+      'cambiar avatar',
+      'editar foto',
+      'modificar foto'
     ],
     steps: [
       'Andá a la pestaña **Ajustes**.',
@@ -182,7 +189,13 @@ var AI_HELP_GUIDES = [
       'editar nombre',
       'apodo',
       'alias',
-      'como me llamo'
+      'como me llamo',
+      'cambio nombre',
+      'cambio mi nombre',
+      'cambiar mi nombre',
+      'modificar nombre',
+      'nombre perfil',
+      'nombre usuario'
     ],
     steps: [
       'Andá a la pestaña **Ajustes**.',
@@ -268,7 +281,16 @@ var AI_HELP_GUIDES = [
       'copia seguridad',
       'guardar datos',
       'no perder datos',
-      'salvar datos'
+      'salvar datos',
+      'respaldo',
+      'hacer backup',
+      'exportar datos',
+      'descargar datos',
+      'guardo mis datos',
+      'como guardo',
+      'respaldo mis datos',
+      'respaldar datos',
+      'copia de seguridad'
     ],
     steps: [
       'Andá a la pestaña **Ajustes** > sección **Datos**.',
@@ -477,7 +499,14 @@ var AI_HELP_GUIDES = [
       'descargar app',
       'play store',
       'app store',
-      'instalar app'
+      'instalar app',
+      'instalo app',
+      'instalo la app',
+      'como instalo',
+      'como descargar',
+      'instalar aplicacion',
+      'añadir inicio',
+      'anadir inicio'
     ],
     steps: [
       '**Android (Chrome):** Tocá los 3 puntitos ⋮ > "Añadir a pantalla de inicio".',
@@ -498,7 +527,15 @@ var AI_HELP_GUIDES = [
       'compartir',
       'enviar whatsapp',
       'mandar whatsapp',
-      'compartir analisis'
+      'compartir analisis',
+      'comparto whatsapp',
+      'comparto por whatsapp',
+      'compartir por whatsapp',
+      'como comparto',
+      'enviar analisis',
+      'mandar informe',
+      'compartir numeros',
+      'compartir informe'
     ],
     steps: [
       'Tocá la pestaña **Análisis**.',
@@ -521,7 +558,15 @@ var AI_HELP_GUIDES = [
       'periodo quincena',
       'q1 q2',
       'cuando empieza quincena',
-      'modificar quincena'
+      'modificar quincena',
+      'cambio quincena',
+      'modifico quincena',
+      'modifico dias quincena',
+      'cambio dias quincena',
+      'editar quincena',
+      'ajustar quincena',
+      'cambiar fechas quincena',
+      'configuro quincena'
     ],
     steps: [
       'Andá a la pestaña **Ajustes**.',
@@ -778,20 +823,29 @@ var AI_HELP_GUIDES = [
   }
 ];
 
-// ─── MOTOR DE BÚSQUEDA ────────────────────────────────────────
-// Busca la guía más relevante según la pregunta del usuario.
-// Usa puntaje por coincidencia de keywords.
+// ─── MOTOR DE BÚSQUEDA MEJORADO ──────────────────────────────
+// Usa tokenización con stemming (igual que ai-nlp.js) para que
+// "cambio" coincida con "cambiar", "instalo" con "instalar", etc.
+// También aplica el preprocesador para quitar muletillas.
 
 function aiHelpSearch(question) {
-  var q = (question || '')
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[¿¡?!,.]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
+  // Usar el tokenizador del NLP si está disponible (más robusto)
+  var tokens = [];
+  if (typeof aiTokenize === 'function') {
+    tokens = aiTokenize(question);
+  } else {
+    // Fallback simple
+    var q = (question || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[¿¡?!,.]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    tokens = q.split(' ').filter(function (w) { return w.length >= 2; });
+  }
 
-  if (!q) return null;
+  if (!tokens.length) return null;
 
   var best = null;
   var bestScore = 0;
@@ -802,8 +856,27 @@ function aiHelpSearch(question) {
 
     for (var j = 0; j < guide.keywords.length; j++) {
       var kw = guide.keywords[j].toLowerCase();
-      if (q.indexOf(kw) >= 0) {
-        score += kw.length; // keywords más largas pesan más
+      // También tokenizar la keyword para comparación por tokens
+      var kwTokens = kw.split(' ').filter(function (w) { return w.length >= 2; });
+      // Stem cada token de la keyword (usando la misma lógica del NLP)
+      var kwStems = [];
+      for (var k = 0; k < kwTokens.length; k++) {
+        var stemmed = typeof aiStem === 'function' ? aiStem(kwTokens[k]) : kwTokens[k];
+        kwStems.push(stemmed);
+      }
+      // Verificar cuántos tokens de la keyword aparecen en los tokens de la pregunta
+      var matchCount = 0;
+      for (var k = 0; k < kwStems.length; k++) {
+        for (var t = 0; t < tokens.length; t++) {
+          if (tokens[t] === kwStems[k]) {
+            matchCount++;
+            break;
+          }
+        }
+      }
+      // Puntaje: todas las palabras de la keyword deben estar presentes
+      if (matchCount === kwStems.length && kwStems.length > 0) {
+        score += kwStems.length * 3; // keywords más largas pesan más
       }
     }
 
