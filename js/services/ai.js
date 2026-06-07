@@ -741,8 +741,13 @@ function _aiDispatchNLP(intent, c, state, q, t) {
       '• Vacaciones: ' + fCOP(c.estVacaciones);
   }
 
-  // ── Ley ──
+  // ── Ley / Conocimiento laboral ──
   if (intent === 'ley') {
+    // PRIORIDAD: buscar en la base de conocimiento para respuestas específicas
+    if (typeof aiKnowledgeSearch === 'function') {
+      var kResp = aiKnowledgeSearch(q);
+      if (kResp) return kResp;
+    }
     var hsemActual = typeof getHSEM === 'function' ? getHSEM(c.ahora) : 44;
     return '⚖️ **Normativa laboral colombiana:**\n\n' +
       '• Jornada máxima actual: **' + hsemActual + 'h/semana** (Ley 2101/2021)\n' +
