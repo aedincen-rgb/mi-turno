@@ -50,6 +50,19 @@ function AsistenteTab(props) {
   var ar = useState(false);
   var autoRead = ar[0], setAutoRead = ar[1];
 
+  // Cleanup al desmontar el componente (evita memory leaks)
+  useEffect(function () {
+    return function () {
+      if (audioAnimRef.current) clearInterval(audioAnimRef.current);
+      if (recognitionRef.current) {
+        try { recognitionRef.current.abort(); } catch (_) {}
+      }
+      if (typeof speechSynthesis !== 'undefined') {
+        try { speechSynthesis.cancel(); } catch (_) {}
+      }
+    };
+  }, []);
+
   // Modo manos libres: conversación continua escuchar→responder→leer→repetir
   var hf = useState(false);
   var handsFree = hf[0], setHandsFree = hf[1];
@@ -149,7 +162,7 @@ function AsistenteTab(props) {
         setInput(transcript);
         setAudioLevel(0.8);
         if (e.results[0].isFinal) {
-          // Limpiar estado de escucha
+          // Limpiar estado de escucha (también libera _micBusy)
           _cleanupRecording();
           var finalText = transcript.trim();
           if (finalText) {
@@ -158,9 +171,7 @@ function AsistenteTab(props) {
               if (cmd.action === 'nav') {
                 if (props.onNavigate) props.onNavigate(cmd.tab, cmd.sub || null);
                 if (handsFree) {
-                  setTimeout(function () { _micBusy.current = false; startListening(); }, 1800);
-                } else {
-                  _micBusy.current = false;
+                  setTimeout(function () { startListening(); }, 1800);
                 }
                 return;
               }
@@ -171,18 +182,13 @@ function AsistenteTab(props) {
                   setTimeout(function () { setInput(''); }, 4000);
                 }
                 if (handsFree) {
-                  setTimeout(function () { _micBusy.current = false; startListening(); }, 1400);
-                } else {
-                  _micBusy.current = false;
+                  setTimeout(function () { startListening(); }, 1600);
                 }
                 return;
               }
             }
             // Enviar a la IA normalmente
             setTimeout(function () { send(finalText); }, 400);
-            _micBusy.current = false;
-          } else {
-            _micBusy.current = false;
           }
         }
       };
@@ -227,16 +233,20 @@ function AsistenteTab(props) {
     if (audioAnimRef.current) { clearInterval(audioAnimRef.current); audioAnimRef.current = null; }
     setAudioLevel(0);
     setListening(false);
+    _micBusy.current = false;
     if (recognitionRef.current) {
-      try { recognitionRef.current.stop(); } catch (_) {}
+      try { recognitionRef.current.abort(); } catch (_) {}
       recognitionRef.current = null;
     }
   }
 
   function stopListening() {
+    _micBusy.current = true; // bloquear reinicio inmediato por onend
     setHandsFree(false);
-    _micBusy.current = false;
     _cleanupRecording();
+    // _cleanupRecording ya pone _micBusy en false, pero mantenemos el bloqueo
+    // un poco más para que cualquier onend pendiente no reinicie
+    setTimeout(function () { _micBusy.current = false; }, 500);
   }
 
   // ── Helpers de voz ──

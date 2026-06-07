@@ -1,4 +1,4 @@
 {
-  "v": "v191",
-  "label": "Indicador manos libres sutil: puntito verde en el input + borde animado azul. Sin barras rojas invasivas."
+  "v": "v192",
+  "label": "Hotfix: 4 bugs críticos en manos libres — mutex, race condition, memory leak, unmount cleanup"
 }
