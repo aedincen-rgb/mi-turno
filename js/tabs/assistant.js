@@ -543,7 +543,7 @@ function AsistenteTab(props) {
                 try {
                   var rec = new SR();
                   rec.lang = 'es-CO';
-                  rec.interimResults = true;  // mostrar texto mientras se habla
+                  rec.interimResults = true;
                   rec.continuous = false;
                   rec.onresult = function (e) {
                     var transcript = '';
@@ -551,7 +551,6 @@ function AsistenteTab(props) {
                       transcript += e.results[i][0].transcript;
                     }
                     setInput(transcript);
-                    // Solo enviar cuando el resultado es final
                     if (e.results[0].isFinal) {
                       setListening(false);
                       var finalText = transcript.trim();
@@ -565,7 +564,6 @@ function AsistenteTab(props) {
                     if (e.error === 'not-allowed') {
                       alert('Permiso de micrófono denegado. Concedelo en Configuración del navegador.');
                     } else if (e.error !== 'no-speech') {
-                      // 'no-speech' es normal, no mostrar error
                       console.log('Mic error:', e.error);
                     }
                   };
@@ -579,17 +577,26 @@ function AsistenteTab(props) {
                 }
               },
               disabled: busy,
-              'aria-label': listening ? 'Escuchando...' : 'Hablar por voz',
-              title: listening ? 'Escuchando...' : 'Hablar'
+              'aria-label': listening ? 'Grabando… tocá para detener' : 'Hablar por voz',
+              title: listening ? 'Grabando… tocá para detener' : 'Hablar por voz'
             },
-            listening ? '●' : 
             h('svg', {
-              viewBox: '0 0 36 36',
-              width: 24, height: 24,
-              style: { transform: 'rotate(-90deg)' }
+              viewBox: '0 0 24 24',
+              width: 22, height: 22,
+              fill: 'none',
+              stroke: 'currentColor',
+              'stroke-width': 2,
+              'stroke-linecap': 'round',
+              'stroke-linejoin': 'round'
             },
-              h('circle', { cx: 18, cy: 18, r: 14, fill: 'none', stroke: 'rgba(91,134,229,0.2)', 'stroke-width': 3 }),
-              h('circle', { cx: 18, cy: 18, r: 14, fill: 'none', stroke: '#5b86e5', 'stroke-width': 3, strokeDasharray: 87.96, strokeDashoffset: 87.96, strokeLinecap: 'round' })
+              // Cuerpo del micrófono (rectángulo redondeado)
+              h('rect', { x: 9, y: 1, width: 6, height: 11, rx: 3 }),
+              // Línea inferior (base)
+              h('line', { x1: 12, y1: 17, x2: 12, y2: 22 }),
+              // Arco de la base
+              h('path', { d: 'M8 22h8' }),
+              // Ondas de sonido (arcos laterales) — solo cuando NO está escuchando
+              listening ? null : h('path', { d: 'M5 9a7 7 0 0 0 0 5M19 9a7 7 0 0 1 0 5' })
             )
           )
         : null

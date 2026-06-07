@@ -810,30 +810,99 @@
   border-color: var(--accent);
 }
 
-/* Micrófono con anillo (voz a texto) */
+/* ── Micrófono: voz a texto (SpeechRecognition) ── */
 .asistente-mic {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: var(--glass-mid);
+  backdrop-filter: var(--blur-sm);
+  -webkit-backdrop-filter: var(--blur-sm);
+  border: 1.5px solid var(--glass-border-sm);
+  color: var(--accent);
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: none;
-  background: transparent;
-  cursor: pointer;
   flex-shrink: 0;
-  transition: transform 0.2s;
+  cursor: pointer;
+  font-family: inherit;
+  transition:
+    background 0.25s var(--ease),
+    color 0.25s var(--ease),
+    border-color 0.25s var(--ease),
+    transform 0.18s var(--spring),
+    box-shadow 0.25s var(--ease);
   -webkit-tap-highlight-color: transparent;
+  box-shadow:
+    inset 0 1px 0 var(--spec-top),
+    0 4px 12px rgba(91,134,229,0.08);
 }
 
 .asistente-mic:active {
   transform: scale(0.92);
 }
 
-.asistente-mic.listening circle:last-child {
-  stroke: #ff3b30;
+.asistente-mic:disabled {
+  opacity: 0.4;
+  cursor: default;
+  transform: none;
 }
 
-.asistente-mic.listening circle:first-child {
-  stroke: rgba(255,59,48,0.2);
+/* ── Estado grabando: fondo rojo + pulso ── */
+.asistente-mic.listening {
+  background: #ff3b30;
+  border-color: #ff3b30;
+  color: #fff;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.3),
+    0 0 0 8px rgba(255,59,48,0.18),
+    0 8px 24px rgba(255,59,48,0.25);
+  animation: micPulse 1.6s ease-in-out infinite;
+}
+
+@keyframes micPulse {
+  0%, 100% {
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.3),
+      0 0 0 8px rgba(255,59,48,0.18),
+      0 8px 24px rgba(255,59,48,0.25);
+  }
+  50% {
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.3),
+      0 0 0 16px rgba(255,59,48,0.06),
+      0 12px 36px rgba(255,59,48,0.35);
+  }
+}
+
+[data-theme='dark'] .asistente-mic {
+  background: rgba(255,255,255,0.07);
+  border-color: rgba(255,255,255,0.1);
+  color: #7da8ff;
+}
+
+[data-theme='dark'] .asistente-mic.listening {
+  background: #ff453a;
+  border-color: #ff453a;
+  color: #fff;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.25),
+    0 0 0 8px rgba(255,69,58,0.15),
+    0 8px 24px rgba(255,69,58,0.3);
+  animation-name: micPulseDark;
+}
+
+@keyframes micPulseDark {
+  0%, 100% {
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.25),
+      0 0 0 8px rgba(255,69,58,0.15),
+      0 8px 24px rgba(255,69,58,0.3);
+  }
+  50% {
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.25),
+      0 0 0 18px rgba(255,69,58,0.04),
+      0 14px 38px rgba(255,69,58,0.4);
+  }
 }
