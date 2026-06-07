@@ -339,6 +339,21 @@ function AsistenteTab(props) {
         '¿Cómo comparto por WhatsApp?',
         '¿Cómo respaldo mis datos?'
       ]
+    },
+    {
+      id: 'logros',
+      icono: '🏅',
+      titulo: 'Logros',
+      desc: 'Tus rachas, récords e hitos',
+      preguntas: [
+        '/logros',
+        '/meta 2000000',
+        '/simular 4h nocturnas',
+        '/tendencia',
+        '/semana',
+        '/dia',
+        '/stats'
+      ]
     }
   ];
 

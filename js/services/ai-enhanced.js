@@ -365,7 +365,18 @@ function aiEnhancedRespond(originalResponse, intent, topic, question, userContex
   // 3. Enriquecer con acciones rápidas
   var enriched = aiEnrichResponse(expanded, intent, userContext);
 
-  // 4. Colombianizar
+  // 4. Logros desbloqueados (solo en respuestas principales)
+  if (intent === 'total_ganado' || intent === 'hoy' || intent === 'stats' || intent === 'proyeccion') {
+    if (typeof aiCheckAchievements === 'function') {
+      var achievements = aiCheckAchievements(userContext);
+      var formatted = typeof aiFormatAchievements === 'function' ? aiFormatAchievements(achievements) : null;
+      if (formatted) {
+        enriched.text += formatted;
+      }
+    }
+  }
+
+  // 5. Colombianizar
   var mood = typeof aiAnalyzeMood === 'function' ? aiAnalyzeMood(question, userContext) : { mood: 'neutral' };
   enriched.text = aiColombianizar(enriched.text, mood.mood);
 

@@ -372,6 +372,21 @@ function buildContext(state) {
   // ── Días hábiles restantes (no domingos ni festivos del calendario laboral, contando todos) ──
   var diasRestantes = diasMes - diaActual;
 
+  // ── Campos para sistema de logros ──
+  var festDiasCount = festTrab.length;
+  var hoyEsRecord = false;
+  if (mejor && dias.length > 0) {
+    var hoyKey = ahora.getFullYear() + '-' +
+      String(ahora.getMonth() + 1).padStart(2, '0') +
+      String(ahora.getDate()).padStart(2, '0');
+    hoyEsRecord = mejor.fecha === hoyKey;
+  }
+  var totalTurnosVida = (state.turnosAll || state.turnos || []).length + (state.calc && state.calc.totalMins > 0 ? 1 : 0);
+  // si hay activo, no contarlo doble
+  if (state.turnos && state.turnos.length > 0 && state.activo) {
+    // asumimos que el activo NO está en turnos (por convención)
+  }
+
   return {
     // Tiempo
     // 📚 Diccionario para Programar (Base de Conocimiento Admin)
@@ -517,7 +532,12 @@ function buildContext(state) {
     deducciones: deducciones,
     sueldoNeto: sueldoNeto,
     burnout: alertaFatiga,
-    hrsSemanales: hrsSemanales
+    hrsSemanales: hrsSemanales,
+    // Logros
+    festDiasCount: festDiasCount,
+    hoyEsRecord: hoyEsRecord,
+    totalTurnosVida: totalTurnosVida,
+    salario: salario
   };
 }
 
@@ -943,7 +963,7 @@ function aiAnswer(question, state) {
 
   // ── SLASH COMMANDS ──
   if (q === '/ayuda' || q === '/help' || q === '/?') {
-    return '**Comandos disponibles:**\n• /ayuda · esta lista\n• /stats · resumen rápido\n• /liquidar · prestaciones y neto\n• /ley · normativa laboral Col.\n• /ahorro 1000000 · ¿cuánto debo trabajar?\n• /salud · bienestar';
+    return '**Comandos disponibles:**\n• /ayuda · esta lista\n• /stats · resumen rápido\n• /logros · tus logros desbloqueados\n• /meta 2500000 · ¿cuánto falta para X?\n• /simular 4h nocturnas · escenario hipotético\n• /tendencia · análisis de últimos meses\n• /liquidar · prestaciones y neto\n• /ley · normativa laboral Col.\n• /salud · bienestar y fatiga\n• /semana · resumen de la semana\n• /dia · resumen de hoy';
   }
   if (q === '/capacidades' || q === '/skills') {
     return '**Capacidades Potenciadas:**\n\n💰 **Finanzas**\n• Sueldo Neto (menos salud/pensión)\n• Liquidación Proporcional\n\n⚖️ **Legal**\n• Ley 2101 (Reducción de jornada)\n• Auxilio de Transporte y Recargos\n\n🧠 **Salud**\n• Análisis de burnout y descanso';
@@ -1014,6 +1034,116 @@ function aiAnswer(question, state) {
       '\n• Proyección: ' +
       fCOP(c.proy)
     );
+  }
+
+  // ── /LOGROS ──
+  if (q === '/logros') {
+    if (typeof aiListAllAchievements === 'function') {
+      return aiListAllAchievements(c);
+    }
+    return '🏅 Sistema de logros no disponible.';
+  }
+
+  // ── /META ──
+  if (q.indexOf('/meta') === 0 || _aiHas(t, 'meta', 'cuanto necesito para', 'cuanto debo trabajar para')) {
+    var metaVal = _aiNum(t);
+    if (!metaVal && q.indexOf('/meta') === 0) {
+      var metaParts = q.split(' ');
+      if (metaParts.length > 1) metaVal = parseFloat(metaParts[1].replace(/[^0-9]/g, ''));
+    }
+    if (!metaVal || metaVal <= 0) {
+      return '💡 Usá **/meta 2500000** para calcular cuánto te falta. También podés escribir "¿cuánto necesito para llegar a 2 millones?"';
+    }
+    var falta = Math.max(0, metaVal - c.totalCOP);
+    var horasFaltan = c.copPorHoraReal > 0 ? falta / c.copPorHoraReal : 0;
+    var diasFaltan = c.prom > 0 ? Math.ceil(falta / c.prom) : 0;
+    var resp = '🎯 **Meta: ' + fCOP(metaVal) + '**\n\n';
+    resp += '• Llevás: ' + fCOP(c.totalCOP) + ' (' + c.pctSalario.toFixed(1) + '% de tu salario base)\n';
+    resp += '• Te faltan: ' + fCOP(falta) + '\n';
+    resp += '• Necesitás ≈ ' + horasFaltan.toFixed(1) + ' horas más (≈ ' + fCOP(c.copPorHoraReal) + '/h)\n';
+    resp += '• A tu ritmo actual (' + fCOP(c.prom) + '/día), te tomaría unos **' + diasFaltan + ' días**\n';
+    if (c.diasRestantes > 0) {
+      var diarioNecesario = falta / c.diasRestantes;
+      resp += '• Quedan ' + c.diasRestantes + ' días del mes → necesitás ' + fCOP(diarioNecesario) + '/día para llegar\n';
+    }
+    resp += '\n💡 Escribí **/simular** para probar escenarios distintos.';
+    return resp;
+  }
+
+  // ── /SIMULAR ──
+  if (q.indexOf('/simular') === 0 || (_aiHas(t, 'simular') && _aiNum(t) !== null)) {
+    var numHoras = _aiNum(t);
+    if (!numHoras && q.indexOf('/simular') === 0) {
+      var simParts = q.split(' ');
+      for (var si = 0; si < simParts.length; si++) {
+        var n = parseFloat(simParts[si].replace(/[^0-9.]/g, ''));
+        if (!isNaN(n) && n > 0) { numHoras = n; break; }
+      }
+    }
+    if (!numHoras || numHoras <= 0) {
+      return '💡 Usá **/simular 4h** o **/simular 4h nocturnas** para calcular un escenario.\n\nEjemplos:\n• "/simular 4h" → 4 horas diurnas extra\n• "/simular 4h nocturnas" → 4 horas extra de noche';
+    }
+    var esNocturno = _aiHas(t, 'nocturn', 'noche', 'noct');
+    var factor = esNocturno ? 1.75 : 1.25; // extra diurna 25% o extra nocturna 75%
+    var extraEstimado = numHoras * c.vh * factor;
+    var nuevoTotal = c.totalCOP + extraEstimado;
+    var respSim = '🔮 **Simulación: +' + numHoras + 'h' + (esNocturno ? ' nocturnas' : ' diurnas') + '**\n\n';
+    respSim += '• Valor hora base: ' + fCOP(c.vh) + '\n';
+    respSim += '• Factor recargo: ' + (factor * 100).toFixed(0) + '%\n';
+    respSim += '• Extra estimado: ≈ ' + fCOP(extraEstimado) + '\n';
+    respSim += '• Nuevo total: ≈ ' + fCOP(nuevoTotal) + ' (' + ((nuevoTotal / c.salario) * 100).toFixed(1) + '% del salario)\n';
+    respSim += '\n💡 Probá también **/meta ' + Math.round(nuevoTotal / 100000) * 100000 + '** para ver si llegás.';
+    return respSim;
+  }
+
+  // ── /TENDENCIA ──
+  if (q === '/tendencia' || _aiHas(t, 'tendencia', 'evolucion', 'como voy vs antes', 'historico')) {
+    // Buscar datos de meses anteriores en los turnos
+    var ahoraMes = c.ahora.getMonth();
+    var ahoraAno = c.ahora.getFullYear();
+    var mesesNombres = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+    var mesesData = [];
+    for (var mi = 0; mi < 3; mi++) {
+      var mIdx = ahoraMes - mi;
+      var aIdx = ahoraAno;
+      if (mIdx < 0) { mIdx += 12; aIdx--; }
+      var iniM = new Date(aIdx, mIdx, 1);
+      var finM = new Date(aIdx, mIdx + 1, 0);
+      var turnosM = (state.turnosAll || state.turnos || []).filter(function (t) {
+        var d = new Date(t.inicio);
+        return d >= iniM && d < finM && t.fin;
+      });
+      if (turnosM.length === 0 && mi > 0) continue;
+      var calcM = mi === 0 ? { totalMins: c.totalMins, totalCOP: c.totalCOP } : doCalc(turnosM, null, finM, vh);
+      var diasM = mi === 0 ? c.diasTrab : calcPorDia(turnosM, vh).length;
+      mesesData.push({ label: mesesNombres[mIdx], cop: Math.round(calcM.totalCOP), mins: Math.round(calcM.totalMins), dias: diasM });
+    }
+    if (mesesData.length < 2) {
+      return '📊 Necesito al menos 2 meses de datos para mostrar una tendencia. ¡Seguí trabajando! 💪';
+    }
+    var respTen = '📈 **Tendencia**\n\n';
+    for (var ti = 0; ti < mesesData.length; ti++) {
+      var flecha = ti === 0 ? '📍 ' : (mesesData[ti].cop > mesesData[ti - 1].cop ? '📈 ' : '📉 ');
+      respTen += flecha + mesesData[ti].label + ': ' + fCOP(mesesData[ti].cop) + ' · ' + fDur(mesesData[ti].mins) + ' · ' + mesesData[ti].dias + ' días\n';
+    }
+    if (mesesData.length >= 2) {
+      var dif = mesesData[0].cop - mesesData[1].cop;
+      var pctCambio = mesesData[1].cop > 0 ? ((dif / mesesData[1].cop) * 100) : 0;
+      respTen += '\n' + (dif >= 0 ? '📈 ' : '📉 ') + 'vs mes pasado: ' + (dif >= 0 ? '+' : '') + fCOP(Math.abs(dif)) + ' (' + (pctCambio >= 0 ? '+' : '') + pctCambio.toFixed(1) + '%)';
+    }
+    return respTen;
+  }
+
+  // ── /SEMANA ──
+  if (q === '/semana') {
+    return '📅 **Esta semana:** ' + fCOP(c.totalCOPSemana) + ' en ' + fDur(c.totalMinsSemana) + ' · ' + c.diasSemanaCount + ' días.\n\n' +
+      '💡 **/tendencia** para ver la evolución de los últimos meses.';
+  }
+
+  // ── /DIA ──
+  if (q === '/dia') {
+    if (c.turnosHoy === 0) return 'Hoy no registraste turnos todavía. ¿Arrancamos? 🚀';
+    return '📅 **Hoy:** ' + fCOP(c.copHoy) + ' en ' + fDur(c.minsHoy) + ' · ' + c.turnosHoy + ' turno' + (c.turnosHoy !== 1 ? 's' : '') + '.';
   }
 
   // ── INTENT: SALUD / FATIGA ──
