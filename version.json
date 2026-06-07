@@ -1,4 +1,4 @@
 {
-  "v": "v173",
-  "label": "Lenguaje adaptativo por género: vocabulario femenino/masculino/neutro en toda la app"
+  "v": "v174",
+  "label": "Fix: gender-lang.js cargado antes de ai-enhanced.js + getters robustecidos"
 }
