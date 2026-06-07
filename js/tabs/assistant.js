@@ -638,7 +638,7 @@ function AsistenteTab(props) {
         ref: inputRef,
         className: 'asistente-input',
         'aria-label': 'Tu mensaje al asistente',
-        placeholder: tieneConversacion ? 'Seguí preguntando…' : 'O escribime directamente…',
+        placeholder: 'Escribe…',
         value: input,
         onChange: function (e) { setInput(e.target.value); },
         onKeyDown: function (e) {
