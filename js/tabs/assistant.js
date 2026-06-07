@@ -72,7 +72,10 @@ function AsistenteTab(props) {
           setAutoRead: setAutoRead,
           onNavigate: props.onNavigate,
           onStartTurno: props.onStartTurno,
-          onStopTurno: props.onStopTurno
+          onStopTurno: props.onStopTurno,
+          turnos: props.turnos,
+          calc: props.calc,
+          salario: props.salario
         };
         var result = voiceExecute(cmd, ctx);
         if (result && result.type === 'ask') {
@@ -97,15 +100,6 @@ function AsistenteTab(props) {
         }
         if (result && result.type === 'navigate') {
           return { action: 'nav', tab: result.tab, sub: result.sub };
-        }
-        if (result && result.type === 'export') {
-          // Ejecutar exportación con los datos actuales
-          if (result.format === 'pdf' && typeof exportPDF === 'function') {
-            setTimeout(function () { exportPDF(props.turnos, props.calc, props.salario); }, 300);
-          } else if (result.format === 'excel' && typeof exportExcel === 'function') {
-            setTimeout(function () { exportExcel(props.turnos, props.calc, props.salario); }, 300);
-          }
-          return { action: 'local' };
         }
         return null;
       }

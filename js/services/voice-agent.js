@@ -143,23 +143,92 @@ var VOICE_COMMANDS = [
     id: 'export_pdf',
     patterns: ['exportar pdf', 'descargar pdf', 'bajar pdf', 'generar pdf', 'crear pdf', 'exportar reporte pdf', 'informe pdf', 'guardar como pdf'],
     action: 'function',
-    fn: function () {
-      if (typeof exportPDF === 'function') {
-        // Necesita turnos y calc — se pasan desde el caller
-        return { type: 'export', format: 'pdf' };
+    fn: function (ctx) {
+      if (!ctx || !ctx.turnos || !ctx.turnos.length) return { type: 'error', msg: 'No hay turnos para exportar. Registrá algunos primero.' };
+      if (!window.jspdf) return { type: 'error', msg: 'Librería PDF no disponible. Recargá la app.' };
+      try {
+        var jsPDF = window.jspdf.jsPDF;
+        var doc = new jsPDF();
+        var ahora = new Date();
+        var mes = ahora.toLocaleDateString('es-CO', { month: 'long', year: 'numeric' });
+        var calc = ctx.calc || { totalCOP: 0, totalMins: 0, bd: {} };
+        var sal = ctx.salario || 0;
+
+        doc.setFontSize(18);
+        doc.text('Mi Turno · Reporte', 14, 20);
+        doc.setFontSize(10);
+        doc.setTextColor(120);
+        doc.text('Periodo: ' + mes, 14, 27);
+        doc.text('Generado: ' + ahora.toLocaleString('es-CO'), 14, 32);
+        doc.setFontSize(14);
+        doc.setTextColor(40);
+        doc.text('Resumen del mes', 14, 44);
+        doc.setFontSize(10);
+        doc.setTextColor(80);
+        doc.text('Total: ' + (typeof fCOP === 'function' ? fCOP(calc.totalCOP) : '$' + calc.totalCOP), 14, 52);
+        doc.text('Horas: ' + (typeof fDur === 'function' ? fDur(calc.totalMins) : (calc.totalMins / 60).toFixed(1) + 'h'), 14, 58);
+        if (sal > 0) {
+          doc.text('Salario: ' + (typeof fCOP === 'function' ? fCOP(sal) : '$' + sal) + ' · Avance: ' + ((calc.totalCOP / sal) * 100).toFixed(1) + '%', 14, 64);
+        }
+
+        var bd = calc.bd || {};
+        var rows = [];
+        var keys = Object.keys(bd);
+        for (var k = 0; k < keys.length; k++) {
+          if (bd[keys[k]].mins > 0) {
+            var rc = (typeof RC !== 'undefined' && RC[keys[k]]) ? RC[keys[k]] : { label: keys[k], factor: 1 };
+            rows.push([rc.label, typeof fDur === 'function' ? fDur(bd[keys[k]].mins) : '', 'x' + rc.factor.toFixed(2), typeof fCOP === 'function' ? fCOP(bd[keys[k]].cop) : '']);
+          }
+        }
+        if (rows.length > 0 && typeof doc.autoTable === 'function') {
+          doc.autoTable({
+            startY: 72,
+            head: [['Tipo', 'Horas', 'Factor', 'Pago']],
+            body: rows,
+            headStyles: { fillColor: [91, 134, 229], textColor: [255, 255, 255], fontSize: 10 },
+            bodyStyles: { fontSize: 9 },
+            theme: 'striped'
+          });
+        }
+
+        var filename = 'mi-turno-' + ahora.toISOString().slice(0, 10) + '.pdf';
+        doc.save(filename);
+        return { type: 'success', msg: '📄 PDF descargado: ' + filename };
+      } catch (e) {
+        return { type: 'error', msg: 'Error al generar PDF. Probá desde Historial > Exportar.' };
       }
-      return { type: 'error', msg: 'Exportación PDF no disponible' };
     }
   },
   {
     id: 'export_excel',
     patterns: ['exportar excel', 'descargar excel', 'bajar excel', 'generar excel', 'crear excel', 'exportar reporte excel', 'informe excel', 'guardar como excel', 'hoja de cálculo', 'hoja de calculo'],
     action: 'function',
-    fn: function () {
-      if (typeof exportExcel === 'function') {
-        return { type: 'export', format: 'excel' };
+    fn: function (ctx) {
+      if (!ctx || !ctx.turnos || !ctx.turnos.length) return { type: 'error', msg: 'No hay turnos para exportar. Registrá algunos primero.' };
+      if (!window.XLSX) return { type: 'error', msg: 'Librería Excel no disponible. Recargá la app.' };
+      try {
+        var turnos = ctx.turnos || [];
+        var ahora = new Date();
+        var wb = window.XLSX.utils.book_new();
+        var detalle = [];
+        for (var i = 0; i < turnos.length; i++) {
+          var t = turnos[i];
+          var ini = new Date(t.inicio), fin = new Date(t.fin);
+          detalle.push({
+            Fecha: ini.toLocaleDateString('es-CO'),
+            Entrada: ini.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }),
+            Salida: fin.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }),
+            Duracion: typeof fDur === 'function' ? fDur(Math.round((fin - ini) / 60000)) : '',
+            Horas: Number(((fin - ini) / 3600000).toFixed(2))
+          });
+        }
+        window.XLSX.utils.book_append_sheet(wb, window.XLSX.utils.json_to_sheet(detalle), 'Turnos');
+        var filename = 'mi-turno-' + ahora.toISOString().slice(0, 10) + '.xlsx';
+        window.XLSX.writeFile(wb, filename);
+        return { type: 'success', msg: '📊 Excel descargado: ' + filename };
+      } catch (e) {
+        return { type: 'error', msg: 'Error al generar Excel. Probá desde Historial > Exportar.' };
       }
-      return { type: 'error', msg: 'Exportación Excel no disponible' };
     }
   },
   {

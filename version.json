@@ -1,4 +1,4 @@
 {
-  "v": "v186",
-  "label": "Agente de voz completo: +30 comandos, exportación, navegación, configuración por voz"
+  "v": "v188",
+  "label": "Fix: exportación por voz ahora genera PDF/Excel directo con validación. Sin alert() ni diálogos intermedios."
 }
