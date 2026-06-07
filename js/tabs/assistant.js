@@ -343,16 +343,16 @@ function AsistenteTab(props) {
     {
       id: 'logros',
       icono: '🏅',
-      titulo: 'Logros',
-      desc: 'Tus rachas, récords e hitos',
+      titulo: 'Logros y comandos',
+      desc: 'Tus insignias, metas, simulaciones y tendencias',
       preguntas: [
-        '/logros',
-        '/meta 2000000',
-        '/simular 4h nocturnas',
-        '/tendencia',
-        '/semana',
-        '/dia',
-        '/stats'
+        '/logros — Ver mis insignias desbloqueadas',
+        '/meta 2000000 — ¿Cuánto falta para 2 millones?',
+        '/simular 4h nocturnas — Simular horas extra',
+        '/tendencia — Últimos 3 meses comparados',
+        '/semana — Resumen de esta semana',
+        '/dia — Lo que gané hoy',
+        '/stats — Resumen exprés'
       ]
     }
   ];

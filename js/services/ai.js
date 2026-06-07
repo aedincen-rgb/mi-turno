@@ -963,7 +963,18 @@ function aiAnswer(question, state) {
 
   // ── SLASH COMMANDS ──
   if (q === '/ayuda' || q === '/help' || q === '/?') {
-    return '**Comandos disponibles:**\n• /ayuda · esta lista\n• /stats · resumen rápido\n• /logros · tus logros desbloqueados\n• /meta 2500000 · ¿cuánto falta para X?\n• /simular 4h nocturnas · escenario hipotético\n• /tendencia · análisis de últimos meses\n• /liquidar · prestaciones y neto\n• /ley · normativa laboral Col.\n• /salud · bienestar y fatiga\n• /semana · resumen de la semana\n• /dia · resumen de hoy';
+    return '⌨️ **Comandos rápidos**\n\n' +
+      '• **/stats** — Resumen exprés: plata, horas y proyección en 1 línea\n' +
+      '• **/logros** — Tus insignias desbloqueadas (rachas, récords, hitos)\n' +
+      '• **/meta 2500000** — ¿Cuánto te falta para llegar a X pesos?\n' +
+      '• **/simular 4h** — ¿Cuánto ganarías con X horas extra? (añadí "nocturnas" para simular de noche)\n' +
+      '• **/tendencia** — Comparativa de tus últimos 3 meses\n' +
+      '• **/semana** — Resumen de cuánto llevás esta semana\n' +
+      '• **/dia** — Lo que ganaste hoy\n' +
+      '• **/liquidar** — Prestaciones, descuentos y sueldo neto estimado\n' +
+      '• **/ley** — Info de la Ley 2101, jornada máxima y salario mínimo\n' +
+      '• **/salud** — Análisis de fatiga y ritmo de trabajo\n\n' +
+      '💡 También podés escribir en lenguaje natural: "¿cuánto gané ayer?", "proyección al cierre", "¿cómo cambio mi foto?"';
   }
   if (q === '/capacidades' || q === '/skills') {
     return '**Capacidades Potenciadas:**\n\n💰 **Finanzas**\n• Sueldo Neto (menos salud/pensión)\n• Liquidación Proporcional\n\n⚖️ **Legal**\n• Ley 2101 (Reducción de jornada)\n• Auxilio de Transporte y Recargos\n\n🧠 **Salud**\n• Análisis de burnout y descanso';

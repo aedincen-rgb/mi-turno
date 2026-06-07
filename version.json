@@ -1,4 +1,4 @@
 {
-  "v": "v178",
-  "label": "Hotfix: /tendencia crash — try-catch + null-safety en todos los comandos slash"
+  "v": "v179",
+  "label": "Comandos slash con descripciones claras en /ayuda y categoría Logros"
 }
