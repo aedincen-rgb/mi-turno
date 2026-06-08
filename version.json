@@ -1,4 +1,4 @@
 {
-  "v": "v204",
-  "label": "Evolución a Agente Autónomo: NLP con Levenshtein, extracción de entidades y ejecución de acciones"
+  "v": "v205",
+  "label": "Fix IA: Cálculo exacto en COP para preguntas de recargos y horas específicas"
 }

@@ -749,7 +749,38 @@ function _aiDispatchNLP(intent, c, state, q, t) {
   }
 
   // ── Ley / Conocimiento laboral ──
-  if (intent === 'ley') {
+  if (intent === 'ley' || intent === 'laboral') {
+    // Si el usuario pregunta por el valor de una hora específica y tenemos su salario
+    if (c.vh > 0) {
+      if (_aiHas(t, 'domingo', 'dominical', 'festivo')) {
+        if (_aiHas(t, 'extra', 'extras')) {
+          if (_aiHas(t, 'noche', 'nocturno', 'nocturna')) {
+            return '🌙⛪ **Hora extra festiva nocturna:**\n\nTu hora base es ' + fCOP(c.vh) + '.\nCon el recargo del 150% (2.50x), te pagan **' + fCOP(c.vh * 2.5) + '** por cada hora.';
+          }
+          return '☀️⛪ **Hora extra festiva diurna:**\n\nTu hora base es ' + fCOP(c.vh) + '.\nCon el recargo del 100% (2.00x), te pagan **' + fCOP(c.vh * 2.0) + '** por cada hora.';
+        }
+        if (_aiHas(t, 'noche', 'nocturno', 'nocturna')) {
+          return '🌙⛪ **Hora festiva nocturna:**\n\nTu hora base es ' + fCOP(c.vh) + '.\nCon el recargo del 110% (2.10x), te pagan **' + fCOP(c.vh * 2.1) + '** por cada hora.';
+        }
+        return '☀️⛪ **Hora dominical/festiva diurna:**\n\nTu hora base es ' + fCOP(c.vh) + '.\nCon el recargo del 75% (1.75x), te pagan **' + fCOP(c.vh * 1.75) + '** por cada hora.';
+      }
+      
+      if (_aiHas(t, 'noche', 'nocturno', 'nocturna')) {
+        if (_aiHas(t, 'extra', 'extras')) {
+          return '🌙 **Hora extra nocturna:**\n\nTu hora base es ' + fCOP(c.vh) + '.\nCon el recargo del 75% (1.75x), te pagan **' + fCOP(c.vh * 1.75) + '** por cada hora.';
+        }
+        return '🌙 **Hora nocturna ordinaria:**\n\nTu hora base es ' + fCOP(c.vh) + '.\nCon el recargo del 35% (1.35x), te pagan **' + fCOP(c.vh * 1.35) + '** por cada hora.';
+      }
+      
+      if (_aiHas(t, 'extra', 'extras')) {
+        return '☀️ **Hora extra diurna:**\n\nTu hora base es ' + fCOP(c.vh) + '.\nCon el recargo del 25% (1.25x), te pagan **' + fCOP(c.vh * 1.25) + '** por cada hora.';
+      }
+      
+      if (_aiHas(t, 'hora', 'vale', 'pagan') && !_aiHas(t, 'ley', 'normativa')) {
+        return 'Tu **valor hora ordinario** (sin recargos) es de **' + fCOP(c.vh) + '**, calculado en base a tu salario de ' + fCOP(c.salario) + '.';
+      }
+    }
+
     // PRIORIDAD: buscar en la base de conocimiento para respuestas específicas
     if (typeof aiKnowledgeSearch === 'function') {
       var kResp = aiKnowledgeSearch(q);
