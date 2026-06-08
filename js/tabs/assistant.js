@@ -88,6 +88,10 @@ function AsistenteTab(props) {
     setAudioLevel = al[1];
   var audioAnimRef = useRef(null);
 
+  // Refs para el botón inteligente (tap = enviar, hold = grabar)
+  var pressTimerRef = useRef(null);
+  var isLongPressRef = useRef(false);
+
   var tieneConversacion = msgs.length > 0;
 
   // ── Comandos de voz (usa voice-agent.js si está disponible) ──
@@ -1039,7 +1043,7 @@ function AsistenteTab(props) {
         ref: inputRef,
         className: 'asistente-input' + (listening ? ' listening' : ''),
         'aria-label': 'Tu mensaje al asistente',
-        placeholder: 'Escribe…',
+        placeholder: listening ? 'Escuchando…' : 'Escribe o mantén pulsado para hablar…',
         value: input,
         onChange: function (e) {
           setInput(e.target.value);
@@ -1052,123 +1056,175 @@ function AsistenteTab(props) {
         },
         rows: 1
       }),
+
+      // Botón inteligente: tap = enviar (si hay texto) / tap = alternar mic (sin texto)
+      //                    mantener pulsado = grabar voz
       h(
         'button',
         {
-          className: 'asistente-send' + (input.trim() && !busy ? ' active' : ''),
+          className:
+            'asistente-smart-btn' +
+            (listening ? ' recording' : '') +
+            (busy ? ' sending' : '') +
+            (input.trim() && !listening && !busy ? ' has-text' : ''),
+          'aria-label': listening
+            ? 'Grabando, suelta para detener'
+            : input.trim()
+              ? 'Enviar mensaje'
+              : 'Mantené pulsado para hablar o escribí tu mensaje',
+          // — Tap: enviar si hay texto, sino alternar mic
           onClick: function () {
-            send();
+            if (isLongPressRef.current) return; // el pointerUp ya actuó
+            if (busy) return;
+            haptic();
+            if (input.trim()) {
+              send();
+            } else if (!listening) {
+              startListening();
+            } else {
+              stopListening();
+            }
           },
-          disabled: !input.trim() || busy,
-          'aria-label': 'Enviar'
+          // — Mantener: grabar por voz (hold to talk)
+          onPointerDown: function () {
+            isLongPressRef.current = false;
+            pressTimerRef.current = setTimeout(function () {
+              isLongPressRef.current = true;
+              haptic();
+              if (!listening) startListening();
+            }, 350);
+          },
+          onPointerUp: function () {
+            clearTimeout(pressTimerRef.current);
+            if (isLongPressRef.current) {
+              // Soltar tras hold: detener grabación
+              if (listening) stopListening();
+              isLongPressRef.current = false;
+            }
+          },
+          onPointerCancel: function () {
+            clearTimeout(pressTimerRef.current);
+            if (isLongPressRef.current && listening) stopListening();
+            isLongPressRef.current = false;
+          }
         },
-        '↑'
-      ),
-      // Micrófono: voz a texto (SpeechRecognition)
-      typeof SpeechRecognition !== 'undefined' || typeof webkitSpeechRecognition !== 'undefined'
-        ? h(
-            'div',
-            { className: 'asistente-mic-group' },
-            h(
-              'button',
-              {
-                className: 'asistente-mic' + (listening ? ' listening' : ''),
-                onClick: function () {
-                  haptic();
-                  if (listening) {
-                    stopListening();
-                    return;
-                  }
-                  startListening();
-                },
-                disabled: busy && !listening,
-                'aria-label': listening ? 'Grabando… tocá para detener' : 'Hablar por voz',
-                title: listening ? 'Grabando… tocá para detener' : 'Hablar por voz'
-              },
-              listening
-                ? h('div', {
-                    className: 'asistente-mic-pulse',
-                    style: { transform: 'scale(' + (1 + audioLevel * 0.5) + ')' }
-                  })
-                : null,
-              '🎤'
-            ),
-            // Botón de Manos Libres (Voice-First)
-            h(
-              'button',
-              {
-                className: 'asistente-handsfree-btn' + (handsFree ? ' active' : ''),
-                onClick: function () {
-                  haptic();
-                  var newState = !handsFree;
-                  setHandsFree(newState);
-                  setAutoRead(newState); // Si activa manos libres, activa auto-lectura
-                  if (newState && !listening) {
-                    startListening();
-                  } else if (!newState && listening) {
-                    stopListening();
-                  }
-                },
-                'aria-label': handsFree ? 'Desactivar manos libres' : 'Activar manos libres',
-                title: 'Modo Manos Libres (Conversación continua)'
-              },
-              '🎧'
-            )
-          )
-        : null
+        // Anillo de nivel de audio mientras graba
+        listening
+          ? h('div', {
+              className: 'asistente-mic-pulse',
+              style: { transform: 'scale(' + (1 + audioLevel * 0.5) + ')' }
+            })
+          : null,
+        // Icono dinámico
+        busy ? h('span', { className: 'sp-in' }) : listening ? '■' : input.trim() ? '↑' : '🎤'
+      )
     ),
 
-    // ═══ AUTO-READ TOGGLE ═══
-    typeof speechSynthesis !== 'undefined' &&
-      h(
-        'button',
-        {
-          className: 'asistente-autoread' + (autoRead ? ' active' : ''),
-          onClick: function () {
-            haptic();
-            setAutoRead(!autoRead);
-            if (!autoRead && handsFree) setHandsFree(false);
-          },
-          'aria-label': autoRead
-            ? 'Desactivar lectura automática'
-            : 'Activar lectura automática de respuestas',
-          title: autoRead ? 'Lectura automática activada' : 'Activar lectura automática'
-        },
-        h('span', { className: 'asistente-autoread-dot' }),
-        autoRead ? 'Lectura automática activada' : 'Leer respuestas en voz alta'
-      ),
-
-    // ═══ MODO MANOS LIBRES ═══
-    typeof SpeechRecognition !== 'undefined' || typeof webkitSpeechRecognition !== 'undefined'
+    // ═══ PANEL DE CONTROLES DE VOZ (switches iOS 26) ═══
+    typeof speechSynthesis !== 'undefined' ||
+      typeof SpeechRecognition !== 'undefined' ||
+      typeof webkitSpeechRecognition !== 'undefined'
       ? h(
-          'button',
-          {
-            className: 'asistente-handsfree' + (handsFree ? ' active' : ''),
-            onClick: function () {
-              haptic();
-              if (!handsFree) {
-                setAutoRead(true);
-                setHandsFree(true);
-                setTimeout(function () {
-                  startListening();
-                }, 500);
-              } else {
-                stopListening();
-              }
-            },
-            'aria-label': handsFree ? 'Desactivar modo manos libres' : 'Activar modo manos libres',
-            title: handsFree
-              ? 'Modo conversación continua activado'
-              : 'Activar conversación por voz'
-          },
-          h('span', { className: 'asistente-handsfree-dot' }),
-          handsFree ? '🗣 Modo manos libres activo' : '\ud83c� Activar manos libres'
-        )
-      : null,
+          'div',
+          { className: 'asistente-controls' },
 
-    // ═══ VISUALIZADOR DE AUDIO (sutil: solo un puntito en el input) ═══
-    handsFree && !listening
-      ? h('div', { className: 'asistente-handsfree-dot-active', 'aria-hidden': 'true' })
+          // Fila: Leer en voz alta
+          typeof speechSynthesis !== 'undefined'
+            ? h(
+                'div',
+                { className: 'asistente-ctrl-row' },
+                h(
+                  'div',
+                  { className: 'asistente-ctrl-info' },
+                  h('span', { className: 'asistente-ctrl-icon', 'aria-hidden': 'true' }, '🔊'),
+                  h(
+                    'div',
+                    null,
+                    h('div', { className: 'asistente-ctrl-label' }, 'Leer en voz alta'),
+                    h(
+                      'div',
+                      { className: 'asistente-ctrl-sub' },
+                      autoRead ? 'Respuestas habladas' : 'Respuestas en texto'
+                    )
+                  )
+                ),
+                h(
+                  'label',
+                  { className: 'ios-sw' },
+                  h('input', {
+                    type: 'checkbox',
+                    role: 'switch',
+                    'aria-checked': autoRead,
+                    'aria-label':
+                      'Leer respuestas en voz alta, ' + (autoRead ? 'activado' : 'desactivado'),
+                    checked: autoRead,
+                    onChange: function () {
+                      haptic();
+                      var next = !autoRead;
+                      setAutoRead(next);
+                      if (!next && handsFree) setHandsFree(false);
+                    }
+                  }),
+                  h('span', { className: 'sw-track' })
+                )
+              )
+            : null,
+
+          // Divisor entre filas
+          typeof speechSynthesis !== 'undefined' &&
+            (typeof SpeechRecognition !== 'undefined' ||
+              typeof webkitSpeechRecognition !== 'undefined')
+            ? h('div', { className: 'asistente-ctrl-divider', 'aria-hidden': 'true' })
+            : null,
+
+          // Fila: Modo manos libres
+          typeof SpeechRecognition !== 'undefined' || typeof webkitSpeechRecognition !== 'undefined'
+            ? h(
+                'div',
+                { className: 'asistente-ctrl-row' },
+                h(
+                  'div',
+                  { className: 'asistente-ctrl-info' },
+                  h('span', { className: 'asistente-ctrl-icon', 'aria-hidden': 'true' }, '🎙'),
+                  h(
+                    'div',
+                    null,
+                    h('div', { className: 'asistente-ctrl-label' }, 'Modo manos libres'),
+                    h(
+                      'div',
+                      { className: 'asistente-ctrl-sub' + (handsFree ? ' on' : '') },
+                      handsFree ? (listening ? 'Escuchando…' : 'En pausa') : 'Conversación continua'
+                    )
+                  )
+                ),
+                h(
+                  'label',
+                  { className: 'ios-sw asistente-hf-sw' },
+                  h('input', {
+                    type: 'checkbox',
+                    role: 'switch',
+                    'aria-checked': handsFree,
+                    'aria-label': 'Modo manos libres, ' + (handsFree ? 'activado' : 'desactivado'),
+                    checked: handsFree,
+                    onChange: function () {
+                      haptic();
+                      if (!handsFree) {
+                        setAutoRead(true);
+                        setHandsFree(true);
+                        setTimeout(function () {
+                          startListening();
+                        }, 500);
+                      } else {
+                        setHandsFree(false);
+                        stopListening();
+                      }
+                    }
+                  }),
+                  h('span', { className: 'sw-track' })
+                )
+              )
+            : null
+        )
       : null,
 
     // ═══ Reanudar / nueva conversación ═══

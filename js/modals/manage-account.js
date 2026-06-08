@@ -381,6 +381,12 @@ function ManageAccountModal(props) {
             }
           })
           .catch(function (e) {
+            // Si es error semántico (PIN duplicado), re-lanzar para que
+            // doVerify muestre el mensaje al usuario en lugar de OK.
+            var msg = e && e.message ? e.message : '';
+            if (msg.indexOf('en uso') >= 0 || msg.indexOf('duplicado') >= 0) {
+              throw e;
+            }
             // Error de red — encolar y resolver OK
             if (typeof queueAction === 'function') {
               queueAction(uid, 'updatePinLookup', { pin: val, user_email: session.email });

@@ -1,4 +1,4 @@
 {
-  "v": "v227",
-  "label": "Fix — busyRef no se reseteaba en _startLocalOtp, bloqueando doVerify silenciosamente"
+  "v": "v230",
+  "label": "Asistente — botón inteligente único: tap=enviar, hold=grabar voz"
 }
