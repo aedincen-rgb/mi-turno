@@ -178,7 +178,7 @@ button:focus:not(:focus-visible) {
 
 .tabs {
   position: fixed;
-  bottom: calc(var(--sab) + 12px);
+  bottom: calc(var(--sab) + 2px);
   left: 50%;
   transform: translateX(-50%);
   width: calc(100% - 48px);
