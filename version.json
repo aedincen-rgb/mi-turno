@@ -1,4 +1,4 @@
 {
-  "v": "v239",
-  "label": "Fix IA — preguntas sobre hora dominical/nocturna/festiva ya no caen en horas_trabajadas"
+  "v": "v240",
+  "label": "Perf — defer de jsPDF/XLSX/Chart.js saca ~1MB del camino crítico de arranque"
 }

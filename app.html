@@ -190,10 +190,16 @@
 <!-- React, jsPDF y XLSX desde cdnjs (Cloudflare CDN — más confiable en iOS) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js" integrity="sha384-tMH8h3BGESGckSAVGZ82T9n90ztNXxvdwvdM6UoR56cYcf+0iGXBliJ29D+wZ/x8" crossorigin="anonymous" onerror="window.__onScriptError && window.__onScriptError(this, 'React 18 (cdnjs)')"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js" integrity="sha384-bm7MnzvK++ykSwVJ2tynSE5TRdN+xL418osEVF2DE/L/gfWHj91J2Sphe582B1Bh" crossorigin="anonymous" onerror="window.__onScriptError && window.__onScriptError(this, 'ReactDOM 18 (cdnjs)')"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" integrity="sha384-JcnsjUPPylna1s1fvi1u12X5qjY5OL56iySh75FdtrwhO/SWXgMjoVqcKyIIWOLk" crossorigin="anonymous" onerror="window.__onScriptError && window.__onScriptError(this, 'jsPDF (cdnjs)')"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js" integrity="sha384-vxxMdt1K6XlME6zkLsgFrrHIeC7XIdAo1GW/uhhObjJXnymxiIi/eoMXsKJA13ZJ" crossorigin="anonymous" onerror="window.__onScriptError && window.__onScriptError(this, 'jsPDF AutoTable (cdnjs)')"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" integrity="sha384-vtjasyidUo0kW94K5MXDXntzOJpQgBKXmE7e2Ga4LG0skTTLeBi97eFAXsqewJjw" crossorigin="anonymous" onerror="window.__onScriptError && window.__onScriptError(this, 'XLSX (cdnjs)')"></script>
-<script src="js/lib/chart.min.js"></script>
+<!-- defer: estas libs solo se usan bajo acción del usuario (export PDF/Excel,
+     gráfico del dashboard), nunca en el arranque. Diferirlas saca ~1 MB de
+     parse/exec del camino crítico de boot sin bloquear el primer pintado.
+     Orden preservado por defer (autotable depende de jspdf). Todas tienen
+     guard: export-files.js valida window.jspdf/window.XLSX; dashboard.js
+     valida window.Chart dentro de useEffect. -->
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" integrity="sha384-JcnsjUPPylna1s1fvi1u12X5qjY5OL56iySh75FdtrwhO/SWXgMjoVqcKyIIWOLk" crossorigin="anonymous" onerror="window.__onScriptError && window.__onScriptError(this, 'jsPDF (cdnjs)')"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js" integrity="sha384-vxxMdt1K6XlME6zkLsgFrrHIeC7XIdAo1GW/uhhObjJXnymxiIi/eoMXsKJA13ZJ" crossorigin="anonymous" onerror="window.__onScriptError && window.__onScriptError(this, 'jsPDF AutoTable (cdnjs)')"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" integrity="sha384-vtjasyidUo0kW94K5MXDXntzOJpQgBKXmE7e2Ga4LG0skTTLeBi97eFAXsqewJjw" crossorigin="anonymous" onerror="window.__onScriptError && window.__onScriptError(this, 'XLSX (cdnjs)')"></script>
+<script defer src="js/lib/chart.min.js"></script>
 
 </head>
 <body>
