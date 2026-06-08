@@ -39,37 +39,53 @@ function AsistenteTab(props) {
 
   // Estado de escucha por voz
   var ls = useState(false);
-  var listening = ls[0], setListening = ls[1];
+  var listening = ls[0],
+    setListening = ls[1];
 
   // Estado de reproducción de voz (anillo de progreso)
-  var speakRef = useRef({ msgIdx: -1, status: 'idle', progress: 0, utterance: null, startTime: 0, pausedAt: 0 });
+  var speakRef = useRef({
+    msgIdx: -1,
+    status: 'idle',
+    progress: 0,
+    utterance: null,
+    startTime: 0,
+    pausedAt: 0
+  });
   var sps = useState({ idx: -1, status: 'idle', progress: 0 });
-  var speakUI = sps[0], setSpeakUI = sps[1];
+  var speakUI = sps[0],
+    setSpeakUI = sps[1];
 
   // Auto-leer respuestas de la IA
   var ar = useState(false);
-  var autoRead = ar[0], setAutoRead = ar[1];
+  var autoRead = ar[0],
+    setAutoRead = ar[1];
 
   // Cleanup al desmontar el componente (evita memory leaks)
   useEffect(function () {
     return function () {
       if (audioAnimRef.current) clearInterval(audioAnimRef.current);
       if (recognitionRef.current) {
-        try { recognitionRef.current.abort(); } catch (_) {}
+        try {
+          recognitionRef.current.abort();
+        } catch (_) {}
       }
       if (typeof speechSynthesis !== 'undefined') {
-        try { speechSynthesis.cancel(); } catch (_) {}
+        try {
+          speechSynthesis.cancel();
+        } catch (_) {}
       }
     };
   }, []);
 
   // Modo manos libres: conversación continua escuchar→responder→leer→repetir
   var hf = useState(false);
-  var handsFree = hf[0], setHandsFree = hf[1];
+  var handsFree = hf[0],
+    setHandsFree = hf[1];
 
   // Nivel de audio (para visualización mientras graba)
   var al = useState(0);
-  var audioLevel = al[0], setAudioLevel = al[1];
+  var audioLevel = al[0],
+    setAudioLevel = al[1];
   var audioAnimRef = useRef(null);
 
   var tieneConversacion = msgs.length > 0;
@@ -97,18 +113,24 @@ function AsistenteTab(props) {
         if (result && result.type === 'local') {
           if (result.msg) {
             setInput(result.msg);
-            setTimeout(function () { setInput(''); }, 4000);
+            setTimeout(function () {
+              setInput('');
+            }, 4000);
           }
           return { action: 'local' };
         }
         if (result && result.type === 'error') {
           setInput(result.msg || 'Error al ejecutar comando');
-          setTimeout(function () { setInput(''); }, 4000);
+          setTimeout(function () {
+            setInput('');
+          }, 4000);
           return { action: 'local' };
         }
         if (result && result.type === 'success') {
           setInput(result.msg || 'Listo');
-          setTimeout(function () { setInput(''); }, 3000);
+          setTimeout(function () {
+            setInput('');
+          }, 3000);
           return { action: 'local' };
         }
         if (result && result.type === 'navigate') {
@@ -120,7 +142,8 @@ function AsistenteTab(props) {
     // Fallback: comandos básicos si el módulo no está disponible
     var t = (text || '').toLowerCase().trim();
     if (t.indexOf('ir a inicio') >= 0) return { action: 'nav', tab: 'home' };
-    if (t.indexOf('ir a análisis') >= 0 || t.indexOf('ir a analisis') >= 0) return { action: 'nav', tab: 'dashboard' };
+    if (t.indexOf('ir a análisis') >= 0 || t.indexOf('ir a analisis') >= 0)
+      return { action: 'nav', tab: 'dashboard' };
     if (t.indexOf('ir a asistente') >= 0) return { action: 'nav', tab: 'ai' };
     if (t.indexOf('ir a historial') >= 0) return { action: 'nav', tab: 'history' };
     if (t.indexOf('ir a ajustes') >= 0) return { action: 'nav', tab: 'config' };
@@ -140,7 +163,9 @@ function AsistenteTab(props) {
     try {
       // Limpiar cualquier sesión anterior
       if (recognitionRef.current) {
-        try { recognitionRef.current.abort(); } catch (_) {}
+        try {
+          recognitionRef.current.abort();
+        } catch (_) {}
         recognitionRef.current = null;
       }
       var rec = new SR();
@@ -171,7 +196,9 @@ function AsistenteTab(props) {
               if (cmd.action === 'nav') {
                 if (props.onNavigate) props.onNavigate(cmd.tab, cmd.sub || null);
                 if (handsFree) {
-                  setTimeout(function () { startListening(); }, 1800);
+                  setTimeout(function () {
+                    startListening();
+                  }, 1800);
                 }
                 return;
               }
@@ -179,16 +206,22 @@ function AsistenteTab(props) {
                 setInput('');
                 if (cmd.msg) {
                   setInput(cmd.msg);
-                  setTimeout(function () { setInput(''); }, 4000);
+                  setTimeout(function () {
+                    setInput('');
+                  }, 4000);
                 }
                 if (handsFree) {
-                  setTimeout(function () { startListening(); }, 1600);
+                  setTimeout(function () {
+                    startListening();
+                  }, 1600);
                 }
                 return;
               }
             }
             // Enviar a la IA normalmente
-            setTimeout(function () { send(finalText); }, 400);
+            setTimeout(function () {
+              send(finalText);
+            }, 400);
           }
         }
       };
@@ -203,7 +236,9 @@ function AsistenteTab(props) {
         }
         // Reintento suave en manos libres (solo si no fue cancelado manual)
         if (handsFree && e.error !== 'aborted') {
-          setTimeout(function () { startListening(); }, 2000);
+          setTimeout(function () {
+            startListening();
+          }, 2000);
         }
       };
 
@@ -214,7 +249,9 @@ function AsistenteTab(props) {
         if (handsFree && !busy && _micBusy.current === false) {
           // _micBusy ya fue liberado por onresult o onerror
           // Solo reintentar si no hay un proceso en curso
-          setTimeout(function () { startListening(); }, 600);
+          setTimeout(function () {
+            startListening();
+          }, 600);
         }
       };
 
@@ -230,12 +267,17 @@ function AsistenteTab(props) {
   }
 
   function _cleanupRecording() {
-    if (audioAnimRef.current) { clearInterval(audioAnimRef.current); audioAnimRef.current = null; }
+    if (audioAnimRef.current) {
+      clearInterval(audioAnimRef.current);
+      audioAnimRef.current = null;
+    }
     setAudioLevel(0);
     setListening(false);
     _micBusy.current = false;
     if (recognitionRef.current) {
-      try { recognitionRef.current.abort(); } catch (_) {}
+      try {
+        recognitionRef.current.abort();
+      } catch (_) {}
       recognitionRef.current = null;
     }
   }
@@ -246,17 +288,21 @@ function AsistenteTab(props) {
     _cleanupRecording();
     // _cleanupRecording ya pone _micBusy en false, pero mantenemos el bloqueo
     // un poco más para que cualquier onend pendiente no reinicie
-    setTimeout(function () { _micBusy.current = false; }, 500);
+    setTimeout(function () {
+      _micBusy.current = false;
+    }, 500);
   }
 
   // ── Helpers de voz ──
   function cleanSpeakText(text) {
     return (text || '')
-      .replace(/\*\*|__|\*|`/g, '')
+      .replace(/\*\*|__|\.\*|`/g, '')
       .replace(/🏆/g, function () {
-        return ' ¡' + ((typeof _glTerm === 'function') ? _glTerm('terms', 'champion') : 'campeón') + '! ';
+        return (
+          ' ¡' + (typeof _glTerm === 'function' ? _glTerm('terms', 'champion') : 'campeón') + '! '
+        );
       })
-      .replace(/[🔥🚀✨💪🙌🎉🎯💡⚡🌟👑💎📊💰📅🔮🤖📖⚖️📡📱♿🔗📧⚠️✅📋⏱📤💬🔊🛡📦📂🔑🛠🐞👥◷✦🎬🍎🇨🇴]/g, '')
+      .replace(/[\p{Extended_Pictographic}\p{Emoji_Presentation}]/gu, '')
       .replace(/(\d+)mins\b/g, '$1 minutos')
       .replace(/\bmins\b/g, 'minutos')
       .replace(/(\d+)m\b/g, '$1 minutos')
@@ -270,12 +316,16 @@ function AsistenteTab(props) {
     var utter = new SpeechSynthesisUtterance(clean);
     utter.lang = 'es-CO';
     utter.rate = 1.1;
-    
+
     var st = speakRef.current;
-    st.msgIdx = idx; st.status = 'speaking'; st.progress = 0;
-    st.startTime = Date.now(); st.pausedAt = 0; st.utterance = utter;
+    st.msgIdx = idx;
+    st.status = 'speaking';
+    st.progress = 0;
+    st.startTime = Date.now();
+    st.pausedAt = 0;
+    st.utterance = utter;
     st._estimatedDuration = clean.length * 55; // ~55ms por carácter en español
-    
+
     utter.onboundary = function (e) {
       if (e.name === 'word' && st.status === 'speaking') {
         var elapsed = Date.now() - st.startTime;
@@ -284,23 +334,27 @@ function AsistenteTab(props) {
         setSpeakUI({ idx: idx, status: 'speaking', progress: progress });
       }
     };
-    
+
     utter.onend = function () {
       if (st.msgIdx === idx) {
-        st.status = 'idle'; st.progress = 1;
+        st.status = 'idle';
+        st.progress = 1;
         setSpeakUI({ idx: idx, status: 'idle', progress: 0 });
         // Solo re-escuchar si manos libres sigue activo y no estamos ocupados
         if (handsFree && !busy && !listening && !_micBusy.current) {
-          setTimeout(function () { startListening(); }, 800);
+          setTimeout(function () {
+            startListening();
+          }, 800);
         }
       }
     };
 
     utter.onerror = function () {
-      st.status = 'idle'; st.progress = 0;
+      st.status = 'idle';
+      st.progress = 0;
       setSpeakUI({ idx: -1, status: 'idle', progress: 0 });
     };
-    
+
     speechSynthesis.speak(utter);
     setSpeakUI({ idx: idx, status: 'speaking', progress: 0 });
   }
@@ -368,6 +422,7 @@ function AsistenteTab(props) {
       _aiClearHistory(uid);
       if (typeof aiResetConv === 'function') aiResetConv();
       if (typeof aiClearMemory === 'function') aiClearMemory();
+      if (typeof aiConvReset === 'function') aiConvReset();
     },
     [uid]
   );
@@ -423,23 +478,33 @@ function AsistenteTab(props) {
               grabar('mt_s_' + props.session.user.id, resp.execute.payload);
               grabar('mt_sc_' + props.session.user.id, true);
               if (typeof queueAction === 'function') {
-                queueAction(props.session.user.id, 'set_salario', { salario_base: resp.execute.payload });
+                queueAction(props.session.user.id, 'set_salario', {
+                  salario_base: resp.execute.payload
+                });
               }
               // Forzar recarga para que la app tome el nuevo salario
-              setTimeout(function() { window.location.reload(); }, 2000);
+              setTimeout(function () {
+                window.location.reload();
+              }, 2000);
             } else if (resp.execute.type === 'START_SHIFT') {
               if (typeof queueAction === 'function') {
-                queueAction(props.session.user.id, 'start_shift', { inicio: new Date().toISOString() });
+                queueAction(props.session.user.id, 'start_shift', {
+                  inicio: new Date().toISOString()
+                });
               }
-              setTimeout(function() { window.location.reload(); }, 2000);
+              setTimeout(function () {
+                window.location.reload();
+              }, 2000);
             } else if (resp.execute.type === 'END_SHIFT') {
               if (typeof queueAction === 'function') {
                 queueAction(props.session.user.id, 'end_shift', { fin: new Date().toISOString() });
               }
-              setTimeout(function() { window.location.reload(); }, 2000);
+              setTimeout(function () {
+                window.location.reload();
+              }, 2000);
             } else if (resp.execute.type === 'NAVIGATE') {
               // Simular click en el tab correspondiente
-              setTimeout(function() {
+              setTimeout(function () {
                 var tabId = resp.execute.payload === 'ajustes' ? 'config' : resp.execute.payload;
                 var btn = document.querySelector('.tab-btn[data-tab="' + tabId + '"]');
                 if (btn) btn.click();
@@ -578,7 +643,7 @@ function AsistenteTab(props) {
     },
     {
       id: 'logros',
-      icono: '🏅',
+      icono: '\ud83c�',
       titulo: 'Comandos rápidos',
       desc: 'Insignias, metas, simulaciones y tendencias',
       preguntas: [
@@ -596,7 +661,16 @@ function AsistenteTab(props) {
   var phrases = _aiHeroPhrases(props);
   // Prepend briefing si está disponible
   if (typeof aiBriefing === 'function') {
-    var briefing = aiBriefing(props.calc ? Object.assign({}, props.calc, { ahora: new Date(), salario: props.salario, vh: props.vh, turnos: props.turnos }) : null);
+    var briefing = aiBriefing(
+      props.calc
+        ? Object.assign({}, props.calc, {
+            ahora: new Date(),
+            salario: props.salario,
+            vh: props.vh,
+            turnos: props.turnos
+          })
+        : null
+    );
     if (briefing) {
       phrases = [briefing].concat(phrases);
     }
@@ -604,7 +678,10 @@ function AsistenteTab(props) {
 
   return h(
     'section',
-    { className: 'asistente-wrap' + (tieneConversacion ? ' has-chat' : ''), 'aria-label': 'Asistente AI' },
+    {
+      className: 'asistente-wrap' + (tieneConversacion ? ' has-chat' : ''),
+      'aria-label': 'Asistente AI'
+    },
 
     // ═══ HERO iOS STYLE: orb izq + texto der (siempre visible) ═══
     h(
@@ -639,37 +716,67 @@ function AsistenteTab(props) {
       { className: 'asistente-chips' },
       h(
         'button',
-        { className: 'asistente-chip', onClick: function () { send('¿Cuánto gané ayer?'); } },
+        {
+          className: 'asistente-chip',
+          onClick: function () {
+            send('¿Cuánto gané ayer?');
+          }
+        },
         h('span', { className: 'asistente-chip-ico' }, '📅'),
         'Ayer'
       ),
       h(
         'button',
-        { className: 'asistente-chip', onClick: function () { send('¿Cuánto gané este mes?'); } },
+        {
+          className: 'asistente-chip',
+          onClick: function () {
+            send('¿Cuánto gané este mes?');
+          }
+        },
         h('span', { className: 'asistente-chip-ico' }, '💰'),
         'Este mes'
       ),
       h(
         'button',
-        { className: 'asistente-chip', onClick: function () { send('Proyección al cierre'); } },
+        {
+          className: 'asistente-chip',
+          onClick: function () {
+            send('Proyección al cierre');
+          }
+        },
         h('span', { className: 'asistente-chip-ico' }, '🔮'),
         'Proyección'
       ),
       h(
         'button',
-        { className: 'asistente-chip', onClick: function () { send('¿VS mes pasado?'); } },
+        {
+          className: 'asistente-chip',
+          onClick: function () {
+            send('¿VS mes pasado?');
+          }
+        },
         h('span', { className: 'asistente-chip-ico' }, '⚖'),
         'VS mes pasado'
       ),
       h(
         'button',
-        { className: 'asistente-chip', onClick: function () { send('¿Cuánto si trabajo 4h más?'); } },
+        {
+          className: 'asistente-chip',
+          onClick: function () {
+            send('¿Cuánto si trabajo 4h más?');
+          }
+        },
         h('span', { className: 'asistente-chip-ico' }, '🧮'),
         'Simular'
       ),
       h(
         'button',
-        { className: 'asistente-chip', onClick: function () { send('/tendencia'); } },
+        {
+          className: 'asistente-chip',
+          onClick: function () {
+            send('/tendencia');
+          }
+        },
         h('span', { className: 'asistente-chip-ico' }, '📈'),
         'Tendencia'
       )
@@ -704,82 +811,104 @@ function AsistenteTab(props) {
                     ? h(
                         'button',
                         {
-                          className: 'asistente-speak-btn' + 
+                          className:
+                            'asistente-speak-btn' +
                             (speakUI.idx === i && speakUI.status !== 'idle' ? ' speaking' : ''),
                           onClick: function () {
                             haptic();
                             var now = Date.now();
                             var st = speakRef.current;
-                            
+
                             // Double tap → reiniciar desde el principio
                             if (st.msgIdx === i && now - (st._lastTap || 0) < 500) {
                               speechSynthesis.cancel();
-                              st.status = 'idle'; st.progress = 0;
+                              st.status = 'idle';
+                              st.progress = 0;
                               setSpeakUI({ idx: i, status: 'idle', progress: 0 });
                               startSpeak(i, m.content);
                               return;
                             }
                             st._lastTap = now;
-                            
+
                             // Si este mensaje está hablando → pausar/reanudar
                             if (st.msgIdx === i && st.status === 'speaking') {
                               speechSynthesis.pause();
-                              st.status = 'paused'; st.pausedAt = now;
+                              st.status = 'paused';
+                              st.pausedAt = now;
                               setSpeakUI({ idx: i, status: 'paused', progress: st.progress });
                               return;
                             }
                             if (st.msgIdx === i && st.status === 'paused') {
                               speechSynthesis.resume();
-                              st.status = 'speaking'; st.startTime += (now - st.pausedAt);
+                              st.status = 'speaking';
+                              st.startTime += now - st.pausedAt;
                               setSpeakUI({ idx: i, status: 'speaking', progress: st.progress });
                               return;
                             }
-                            
+
                             // Nuevo mensaje: cancelar anterior y empezar
                             speechSynthesis.cancel();
                             startSpeak(i, m.content);
                           },
                           // Long press → parar y resetear
-                          onMouseDown: function () { speakRef.current._pressStart = Date.now(); },
+                          onMouseDown: function () {
+                            speakRef.current._pressStart = Date.now();
+                          },
                           onMouseUp: function () {
                             var held = Date.now() - (speakRef.current._pressStart || 0);
                             if (held > 600 && speakRef.current.msgIdx === i) {
                               speechSynthesis.cancel();
-                              speakRef.current.status = 'idle'; speakRef.current.progress = 0;
+                              speakRef.current.status = 'idle';
+                              speakRef.current.progress = 0;
                               setSpeakUI({ idx: i, status: 'idle', progress: 0 });
                             }
                           },
-                          onTouchStart: function () { speakRef.current._pressStart = Date.now(); },
+                          onTouchStart: function () {
+                            speakRef.current._pressStart = Date.now();
+                          },
                           onTouchEnd: function () {
                             var held = Date.now() - (speakRef.current._pressStart || 0);
                             if (held > 600 && speakRef.current.msgIdx === i) {
                               speechSynthesis.cancel();
-                              speakRef.current.status = 'idle'; speakRef.current.progress = 0;
+                              speakRef.current.status = 'idle';
+                              speakRef.current.progress = 0;
                               setSpeakUI({ idx: i, status: 'idle', progress: 0 });
                             }
                           },
-                          'aria-label': speakUI.idx === i && speakUI.status === 'speaking' ? 'Pausar voz' :
-                                       speakUI.idx === i && speakUI.status === 'paused' ? 'Reanudar voz' : 'Escuchar',
+                          'aria-label':
+                            speakUI.idx === i && speakUI.status === 'speaking'
+                              ? 'Pausar voz'
+                              : speakUI.idx === i && speakUI.status === 'paused'
+                                ? 'Reanudar voz'
+                                : 'Escuchar',
                           title: 'Tocá: pausar · Doble toque: reiniciar · Sostené: parar'
                         },
-                        h('svg', {
-                          viewBox: '0 0 36 36',
-                          width: 28, height: 28,
-                          style: { transform: 'rotate(-90deg)' }
-                        },
+                        h(
+                          'svg',
+                          {
+                            viewBox: '0 0 36 36',
+                            width: 28,
+                            height: 28,
+                            style: { transform: 'rotate(-90deg)' }
+                          },
                           h('circle', {
-                            cx: 18, cy: 18, r: 14,
+                            cx: 18,
+                            cy: 18,
+                            r: 14,
                             fill: 'none',
                             stroke: 'var(--border)',
                             'stroke-width': 3
                           }),
                           h('circle', {
-                            cx: 18, cy: 18, r: 14,
+                            cx: 18,
+                            cy: 18,
+                            r: 14,
                             fill: 'none',
                             stroke: 'var(--accent)',
                             'stroke-width': 3,
                             strokeDasharray: 87.96,
-                            strokeDashoffset: 87.96 - (87.96 * (speakUI.idx === i ? speakUI.progress : 0)),
+                            strokeDashoffset:
+                              87.96 - 87.96 * (speakUI.idx === i ? speakUI.progress : 0),
                             strokeLinecap: 'round',
                             style: { transition: 'stroke-dashoffset 0.3s linear' }
                           })
@@ -802,7 +931,9 @@ function AsistenteTab(props) {
                             {
                               key: j,
                               className: 'asistente-action-btn',
-                              onClick: function () { send(a.query); }
+                              onClick: function () {
+                                send(a.query);
+                              }
                             },
                             a.label
                           );
@@ -828,7 +959,10 @@ function AsistenteTab(props) {
                                 { className: 'asistente-chart-bar-track' },
                                 h('div', {
                                   className: 'asistente-chart-bar-fill',
-                                  style: { width: d.pct + '%', backgroundColor: d.color || 'var(--accent)' }
+                                  style: {
+                                    width: d.pct + '%',
+                                    backgroundColor: d.color || 'var(--accent)'
+                                  }
                                 })
                               ),
                               h('div', { className: 'asistente-chart-bar-val' }, d.val)
@@ -842,11 +976,17 @@ function AsistenteTab(props) {
                     ? h(EmailComposeCard, {
                         data: m.action.data,
                         parent: props,
-                        onResolved: function (r) { resolveAction(i, r); }
+                        onResolved: function (r) {
+                          resolveAction(i, r);
+                        }
                       })
                     : null,
                   m.actionResult
-                    ? h('div', { className: 'email-result-badge ' + (m.actionResult.ok ? 'ok' : 'bad') }, m.actionResult.msg)
+                    ? h(
+                        'div',
+                        { className: 'email-result-badge ' + (m.actionResult.ok ? 'ok' : 'bad') },
+                        m.actionResult.msg
+                      )
                     : null
                 )
               );
@@ -901,7 +1041,9 @@ function AsistenteTab(props) {
         'aria-label': 'Tu mensaje al asistente',
         placeholder: 'Escribe…',
         value: input,
-        onChange: function (e) { setInput(e.target.value); },
+        onChange: function (e) {
+          setInput(e.target.value);
+        },
         onKeyDown: function (e) {
           if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
@@ -914,14 +1056,16 @@ function AsistenteTab(props) {
         'button',
         {
           className: 'asistente-send' + (input.trim() && !busy ? ' active' : ''),
-          onClick: function () { send(); },
+          onClick: function () {
+            send();
+          },
           disabled: !input.trim() || busy,
           'aria-label': 'Enviar'
         },
         '↑'
       ),
       // Micrófono: voz a texto (SpeechRecognition)
-      (typeof SpeechRecognition !== 'undefined' || typeof webkitSpeechRecognition !== 'undefined')
+      typeof SpeechRecognition !== 'undefined' || typeof webkitSpeechRecognition !== 'undefined'
         ? h(
             'div',
             { className: 'asistente-mic-group' },
@@ -942,7 +1086,10 @@ function AsistenteTab(props) {
                 title: listening ? 'Grabando… tocá para detener' : 'Hablar por voz'
               },
               listening
-                ? h('div', { className: 'asistente-mic-pulse', style: { transform: 'scale(' + (1 + audioLevel * 0.5) + ')' } })
+                ? h('div', {
+                    className: 'asistente-mic-pulse',
+                    style: { transform: 'scale(' + (1 + audioLevel * 0.5) + ')' }
+                  })
                 : null,
               '🎤'
             ),
@@ -982,7 +1129,9 @@ function AsistenteTab(props) {
             setAutoRead(!autoRead);
             if (!autoRead && handsFree) setHandsFree(false);
           },
-          'aria-label': autoRead ? 'Desactivar lectura automática' : 'Activar lectura automática de respuestas',
+          'aria-label': autoRead
+            ? 'Desactivar lectura automática'
+            : 'Activar lectura automática de respuestas',
           title: autoRead ? 'Lectura automática activada' : 'Activar lectura automática'
         },
         h('span', { className: 'asistente-autoread-dot' }),
@@ -1000,16 +1149,20 @@ function AsistenteTab(props) {
               if (!handsFree) {
                 setAutoRead(true);
                 setHandsFree(true);
-                setTimeout(function () { startListening(); }, 500);
+                setTimeout(function () {
+                  startListening();
+                }, 500);
               } else {
                 stopListening();
               }
             },
             'aria-label': handsFree ? 'Desactivar modo manos libres' : 'Activar modo manos libres',
-            title: handsFree ? 'Modo conversación continua activado' : 'Activar conversación por voz'
+            title: handsFree
+              ? 'Modo conversación continua activado'
+              : 'Activar conversación por voz'
           },
           h('span', { className: 'asistente-handsfree-dot' }),
-          handsFree ? '🗣 Modo manos libres activo' : '🎙 Activar manos libres'
+          handsFree ? '🗣 Modo manos libres activo' : '\ud83c� Activar manos libres'
         )
       : null,
 
