@@ -20,7 +20,7 @@
  * @returns {object} { critical: bool, type: string, intensity: number }
  */
 function aiPsychDetectHour(d) {
-  var h = (d && typeof d.getHours === 'function') ? d.getHours() : new Date().getHours();
+  var h = d && typeof d.getHours === 'function' ? d.getHours() : new Date().getHours();
   var min = d ? d.getMinutes() : 0;
   var horaDecimal = h + min / 60;
 
@@ -50,29 +50,41 @@ function aiPsychMensajePorHora(d, c) {
   var ctx = aiPsychDetectHour(d);
   if (!ctx.critical) return null;
 
-  var nm = typeof _aiNombrePersonal === 'function' ? _aiNombrePersonal({session: {uid: null}}) : '';
+  var nm =
+    typeof _aiNombrePersonal === 'function' ? _aiNombrePersonal({ session: { uid: null } }) : '';
   var nombre = nm ? nm + ', ' : '';
 
   var mensajes = {
     madrugada_profunda: [
-      nombre + 'sé que esta hora es dura. Lo que hacés ahora, cuando casi todos duermen, habla de tu compromiso. Cada minuto cuenta y estás sumando.',
-      nombre + 'las 3 AM son la hora más difícil del cuerpo humano. Si estás trabajando ahora, recordá que tu esfuerzo vale 35% más que de día. Eso es reconocimiento real.',
-      nombre + 'madrugada. El silencio de esta hora es solo tuyo. Aprovechalo — rendís más de lo que creés a esta hora.'
+      nombre +
+        'sé que esta hora es dura. Lo que hacés ahora, cuando casi todos duermen, habla de tu compromiso. Cada minuto cuenta y estás sumando.',
+      nombre +
+        'las 3 AM son la hora más difícil del cuerpo humano. Si estás trabajando ahora, recordá que tu esfuerzo vale 35% más que de día. Eso es reconocimiento real.',
+      nombre +
+        'madrugada. El silencio de esta hora es solo tuyo. Aprovechalo — rendís más de lo que creés a esta hora.'
     ],
     amanecer: [
-      nombre + 'ya está amaneciendo. Pasaste la noche. El cuerpo empieza a despertar y con él, tu energía. Ya casi termina el turno más duro.',
-      nombre + 'el sol está saliendo. Tu turno nocturno está por terminar. Lo lograste una vez más. Cuando llegues a casa, descansá con orgullo.',
+      nombre +
+        'ya está amaneciendo. Pasaste la noche. El cuerpo empieza a despertar y con él, tu energía. Ya casi termina el turno más duro.',
+      nombre +
+        'el sol está saliendo. Tu turno nocturno está por terminar. Lo lograste una vez más. Cuando llegues a casa, descansá con orgullo.',
       nombre + 'amanecer. Terminaste la parte más difícil. Lo que queda del día es ganancia pura.'
     ],
     bajon_tarde: [
-      nombre + 'es normal sentir el bajón de las 2 PM. El cuerpo pide siesta, pero vos seguís. Un café, un estiramiento, y para adelante.',
-      nombre + 'media tarde. Ya pasaste más de la mitad del día. Lo que queda es cuesta abajo. Un respiro y seguimos.',
-      nombre + 'tarde. El bajón post-almuerzo es biológico, no es falta de ganas. Hidratate, movete un poco, y vas a ver que remontás.'
+      nombre +
+        'es normal sentir el bajón de las 2 PM. El cuerpo pide siesta, pero vos seguís. Un café, un estiramiento, y para adelante.',
+      nombre +
+        'media tarde. Ya pasaste más de la mitad del día. Lo que queda es cuesta abajo. Un respiro y seguimos.',
+      nombre +
+        'tarde. El bajón post-almuerzo es biológico, no es falta de ganas. Hidratate, movete un poco, y vas a ver que remontás.'
     ],
     inicio_nocturno: [
-      nombre + 'arranca la noche. Tu cuerpo está en su pico de alerta ahora. Aprovechá las primeras horas que son las más productivas.',
-      nombre + 'turno nocturno empezando. Las próximas 3-4 horas son tu ventana de máxima energía. Después, bajá el ritmo sin culpa.',
-      nombre + 'empezando la noche. Cada hora de ahora en adelante paga 35% más. Tu tiempo vale más que durante el día.'
+      nombre +
+        'arranca la noche. Tu cuerpo está en su pico de alerta ahora. Aprovechá las primeras horas que son las más productivas.',
+      nombre +
+        'turno nocturno empezando. Las próximas 3-4 horas son tu ventana de máxima energía. Después, bajá el ritmo sin culpa.',
+      nombre +
+        'empezando la noche. Cada hora de ahora en adelante paga 35% más. Tu tiempo vale más que durante el día.'
     ]
   };
 
@@ -94,29 +106,45 @@ function aiPsychFinancialFraming(c) {
 
   // Progreso hacia el salario
   if (c.pctSalario >= 90) {
-    frases.push('🎯 ¡Estás a nada de tu salario base! Cada hora extra ahora es pura ganancia. Ya cubriste tus gastos fijos del mes.');
+    frases.push(
+      '🎯 ¡Estás a nada de tu salario base! Cada hora extra ahora es pura ganancia. Ya cubriste tus gastos fijos del mes.'
+    );
   } else if (c.pctSalario >= 70) {
-    frases.push('💪 Ya superaste el 70% de tu salario base. Vas fuerte. Lo que sigue es construir sobre esa base sólida.');
+    frases.push(
+      '💪 Ya superaste el 70% de tu salario base. Vas fuerte. Lo que sigue es construir sobre esa base sólida.'
+    );
   } else if (c.pctSalario >= 50) {
-    frases.push('📈 Vas por la mitad. Cada turno te acerca más. Ya hiciste la parte más difícil: arrancar.');
+    frases.push(
+      '📈 Vas por la mitad. Cada turno te acerca más. Ya hiciste la parte más difícil: arrancar.'
+    );
   } else if (c.pctSalario >= 25) {
-    frases.push('🌱 Vas construyendo. Un cuarto del mes ya es tuyo. Paso a paso, sin prisa pero sin pausa.');
+    frases.push(
+      '🌱 Vas construyendo. Un cuarto del mes ya es tuyo. Paso a paso, sin prisa pero sin pausa.'
+    );
   }
 
   // Comparación con mes anterior
   if (c.totalCOPMesPasado > 0 && c.totalCOP > c.totalCOPMesPasado) {
     var dif = c.totalCOP - c.totalCOPMesPasado;
-    frases.push('📊 Vas ' + fCOP(dif) + ' arriba vs el mes pasado. Estás mejorando. Eso es crecimiento real.');
+    frases.push(
+      '📊 Vas ' + fCOP(dif) + ' arriba vs el mes pasado. Estás mejorando. Eso es crecimiento real.'
+    );
   }
 
   // Eficiencia
   if (c.copPorHoraReal && c.vh && c.copPorHoraReal > c.vh * 1.3) {
-    frases.push('⚡ Tu valor hora efectivo es ' + fCOP(c.copPorHoraReal) + '. Estás rindiendo al máximo. Cada hora tuya vale más que la de muchos.');
+    frases.push(
+      '⚡ Tu valor hora efectivo es ' +
+        fCOP(c.copPorHoraReal) +
+        '. Estás rindiendo al máximo. Cada hora tuya vale más que la de muchos.'
+    );
   }
 
   // Días trabajados
   if (c.diasTrab >= 15) {
-    frases.push('🗓 Más de medio mes trabajado. Ya pasaste la mitad. Cada día que queda es un paso más hacia tu meta.');
+    frases.push(
+      '🗓 Más de medio mes trabajado. Ya pasaste la mitad. Cada día que queda es un paso más hacia tu meta.'
+    );
   }
 
   return frases.length > 0 ? '\n\n' + frases[Math.floor(Math.random() * frases.length)] : null;
@@ -173,7 +201,8 @@ function aiPsychPostShift(c) {
   var minsHoy = c.minsHoy || 0;
   if (minsHoy < 480) return null; // menos de 8h, no aplica
 
-  var nm = typeof _aiNombrePersonal === 'function' ? _aiNombrePersonal({session: {uid: null}}) : '';
+  var nm =
+    typeof _aiNombrePersonal === 'function' ? _aiNombrePersonal({ session: { uid: null } }) : '';
   var nombre = nm ? nm + ', ' : '';
 
   var mensajes = [
@@ -203,8 +232,16 @@ function aiPsychRespond(c, intent) {
   var horaMsg = aiPsychMensajePorHora(ahora, c);
   if (horaMsg) parts.push('\n\n🕐 ' + horaMsg);
 
-  // 2. Framing positivo de números (en respuestas de dinero)
-  if (intent === 'total_ganado' || intent === 'stats' || intent === 'proyeccion') {
+  // 2. Framing positivo de números (en respuestas de dinero o tiempo trabajado)
+  if (
+    intent === 'total_ganado' ||
+    intent === 'stats' ||
+    intent === 'proyeccion' ||
+    intent === 'hoy' ||
+    intent === 'ayer' ||
+    intent === 'comparativa_mes' ||
+    intent === 'horas_trabajadas'
+  ) {
     var framing = aiPsychFinancialFraming(c);
     if (framing) parts.push(framing);
   }

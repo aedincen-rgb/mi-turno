@@ -448,11 +448,6 @@ function _aiExpandir(original, intent, userContext) {
     addon += defaults[Math.floor(Math.random() * defaults.length)];
   }
 
-  // Cierre colombiano para respuestas extendidas
-  if (addon && Math.random() < 0.3) {
-    addon += '\n\n' + aiRandomPick(_aiColombianismo.closings);
-  }
-
   return original + addon;
 }
 
@@ -485,13 +480,8 @@ function aiEnhancedRespond(
     aiRemember('ai', (originalResponse || '').substring(0, 120), intent, topic, userContext);
   } catch (_) {}
 
-  // 2. Expansión base (tips + contexto)
+  // 2. Análisis financiero
   var text = originalResponse;
-  try {
-    text = _aiExpandir(text, intent, userContext);
-  } catch (_) {}
-
-  // 3. Análisis financiero
   try {
     if (typeof aiInsightFull === 'function') {
       var insight = aiInsightFull(userContext, intent);
@@ -499,11 +489,11 @@ function aiEnhancedRespond(
     }
   } catch (_) {}
 
-  // 4. Enriquecimiento (acciones + follow-ups)
+  // 3. Enriquecimiento (acciones + follow-ups)
   var enriched = aiEnrichResponse(text, intent, userContext, entities, turnosAll);
-  text = enriched.text; // ahora text tiene acciones
+  text = enriched.text;
 
-  // 5. Capa personal: logros + psicología + proactivo + asesor
+  // 4. Capa personal: logros + psicología + proactivo + asesor
   try {
     if (
       intent === 'total_ganado' ||
@@ -541,6 +531,11 @@ function aiEnhancedRespond(
     }
   } catch (_) {}
 
+  // 5. Expansión contextual — rellena con tips/ánimo solo si la respuesta sigue siendo corta
+  try {
+    text = _aiExpandir(text, intent, userContext);
+  } catch (_) {}
+
   // 6. Pulido final: personalidad + conversación
   var mood = { mood: 'neutral' };
   try {
@@ -556,34 +551,15 @@ function aiEnhancedRespond(
     if (typeof aiConvOrchestrate === 'function')
       text = aiConvOrchestrate(text, intent, userContext);
   } catch (_) {}
-
-  // Avanzar nivel conversacional para que el usuario vea respuestas más ricas
-  // con cada interacción (solo cuando el intent es de datos, no conversacional)
+  // aiConvNextStep: sugerencia contextual inteligente → agrega a las acciones rápidas
   try {
-    var _convIntents = {
-      total_ganado: 1,
-      hoy: 1,
-      ayer: 1,
-      proyeccion: 1,
-      horas_trabajadas: 1,
-      promedio: 1,
-      comparativa_mes: 1,
-      comparativa_semana: 1,
-      mejor_dia: 1,
-      peor_dia: 1,
-      racha: 1,
-      distribucion: 1,
-      simulacion: 1,
-      festivos: 1,
-      bienestar: 1,
-      liquidacion: 1,
-      ley: 1,
-      laboral: 1,
-      ahorro: 1,
-      stats: 1
-    };
-    if (intent && _convIntents[intent] && typeof aiConvAdvance === 'function') {
-      aiConvAdvance(intent);
+    if (typeof aiConvNextStep === 'function') {
+      var ns = aiConvNextStep(intent, userContext || {});
+      if (ns) {
+        if (!enriched.actions) enriched.actions = [];
+        if (enriched.actions.length < 3)
+          enriched.actions.push({ label: ns.label, query: ns.query });
+      }
     }
   } catch (_) {}
 

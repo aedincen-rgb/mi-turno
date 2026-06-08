@@ -246,6 +246,7 @@ const projectGlobals = {
   aiConvReset: 'readonly',
   aiConvAdvance: 'readonly',
   aiConvOrchestrate: 'readonly',
+  aiConvNextStep: 'readonly',
   // services/ai-nlp.js
   aiExtractEntities: 'readonly',
   _aiIntentTopic: 'readonly',
