@@ -43,7 +43,27 @@
 
     // Cargar e inicializar Clerk con la Publishable Key.
     // window.Clerk es la instancia del SDK browser (@clerk/clerk-js).
-    window.Clerk.load({ publishableKey: CLERK_PK })
+    window.Clerk.load({
+      publishableKey: CLERK_PK,
+      appearance: {
+        variables: {
+          colorPrimary:         '#5b86e5',
+          colorBackground:      '#ffffff',
+          colorInputBackground: '#f5f7fb',
+          colorText:            '#1a1d2e',
+          colorTextSecondary:   '#646b7d',
+          fontFamily:           '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+          borderRadius:         '14px',
+          fontSize:             '15px'
+        },
+        elements: {
+          card:              'clerk-card-mt',
+          formButtonPrimary: 'clerk-btn-primary-mt',
+          headerTitle:       'clerk-header-title-mt',
+          headerSubtitle:    'clerk-header-subtitle-mt'
+        }
+      }
+    })
       .then(function () {
         window.CLERK_MODE = true;
         console.log('[MT Clerk] SDK inicializado');
@@ -119,6 +139,11 @@
     // Exponer en window._mtSession para compatibilidad con módulos
     // que leen la sesión directamente (p. ej. tabs, IA, sync-queue).
     window._mtSession = ses;
+
+    // Migrar datos existentes bajo UUID de Supabase Auth al Clerk UID.
+    // Debe correr ANTES del upsert para no crear fila nueva si ya existe
+    // una bajo el UUID viejo — _clerkUpsertPerfil luego la encontrará.
+    _migrarSiEsNecesario(ses.uid, ses.email);
 
     // Sincronizar perfil en Supabase (upsert).
     // Esto garantiza que la fila en public.perfiles existe para el uid
@@ -213,6 +238,30 @@
       })
       .catch(function (e) {
         console.warn('[MT Clerk] PIN lookup falló (no crítico):', e.message || e);
+      });
+  }
+
+  // ── _migrarSiEsNecesario ──────────────────────────────────────
+  // Llama la RPC migrar_uid_a_clerk para reasignar datos que existen
+  // bajo el UUID viejo de Supabase Auth al nuevo Clerk UID.
+  // Silencioso: ni toast ni bloqueo de flujo en ningún caso.
+  function _migrarSiEsNecesario(uid, email) {
+    if (!uid || !email) return;
+    if (typeof SUPA === 'undefined' || !SUPA) return;
+
+    SUPA.rpc('migrar_uid_a_clerk', { p_email: email, p_new_uid: uid })
+      .then(function (res) {
+        if (res && res.error) {
+          console.warn('[MT Clerk] migración UID error:', res.error.message || res.error);
+          return;
+        }
+        if (res && res.data === true) {
+          console.log('[MT Clerk] Migración UUID→Clerk completada para', email);
+        }
+        // res.data === false → usuario nuevo o ya migrado, normal.
+      })
+      .catch(function (e) {
+        console.warn('[MT Clerk] migración UID falló (no crítico):', e.message || e);
       });
   }
 

@@ -1,0 +1,40 @@
+/* ── Mi Turno × Clerk — integración visual ── */
+
+.clerk-card-mt {
+  background: rgba(255, 255, 255, 0.85) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(91, 134, 229, 0.18) !important;
+  box-shadow: 0 8px 32px rgba(91, 134, 229, 0.12) !important;
+  border-radius: 20px !important;
+}
+
+.clerk-btn-primary-mt {
+  background: linear-gradient(135deg, #5b86e5, #7c5cfc) !important;
+  border-radius: 12px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.01em !important;
+}
+
+.clerk-header-title-mt {
+  font-size: 22px !important;
+  font-weight: 700 !important;
+  color: #1a1d2e !important;
+}
+
+.clerk-header-subtitle-mt {
+  color: #646b7d !important;
+}
+
+[data-theme='dark'] .clerk-card-mt {
+  background: rgba(26, 29, 46, 0.85) !important;
+  border-color: rgba(91, 134, 229, 0.25) !important;
+}
+
+[data-theme='dark'] .clerk-header-title-mt {
+  color: #f0f2ff !important;
+}
+
+[data-theme='dark'] .clerk-header-subtitle-mt {
+  color: #a0a3b8 !important;
+}

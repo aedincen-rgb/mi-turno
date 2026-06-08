@@ -1,4 +1,4 @@
 {
-  "v": "v208",
-  "label": "Clerk auth — reemplaza Supabase Auth por Clerk"
+  "v": "v209",
+  "label": "Migración silenciosa UUID→Clerk + UI Clerk adaptada a Mi Turno"
 }
