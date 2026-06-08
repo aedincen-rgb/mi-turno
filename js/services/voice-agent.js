@@ -13,31 +13,73 @@ var VOICE_COMMANDS = [
   // ═══ NAVEGACIÓN ═══
   {
     id: 'nav_home',
-    patterns: ['ir a inicio', 'ir al inicio', 'inicio', 'home', 'pantalla principal', 'volver al inicio'],
+    patterns: [
+      'ir a inicio',
+      'ir al inicio',
+      'inicio',
+      'home',
+      'pantalla principal',
+      'volver al inicio'
+    ],
     action: 'navigate',
     tab: 'home'
   },
   {
     id: 'nav_dashboard',
-    patterns: ['ir a análisis', 'ir a analisis', 'análisis', 'analisis', 'dashboard', 'estadísticas', 'estadisticas', 'ver análisis', 'ver analisis', 'mis números', 'mis numeros'],
+    patterns: [
+      'ir a análisis',
+      'ir a analisis',
+      'análisis',
+      'analisis',
+      'dashboard',
+      'estadísticas',
+      'estadisticas',
+      'ver análisis',
+      'ver analisis',
+      'mis números',
+      'mis numeros'
+    ],
     action: 'navigate',
     tab: 'dashboard'
   },
   {
     id: 'nav_ai',
-    patterns: ['ir a asistente', 'asistente', 'chat', 'ia', 'inteligencia artificial', 'hablar con ia', 'abrir chat'],
+    patterns: [
+      'ir a asistente',
+      'asistente',
+      'chat',
+      'ia',
+      'inteligencia artificial',
+      'hablar con ia',
+      'abrir chat'
+    ],
     action: 'navigate',
     tab: 'ai'
   },
   {
     id: 'nav_history',
-    patterns: ['ir a historial', 'historial', 'historia', 'turnos anteriores', 'ver historial', 'mis turnos'],
+    patterns: [
+      'ir a historial',
+      'historial',
+      'historia',
+      'turnos anteriores',
+      'ver historial',
+      'mis turnos'
+    ],
     action: 'navigate',
     tab: 'history'
   },
   {
     id: 'nav_config',
-    patterns: ['ir a ajustes', 'ajustes', 'configuración', 'configuracion', 'settings', 'opciones', 'configurar'],
+    patterns: [
+      'ir a ajustes',
+      'ajustes',
+      'configuración',
+      'configuracion',
+      'settings',
+      'opciones',
+      'configurar'
+    ],
     action: 'navigate',
     tab: 'config'
   },
@@ -45,55 +87,136 @@ var VOICE_COMMANDS = [
   // ═══ TURNOS ═══
   {
     id: 'start_turno',
-    patterns: ['iniciar turno', 'empezar turno', 'comenzar turno', 'arrancar turno', 'marcar entrada', 'fichar entrada', 'empezar a trabajar', 'iniciar jornada', 'abrir turno', 'nuevo turno'],
+    patterns: [
+      'iniciar turno',
+      'empezar turno',
+      'comenzar turno',
+      'arrancar turno',
+      'marcar entrada',
+      'fichar entrada',
+      'empezar a trabajar',
+      'iniciar jornada',
+      'abrir turno',
+      'nuevo turno'
+    ],
     action: 'startTurno'
   },
   {
     id: 'stop_turno',
-    patterns: ['finalizar turno', 'terminar turno', 'cerrar turno', 'marcar salida', 'fichar salida', 'acabar turno', 'salir del trabajo', 'terminar jornada', 'cerrar jornada'],
+    patterns: [
+      'finalizar turno',
+      'terminar turno',
+      'cerrar turno',
+      'marcar salida',
+      'fichar salida',
+      'acabar turno',
+      'salir del trabajo',
+      'terminar jornada',
+      'cerrar jornada'
+    ],
     action: 'stopTurno'
   },
 
   // ═══ CONSULTAS RÁPIDAS ═══
   {
     id: 'ask_month',
-    patterns: ['cuánto gané este mes', 'cuanto gane este mes', 'total del mes', 'mis ganancias del mes', 'ingresos del mes', 'cuánto llevo este mes', 'cuanto llevo este mes'],
+    patterns: [
+      'cuánto gané este mes',
+      'cuanto gane este mes',
+      'total del mes',
+      'mis ganancias del mes',
+      'ingresos del mes',
+      'cuánto llevo este mes',
+      'cuanto llevo este mes'
+    ],
     action: 'ask',
     query: '¿Cuánto gané este mes?'
   },
   {
     id: 'ask_today',
-    patterns: ['cuánto gané hoy', 'cuanto gane hoy', 'hoy cuánto gané', 'hoy cuanto gane', 'resumen de hoy', 'cómo me fue hoy', 'como me fue hoy'],
+    patterns: [
+      'cuánto gané hoy',
+      'cuanto gane hoy',
+      'hoy cuánto gané',
+      'hoy cuanto gane',
+      'resumen de hoy',
+      'cómo me fue hoy',
+      'como me fue hoy'
+    ],
     action: 'ask',
     query: '¿Cuánto gané hoy?'
   },
   {
     id: 'ask_yesterday',
-    patterns: ['cuánto gané ayer', 'cuanto gane ayer', 'ayer cuánto gané', 'ayer cuanto gane', 'cómo me fue ayer', 'como me fue ayer', 'y ayer'],
+    patterns: [
+      'cuánto gané ayer',
+      'cuanto gane ayer',
+      'ayer cuánto gané',
+      'ayer cuanto gane',
+      'cómo me fue ayer',
+      'como me fue ayer',
+      'y ayer'
+    ],
     action: 'ask',
     query: '¿Cuánto gané ayer?'
   },
   {
     id: 'ask_projection',
-    patterns: ['proyección', 'proyeccion', 'cuánto voy a ganar', 'cuanto voy a ganar', 'proyección al cierre', 'proyeccion al cierre', 'cuánto al final del mes', 'cuanto al final del mes', 'estimado del mes'],
+    patterns: [
+      'proyección',
+      'proyeccion',
+      'cuánto voy a ganar',
+      'cuanto voy a ganar',
+      'proyección al cierre',
+      'proyeccion al cierre',
+      'cuánto al final del mes',
+      'cuanto al final del mes',
+      'estimado del mes'
+    ],
     action: 'ask',
     query: 'Proyección al cierre'
   },
   {
     id: 'ask_hours',
-    patterns: ['cuántas horas llevo', 'cuantas horas llevo', 'cuántas horas trabajé', 'cuantas horas trabaje', 'horas trabajadas', 'horas totales', 'tiempo trabajado'],
+    patterns: [
+      'cuántas horas llevo',
+      'cuantas horas llevo',
+      'cuántas horas trabajé',
+      'cuantas horas trabaje',
+      'horas trabajadas',
+      'horas totales',
+      'tiempo trabajado'
+    ],
     action: 'ask',
     query: '¿Cuántas horas llevo?'
   },
   {
     id: 'ask_week',
-    patterns: ['cómo voy esta semana', 'como voy esta semana', 'resumen de la semana', 'esta semana', 'cuánto esta semana', 'cuanto esta semana'],
+    patterns: [
+      'cómo voy esta semana',
+      'como voy esta semana',
+      'resumen de la semana',
+      'esta semana',
+      'cuánto esta semana',
+      'cuanto esta semana'
+    ],
     action: 'ask',
     query: '/semana'
   },
   {
     id: 'ask_stats',
-    patterns: ['resumen rápido', 'resumen rapido', 'stats', 'estadísticas', 'estadisticas', 'dame los números', 'dame los numeros', 'cómo voy', 'como voy', 'balance'],
+    patterns: [
+      'resumen rápido',
+      'resumen rapido',
+      'stats',
+      'estadísticas',
+      'estadisticas',
+      'dame los números',
+      'dame los numeros',
+      'cómo voy',
+      'como voy',
+      'balance'
+    ],
     action: 'ask',
     query: '/stats'
   },
@@ -101,19 +224,46 @@ var VOICE_COMMANDS = [
   // ═══ COMPARATIVAS ═══
   {
     id: 'compare_month',
-    patterns: ['comparar con mes pasado', 'vs mes pasado', 'versus mes pasado', 'contra mes pasado', 'mes anterior', 'cómo voy vs mes pasado', 'como voy vs mes pasado', 'diferencia con mes pasado'],
+    patterns: [
+      'comparar con mes pasado',
+      'vs mes pasado',
+      'versus mes pasado',
+      'contra mes pasado',
+      'mes anterior',
+      'cómo voy vs mes pasado',
+      'como voy vs mes pasado',
+      'diferencia con mes pasado'
+    ],
     action: 'ask',
     query: '¿VS mes pasado?'
   },
   {
     id: 'compare_week',
-    patterns: ['comparar con semana pasada', 'vs semana pasada', 'versus semana pasada', 'semana anterior', 'cómo voy vs semana pasada', 'como voy vs semana pasada'],
+    patterns: [
+      'comparar con semana pasada',
+      'vs semana pasada',
+      'versus semana pasada',
+      'semana anterior',
+      'cómo voy vs semana pasada',
+      'como voy vs semana pasada'
+    ],
     action: 'ask',
     query: '¿VS semana pasada?'
   },
   {
     id: 'trend',
-    patterns: ['tendencia', 'evolución', 'evolucion', 'histórico', 'historico', 'últimos meses', 'ultimos meses', 'cómo he mejorado', 'como he mejorado', 'progreso'],
+    patterns: [
+      'tendencia',
+      'evolución',
+      'evolucion',
+      'histórico',
+      'historico',
+      'últimos meses',
+      'ultimos meses',
+      'cómo he mejorado',
+      'como he mejorado',
+      'progreso'
+    ],
     action: 'ask',
     query: '/tendencia'
   },
@@ -121,43 +271,89 @@ var VOICE_COMMANDS = [
   // ═══ SIMULACIONES ═══
   {
     id: 'simulate_extra',
-    patterns: ['simular horas extra', 'cuánto si trabajo más', 'cuanto si trabajo mas', 'y si hago más horas', 'y si hago mas horas', 'simular extra'],
+    patterns: [
+      'simular horas extra',
+      'cuánto si trabajo más',
+      'cuanto si trabajo mas',
+      'y si hago más horas',
+      'y si hago mas horas',
+      'simular extra'
+    ],
     action: 'ask',
     query: '¿Cuánto si trabajo 4h más?'
   },
   {
     id: 'simulate_night',
-    patterns: ['simular nocturnas', 'cuánto si hago nocturnas', 'cuanto si hago nocturnas', 'solo turnos de noche', 'simular noche'],
+    patterns: [
+      'simular nocturnas',
+      'cuánto si hago nocturnas',
+      'cuanto si hago nocturnas',
+      'solo turnos de noche',
+      'simular noche'
+    ],
     action: 'ask',
     query: '¿Cuánto ganaría si solo hago nocturnas?'
   },
   {
     id: 'goal',
-    patterns: ['cuánto falta para', 'cuanto falta para', 'meta de', 'para llegar a', 'cuánto necesito para', 'cuanto necesito para', 'cuánto debo trabajar para', 'cuanto debo trabajar para'],
+    patterns: [
+      'cuánto falta para',
+      'cuanto falta para',
+      'meta de',
+      'para llegar a',
+      'cuánto necesito para',
+      'cuanto necesito para',
+      'cuánto debo trabajar para',
+      'cuanto debo trabajar para'
+    ],
     action: 'ask',
     query: null // se procesa abajo con el número
   },
   {
     id: 'save_goal',
-    patterns: ['poner meta', 'guardar meta', 'fijar meta', 'crear meta', 'mi meta es', 'quiero ahorrar', 'quiero llegar a'],
+    patterns: [
+      'poner meta',
+      'guardar meta',
+      'fijar meta',
+      'crear meta',
+      'mi meta es',
+      'quiero ahorrar',
+      'quiero llegar a'
+    ],
     action: 'function',
     fn: function (ctx) {
       // Extraer número del texto y guardarlo como meta
-      if (typeof _extractNumber !== 'function') return { type: 'error', msg: 'No pude entender el número. Decí "meta de 2 millones".' };
-      if (typeof aiSetGoal !== 'function') return { type: 'error', msg: 'Función de metas no disponible.' };
+      if (typeof _extractNumber !== 'function')
+        return { type: 'error', msg: 'No pude entender el número. Decí "meta de 2 millones".' };
+      if (typeof aiSetGoal !== 'function')
+        return { type: 'error', msg: 'Función de metas no disponible.' };
       // El texto completo viene del comando detectado
-      return { type: 'success', msg: 'Usá **/meta 2000000** para calcular cuánto te falta. Para guardar una meta, decí "poner meta de 2 millones".' };
+      return {
+        type: 'success',
+        msg: 'Usá **/meta 2000000** para calcular cuánto te falta. Para guardar una meta, decí "poner meta de 2 millones".'
+      };
     }
   },
 
   // ═══ ACCIONES ═══
   {
     id: 'export_pdf',
-    patterns: ['exportar pdf', 'descargar pdf', 'bajar pdf', 'generar pdf', 'crear pdf', 'exportar reporte pdf', 'informe pdf', 'guardar como pdf'],
+    patterns: [
+      'exportar pdf',
+      'descargar pdf',
+      'bajar pdf',
+      'generar pdf',
+      'crear pdf',
+      'exportar reporte pdf',
+      'informe pdf',
+      'guardar como pdf'
+    ],
     action: 'function',
     fn: function (ctx) {
-      if (!ctx || !ctx.turnos || !ctx.turnos.length) return { type: 'error', msg: 'No hay turnos para exportar. Registrá algunos primero.' };
-      if (!window.jspdf) return { type: 'error', msg: 'Librería PDF no disponible. Recargá la app.' };
+      if (!ctx || !ctx.turnos || !ctx.turnos.length)
+        return { type: 'error', msg: 'No hay turnos para exportar. Registrá algunos primero.' };
+      if (!window.jspdf)
+        return { type: 'error', msg: 'Librería PDF no disponible. Recargá la app.' };
       try {
         var jsPDF = window.jspdf.jsPDF;
         var doc = new jsPDF();
@@ -177,10 +373,29 @@ var VOICE_COMMANDS = [
         doc.text('Resumen del mes', 14, 44);
         doc.setFontSize(10);
         doc.setTextColor(80);
-        doc.text('Total: ' + (typeof fCOP === 'function' ? fCOP(calc.totalCOP) : '$' + calc.totalCOP), 14, 52);
-        doc.text('Horas: ' + (typeof fDur === 'function' ? fDur(calc.totalMins) : (calc.totalMins / 60).toFixed(1) + 'h'), 14, 58);
+        doc.text(
+          'Total: ' + (typeof fCOP === 'function' ? fCOP(calc.totalCOP) : '$' + calc.totalCOP),
+          14,
+          52
+        );
+        doc.text(
+          'Horas: ' +
+            (typeof fDur === 'function'
+              ? fDur(calc.totalMins)
+              : (calc.totalMins / 60).toFixed(1) + 'h'),
+          14,
+          58
+        );
         if (sal > 0) {
-          doc.text('Salario: ' + (typeof fCOP === 'function' ? fCOP(sal) : '$' + sal) + ' · Avance: ' + ((calc.totalCOP / sal) * 100).toFixed(1) + '%', 14, 64);
+          doc.text(
+            'Salario: ' +
+              (typeof fCOP === 'function' ? fCOP(sal) : '$' + sal) +
+              ' · Avance: ' +
+              ((calc.totalCOP / sal) * 100).toFixed(1) +
+              '%',
+            14,
+            64
+          );
         }
 
         var bd = calc.bd || {};
@@ -188,8 +403,16 @@ var VOICE_COMMANDS = [
         var keys = Object.keys(bd);
         for (var k = 0; k < keys.length; k++) {
           if (bd[keys[k]].mins > 0) {
-            var rc = (typeof RC !== 'undefined' && RC[keys[k]]) ? RC[keys[k]] : { label: keys[k], factor: 1 };
-            rows.push([rc.label, typeof fDur === 'function' ? fDur(bd[keys[k]].mins) : '', 'x' + rc.factor.toFixed(2), typeof fCOP === 'function' ? fCOP(bd[keys[k]].cop) : '']);
+            var rc =
+              typeof RC !== 'undefined' && RC[keys[k]]
+                ? RC[keys[k]]
+                : { label: keys[k], factor: 1 };
+            rows.push([
+              rc.label,
+              typeof fDur === 'function' ? fDur(bd[keys[k]].mins) : '',
+              'x' + rc.factor.toFixed(2),
+              typeof fCOP === 'function' ? fCOP(bd[keys[k]].cop) : ''
+            ]);
           }
         }
         if (rows.length > 0 && typeof doc.autoTable === 'function') {
@@ -213,11 +436,24 @@ var VOICE_COMMANDS = [
   },
   {
     id: 'export_excel',
-    patterns: ['exportar excel', 'descargar excel', 'bajar excel', 'generar excel', 'crear excel', 'exportar reporte excel', 'informe excel', 'guardar como excel', 'hoja de cálculo', 'hoja de calculo'],
+    patterns: [
+      'exportar excel',
+      'descargar excel',
+      'bajar excel',
+      'generar excel',
+      'crear excel',
+      'exportar reporte excel',
+      'informe excel',
+      'guardar como excel',
+      'hoja de cálculo',
+      'hoja de calculo'
+    ],
     action: 'function',
     fn: function (ctx) {
-      if (!ctx || !ctx.turnos || !ctx.turnos.length) return { type: 'error', msg: 'No hay turnos para exportar. Registrá algunos primero.' };
-      if (!window.XLSX) return { type: 'error', msg: 'Librería Excel no disponible. Recargá la app.' };
+      if (!ctx || !ctx.turnos || !ctx.turnos.length)
+        return { type: 'error', msg: 'No hay turnos para exportar. Registrá algunos primero.' };
+      if (!window.XLSX)
+        return { type: 'error', msg: 'Librería Excel no disponible. Recargá la app.' };
       try {
         var turnos = ctx.turnos || [];
         var ahora = new Date();
@@ -225,7 +461,8 @@ var VOICE_COMMANDS = [
         var detalle = [];
         for (var i = 0; i < turnos.length; i++) {
           var t = turnos[i];
-          var ini = new Date(t.inicio), fin = new Date(t.fin);
+          var ini = new Date(t.inicio),
+            fin = new Date(t.fin);
           detalle.push({
             Fecha: ini.toLocaleDateString('es-CO'),
             Entrada: ini.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }),
@@ -245,7 +482,17 @@ var VOICE_COMMANDS = [
   },
   {
     id: 'send_email',
-    patterns: ['enviar por correo', 'mandar por correo', 'enviar reporte', 'mandar reporte', 'enviar email', 'enviar mail', 'correo electrónico', 'correo electronico', 'enviar a mi jefe'],
+    patterns: [
+      'enviar por correo',
+      'mandar por correo',
+      'enviar reporte',
+      'mandar reporte',
+      'enviar email',
+      'enviar mail',
+      'correo electrónico',
+      'correo electronico',
+      'enviar a mi jefe'
+    ],
     action: 'ask',
     query: 'Envía mi reporte por correo'
   },
@@ -253,7 +500,16 @@ var VOICE_COMMANDS = [
   // ═══ CONFIGURACIÓN ═══
   {
     id: 'dark_mode',
-    patterns: ['modo oscuro', 'activar modo oscuro', 'poner oscuro', 'tema oscuro', 'dark mode', 'fondo negro', 'cambiar a oscuro', 'noche'],
+    patterns: [
+      'modo oscuro',
+      'activar modo oscuro',
+      'poner oscuro',
+      'tema oscuro',
+      'dark mode',
+      'fondo negro',
+      'cambiar a oscuro',
+      'noche'
+    ],
     action: 'function',
     fn: function () {
       try {
@@ -267,7 +523,17 @@ var VOICE_COMMANDS = [
   },
   {
     id: 'light_mode',
-    patterns: ['modo claro', 'activar modo claro', 'poner claro', 'tema claro', 'light mode', 'fondo blanco', 'cambiar a claro', 'día', 'dia'],
+    patterns: [
+      'modo claro',
+      'activar modo claro',
+      'poner claro',
+      'tema claro',
+      'light mode',
+      'fondo blanco',
+      'cambiar a claro',
+      'día',
+      'dia'
+    ],
     action: 'function',
     fn: function () {
       try {
@@ -289,7 +555,13 @@ var VOICE_COMMANDS = [
         var next = cur === 'dark' ? 'light' : 'dark';
         document.documentElement.setAttribute('data-theme', next);
         if (typeof grabar === 'function') grabar('mt_theme', next);
-        return { type: 'success', msg: (next === 'dark' ? '🌙' : '☀️') + ' Tema cambiado a ' + (next === 'dark' ? 'oscuro' : 'claro') };
+        return {
+          type: 'success',
+          msg:
+            (next === 'dark' ? '🌙' : '☀️') +
+            ' Tema cambiado a ' +
+            (next === 'dark' ? 'oscuro' : 'claro')
+        };
       } catch (_) {
         return { type: 'error', msg: 'No se pudo cambiar el tema' };
       }
@@ -299,7 +571,15 @@ var VOICE_COMMANDS = [
   // ═══ MODO MANOS LIBRES ═══
   {
     id: 'hands_free_on',
-    patterns: ['activar manos libres', 'modo manos libres', 'conversación por voz', 'conversacion por voz', 'hablar sin tocar', 'empezar a escuchar', 'escuchar siempre'],
+    patterns: [
+      'activar manos libres',
+      'modo manos libres',
+      'conversación por voz',
+      'conversacion por voz',
+      'hablar sin tocar',
+      'empezar a escuchar',
+      'escuchar siempre'
+    ],
     action: 'local',
     handler: function (ctx) {
       if (ctx.setAutoRead) ctx.setAutoRead(true);
@@ -309,7 +589,15 @@ var VOICE_COMMANDS = [
   },
   {
     id: 'hands_free_off',
-    patterns: ['desactivar manos libres', 'silencio', 'dejar de escuchar', 'modo normal', 'salir de manos libres', 'apagar micrófono', 'apagar microfono'],
+    patterns: [
+      'desactivar manos libres',
+      'silencio',
+      'dejar de escuchar',
+      'modo normal',
+      'salir de manos libres',
+      'apagar micrófono',
+      'apagar microfono'
+    ],
     action: 'local',
     handler: function (ctx) {
       if (ctx.setHandsFree) ctx.setHandsFree(false);
@@ -319,26 +607,48 @@ var VOICE_COMMANDS = [
   },
   {
     id: 'voice_help',
-    patterns: ['ayuda de voz', 'qué puedo decir', 'que puedo decir', 'comandos de voz', 'qué sabes hacer con voz', 'que sabes hacer con voz', 'lista de comandos', 'ayuda por voz'],
+    patterns: [
+      'ayuda de voz',
+      'qué puedo decir',
+      'que puedo decir',
+      'comandos de voz',
+      'qué sabes hacer con voz',
+      'que sabes hacer con voz',
+      'lista de comandos',
+      'ayuda por voz'
+    ],
     action: 'local',
     handler: function () {
-      return '🎙 **Comandos de voz disponibles:**\n\n' +
+      return (
+        '🎙 **Soy tu agente de voz. Esto es lo que puedo hacer por vos:**\n\n' +
+        '⏱ **Acciones (con confirmación):** "iniciar turno", "finalizar turno", "pon mi salario en 1.5 millones"\n' +
         '🗣 **Navegar:** "ir a inicio", "ir a análisis", "ir a ajustes"\n' +
-        '⏱ **Turnos:** "iniciar turno", "finalizar turno"\n' +
         '💰 **Consultar:** "cuánto gané hoy", "cuánto gané ayer", "cuánto gané este mes"\n' +
-        '📊 **Comparar:** "vs mes pasado", "vs semana pasada", "tendencia"\n' +
+        '📊 **Comparar:** "vs mes pasado", "vs semana pasada", "mi tendencia"\n' +
         '🔮 **Simular:** "simular horas extra", "cuánto falta para 2 millones"\n' +
-        '� **Exportar archivos:** "exportar pdf" (descargable), "exportar excel" (hoja de cálculo)\n' +
-        '💬 **Compartir:** "compartir por WhatsApp" (mensaje de texto, sin archivo)\n' +
-        '📧 **Enviar por correo:** "enviar por correo" (documento adjunto)\n' +
+        '🧮 **Calcular:** "mi liquidación", "plan de ahorro", "optimizar mis turnos", "informe completo"\n' +
+        '⚖️ **Ley:** "mis derechos", "recargo nocturno", "recargo dominical"\n' +
+        '📄 **Exportar:** "exportar pdf", "exportar excel"\n' +
+        '📧 **Enviar por correo:** "enviar por correo"\n' +
         '🌙 **Tema:** "modo oscuro", "modo claro"\n' +
-        '🎙 **Control:** "activar manos libres", "silencio", "ayuda de voz"\n\n' +
-        '💡 Si decís "compartir reporte", te llevo a Análisis (WhatsApp). Si querés un archivo, decí "exportar pdf".';
+        '🚀 **Al día:** "ponme al día", "briefing", "qué tal voy"\n' +
+        '🎙 **Control:** "silencio" para apagar el modo manos libres\n\n' +
+        '💡 Cuando te pida confirmar una acción, decí "sí" o "no".'
+      );
     }
   },
   {
     id: 'read_aloud',
-    patterns: ['léeme', 'leeme', 'leer en voz alta', 'decime', 'dime', 'contame', 'cuentame', 'cuéntame'],
+    patterns: [
+      'léeme',
+      'leeme',
+      'leer en voz alta',
+      'decime',
+      'dime',
+      'contame',
+      'cuentame',
+      'cuéntame'
+    ],
     action: 'ask',
     query: null // passthrough: envía el texto completo a la IA
   },
@@ -346,7 +656,14 @@ var VOICE_COMMANDS = [
   // ═══ LOGROS ═══
   {
     id: 'achievements',
-    patterns: ['mis logros', 'ver logros', 'insignias', 'qué logros tengo', 'que logros tengo', 'mis medallas'],
+    patterns: [
+      'mis logros',
+      'ver logros',
+      'insignias',
+      'qué logros tengo',
+      'que logros tengo',
+      'mis medallas'
+    ],
     action: 'ask',
     query: '/logros'
   },
@@ -354,7 +671,17 @@ var VOICE_COMMANDS = [
   // ═══ SALUD ═══
   {
     id: 'health_check',
-    patterns: ['cómo estoy de salud', 'como estoy de salud', 'estoy cansado', 'estoy agotado', 'ritmo de trabajo', 'cómo está mi salud', 'como esta mi salud', 'burnout', 'fatiga'],
+    patterns: [
+      'cómo estoy de salud',
+      'como estoy de salud',
+      'estoy cansado',
+      'estoy agotado',
+      'ritmo de trabajo',
+      'cómo está mi salud',
+      'como esta mi salud',
+      'burnout',
+      'fatiga'
+    ],
     action: 'ask',
     query: '/salud'
   },
@@ -362,17 +689,152 @@ var VOICE_COMMANDS = [
   // ═══ INFO APP ═══
   {
     id: 'app_version',
-    patterns: ['qué versión es esta', 'que version es esta', 'versión de la app', 'version de la app', 'qué versión tengo', 'que version tengo'],
+    patterns: [
+      'qué versión es esta',
+      'que version es esta',
+      'versión de la app',
+      'version de la app',
+      'qué versión tengo',
+      'que version tengo'
+    ],
     action: 'local',
     handler: function () {
-      return '📱 Mi Turno ' + (typeof MT_APP_VERSION !== 'undefined' ? MT_APP_VERSION : '') + ' · Colombia, 100% offline.';
+      return (
+        '📱 Mi Turno ' +
+        (typeof MT_APP_VERSION !== 'undefined' ? MT_APP_VERSION : '') +
+        ' · Colombia, 100% offline.'
+      );
     }
   },
   {
     id: 'connection_status',
-    patterns: ['estoy conectado', 'hay conexión', 'hay conexion', 'estado de conexión', 'estado de conexion', 'cómo está la conexión', 'como esta la conexion', 'internet'],
+    patterns: [
+      'estoy conectado',
+      'hay conexión',
+      'hay conexion',
+      'estado de conexión',
+      'estado de conexion',
+      'cómo está la conexión',
+      'como esta la conexion',
+      'internet'
+    ],
     action: 'ask',
     query: '¿Estoy conectado a Supabase?'
+  },
+
+  // ═══ AGENTE AVANZADO (calculadoras del advisor) ═══
+  {
+    id: 'adv_liquidacion',
+    patterns: [
+      'mi liquidación',
+      'mi liquidacion',
+      'calcular liquidación',
+      'calcular liquidacion',
+      'cuánto me deben',
+      'cuanto me deben',
+      'mis prestaciones',
+      'prima de servicios',
+      'cesantías',
+      'cesantias',
+      'liquidación laboral',
+      'liquidacion laboral'
+    ],
+    action: 'ask',
+    query: '/liquidar'
+  },
+  {
+    id: 'adv_informe',
+    patterns: [
+      'informe completo',
+      'reporte completo',
+      'reporte detallado',
+      'análisis completo',
+      'analisis completo',
+      'dame el informe',
+      'informe del mes'
+    ],
+    action: 'ask',
+    query: '/informe'
+  },
+  {
+    id: 'adv_ahorro',
+    patterns: [
+      'plan de ahorro',
+      'cómo ahorro',
+      'como ahorro',
+      'ayúdame a ahorrar',
+      'ayudame a ahorrar',
+      'cuánto puedo ahorrar',
+      'cuanto puedo ahorrar',
+      'estrategia de ahorro'
+    ],
+    action: 'ask',
+    query: '/ahorro'
+  },
+  {
+    id: 'adv_optimizar',
+    patterns: [
+      'optimizar mis turnos',
+      'optimizar turnos',
+      'cómo gano más',
+      'como gano mas',
+      'cómo ganar más',
+      'como ganar mas',
+      'consejos para ganar más',
+      'consejos para ganar mas',
+      'cómo mejorar mis ingresos',
+      'como mejorar mis ingresos',
+      'optimizar ingresos'
+    ],
+    action: 'ask',
+    query: 'optimizar'
+  },
+  {
+    id: 'adv_ley',
+    patterns: [
+      'mis derechos',
+      'qué dice la ley',
+      'que dice la ley',
+      'recargos legales',
+      'derechos laborales',
+      'cuánto es el recargo nocturno',
+      'cuanto es el recargo nocturno',
+      'recargo dominical',
+      'la ley colombiana'
+    ],
+    action: 'ask',
+    query: '/ley'
+  },
+  {
+    id: 'adv_briefing',
+    patterns: [
+      'ponme al día',
+      'ponme al dia',
+      'briefing',
+      'actualízame',
+      'actualizame',
+      'qué tal voy',
+      'que tal voy',
+      'resumen del día',
+      'resumen del dia',
+      'cómo arranca el día',
+      'como arranca el dia',
+      'dame el resumen'
+    ],
+    action: 'ask',
+    query: '/stats'
+  },
+  {
+    id: 'adv_tendencia',
+    patterns: [
+      'mi evolución',
+      'mi evolucion',
+      'cómo he progresado',
+      'como he progresado',
+      'mi tendencia de ingresos'
+    ],
+    action: 'ask',
+    query: '/tendencia'
   }
 ];
 
@@ -407,7 +869,9 @@ function voiceDetect(text) {
           return {
             id: cmd.id,
             action: 'local',
-            handler: function () { return '¿De cuánto es tu meta? Decime un número, por ejemplo: "meta de 2 millones".'; }
+            handler: function () {
+              return '¿De cuánto es tu meta? Decime un número, por ejemplo: "meta de 2 millones".';
+            }
           };
         }
         // Passthrough: enviar el texto completo

@@ -469,10 +469,18 @@ function App(props) {
         // Si CLOUD_MODE está apagado pero hay red y SUPA existe, intentamos
         // reconectar: un __cloudReady falló antes por timeout de red, pero
         // ahora la conexión volvió. Revalidamos sin bloquear la UI.
-        if (!CLOUD_MODE && isOnline() && typeof SUPA !== 'undefined' && SUPA && window.__cloudReady) {
+        if (
+          !CLOUD_MODE &&
+          isOnline() &&
+          typeof SUPA !== 'undefined' &&
+          SUPA &&
+          window.__cloudReady
+        ) {
           window.__cloudReady.then(function (ok) {
             if (ok) {
-              try { processQueue(uid); } catch (_) {}
+              try {
+                processQueue(uid);
+              } catch (_) {}
             }
           });
         }
@@ -1218,6 +1226,12 @@ function App(props) {
             salario: salario,
             vh: vh,
             session: session,
+            activo: activo,
+            // Acciones reales del agente: se ejecutan in-place (sin reload),
+            // preservando el loop de manos libres.
+            onIniTurno: onIni,
+            onFinTurno: onFin,
+            onSetSalario: onSalario,
             onNavigate: function (tabId, subAction) {
               haptic();
               setTab(tabId);

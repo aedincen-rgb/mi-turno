@@ -92,6 +92,10 @@ function AsistenteTab(props) {
   var pressTimerRef = useRef(null);
   var isLongPressRef = useRef(false);
 
+  // Acción del agente pendiente de confirmación hablada (modo manos libres).
+  // Guarda el objeto execute mientras el agente espera un "sí"/"no".
+  var pendingActionRef = useRef(null);
+
   var tieneConversacion = msgs.length > 0;
 
   // ── Comandos de voz (usa voice-agent.js si está disponible) ──
@@ -363,6 +367,62 @@ function AsistenteTab(props) {
     setSpeakUI({ idx: idx, status: 'speaking', progress: 0 });
   }
 
+  // ── Briefing hablado al activar manos libres ──
+  // Da un resumen real (cuánto llevás, proyección, alertas) en vez de
+  // un saludo genérico. Lo agrega al chat y lo lee; al terminar de
+  // hablar, el loop de manos libres empieza a escuchar automáticamente.
+  function speakBriefing() {
+    var text = '';
+    try {
+      if (typeof buildContext === 'function') {
+        var c = buildContext({
+          turnos: props.turnos,
+          turnosAll: props.turnosAll || props.turnos,
+          calc: props.calc,
+          salario: props.salario,
+          vh: props.vh,
+          session: props.session
+        });
+        var partes = [];
+        var hora = _saludoHora(new Date());
+        var nombre =
+          typeof _aiNombrePersonal === 'function'
+            ? _aiNombrePersonal({ session: props.session })
+            : '';
+        partes.push(hora + (nombre ? ', ' + nombre : '') + '.');
+        if (typeof aiBriefing === 'function') {
+          var b = aiBriefing(c);
+          if (b) partes.push(b);
+        }
+        if (typeof aiAlerts === 'function') {
+          var al = aiAlerts(c);
+          if (al) partes.push(al);
+        }
+        partes.push(
+          'Te escucho. Decime qué necesitás, o "ayuda de voz" para ver todo lo que puedo hacer.'
+        );
+        text = partes.join(' ');
+      }
+    } catch (_) {}
+    if (!text) {
+      text = 'Modo manos libres activado. Te escucho — decime qué necesitás.';
+    }
+    var briefIdx = msgs.length;
+    setMsgs(function (p) {
+      return p.concat([{ role: 'ai', content: text }]);
+    });
+    if (typeof speechSynthesis !== 'undefined') {
+      setTimeout(function () {
+        startSpeak(briefIdx, text);
+      }, 400);
+    } else {
+      // Sin TTS: arrancamos a escuchar igual
+      setTimeout(function () {
+        startListening();
+      }, 600);
+    }
+  }
+
   // Recargar el historial al cambiar de usuario
   useEffect(
     function () {
@@ -448,6 +508,91 @@ function AsistenteTab(props) {
     });
   }, []);
 
+  // ── Ejecuta una acción del agente IN-PLACE (sin reload) ──
+  // Devuelve un texto de confirmación hablable, o null si no aplica.
+  var executeAgentAction = useCallback(
+    function (execute) {
+      if (!execute || !execute.type) return null;
+      switch (execute.type) {
+        case 'START_SHIFT':
+          if (typeof props.onIniTurno === 'function') {
+            props.onIniTurno();
+            return 'Listo, inicié tu turno. Que te rinda. Te aviso si acumulás muchas horas.';
+          }
+          if (props.onNavigate) props.onNavigate('home', 'start');
+          return 'Inicié tu turno.';
+        case 'END_SHIFT':
+          if (!props.activo) {
+            return 'No tenés ningún turno abierto en este momento.';
+          }
+          if (typeof props.onFinTurno === 'function') {
+            props.onFinTurno();
+            return 'Cerré tu turno. ¡Buen descanso! Decí "cuánto gané hoy" para ver el resumen.';
+          }
+          if (props.onNavigate) props.onNavigate('home', 'stop');
+          return 'Cerré tu turno.';
+        case 'SET_SALARY':
+          if (typeof props.onSetSalario === 'function' && execute.payload) {
+            props.onSetSalario(execute.payload);
+            return (
+              'Actualicé tu salario base a ' +
+              (typeof fCOP === 'function' ? fCOP(execute.payload) : execute.payload) +
+              '. Ya recalculo todo con ese valor.'
+            );
+          }
+          return null;
+        case 'NAVIGATE':
+          var tabId = execute.payload === 'ajustes' ? 'config' : execute.payload;
+          if (props.onNavigate) {
+            props.onNavigate(tabId, null);
+          } else {
+            var btn = document.querySelector('.tab-btn[data-tab="' + tabId + '"]');
+            if (btn) btn.click();
+          }
+          return null;
+        default:
+          return null;
+      }
+    },
+    [props]
+  );
+
+  // ¿La acción requiere confirmación hablada antes de ejecutarse?
+  // Solo las que cambian datos: iniciar/cerrar turno y salario.
+  function _needsConfirm(execute) {
+    if (!execute || !execute.type) return false;
+    return (
+      execute.type === 'START_SHIFT' ||
+      execute.type === 'END_SHIFT' ||
+      execute.type === 'SET_SALARY'
+    );
+  }
+
+  // Frase corta que describe la acción para pedir confirmación.
+  function _confirmPrompt(execute) {
+    if (execute.type === 'START_SHIFT') return 'Voy a iniciar tu turno ahora. ¿Confirmás?';
+    if (execute.type === 'END_SHIFT') return 'Voy a cerrar tu turno actual. ¿Confirmás?';
+    if (execute.type === 'SET_SALARY')
+      return (
+        'Voy a poner tu salario base en ' +
+        (typeof fCOP === 'function' ? fCOP(execute.payload) : execute.payload) +
+        '. ¿Confirmás?'
+      );
+    return '¿Confirmás?';
+  }
+
+  // Clasifica una frase como afirmación, negación o ninguna.
+  function _yesNo(text) {
+    var t = (text || '').toLowerCase().trim();
+    var yes =
+      /\b(s[ií]|dale|confirmo|confirmado|hazlo|hacelo|correcto|claro|obvio|de una|ok|okay|vale|ya|adelante|por supuesto|exacto)\b/;
+    var no =
+      /\b(no|cancel[aá]|cancelar|negativo|mejor no|olvidalo|olvídalo|para|detente|abortar|nada)\b/;
+    if (no.test(t)) return 'no';
+    if (yes.test(t)) return 'yes';
+    return null;
+  }
+
   var send = useCallback(
     function (text) {
       var q = (text || input).trim();
@@ -459,6 +604,49 @@ function AsistenteTab(props) {
       if (q === '/limpiar' || q === '/clear' || q === '/reset') {
         clearChat();
         return;
+      }
+
+      // ── Resolución de confirmación pendiente (modo agente) ──
+      // Si el agente dejó una acción esperando "sí"/"no", interpretamos
+      // esta frase como la respuesta antes de tocar la IA.
+      if (pendingActionRef.current) {
+        var verdict = _yesNo(q);
+        var pending = pendingActionRef.current;
+        if (verdict === 'yes') {
+          pendingActionRef.current = null;
+          setMsgs(function (p) {
+            return p.concat([{ role: 'user', content: q }]);
+          });
+          var okText = executeAgentAction(pending) || 'Hecho.';
+          var okMsg = { role: 'ai', content: okText };
+          setMsgs(function (p) {
+            return p.concat([okMsg]);
+          });
+          if (autoRead && typeof speechSynthesis !== 'undefined') {
+            setTimeout(function () {
+              startSpeak(msgs.length + 1, okText);
+            }, 400);
+          }
+          return;
+        }
+        if (verdict === 'no') {
+          pendingActionRef.current = null;
+          setMsgs(function (p) {
+            return p.concat([{ role: 'user', content: q }]);
+          });
+          var cancelText = 'Listo, lo dejo así. No hice ningún cambio.';
+          setMsgs(function (p) {
+            return p.concat([{ role: 'ai', content: cancelText }]);
+          });
+          if (autoRead && typeof speechSynthesis !== 'undefined') {
+            setTimeout(function () {
+              startSpeak(msgs.length + 1, cancelText);
+            }, 400);
+          }
+          return;
+        }
+        // Ni sí ni no: descartamos la acción pendiente y seguimos normal.
+        pendingActionRef.current = null;
       }
 
       setMsgs(function (p) {
@@ -477,44 +665,22 @@ function AsistenteTab(props) {
           });
           var newMsg;
           if (resp && typeof resp === 'object' && resp.execute) {
-            // Ejecutar acción del agente
-            if (resp.execute.type === 'SET_SALARY') {
-              grabar('mt_s_' + props.session.user.id, resp.execute.payload);
-              grabar('mt_sc_' + props.session.user.id, true);
-              if (typeof queueAction === 'function') {
-                queueAction(props.session.user.id, 'set_salario', {
-                  salario_base: resp.execute.payload
-                });
-              }
-              // Forzar recarga para que la app tome el nuevo salario
-              setTimeout(function () {
-                window.location.reload();
-              }, 2000);
-            } else if (resp.execute.type === 'START_SHIFT') {
-              if (typeof queueAction === 'function') {
-                queueAction(props.session.user.id, 'start_shift', {
-                  inicio: new Date().toISOString()
-                });
-              }
-              setTimeout(function () {
-                window.location.reload();
-              }, 2000);
-            } else if (resp.execute.type === 'END_SHIFT') {
-              if (typeof queueAction === 'function') {
-                queueAction(props.session.user.id, 'end_shift', { fin: new Date().toISOString() });
-              }
-              setTimeout(function () {
-                window.location.reload();
-              }, 2000);
-            } else if (resp.execute.type === 'NAVIGATE') {
-              // Simular click en el tab correspondiente
-              setTimeout(function () {
-                var tabId = resp.execute.payload === 'ajustes' ? 'config' : resp.execute.payload;
-                var btn = document.querySelector('.tab-btn[data-tab="' + tabId + '"]');
-                if (btn) btn.click();
-              }, 1500);
+            if (_needsConfirm(resp.execute)) {
+              // Acción que modifica datos → pedimos confirmación hablada
+              // antes de ejecutarla. Guardamos la acción y respondemos
+              // con la pregunta. El siguiente "sí"/"no" la resuelve.
+              pendingActionRef.current = resp.execute;
+              newMsg = { role: 'ai', content: _confirmPrompt(resp.execute) };
+            } else {
+              // Acción sin riesgo (navegar): se ejecuta de una.
+              executeAgentAction(resp.execute);
+              newMsg = {
+                role: 'ai',
+                content: resp.text,
+                actions: resp.actions,
+                chart: resp.chart
+              };
             }
-            newMsg = { role: 'ai', content: resp.text, actions: resp.actions, chart: resp.chart };
           } else if (resp && typeof resp === 'object' && resp.action) {
             newMsg = { role: 'ai', content: resp.text, action: resp.action, chart: resp.chart };
           } else if (resp && typeof resp === 'object' && resp.actions) {
@@ -1211,9 +1377,11 @@ function AsistenteTab(props) {
                       if (!handsFree) {
                         setAutoRead(true);
                         setHandsFree(true);
+                        // Briefing hablado de bienvenida; al terminar de
+                        // leerlo, el loop arranca a escuchar solo.
                         setTimeout(function () {
-                          startListening();
-                        }, 500);
+                          speakBriefing();
+                        }, 350);
                       } else {
                         setHandsFree(false);
                         stopListening();

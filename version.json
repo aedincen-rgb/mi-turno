@@ -1,4 +1,4 @@
 {
-  "v": "v230",
-  "label": "Asistente — botón inteligente único: tap=enviar, hold=grabar voz"
+  "v": "v231",
+  "label": "Modo agente — acciones in-place sin reload, confirmacion hablada, briefing y +7 comandos de voz"
 }

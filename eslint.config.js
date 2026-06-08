@@ -269,6 +269,7 @@ const projectGlobals = {
   // services/ai-proactive.js
   aiProactive: 'readonly',
   aiBriefing: 'readonly',
+  aiAlerts: 'readonly',
   aiCheckGoals: 'readonly',
   aiSetGoal: 'readonly',
   // services/ai-achievements.js
