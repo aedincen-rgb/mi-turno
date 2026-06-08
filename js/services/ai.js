@@ -411,10 +411,50 @@ function buildContext(state) {
   var totalTurnosVida =
     (state.turnosAll || state.turnos || []).length +
     (state.calc && state.calc.totalMins > 0 ? 1 : 0);
-  // si hay activo, no contarlo doble
-  if (state.turnos && state.turnos.length > 0 && state.activo) {
-    // asumimos que el activo NO está en turnos (por convención)
+
+  // ── Contexto situacional ──────────────────────────────────────
+  var horaDelDia = ahora.getHours();
+  var periodoDelDia =
+    horaDelDia >= 6 && horaDelDia < 12
+      ? 'mañana'
+      : horaDelDia >= 12 && horaDelDia < 18
+        ? 'tarde'
+        : horaDelDia >= 18 && horaDelDia < 22
+          ? 'noche'
+          : 'madrugada';
+  var _diaSemNum = ahora.getDay();
+  var _DOW_ES2 = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+  var diaSemana = _DOW_ES2[_diaSemNum];
+  var esFinDeSemana = _diaSemNum === 0 || _diaSemNum === 6;
+  var _hoyFestKey =
+    ahora.getFullYear() +
+    '-' +
+    String(ahora.getMonth() + 1).padStart(2, '0') +
+    '-' +
+    String(ahora.getDate()).padStart(2, '0');
+  var esFestivo = festSet && typeof festSet.has === 'function' ? festSet.has(_hoyFestKey) : false;
+
+  // Turno activo en curso
+  var activoObj = state.activo || null;
+  var tieneActivo = !!(activoObj && activoObj.inicio);
+  var minutosEnTurnoActual = 0;
+  if (tieneActivo) {
+    minutosEnTurnoActual = Math.round((ahora - new Date(activoObj.inicio)) / 60000);
   }
+  var alertaTurnoLargo = tieneActivo && minutosEnTurnoActual > 600; // >10h
+  var alertaNocturnaActivo = tieneActivo && (horaDelDia >= 22 || horaDelDia < 6);
+
+  // Indicadores de setup y historial
+  var salarioConfigurado = salario > SMIN;
+  var tieneHistorial = turnosAll.length > 0;
+
+  // Bienestar compuesto
+  var necesitaDescanso = rachaActual >= 6 || alertaTurnoLargo;
+  var _wb = 'normal';
+  if (alertaTurnoLargo || rachaActual >= 9 || hrsSemanales > 55) _wb = 'critico';
+  else if (rachaActual >= 6 || hrsSemanales > 46) _wb = 'cansado';
+  else if (rachaActual <= 3 && diasTrab >= 5 && hrsSemanales < 40) _wb = 'optimo';
+  var estadoBienestar = _wb;
 
   return {
     // Tiempo
@@ -578,7 +618,24 @@ function buildContext(state) {
     // Logros
     festDiasCount: festDiasCount,
     hoyEsRecord: hoyEsRecord,
-    totalTurnosVida: totalTurnosVida
+    totalTurnosVida: totalTurnosVida,
+    // ── Situacional ──
+    horaDelDia: horaDelDia,
+    periodoDelDia: periodoDelDia,
+    diaSemana: diaSemana,
+    esFinDeSemana: esFinDeSemana,
+    esFestivo: esFestivo,
+    // Turno activo
+    tieneActivo: tieneActivo,
+    minutosEnTurnoActual: minutosEnTurnoActual,
+    alertaTurnoLargo: alertaTurnoLargo,
+    alertaNocturnaActivo: alertaNocturnaActivo,
+    // Setup
+    salarioConfigurado: salarioConfigurado,
+    tieneHistorial: tieneHistorial,
+    // Bienestar compuesto
+    necesitaDescanso: necesitaDescanso,
+    estadoBienestar: estadoBienestar
   };
 }
 
@@ -619,11 +676,30 @@ function _aiDispatchNLP(intent, c, state, q, t) {
     var s = typeof _saludoHora === 'function' ? _saludoHora(c.ahora) : 'Hola';
     var nm = state.session && state.session.email ? state.session.email.split('@')[0] : '';
     var nombre = nm ? ', ' + nm.charAt(0).toUpperCase() + nm.slice(1) : '';
+    // Personalizar el saludo según el contexto situacional
+    var saludoExtra = '';
+    if (c.alertaTurnoLargo) {
+      saludoExtra =
+        ' Llevás ' + Math.round(c.minutosEnTurnoActual / 60) + ' horas en turno — ¿todo bien?';
+    } else if (c.alertaNocturnaActivo) {
+      saludoExtra = ' Trabajando de noche, ¿cómo vas?';
+    } else if (c.tieneActivo) {
+      saludoExtra = ' Turno activo en curso.';
+    } else if (c.periodoDelDia === 'madrugada') {
+      saludoExtra = ' Trasnochando, ¿todo bien?';
+    } else if (!c.salarioConfigurado) {
+      saludoExtra =
+        ' Antes de empezar, te recomiendo configurar tu salario base en Ajustes para que las proyecciones sean exactas.';
+    } else if (c.necesitaDescanso) {
+      saludoExtra = ' Llevas ' + c.rachaActual + ' días seguidos — acordate de descansar.';
+    }
     return (
       '¡' +
       s +
       nombre +
-      '! ☀️ Soy tu copiloto de turno. Puedo decirte cómo vas este mes, proyectar tus ingresos, calcular tu liquidación o avisarte si necesitás un descanso. ¿Qué querés mirar hoy?'
+      '!' +
+      saludoExtra +
+      ' Puedo decirte cómo vas este mes, proyectar tus ingresos, calcular tu liquidación o avisarte si necesitás un descanso. ¿Qué querés mirar hoy?'
     );
   }
   if (intent === 'despedida') {
@@ -1076,14 +1152,48 @@ function _aiDispatchNLP(intent, c, state, q, t) {
   // ── Bienestar ──
   if (intent === 'bienestar') {
     var _fu = typeof aiFollowUp === 'function' ? '\n\n' + aiFollowUp('bienestar') : '';
-    if (c.burnout) {
+    // Turno largo activo → alerta inmediata
+    if (c.alertaTurnoLargo) {
+      return (
+        '⚠️ **Turno muy largo:** Llevas **' +
+        Math.round(c.minutosEnTurnoActual / 60) +
+        ' horas** en este turno.' +
+        (c.alertaNocturnaActivo ? ' Y encima de noche.' : '') +
+        '\n\n🛑 El límite legal diario son 10 horas. Considerá cerrar el turno y descansar.\n\n' +
+        '💡 Un descanso ahora es mejor que un accidente o una baja de productividad mañana.' +
+        _fu
+      );
+    }
+    if (c.estadoBienestar === 'critico' || c.burnout) {
       return (
         '⚠️ **Alerta de fatiga:** Tu ritmo (' +
         c.hrsSemanales.toFixed(1) +
         'h/sem) y racha de ' +
         c.rachaActual +
-        ' días sugieren que necesitás un descanso.\n\n' +
-        '💡 **Recomendación:** Tomate al menos un día libre esta semana. Tu cuerpo y tu productividad te lo van a agradecer.' +
+        ' días seguidos indican que necesitás un descanso urgente.\n\n' +
+        '💡 **Recomendación:** Tomate al menos un día libre esta semana. La ley te ampara: un día de descanso cada 6 trabajados es tu derecho.' +
+        _fu
+      );
+    }
+    if (c.estadoBienestar === 'cansado') {
+      return (
+        '🟡 **Atención:** Llevas ' +
+        c.rachaActual +
+        ' días seguidos (' +
+        c.hrsSemanales.toFixed(1) +
+        'h/sem esta semana).\n\n' +
+        '💡 Estás dentro del límite pero acercándote al borde. Planificá un día de descanso pronto.' +
+        _fu
+      );
+    }
+    if (c.estadoBienestar === 'optimo') {
+      return (
+        '✅ **Excelente equilibrio:** Tu carga de ' +
+        c.hrsSemanales.toFixed(1) +
+        'h/sem y ' +
+        c.rachaActual +
+        ' días de racha son sostenibles.\n\n' +
+        '💡 Seguí así. El descanso bien distribuido es lo que mantiene el rendimiento a largo plazo.' +
         _fu
       );
     }

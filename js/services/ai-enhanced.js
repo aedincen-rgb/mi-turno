@@ -593,6 +593,16 @@ function aiThink(question, intent, userContext, convHistory) {
   var c = userContext || {};
   var histLen = convHistory ? convHistory.length : 0;
 
+  // ── Contexto situacional enriquecido (buildContext lo provee) ──
+  var periodoDelDia = c.periodoDelDia || 'mañana';
+  var estadoBienestar = c.estadoBienestar || 'normal';
+  var tieneActivo = !!c.tieneActivo;
+  var alertaTurnoLargo = !!c.alertaTurnoLargo;
+  var alertaNocturnaActivo = !!c.alertaNocturnaActivo;
+  var salarioConfigurado = !!c.salarioConfigurado;
+  var esFinDeSemana = !!c.esFinDeSemana;
+  var esFestivo = !!c.esFestivo;
+
   var mood = 'neutral';
   try {
     if (typeof aiAnalyzeMood === 'function') {
@@ -602,13 +612,18 @@ function aiThink(question, intent, userContext, convHistory) {
 
   var isFinancial = !!_AI_FINANCIAL_INTENTS[intent];
   var isConversational = !!_AI_CONVERSATIONAL_INTENTS[intent];
+
+  // Estrés: texto + contexto situacional
   var isStressed =
     mood === 'frustrated' ||
     mood === 'sad' ||
     mood === 'stressed' ||
     mood === 'tired' ||
     intent === 'queja_fatiga' ||
-    intent === 'bienestar';
+    intent === 'bienestar' ||
+    estadoBienestar === 'critico' ||
+    alertaTurnoLargo;
+
   var isCelebrating =
     mood === 'happy' ||
     mood === 'excited' ||
@@ -616,27 +631,46 @@ function aiThink(question, intent, userContext, convHistory) {
     intent === 'agradecimiento' ||
     (isFinancial && c.pctSalario >= 100);
 
+  // ── Necesidad primaria ──
   var primaryNeed = 'conversation';
   if (isFinancial) primaryNeed = 'information';
   if (intent === 'reflexion') primaryNeed = 'information';
   if (intent === 'planificacion_semana') primaryNeed = 'information';
   if (isStressed || intent === 'motivacion') primaryNeed = 'support';
   if (isCelebrating) primaryNeed = 'celebration';
+  // Turno largo activo → siempre priorizar bienestar
+  if (alertaTurnoLargo) primaryNeed = 'support';
 
+  // ── Estilo de respuesta ──
   var responseStyle = 'conversational';
   if (histLen < 3) responseStyle = 'brief';
   if (isFinancial && histLen >= 3) responseStyle = 'detailed';
   if (isStressed || intent === 'motivacion') responseStyle = 'empathetic';
   if (isCelebrating) responseStyle = 'celebratory';
 
+  // ── Estrategia de engagement ──
   var engageStrategy = 'financial';
-  if (isStressed || intent === 'motivacion') engageStrategy = 'personal';
-  else if (isCelebrating || intent === 'reflexion') engageStrategy = 'reflexion';
-  else if (intent === 'curiosidad_app' || (isConversational && histLen >= 2))
+  if (isStressed || intent === 'motivacion' || alertaTurnoLargo) {
+    engageStrategy = 'personal';
+  } else if (isCelebrating || intent === 'reflexion') {
+    engageStrategy = 'reflexion';
+  } else if (intent === 'curiosidad_app' || (isConversational && histLen >= 2)) {
     engageStrategy = 'discovery';
-  else if (!isFinancial && histLen >= 2) engageStrategy = 'discovery';
-  else if (histLen >= 6 && isFinancial) engageStrategy = 'trivia';
+  } else if (!isFinancial && histLen >= 2) {
+    engageStrategy = 'discovery';
+  } else if (histLen >= 6 && isFinancial) {
+    engageStrategy = 'trivia';
+  }
+  // En madrugada con turno activo → preguntas personales (no financieras)
+  if (periodoDelDia === 'madrugada' && tieneActivo) {
+    engageStrategy = 'personal';
+  }
+  // Fin de semana o festivo → reflexión sobre la semana
+  if ((esFinDeSemana || esFestivo) && isFinancial && histLen >= 2) {
+    engageStrategy = 'reflexion';
+  }
 
+  // ── Módulos a saltar ──
   var skipModules = {};
   if (!isFinancial) {
     skipModules.insights = true;
@@ -646,6 +680,10 @@ function aiThink(question, intent, userContext, convHistory) {
   if (isStressed || primaryNeed === 'support') {
     skipModules.proactive = true;
   }
+  // Si el usuario no configuró salario, no mostrar análisis de advisor
+  if (!salarioConfigurado) {
+    skipModules.advisor = true;
+  }
 
   return {
     primaryNeed: primaryNeed,
@@ -653,7 +691,9 @@ function aiThink(question, intent, userContext, convHistory) {
     engageStrategy: engageStrategy,
     skipModules: skipModules,
     mood: mood,
-    isFinancial: isFinancial
+    isFinancial: isFinancial,
+    periodoDelDia: periodoDelDia,
+    tieneActivo: tieneActivo
   };
 }
 

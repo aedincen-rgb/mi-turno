@@ -381,7 +381,8 @@ function AsistenteTab(props) {
           calc: props.calc,
           salario: props.salario,
           vh: props.vh,
-          session: props.session
+          session: props.session,
+          activo: props.activo || null
         });
         var partes = [];
         var hora = _saludoHora(new Date());
@@ -661,7 +662,8 @@ function AsistenteTab(props) {
             calc: props.calc,
             salario: props.salario,
             vh: props.vh,
-            session: props.session
+            session: props.session,
+            activo: props.activo || null
           });
           var newMsg;
           if (resp && typeof resp === 'object' && resp.execute) {
