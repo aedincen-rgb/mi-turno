@@ -43,13 +43,27 @@
   animation-delay: -10s;
 }
 
+/* Orb superior-derecho: acento polar claro */
+.shape-4 {
+  top: -10%;
+  right: -20%;
+  width: 55vw;
+  height: 55vw;
+  background: var(--accent3);
+  opacity: 0.14;
+  animation-delay: -16s;
+}
+
 /* Dark mode: orbs más vibrantes sobre fondo oscuro */
 [data-theme='dark'] .shape-1 {
-  opacity: 0.55;
+  opacity: 0.58;
 }
 [data-theme='dark'] .shape-2 {
-  opacity: 0.42;
+  opacity: 0.44;
 }
 [data-theme='dark'] .shape-3 {
-  opacity: 0.3;
+  opacity: 0.32;
+}
+[data-theme='dark'] .shape-4 {
+  opacity: 0.26;
 }

@@ -6,10 +6,9 @@
   position: fixed;
   inset: 0;
   z-index: 200;
-  /* Blur blanco: tinte claro + frosted glass en lugar de oscuro */
-  background: rgba(200, 220, 255, 0.18);
-  -webkit-backdrop-filter: blur(28px) saturate(180%);
-  backdrop-filter: blur(28px) saturate(180%);
+  background: rgba(190, 215, 255, 0.22);
+  -webkit-backdrop-filter: blur(32px) saturate(200%);
+  backdrop-filter: blur(32px) saturate(200%);
   display: flex;
   align-items: center;
   justify-content: center;

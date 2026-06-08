@@ -10,12 +10,14 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
-  /* Fondo sólido opaco: aísla el contenido del blur del overlay */
-  background: var(--surface);
+  background: var(--glass-heavy);
   border-radius: var(--radius);
   padding: 26px 22px;
-  border: 1px solid var(--border);
-  box-shadow: var(--sh-3);
+  border: 1px solid var(--glass-border);
+  box-shadow:
+    inset 0 1.5px 0 var(--spec-top),
+    inset 0 -0.5px 0 var(--spec-bot),
+    var(--sh-3);
   animation: fadeUp 0.35s var(--spring);
   /* Contener pintura para evitar que el scroll "rompa" el blur externo */
   contain: paint layout;

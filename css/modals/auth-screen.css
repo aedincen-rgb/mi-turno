@@ -11,7 +11,7 @@
   justify-content: center;
   padding: 28px 22px max(28px, var(--sab));
   overflow-y: auto;
-  background: #F2F2F7;
+  background: var(--bg);
 }
 
 /* ─── HERO · iOS Style horizontal (v89) ─── */
@@ -27,15 +27,18 @@
   width: 64px;
   height: 64px;
   flex-shrink: 0;
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.78);
-  backdrop-filter: blur(25px);
-  -webkit-backdrop-filter: blur(25px);
+  border-radius: var(--radius);
+  background: var(--glass-heavy);
+  backdrop-filter: var(--blur-md);
+  -webkit-backdrop-filter: var(--blur-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--glass-border);
+  box-shadow:
+    inset 0 1.5px 0 var(--spec-top),
+    inset 0 -0.5px 0 var(--spec-bot),
+    var(--sh-2);
 }
 
 .auth-hero-txt {
@@ -65,13 +68,16 @@
 .auth-card {
   width: 100%;
   max-width: 360px;
-  background: rgba(255, 255, 255, 0.78);
-  backdrop-filter: blur(25px);
-  -webkit-backdrop-filter: blur(25px);
-  border-radius: 20px;
+  background: var(--glass-heavy);
+  backdrop-filter: var(--blur-md);
+  -webkit-backdrop-filter: var(--blur-md);
+  border-radius: var(--radius);
   padding: 26px 22px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--glass-border);
+  box-shadow:
+    inset 0 1.5px 0 var(--spec-top),
+    inset 0 -0.5px 0 var(--spec-bot),
+    var(--sh-3);
   animation: fadeUp 0.5s 0.1s var(--spring) both;
 }
 

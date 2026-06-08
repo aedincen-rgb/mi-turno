@@ -138,6 +138,19 @@
   border-color: rgba(125, 168, 255, 0.2);
 }
 
+/* ── Inputs dark ── */
+[data-theme='dark'] .inp {
+  background: color-mix(in srgb, var(--surface2) 80%, transparent);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* ── Auth card dark ── */
+[data-theme='dark'] .auth-card,
+[data-theme='dark'] .auth-logo-box {
+  background: var(--glass-heavy);
+  border-color: var(--glass-border);
+}
+
 /* ── Dark mode surface tokens ── */
 [data-theme='dark'] {
   --bg-secondary: rgba(255, 255, 255, 0.07);
