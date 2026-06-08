@@ -1,141 +1,88 @@
 // ════════════════════════════════════════════════════════════════
-//  MI TURNO · services/ai-calendar.js
-//  Exporta los turnos como archivo .ics (iCalendar) para importar
-//  en Google Calendar, Apple Calendar u otras agendas.
-//  100% offline · ES5 · sin dependencias externas.
+//  MI TURNO · Integración con Calendario
+//  Conecta con Google Calendar/Apple Calendar
 // ════════════════════════════════════════════════════════════════
 
-// ─── GENERADOR ICS ────────────────────────────────────────────────
-
-function _icsDate(ts) {
-  var d = new Date(ts);
-  var pad = function (n) {
-    return n < 10 ? '0' + n : '' + n;
-  };
-  return (
-    d.getUTCFullYear() +
-    pad(d.getUTCMonth() + 1) +
-    pad(d.getUTCDate()) +
-    'T' +
-    pad(d.getUTCHours()) +
-    pad(d.getUTCMinutes()) +
-    pad(d.getUTCSeconds()) +
-    'Z'
-  );
-}
-
-function _icsUID(turno) {
-  return 'miturno-' + (turno.inicio || Date.now()) + '@miturno.app';
-}
-
-/**
- * Convierte un arreglo de turnos en contenido .ics.
- * @param {Array} turnos - lista de turnos {inicio, fin, desc?}
- * @returns {string} contenido del archivo .ics
- */
-function aiGenerateICS(turnos) {
-  var lines = [
-    'BEGIN:VCALENDAR',
-    'VERSION:2.0',
-    'PRODID:-//Mi Turno//Mi Turno App//ES',
-    'CALSCALE:GREGORIAN',
-    'METHOD:PUBLISH',
-    'X-WR-CALNAME:Mis Turnos - Mi Turno',
-    'X-WR-CALDESC:Turnos laborales exportados desde Mi Turno'
-  ];
-
-  var stamp = _icsDate(Date.now());
-
-  for (var i = 0; i < turnos.length; i++) {
-    var t = turnos[i];
-    if (!t.inicio || !t.fin) continue;
-
-    var durMs = t.fin - t.inicio;
-    var durHoras = Math.round((durMs / (1000 * 60 * 60)) * 10) / 10;
-    var summary = t.desc ? 'Turno - ' + t.desc : 'Turno laboral';
-    var description = 'Turno de ' + durHoras + 'h registrado en Mi Turno';
-
-    lines.push('BEGIN:VEVENT');
-    lines.push('UID:' + _icsUID(t));
-    lines.push('DTSTAMP:' + stamp);
-    lines.push('DTSTART:' + _icsDate(t.inicio));
-    lines.push('DTEND:' + _icsDate(t.fin));
-    lines.push('SUMMARY:' + summary);
-    lines.push('DESCRIPTION:' + description);
-    lines.push('CATEGORIES:TRABAJO');
-    lines.push('END:VEVENT');
-  }
-
-  lines.push('END:VCALENDAR');
-  return lines.join('\r\n');
-}
-
-/**
- * Descarga los turnos como archivo .ics para importar en cualquier agenda.
- * @param {string} uid - user id
- * @param {Array} [filtroTurnos] - turnos a exportar (si null, lee de localStorage)
- * @returns {boolean} true si se descargó algo
- */
-function aiExportCalendar(uid, filtroTurnos) {
-  try {
-    var turnos = filtroTurnos;
-    if (!turnos && uid) {
-      turnos = leer(dk(uid, 't'), []);
-    }
-    if (!turnos || turnos.length === 0) {
-      if (typeof showToast === 'function') {
-        showToast('No tenés turnos para exportar', 'warning', 3000);
-      }
-      return false;
-    }
-
-    // Filtrar solo los que tienen inicio y fin
-    var exportables = [];
-    for (var i = 0; i < turnos.length; i++) {
-      if (turnos[i].inicio && turnos[i].fin) {
-        exportables.push(turnos[i]);
-      }
-    }
-
-    if (exportables.length === 0) {
-      if (typeof showToast === 'function') {
-        showToast('No hay turnos completos para exportar', 'warning', 3000);
-      }
-      return false;
-    }
-
-    var icsContent = aiGenerateICS(exportables);
-    var blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
-    var url = URL.createObjectURL(blob);
-    var a = document.createElement('a');
-    a.href = url;
-    var now = new Date();
-    a.download = 'mis-turnos-' + now.getFullYear() + '-' + (now.getMonth() + 1) + '.ics';
-    a.style.cssText = 'position:absolute;opacity:0;pointer-events:none';
-    document.body.appendChild(a);
-    a.click();
+// Intenta sincronizar con calendario nativo
+document.addEventListener('DOMContentLoaded', function () {
+  if (window._mtSession && window._mtSession.uid && navigator.calendar) {
     setTimeout(function () {
-      if (a.parentNode) {
-        a.parentNode.removeChild(a);
+      if (confirm('¿Querés sincronizar Mi Turno con tu calendario?')) {
+        syncWithCalendar();
       }
-      URL.revokeObjectURL(url);
-    }, 1000);
+    }, 30000); // Preguntar después de 30s
+  }
+});
 
-    if (typeof showToast === 'function') {
-      showToast('📅 ' + exportables.length + ' turnos exportados', 'success', 4000);
-    }
-    return exportables.length;
+function syncWithCalendar() {
+  try {
+    // Verificar permisos
+    navigator.calendar.requestReadWritePermission(function (permission) {
+      if (permission !== 'granted') {
+        showToast('Se necesitan permisos de calendario', 'error');
+        return;
+      }
+
+      // Obtener eventos
+      var startDate = new Date();
+      var endDate = new Date();
+      endDate.setMonth(endDate.getMonth() + 1);
+
+      navigator.calendar.findEvents(
+        {
+          startDate: startDate,
+          endDate: endDate,
+          title: 'Trabajo|Turno', // Filtra eventos relevantes
+          calendar: 'default'
+        },
+        function (events) {
+          if (events && events.length > 0) {
+            processCalendarEvents(events);
+          }
+        },
+        function (error) {
+          console.error('[Calendario] Error:', error);
+        }
+      );
+    });
   } catch (e) {
-    console.error('[Calendario] Error al exportar:', e);
-    if (typeof showToast === 'function') {
-      showToast('No se pudo exportar. Intentá de nuevo.', 'error', 3000);
-    }
-    return false;
+    console.error('[Calendario] Error general:', e);
   }
 }
 
-// ─── EXPORT ─────────────────────────────────────────────────────
-window.aiGenerateICS = aiGenerateICS;
-window.aiExportCalendar = aiExportCalendar;
+function processCalendarEvents(events) {
+  var uid = window._mtSession && window._mtSession.uid;
+  if (!uid) return;
 
-console.log('[MT] ai-calendar.js cargado — exportar .ics ✓');
+  var turnosGuardados = leer(dk(uid, 't')) || [];
+  var nuevosTurnos = [];
+
+  for (var i = 0; i < events.length; i++) {
+    var event = events[i];
+
+    // Convertir a turno
+    var nuevoTurno = {
+      inicio: event.startDate.getTime(),
+      fin: event.endDate.getTime(),
+      desc: event.title,
+      origen: 'calendario'
+    };
+
+    // Verificar si ya existe
+    var existe = turnosGuardados.some(function (t) {
+      return t.inicio === nuevoTurno.inicio && t.fin === nuevoTurno.fin;
+    });
+
+    if (!existe) {
+      nuevosTurnos.push(nuevoTurno);
+    }
+  }
+
+  if (nuevosTurnos.length > 0) {
+    // Guardar nuevos turnos
+    var todosTurnos = turnosGuardados.concat(nuevosTurnos);
+    grabar(dk(uid, 't'), todosTurnos);
+
+    showToast('✅ ' + nuevosTurnos.length + ' turnos importados de calendario', 'success', 5000);
+  }
+}

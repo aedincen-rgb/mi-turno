@@ -55,11 +55,11 @@ html {
 }
 
 /* ─── Overlay: blur estático en su propia capa, nunca scrollea ─── */
+/* ⚠️  v93: contain:paint recorta contenido animado en overlays. No usar. */
 .ovl {
   transform: translateZ(0);
   -webkit-transform: translateZ(0);
   /* No will-change:backdrop-filter — queremos que el blur sea ESTÁTICO */
-  contain: paint;
   overflow: hidden; /* refuerzo: el scroll va en .modal-card */
 }
 
@@ -90,11 +90,10 @@ html {
   }
 }
 
-/* ─── Para tarjetas en el .scr durante scroll activo ─── */
+/* ─── Propiedades de scroll para .scr ─── */
+/* ⚠️  v94: transform en .scr rompe position:fixed descendientes. NO agregar. */
 .scr {
-  /* El contenedor scroll también debe estar en su capa GPU */
   -webkit-overflow-scrolling: touch;
-  transform: translateZ(0);
-    overscroll-behavior-y: contain;
-    scroll-padding-top: 80px; /* Evita que el contenido quede bajo el header al scrollear a un ID */
+  overscroll-behavior-y: contain;
+  scroll-padding-top: 80px; /* Evita que el contenido quede bajo el header al scrollear a un ID */
 }
