@@ -53,6 +53,11 @@ const externalGlobals = {
   XLSX: 'readonly',
   jspdf: 'readonly',
   jsPDF: 'readonly',
+  // Browser speech APIs
+  SpeechRecognition: 'readonly',
+  webkitSpeechRecognition: 'readonly',
+  SpeechSynthesisUtterance: 'readonly',
+  speechSynthesis: 'readonly',
 };
 
 // All project-defined globals available across script tags
@@ -233,6 +238,45 @@ const projectGlobals = {
   aiFallbackResponse: 'readonly',
   aiFollowUp: 'readonly',
   aiDebugTokens: 'readonly',
+  // services/ai-enhanced.js
+  aiEnhancedRespond: 'readonly',
+  aiCheckFollowUp: 'readonly',
+  aiClearMemory: 'readonly',
+  // services/ai-conversation.js
+  aiConvReset: 'readonly',
+  aiConvOrchestrate: 'readonly',
+  // services/ai-nlp.js
+  aiExtractEntities: 'readonly',
+  _aiIntentTopic: 'readonly',
+  // services/ai-knowledge.js
+  aiKnowledgeSearch: 'readonly',
+  // services/ai-proactive.js
+  aiBriefing: 'readonly',
+  aiCheckGoals: 'readonly',
+  aiSetGoal: 'readonly',
+  // services/ai-achievements.js
+  aiListAllAchievements: 'readonly',
+  aiCheckAchievements: 'readonly',
+  aiFormatAchievements: 'readonly',
+  // services/ai-advisor.js
+  aiAdvisorOptimizador: 'readonly',
+  aiAdvisorInforme: 'readonly',
+  aiAdvisorHistorico: 'readonly',
+  aiAdvisorAhorro: 'readonly',
+  aiAdvisorRespond: 'readonly',
+  // services/ai-calendar.js
+  aiExportCalendar: 'readonly',
+  aiGenerateICS: 'readonly',
+  // services/ai-psychology.js
+  aiPsychRespond: 'readonly',
+  // services/ai-auditor.js
+  aiAuditShifts: 'readonly',
+  // services/gender-lang.js
+  _gl: 'readonly',
+  _glTerm: 'readonly',
+  // services/voice-agent.js
+  voiceDetect: 'readonly',
+  voiceExecute: 'readonly',
   calcCats: 'readonly',
   calcPorDia: 'readonly',
   doCalc: 'readonly',
