@@ -50,6 +50,7 @@ const externalGlobals = {
   React: 'readonly',
   ReactDOM: 'readonly',
   supabase: 'readonly',
+  Clerk: 'readonly',
   XLSX: 'readonly',
   jspdf: 'readonly',
   jsPDF: 'readonly',
@@ -288,11 +289,19 @@ const projectGlobals = {
   enviarReportePorEmail: 'readonly',
   enviarPINPorEmail: 'readonly',
 
+  // services/clerk-init.js
+  CLERK_MODE: 'writable',
+  CLERK_ERROR: 'writable',
+  clerkReady: 'readonly',
+  clerkSignOut: 'readonly',
+  clerkGetUser: 'readonly',
+
   // React components
   Root: 'readonly',
   App: 'readonly',
   SplashScreen: 'readonly',
   AuthScreen: 'readonly',
+  ClerkAuthScreen: 'readonly',
   AnimatedWaveDots: 'readonly',
   ManageAccountModal: 'readonly',
   ModalOlvidado: 'readonly',

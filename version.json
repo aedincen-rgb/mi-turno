@@ -1,4 +1,4 @@
 {
-  "v": "v207",
-  "label": "ai-calendar: exportación .ics real + fix clearChat conv reset"
+  "v": "v208",
+  "label": "Clerk auth — reemplaza Supabase Auth por Clerk"
 }
