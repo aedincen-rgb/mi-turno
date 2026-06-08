@@ -1,4 +1,4 @@
 {
-  "v": "v202",
-  "label": "IA con conocimiento laboral: base de datos de recargos, leyes y valores. Responde preguntas generales sin datos del usuario."
+  "v": "v203",
+  "label": "Fix de IA: formato de fecha, estructura de datos y duplicados"
 }
