@@ -1,18 +1,10 @@
 // ════════════════════════════════════════════════════════════════
 //  MI TURNO · Integración con Calendario
-//  Conecta con Google Calendar/Apple Calendar
+//  Importa turnos desde Google Calendar/Apple Calendar (experimental).
+//  NOTA: navigator.calendar no es API estandarizada; solo disponible
+//  en navegadores que lo implementan. La integración se activa solo
+//  cuando el usuario lo solicita explícitamente desde Ajustes.
 // ════════════════════════════════════════════════════════════════
-
-// Intenta sincronizar con calendario nativo
-document.addEventListener('DOMContentLoaded', function () {
-  if (window._mtSession && window._mtSession.uid && navigator.calendar) {
-    setTimeout(function () {
-      if (confirm('¿Querés sincronizar Mi Turno con tu calendario?')) {
-        syncWithCalendar();
-      }
-    }, 30000); // Preguntar después de 30s
-  }
-});
 
 function syncWithCalendar() {
   try {
@@ -86,3 +78,11 @@ function processCalendarEvents(events) {
     showToast('✅ ' + nuevosTurnos.length + ' turnos importados de calendario', 'success', 5000);
   }
 }
+
+// ─── EXPORT ──────────────────────────────────────────────────
+// Funciones expuestas para uso desde Ajustes (invocación voluntaria).
+// No se auto-ejecutan al cargar — el usuario debe iniciarlo.
+window.syncWithCalendar = syncWithCalendar;
+window.processCalendarEvents = processCalendarEvents;
+
+console.log('[MT] ai-calendar.js cargado — integración calendario (invocación manual)');

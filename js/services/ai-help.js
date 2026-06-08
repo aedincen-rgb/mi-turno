@@ -585,15 +585,7 @@ var AI_HELP_GUIDES = [
   {
     id: 'configurar_genero',
     title: 'Seleccionar tu género en la app',
-    keywords: [
-      'genero',
-      'hombre',
-      'mujer',
-      'sexo',
-      'masculino',
-      'femenino',
-      'cambiar genero'
-    ],
+    keywords: ['genero', 'hombre', 'mujer', 'sexo', 'masculino', 'femenino', 'cambiar genero'],
     steps: [
       'Andá a la pestaña **Ajustes**.',
       'En la parte superior, debajo de tu email, verás dos botones: ♂ Hombre y ♀ Mujer.',
@@ -654,13 +646,7 @@ var AI_HELP_GUIDES = [
   {
     id: 'auxilio_transporte',
     title: 'Auxilio de transporte',
-    keywords: [
-      'auxilio',
-      'transporte',
-      'subsidio',
-      'auxilio transporte',
-      'cuanto es auxilio'
-    ],
+    keywords: ['auxilio', 'transporte', 'subsidio', 'auxilio transporte', 'cuanto es auxilio'],
     steps: [
       'El auxilio de transporte para 2026 es de **$249,095** mensuales.',
       'Para activarlo: Ajustes > Preferencias de pago > activá el switch **Auxilio de transporte**.',
@@ -743,14 +729,7 @@ var AI_HELP_GUIDES = [
   {
     id: 'version_app',
     title: 'Versión de la app y actualizaciones',
-    keywords: [
-      'version',
-      'actualizar',
-      'update',
-      'nueva version',
-      'que version',
-      'cambios'
-    ],
+    keywords: ['version', 'actualizar', 'update', 'nueva version', 'que version', 'cambios'],
     steps: [
       'Tu versión actual aparece al final de la pestaña **Ajustes** (ej: "Colombia · Nómina inteligente · v175").',
       'La PWA se actualiza automáticamente: al abrir la app, descarga la última versión.',
@@ -845,7 +824,9 @@ function aiHelpSearch(question) {
       .replace(/[¿¡?!,.]/g, ' ')
       .replace(/\s+/g, ' ')
       .trim();
-    tokens = q.split(' ').filter(function (w) { return w.length >= 2; });
+    tokens = q.split(' ').filter(function (w) {
+      return w.length >= 2;
+    });
   }
 
   if (!tokens.length) return null;
@@ -860,7 +841,9 @@ function aiHelpSearch(question) {
     for (var j = 0; j < guide.keywords.length; j++) {
       var kw = guide.keywords[j].toLowerCase();
       // También tokenizar la keyword para comparación por tokens
-      var kwTokens = kw.split(' ').filter(function (w) { return w.length >= 2; });
+      var kwTokens = kw.split(' ').filter(function (w) {
+        return w.length >= 2;
+      });
       // Stem cada token de la keyword (usando la misma lógica del NLP)
       var kwStems = [];
       for (var k = 0; k < kwTokens.length; k++) {
@@ -933,12 +916,26 @@ function aiHelpListAll() {
     Salario: ['configurar_salario', 'modo_quincena', 'configurar_quincena'],
     Historial: ['ver_historial', 'exportar_datos', 'enviar_reporte', 'borrar_turno'],
     Perfil: ['cambiar_foto', 'cambiar_nombre', 'configurar_genero'],
-    Seguridad: ['configurar_pin', 'cambiar_password', 'recuperar_pin', 'cerrar_sesion', 'gestionar_cuenta'],
+    Seguridad: [
+      'configurar_pin',
+      'cambiar_password',
+      'recuperar_pin',
+      'cerrar_sesion',
+      'gestionar_cuenta'
+    ],
     Datos: ['respaldar_datos', 'restaurar_datos'],
-    'Conexión': ['estado_conexion', 'sincronizacion', 'modo_offline'],
+    Conexión: ['estado_conexion', 'sincronizacion', 'modo_offline'],
     Análisis: ['entender_dashboard', 'compartir_whatsapp'],
     Asistente: ['usar_asistente'],
-    'Cálculos y Leyes': ['como_calcula_recargos', 'ley_2101', 'auxilio_transporte', 'prestaciones', 'recargo_nocturno', 'recargo_festivo', 'horas_extras'],
+    'Cálculos y Leyes': [
+      'como_calcula_recargos',
+      'ley_2101',
+      'auxilio_transporte',
+      'prestaciones',
+      'recargo_nocturno',
+      'recargo_festivo',
+      'horas_extras'
+    ],
     Apariencia: ['modo_oscuro'],
     Instalación: ['instalar_pwa', 'version_app'],
     Soporte: ['diagnostico'],
@@ -967,6 +964,14 @@ function aiHelpAnswer(question) {
   // Si no encuentra, sugiere preguntar de otra forma
   return '🤔 No encontré una guía específica para eso. Probá preguntando con otras palabras, o decime **"¿qué sabés hacer?"** para ver todas las guías disponibles.';
 }
+
+// ─── EXPORT ──────────────────────────────────────────────────
+window.aiHelpAnswer = aiHelpAnswer;
+window.aiHelpListAll = aiHelpListAll;
+window.aiHelpSearch = aiHelpSearch;
+window.aiHelpFormat = aiHelpFormat;
+window.aiHelpGetById = aiHelpGetById;
+window.AI_HELP_GUIDES = AI_HELP_GUIDES;
 
 // ─── INICIALIZACIÓN ──────────────────────────────────────────
 console.log('[MT] ai-help.js cargado — ' + AI_HELP_GUIDES.length + ' guías');

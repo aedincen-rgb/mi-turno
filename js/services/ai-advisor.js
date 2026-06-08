@@ -47,14 +47,15 @@ function aiAdvisorLiquidacion(c) {
   }
 
   // Total prestaciones (vacaciones no incluye auxilio de transporte en su base)
-  var totalPrestaciones = cesantiasProporcional + intCesantias + primaProporcional + vacacionesProporcional;
+  var totalPrestaciones =
+    cesantiasProporcional + intCesantias + primaProporcional + vacacionesProporcional;
 
   // Descuentos de nómina (Salud y Pensión se calculan sobre el devengado SIN auxilio de transporte)
   var baseSeguridadSocial = c.totalCOP; // Asumimos que c.totalCOP no incluye auxilio de transporte aún
   var salud = baseSeguridadSocial * 0.04; // 4%
   var pension = baseSeguridadSocial * 0.04; // 4%
   var totalDeducciones = salud + pension;
-  
+
   // El neto a pagar suma el auxilio de transporte DESPUÉS de las deducciones
   var netoPagar = baseSeguridadSocial - totalDeducciones + auxTransporte;
 
@@ -68,13 +69,19 @@ function aiAdvisorLiquidacion(c) {
   resp += '• **Neto a recibir: ' + fCOP(netoPagar) + '**\n\n';
 
   resp += '**Prestaciones acumuladas:**\n';
-  resp += '• Cesantías: ' + fCOP(cesantiasProporcional) + ' (' + (sal <= SMIN * 2 ? 'consignadas al fondo' : 'pagadas directamente') + ')\n';
+  resp +=
+    '• Cesantías: ' +
+    fCOP(cesantiasProporcional) +
+    ' (' +
+    (sal <= SMIN * 2 ? 'consignadas al fondo' : 'pagadas directamente') +
+    ')\n';
   resp += '• Intereses cesantías: ' + fCOP(intCesantias) + ' (12% anual)\n';
   resp += '• Prima de servicios: ' + fCOP(primaProporcional) + ' (pagadero en junio y diciembre)\n';
   resp += '• Vacaciones: ' + fCOP(vacacionesProporcional) + ' (15 días por año trabajado)\n';
   resp += '• **Total prestaciones: ' + fCOP(totalPrestaciones) + '**\n\n';
 
-  resp += '💡 Las cesantías se consignan antes del 15 de febrero del año siguiente. La prima se paga la mitad en junio y la otra en diciembre. Las vacaciones se disfrutan, no se compensan en dinero (salvo terminación del contrato).';
+  resp +=
+    '💡 Las cesantías se consignan antes del 15 de febrero del año siguiente. La prima se paga la mitad en junio y la otra en diciembre. Las vacaciones se disfrutan, no se compensan en dinero (salvo terminación del contrato).';
 
   return resp;
 }
@@ -125,15 +132,24 @@ function aiAdvisorSimular(c, horas, tipo) {
     var peor = escenarios[0];
     resp += '• Mínimo (diurno normal): ' + fCOP(peor.cop) + '\n';
     resp += '• Máximo (festivo nocturno): ' + fCOP(mejor.cop) + '\n';
-    resp += '• Diferencia: ' + fCOP(mejor.cop - peor.cop) + ' (' + ((mejor.factor - peor.factor) * 100).toFixed(0) + '% más)\n\n';
-    resp += '💡 Elegir bien el horario puede duplicar tus ingresos por las mismas horas trabajadas.';
+    resp +=
+      '• Diferencia: ' +
+      fCOP(mejor.cop - peor.cop) +
+      ' (' +
+      ((mejor.factor - peor.factor) * 100).toFixed(0) +
+      '% más)\n\n';
+    resp +=
+      '💡 Elegir bien el horario puede duplicar tus ingresos por las mismas horas trabajadas.';
   } else {
     // Mostrar todos
     for (var i = 0; i < escenarios.length; i++) {
       var s = escenarios[i];
       resp += '• ' + s.label + ': ' + fCOP(s.cop) + '\n';
     }
-    resp += '\n💡 El mismo número de horas puede pagar hasta ' + fCOP(escenarios[5].cop) + ' si las hacés en festivo nocturno.';
+    resp +=
+      '\n💡 El mismo número de horas puede pagar hasta ' +
+      fCOP(escenarios[5].cop) +
+      ' si las hacés en festivo nocturno.';
   }
 
   // Agregar proyección mensual
@@ -155,30 +171,43 @@ function aiAdvisorOptimizador(c, metaExtra) {
   if (!c || !c.vh || !metaExtra || metaExtra <= 0) {
     return 'Para recomendarte turnos, necesito saber tu salario base y cuánto dinero extra quieres ganar. Por ejemplo: "Quiero ganar 150 lucas extra".';
   }
-  
+
   var vh = c.vh;
-  var resp = '🎯 **Optimizador de Horarios**\n\nPara ganar **' + fCOP(metaExtra) + '** extra con tu salario actual, tienes estas opciones:\n\n';
-  
+  var resp =
+    '🎯 **Optimizador de Horarios**\n\nPara ganar **' +
+    fCOP(metaExtra) +
+    '** extra con tu salario actual, tienes estas opciones:\n\n';
+
   // Opción A: Turnos nocturnos (8h)
-  var valorTurnoNocturno = (vh * 1.35) * 8;
+  var valorTurnoNocturno = vh * 1.35 * 8;
   var turnosNocturnos = Math.ceil(metaExtra / valorTurnoNocturno);
   resp += '🌙 **Opción A: ' + turnosNocturnos + ' turnos nocturnos**\n';
-  resp += 'Trabajando de noche (recargo 35%), cada turno de 8h te paga ' + fCOP(valorTurnoNocturno) + '.\n\n';
-  
+  resp +=
+    'Trabajando de noche (recargo 35%), cada turno de 8h te paga ' +
+    fCOP(valorTurnoNocturno) +
+    '.\n\n';
+
   // Opción B: Domingos/Festivos diurnos (8h)
-  var valorTurnoDomingo = (vh * 1.75) * 8;
+  var valorTurnoDomingo = vh * 1.75 * 8;
   var turnosDomingos = Math.ceil(metaExtra / valorTurnoDomingo);
   resp += '⛪ **Opción B: ' + turnosDomingos + ' turnos dominicales/festivos**\n';
-  resp += 'Trabajando un domingo de día (recargo 75%), cada turno de 8h te paga ' + fCOP(valorTurnoDomingo) + '.\n\n';
-  
+  resp +=
+    'Trabajando un domingo de día (recargo 75%), cada turno de 8h te paga ' +
+    fCOP(valorTurnoDomingo) +
+    '.\n\n';
+
   // Opción C: Horas extra diurnas repartidas
   var valorExtraDiurna = vh * 1.25;
   var horasExtra = Math.ceil(metaExtra / valorExtraDiurna);
   resp += '⏱️ **Opción C: ' + horasExtra + ' horas extra diurnas**\n';
-  resp += 'Repartidas en la semana (recargo 25%). Son aprox ' + (horasExtra / 5).toFixed(1) + ' horas extra por día durante 5 días.\n\n';
-  
-  resp += '💡 *Consejo:* La Opción B es la más rápida, pero sacrifica tu fin de semana. La Opción C es más suave pero alarga tus jornadas diarias.';
-  
+  resp +=
+    'Repartidas en la semana (recargo 25%). Son aprox ' +
+    (horasExtra / 5).toFixed(1) +
+    ' horas extra por día durante 5 días.\n\n';
+
+  resp +=
+    '💡 *Consejo:* La Opción B es la más rápida, pero sacrifica tu fin de semana. La Opción C es más suave pero alarga tus jornadas diarias.';
+
   return resp;
 }
 
@@ -191,7 +220,7 @@ function aiAdvisorAhorro(c, meta, plazoMeses) {
   var ingresoMensual = c.proy || c.totalCOP || 0;
   var plazo = plazoMeses || 12;
   var ahorroMensual = meta / plazo;
-  var porcentaje = ingresoMensual > 0 ? (ahorroMensual / ingresoMensual * 100) : 0;
+  var porcentaje = ingresoMensual > 0 ? (ahorroMensual / ingresoMensual) * 100 : 0;
 
   var resp = '🐷 **Plan de ahorro**\n\n';
   resp += '• Meta: ' + fCOP(meta) + '\n';
@@ -201,20 +230,33 @@ function aiAdvisorAhorro(c, meta, plazoMeses) {
 
   if (porcentaje > 30) {
     resp += '⚠️ Ahorrar más del 30% de tu ingreso es ambicioso. Considerá:\n';
-    resp += '• Extender el plazo a ' + Math.ceil(plazo * 1.5) + ' meses → ' + fCOP(meta / Math.ceil(plazo * 1.5)) + '/mes (' + (porcentaje / 1.5).toFixed(1) + '%)\n';
+    resp +=
+      '• Extender el plazo a ' +
+      Math.ceil(plazo * 1.5) +
+      ' meses → ' +
+      fCOP(meta / Math.ceil(plazo * 1.5)) +
+      '/mes (' +
+      (porcentaje / 1.5).toFixed(1) +
+      '%)\n';
     resp += '• Aumentar ingresos con horas extra o recargos\n';
   } else if (porcentaje <= 15) {
-    resp += '✅ Es un plan realista. Si ahorrás eso cada mes, en ' + plazo + ' meses alcanzás tu meta.\n';
+    resp +=
+      '✅ Es un plan realista. Si ahorrás eso cada mes, en ' + plazo + ' meses alcanzás tu meta.\n';
   } else {
     resp += '💡 Es alcanzable con disciplina. Considerá automatizar el ahorro.\n';
   }
 
   // Simular horas extra necesarias
   if (c.vh && c.vh > 0) {
-    var extraNecesario = ahorroMensual - (ingresoMensual * 0.1); // asumiendo ya ahorra 10%
+    var extraNecesario = ahorroMensual - ingresoMensual * 0.1; // asumiendo ya ahorra 10%
     if (extraNecesario > 0) {
       var horasExtras = extraNecesario / (c.vh * 1.25); // asumiendo extra diurna 25%
-      resp += '\n🔧 **Estrategia:** harías ≈' + horasExtras.toFixed(1) + 'h extra al mes (a ' + fCOP(c.vh * 1.25) + '/h con recargo del 25%) para cubrir esta meta sin bajar tu nivel de vida.';
+      resp +=
+        '\n🔧 **Estrategia:** harías ≈' +
+        horasExtras.toFixed(1) +
+        'h extra al mes (a ' +
+        fCOP(c.vh * 1.25) +
+        '/h con recargo del 25%) para cubrir esta meta sin bajar tu nivel de vida.';
     }
   }
 
@@ -235,17 +277,21 @@ function aiAdvisorFiscal(c) {
 
   // Retención en la fuente (simplificado)
   var uvtAnual = 47065 * 365; // UVT aproximado 2026 (~$47,065)
-  var enRenta = ingresoTotal > (uvtAnual * 1400 / 365);
+  var enRenta = ingresoTotal > (uvtAnual * 1400) / 365;
 
   resp += '• Ingreso anual estimado: ' + fCOP(ingresoTotal) + '\n';
-  resp += '• ¿Debe declarar renta?: ' + (enRenta ? 'Posiblemente (supera topes)' : 'No (por debajo de topes)') + '\n\n';
+  resp +=
+    '• ¿Debe declarar renta?: ' +
+    (enRenta ? 'Posiblemente (supera topes)' : 'No (por debajo de topes)') +
+    '\n\n';
 
   resp += '**Deducciones estimadas:**\n';
   resp += '• Aportes salud (4%): ' + fCOP(c.totalCOP * 0.04 * 12) + '/año\n';
   resp += '• Aportes pensión (4%): ' + fCOP(c.totalCOP * 0.04 * 12) + '/año\n';
   resp += '• Total deducible: ' + fCOP(c.totalCOP * 0.08 * 12) + '/año\n\n';
 
-  resp += '💡 Los aportes a salud y pensión son deducibles de la base de retención. Si ganás menos de 2 SMMLV, no te retienen. Si tu empleador no te está afiliando, exigilo — es tu derecho.';
+  resp +=
+    '💡 Los aportes a salud y pensión son deducibles de la base de retención. Si ganás menos de 2 SMMLV, no te retienen. Si tu empleador no te está afiliando, exigilo — es tu derecho.';
 
   return resp;
 }
@@ -289,8 +335,13 @@ function aiAdvisorOptimizar(c) {
   // Sugerencia de cuánto ganaría cambiando
   var horasDiarias = c.totalMins / Math.max(1, c.diasTrab) / 60;
   var gananciaActual = c.totalCOP;
-  var gananciaOptimizada = c.totalCOP + (c.totalCOP * 0.15); // 15% más optimizando
-  resp += '• Si optimizaras tus horarios (más nocturnas/festivos), podrías ganar ≈' + fCOP(gananciaOptimizada) + ' este mes (≈+' + fCOP(gananciaOptimizada - gananciaActual) + ').\n';
+  var gananciaOptimizada = c.totalCOP + c.totalCOP * 0.15; // 15% más optimizando
+  resp +=
+    '• Si optimizaras tus horarios (más nocturnas/festivos), podrías ganar ≈' +
+    fCOP(gananciaOptimizada) +
+    ' este mes (≈+' +
+    fCOP(gananciaOptimizada - gananciaActual) +
+    ').\n';
 
   return resp;
 }
@@ -304,7 +355,7 @@ function aiAdvisorCompararOfertas(c, ofertaSalario, ofertaHoras) {
   var actualVH = c.vh;
   var nuevaVH = ofertaSalario / 240;
   var actualMensual = c.salario || 0;
-  var horasActuales = c.totalMins / 60 || (c.diasTrab * 8) || 176;
+  var horasActuales = c.totalMins / 60 || c.diasTrab * 8 || 176;
 
   var resp = '⚖ **Comparador de ofertas**\n\n';
 
@@ -316,18 +367,31 @@ function aiAdvisorCompararOfertas(c, ofertaSalario, ofertaHoras) {
   resp += '• Salario: ' + fCOP(ofertaSalario) + ' → ' + fCOP(nuevaVH) + '/h\n';
   var difHora = nuevaVH - actualVH;
   var difMensual = ofertaSalario - actualMensual;
-  resp += '• Diferencia: ' + (difMensual >= 0 ? '+' : '') + fCOP(difMensual) + '/mes (' + (difMensual / actualMensual * 100).toFixed(1) + '%)\n\n';
+  resp +=
+    '• Diferencia: ' +
+    (difMensual >= 0 ? '+' : '') +
+    fCOP(difMensual) +
+    '/mes (' +
+    ((difMensual / actualMensual) * 100).toFixed(1) +
+    '%)\n\n';
 
   if (difHora > 0) {
-    resp += '✅ La nueva oferta paga ' + fCOP(Math.abs(difHora)) + '/h más. ' +
-      'En un mes de 240h, son ' + fCOP(difHora * 240) + ' extra.\n';
+    resp +=
+      '✅ La nueva oferta paga ' +
+      fCOP(Math.abs(difHora)) +
+      '/h más. ' +
+      'En un mes de 240h, son ' +
+      fCOP(difHora * 240) +
+      ' extra.\n';
   } else {
-    resp += '⚠️ La nueva oferta paga menos por hora. Pero considerá otros beneficios: ' +
+    resp +=
+      '⚠️ La nueva oferta paga menos por hora. Pero considerá otros beneficios: ' +
       '¿es más cerca? ¿mejor horario? ¿más estabilidad?\n';
   }
 
   // Incluir recargos potenciales
-  resp += '\n💡 **Consejo:** No solo mires el salario base. Preguntá si hay recargos nocturnos, horas extra pagas, ' +
+  resp +=
+    '\n💡 **Consejo:** No solo mires el salario base. Preguntá si hay recargos nocturnos, horas extra pagas, ' +
     'auxilio de transporte, bonos. Un salario menor con buenos recargos puede superar a uno mayor sin extras.';
 
   return resp;
@@ -338,7 +402,8 @@ function aiAdvisorCompararOfertas(c, ofertaSalario, ofertaHoras) {
 // ═══════════════════════════════════════════════════════════════
 
 function aiAdvisorInforme(c) {
-  if (!c || c.diasTrab === 0) return 'Aún no hay suficientes datos para un informe completo. Registrá algunos turnos primero.';
+  if (!c || c.diasTrab === 0)
+    return 'Aún no hay suficientes datos para un informe completo. Registrá algunos turnos primero.';
 
   var secciones = [];
 
@@ -346,10 +411,18 @@ function aiAdvisorInforme(c) {
   secciones.push('📊 **Informe financiero completo**\n');
 
   // 2. Ingresos
-  secciones.push('**1. Ingresos del período**\n• Bruto: ' + fCOP(c.totalCOP) +
-    '\n• Neto estimado: ' + fCOP(c.totalCOP * 0.92) + ' (después de salud y pensión 8%)' +
-    '\n• Proyección al cierre: ' + fCOP(c.proy || c.totalCOP) +
-    '\n• % del salario base: ' + (c.pctSalario || 0).toFixed(1) + '%');
+  secciones.push(
+    '**1. Ingresos del período**\n• Bruto: ' +
+      fCOP(c.totalCOP) +
+      '\n• Neto estimado: ' +
+      fCOP(c.totalCOP * 0.92) +
+      ' (después de salud y pensión 8%)' +
+      '\n• Proyección al cierre: ' +
+      fCOP(c.proy || c.totalCOP) +
+      '\n• % del salario base: ' +
+      (c.pctSalario || 0).toFixed(1) +
+      '%'
+  );
 
   // 3. Prestaciones (resumido)
   if (typeof aiAdvisorLiquidacion === 'function') {
@@ -402,11 +475,17 @@ function aiAdvisorHistorico(turnosAll, vh, salario) {
   for (var m = 0; m < keys.length; m++) {
     var k = keys[m];
     var mes = meses[k];
-    var calc = doCalc(mes.turnos, null, new Date(parseInt(k.split('-')[0]), parseInt(k.split('-')[1]) - 1, 28), vh);
+    var calc = doCalc(
+      mes.turnos,
+      null,
+      new Date(parseInt(k.split('-')[0]), parseInt(k.split('-')[1]) - 1, 28),
+      vh
+    );
     datos.push({ label: k, cop: Math.round(calc.totalCOP), mins: Math.round(calc.totalMins) });
   }
 
-  var mejor = datos[0], peor = datos[0];
+  var mejor = datos[0],
+    peor = datos[0];
   var total = 0;
   for (var n = 0; n < datos.length; n++) {
     total += datos[n].cop;
@@ -424,7 +503,12 @@ function aiAdvisorHistorico(turnosAll, vh, salario) {
   var restantes = 12 - datos.length;
   if (restantes > 0 && prom > 0) {
     var anual = total + prom * restantes;
-    resp += '🔮 Proyección 12 meses: ≈' + fCOP(anual) + ' (' + (anual / Math.max(1, salario) / 12).toFixed(1) + 'x salario base mensual)\n';
+    resp +=
+      '🔮 Proyección 12 meses: ≈' +
+      fCOP(anual) +
+      ' (' +
+      (anual / Math.max(1, salario) / 12).toFixed(1) +
+      'x salario base mensual)\n';
   }
 
   return resp;
@@ -438,7 +522,15 @@ function aiAdvisorDescansoOptimo(c) {
   if (!c || !c.dias || c.dias.length < 5) return '';
   var dias = c.dias;
   var diasSem = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
-  var porDia = [{ t: 0, c: 0 }, { t: 0, c: 0 }, { t: 0, c: 0 }, { t: 0, c: 0 }, { t: 0, c: 0 }, { t: 0, c: 0 }, { t: 0, c: 0 }];
+  var porDia = [
+    { t: 0, c: 0 },
+    { t: 0, c: 0 },
+    { t: 0, c: 0 },
+    { t: 0, c: 0 },
+    { t: 0, c: 0 },
+    { t: 0, c: 0 },
+    { t: 0, c: 0 }
+  ];
 
   for (var i = 0; i < dias.length; i++) {
     var d = dias[i];
@@ -447,13 +539,21 @@ function aiAdvisorDescansoOptimo(c) {
     porDia[dia].c++;
   }
 
-  var mejorD = -1, peorD = -1;
-  var mejorV = 0, peorV = Infinity;
+  var mejorD = -1,
+    peorD = -1;
+  var mejorV = 0,
+    peorV = Infinity;
   for (var j = 0; j < 7; j++) {
     if (porDia[j].c > 0) {
       var prom = porDia[j].t / porDia[j].c;
-      if (prom > mejorV) { mejorV = prom; mejorD = j; }
-      if (prom < peorV) { peorV = prom; peorD = j; }
+      if (prom > mejorV) {
+        mejorV = prom;
+        mejorD = j;
+      }
+      if (prom < peorV) {
+        peorV = prom;
+        peorD = j;
+      }
     }
   }
 
@@ -463,7 +563,8 @@ function aiAdvisorDescansoOptimo(c) {
   resp += '• 📅 Día más flojo: **' + diasSem[peorD] + '** (promedio ' + fCOP(peorV) + '/día)\n';
   resp += '• 💡 Descansar ese día te cuesta ≈' + fCOP(peorV) + ' pero ganás en salud.\n';
   if (mejorD !== peorD && mejorD >= 0) {
-    resp += '• 🏆 Día más rentable: **' + diasSem[mejorD] + '** (promedio ' + fCOP(mejorV) + '/día)\n';
+    resp +=
+      '• 🏆 Día más rentable: **' + diasSem[mejorD] + '** (promedio ' + fCOP(mejorV) + '/día)\n';
   }
 
   return resp;
@@ -499,7 +600,7 @@ function aiAdvisorAnual(c, turnosAll, vh) {
   resp += '• 📊 Promedio mensual (últimos ' + keys.length + ' meses): ' + fCOP(prom) + '\n';
   resp += '• 💰 Proyección 12 meses: ≈' + fCOP(proy) + '\n';
   if (c.salario > 0) {
-    resp += '• 📈 vs salario base: ' + (proy / (c.salario * 12) * 100).toFixed(1) + '%\n';
+    resp += '• 📈 vs salario base: ' + ((proy / (c.salario * 12)) * 100).toFixed(1) + '%\n';
   }
 
   return resp;
@@ -535,6 +636,7 @@ function aiAdvisorRespond(intent, c, state) {
       return aiAdvisorFiscal(c);
 
     case 'optimizar':
+    case 'optimizador':
       return aiAdvisorOptimizar(c) + aiAdvisorDescansoOptimo(c);
 
     case 'total_ganado':
@@ -558,5 +660,6 @@ window.aiAdvisorRespond = aiAdvisorRespond;
 window.aiAdvisorHistorico = aiAdvisorHistorico;
 window.aiAdvisorDescansoOptimo = aiAdvisorDescansoOptimo;
 window.aiAdvisorAnual = aiAdvisorAnual;
+window.aiAdvisorOptimizador = aiAdvisorOptimizador;
 
 console.log('[MT] ai-advisor.js cargado — asesor financiero offline completo ✓');

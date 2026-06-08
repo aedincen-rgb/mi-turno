@@ -244,13 +244,19 @@ const projectGlobals = {
   aiClearMemory: 'readonly',
   // services/ai-conversation.js
   aiConvReset: 'readonly',
+  aiConvAdvance: 'readonly',
   aiConvOrchestrate: 'readonly',
   // services/ai-nlp.js
   aiExtractEntities: 'readonly',
   _aiIntentTopic: 'readonly',
+  aiTokenize: 'readonly',
+  aiStem: 'readonly',
   // services/ai-knowledge.js
   aiKnowledgeSearch: 'readonly',
+  // services/ai-insights.js
+  aiInsightFull: 'readonly',
   // services/ai-proactive.js
+  aiProactive: 'readonly',
   aiBriefing: 'readonly',
   aiCheckGoals: 'readonly',
   aiSetGoal: 'readonly',
@@ -274,6 +280,7 @@ const projectGlobals = {
   // services/gender-lang.js
   _gl: 'readonly',
   _glTerm: 'readonly',
+  _glPick: 'readonly',
   // services/voice-agent.js
   voiceDetect: 'readonly',
   voiceExecute: 'readonly',

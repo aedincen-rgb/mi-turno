@@ -152,7 +152,6 @@ var AI_STOP = {
   ni: 1,
   al: 1,
   // Stop words coloquiales colombianas
-  pues: 1,
   entonces: 1,
   oiga: 1,
   venga: 1,
@@ -331,8 +330,8 @@ function aiLevenshtein(a, b) {
   for (var j = 0; j <= n; j++) {
     d[0][j] = j;
   }
-  for (var i = 1; i <= m; i++) {
-    for (var j = 1; j <= n; j++) {
+  for (i = 1; i <= m; i++) {
+    for (j = 1; j <= n; j++) {
       var cost = a[i - 1] === b[j - 1] ? 0 : 1;
       d[i][j] = Math.min(
         d[i - 1][j] + 1, // borrar
@@ -349,7 +348,7 @@ function aiFuzzyMatch(word, target) {
   if (word === target) return true;
   var diff = Math.abs(word.length - target.length);
   if (diff > 2) return false;
-  
+
   var dist = aiLevenshtein(word, target);
   if (target.length <= 5) return dist <= 1;
   return dist <= 2;
@@ -600,7 +599,6 @@ var AI_SYNONYMS = {
   parcero: 'parce',
   llave: 'parce',
   llaveria: 'parce',
-  parcero: 'parce',
   parcera: 'amiga',
   compa: 'parce',
   comadre: 'amiga',
@@ -620,14 +618,13 @@ var AI_SYNONYMS = {
   jalar: 'comer',
   mecatear: 'comer',
   // Estados de ánimo
-  mamado: 'fatiga',
   maluqueado: 'fatiga',
   paila: 'mal',
   'que oso': 'pena',
   fiero: 'mal',
   lindo: 'bien',
   buenisimo: 'bien',
-  'juemadre': 'frustrado',
+  juemadre: 'frustrado',
   // Palabras de uso diario
   pilas: 'atento',
   chévere: 'bien',
@@ -1439,16 +1436,21 @@ function aiClassify(text, convState, userContext) {
     // en vez de caer en total_ganado genérico.
     var _raw = text.toLowerCase();
     var _hasTimeWord =
-      _raw.indexOf('ayer') >= 0 || _raw.indexOf('antier') >= 0 ||
-      _raw.indexOf('hoy') >= 0 || _raw.indexOf('mañana') >= 0 ||
-      _raw.indexOf('semana') >= 0 || _raw.indexOf('finde') >= 0;
+      _raw.indexOf('ayer') >= 0 ||
+      _raw.indexOf('antier') >= 0 ||
+      _raw.indexOf('hoy') >= 0 ||
+      _raw.indexOf('mañana') >= 0 ||
+      _raw.indexOf('semana') >= 0 ||
+      _raw.indexOf('finde') >= 0;
     var _timeIntentIds = { hoy: 1, ayer: 1, comparativa_semana: 1 };
     if (_hasTimeWord && _timeIntentIds[intent.id]) {
       score += 4; // boost fuerte: si el usuario menciona tiempo, priorizar intents temporales
     }
     // Si hay palabra de mes y es intent de proyección o comparativa_mes
-    if ((_raw.indexOf('mes') >= 0 || _raw.indexOf('mensual') >= 0) &&
-        (intent.id === 'proyeccion' || intent.id === 'comparativa_mes')) {
+    if (
+      (_raw.indexOf('mes') >= 0 || _raw.indexOf('mensual') >= 0) &&
+      (intent.id === 'proyeccion' || intent.id === 'comparativa_mes')
+    ) {
       score += 2;
     }
 
@@ -1660,7 +1662,9 @@ var AI_EMPATHY = {
   frustrado: {
     prefixes: [
       'Te escucho. ',
-      function () { return typeof _glPick === 'function' ? _glPick('consolation') : 'Qué duro, parce. '; },
+      function () {
+        return typeof _glPick === 'function' ? _glPick('consolation') : 'Qué duro, parce. ';
+      },
       'Uff, te entiendo. ',
       'Fuerza con eso. ',
       'No es fácil, lo sé. ',
@@ -1864,6 +1868,11 @@ window.aiStem = aiStem;
 window.aiExpandSynonym = aiExpandSynonym;
 window.AI_SYNONYMS = AI_SYNONYMS;
 window.AI_STOP = AI_STOP;
+window.aiResetConv = aiResetConv;
+window.aiExtractEntities = aiExtractEntities;
+window._aiIntentTopic = _aiIntentTopic;
 
 // ─── INICIALIZACIÓN ──────────────────────────────────────────
-console.log('[MT] ai-nlp.js cargado — NLP mejorado v169 (compound matching + time anchoring + 80+ sinónimos)');
+console.log(
+  '[MT] ai-nlp.js cargado — NLP mejorado v169 (compound matching + time anchoring + 80+ sinónimos)'
+);

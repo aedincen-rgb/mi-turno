@@ -12,7 +12,7 @@ var _aiMemory = {
   userState: {},
   maxTurns: 10,
   proactiveCount: 0,
-  lastSuggestion: null  // lo que la IA acaba de preguntar al usuario
+  lastSuggestion: null // lo que la IA acaba de preguntar al usuario
 };
 
 // Registrar una interacción
@@ -55,7 +55,28 @@ function aiCheckFollowUp(text) {
   if (!sug) return null;
   var t = (text || '').toLowerCase().trim();
   // Respuestas afirmativas a sugerencias
-  var affirm = ['si','sí','dale','bueno','ok','vale','de una','hagale','hágale','mostrame','dime','decime','quiero','claro','obvio','porfa','porfi','sisas','va','vamos'];
+  var affirm = [
+    'si',
+    'sí',
+    'dale',
+    'bueno',
+    'ok',
+    'vale',
+    'de una',
+    'hagale',
+    'hágale',
+    'mostrame',
+    'dime',
+    'decime',
+    'quiero',
+    'claro',
+    'obvio',
+    'porfa',
+    'porfi',
+    'sisas',
+    'va',
+    'vamos'
+  ];
   for (var i = 0; i < affirm.length; i++) {
     if (t === affirm[i] || t.indexOf(affirm[i]) === 0) {
       var intent = sug.intent;
@@ -88,7 +109,10 @@ function aiProactiveSuggest(userContext) {
   // Fatiga / racha larga
   if (c.rachaActual >= 6 && c.rachaActual < 12) {
     suggestions.push({
-      text: 'Llevás ' + c.rachaActual + ' días seguidos. ¿Querés que calculemos cuándo te conviene descansar?',
+      text:
+        'Llevás ' +
+        c.rachaActual +
+        ' días seguidos. ¿Querés que calculemos cuándo te conviene descansar?',
       action: '¿Cuándo descanso?',
       intent: 'bienestar'
     });
@@ -97,7 +121,10 @@ function aiProactiveSuggest(userContext) {
   // Buen rendimiento
   if (c.pctSalario >= 80 && c.diasTrab > 5) {
     suggestions.push({
-      text: '¡Vas al ' + c.pctSalario.toFixed(0) + '% de tu meta! ¿Querés ver la proyección al cierre del mes?',
+      text:
+        '¡Vas al ' +
+        c.pctSalario.toFixed(0) +
+        '% de tu meta! ¿Querés ver la proyección al cierre del mes?',
       action: 'Proyección',
       intent: 'proyeccion'
     });
@@ -147,12 +174,13 @@ function aiProactiveSuggest(userContext) {
 function aiEnrichResponse(originalText, intent, userContext, entities, turnosAll) {
   var actions = [];
   var execute = null;
-  
+
   // 0. Auditoría Inteligente (Anomaly Detection)
   // Si hay una anomalía grave, la inyectamos al principio de la respuesta
   if (typeof aiAuditShifts === 'function' && turnosAll) {
     var anomaly = aiAuditShifts(userContext, turnosAll);
-    if (anomaly && _aiMemory.proactiveCount % 2 === 0) { // No spamear siempre
+    if (anomaly && _aiMemory.proactiveCount % 2 === 0) {
+      // No spamear siempre
       originalText = anomaly.text + '\n\n---\n\n' + originalText;
       if (anomaly.action) {
         actions.push(anomaly.action);
@@ -163,99 +191,98 @@ function aiEnrichResponse(originalText, intent, userContext, entities, turnosAll
   // 1. Procesar acciones directas basadas en entidades extraídas
   if (intent === 'configurar_salario' && entities && entities.money) {
     execute = { type: 'SET_SALARY', payload: entities.money };
-    originalText = '¡Listo! He actualizado tu salario base a ' + fCOP(entities.money) + '. ¿Quieres que recalcule tu proyección con este nuevo valor?';
+    originalText =
+      '¡Listo! He actualizado tu salario base a ' +
+      fCOP(entities.money) +
+      '. ¿Quieres que recalcule tu proyección con este nuevo valor?';
     actions.push({ label: 'Sí, recalcular', query: 'proyección' });
-  }
-  else if (intent === 'iniciar_turno') {
+  } else if (intent === 'iniciar_turno') {
     execute = { type: 'START_SHIFT' };
     originalText = '¡Turno iniciado! Que te rinda mucho. Te avisaré si llevas muchas horas.';
     actions.push({ label: 'Ver mi turno', query: 'ir a inicio' });
-  }
-  else if (intent === 'cerrar_turno') {
+  } else if (intent === 'cerrar_turno') {
     execute = { type: 'END_SHIFT' };
     originalText = 'Turno cerrado correctamente. ¡Buen descanso!';
     actions.push({ label: 'Ver resumen de hoy', query: 'cuanto gané hoy' });
-  }
-  else if (intent === 'navegar_ajustes') {
+  } else if (intent === 'navegar_ajustes') {
     execute = { type: 'NAVIGATE', payload: 'ajustes' };
     originalText = 'Te llevo a la pantalla de Ajustes.';
-  }
-  else if (intent === 'navegar_historial') {
+  } else if (intent === 'navegar_historial') {
     execute = { type: 'NAVIGATE', payload: 'historial' };
     originalText = 'Abriendo tu historial de turnos.';
   }
 
   // 2. Seguimiento contextual según el intent (botones sugeridos)
   var followUps = {
-    'total_ganado': [
+    total_ganado: [
       { label: '📊 VS mes pasado', query: '¿vs mes pasado?' },
       { label: '🔮 Proyección', query: 'Proyección al cierre' },
       { label: '📧 Enviar reporte', query: 'Enviame el reporte por correo' }
     ],
-    'hoy': [
+    hoy: [
       { label: '📅 ¿Y ayer?', query: '¿Cuánto gané ayer?' },
       { label: '🏆 Mejor día', query: 'Mi mejor día' },
       { label: '⏱ Horas hoy', query: '¿Cuántas horas trabajé hoy?' }
     ],
-    'ayer': [
+    ayer: [
       { label: '📅 ¿Y hoy?', query: '¿Cuánto gané hoy?' },
       { label: '📊 VS mes pasado', query: '¿vs mes pasado?' },
       { label: '🏆 Mejor día', query: 'Mi mejor día' }
     ],
-    'proyeccion': [
+    proyeccion: [
       { label: '🔮 Simular extra', query: '¿Cuánto si trabajo 4h más?' },
       { label: '📊 Distribución', query: 'Distribución por recargo' },
       { label: '💰 ¿Cuánto falta?', query: '¿Cuánto me falta para llegar al salario base?' }
     ],
-    'bienestar': [
+    bienestar: [
       { label: '📅 Próximo descanso', query: '¿Cuándo fue mi último descanso?' },
       { label: '📊 Mi ritmo', query: '¿Cómo voy de ritmo?' },
       { label: '🧘 Consejo', query: '¿Cómo puedo descansar mejor?' }
     ],
-    'comparativa_mes': [
+    comparativa_mes: [
       { label: '📅 VS semana pasada', query: '¿vs semana pasada?' },
       { label: '🔮 Proyección', query: 'Proyección al cierre' },
       { label: '📊 Distribución', query: 'Distribución por recargo' }
     ],
-    'comparativa_semana': [
+    comparativa_semana: [
       { label: '📅 VS mes pasado', query: '¿vs mes pasado?' },
       { label: '🔮 Proyección', query: 'Proyección al cierre' }
     ],
-    'horas_trabajadas': [
+    horas_trabajadas: [
       { label: '⏱ Horas extra', query: '¿Cuántas horas extra llevo?' },
       { label: '🌙 Horas nocturnas', query: '¿Cuántas horas nocturnas?' },
       { label: '📊 Distribución', query: 'Distribución por recargo' }
     ],
-    'promedio': [
+    promedio: [
       { label: '💵 Por hora', query: '¿Cuánto gano por hora?' },
       { label: '📊 VS mes pasado', query: '¿vs mes pasado?' }
     ],
-    'mejor_dia': [
+    mejor_dia: [
       { label: '📉 Peor día', query: '¿Cuál fue mi peor día?' },
       { label: '📊 Promedio', query: '¿Cuál es mi promedio diario?' }
     ],
-    'racha': [
+    racha: [
       { label: '🧘 Descanso', query: '¿Cuánto descanso he tenido?' },
       { label: '📊 Mi ritmo', query: '¿Cómo voy de ritmo?' }
     ],
-    'distribucion': [
+    distribucion: [
       { label: '💰 Total ganado', query: '¿Cuánto gané este mes?' },
       { label: '🔮 Proyección', query: 'Proyección al cierre' }
     ],
-    'simulacion': [
+    simulacion: [
       { label: '🌙 Solo nocturnas', query: '¿Cuánto ganaría si solo hago nocturnas?' },
       { label: '📅 Un turno más', query: '¿Cuánto si hago 1 turno extra?' },
       { label: '🎯 Meta', query: '¿Cuánto necesito para llegar a 2 millones?' }
     ],
-    'festivos': [
+    festivos: [
       { label: '📅 Próximos', query: '¿Cuáles son los próximos festivos?' },
       { label: '💰 Ya trabajados', query: '¿Cuánto gané en festivos este mes?' }
     ],
-    'velocidad': [
+    velocidad: [
       { label: '📊 Promedio', query: '¿Cuál es mi promedio por turno?' },
       { label: '🔮 Simular', query: '¿Cuánto si trabajo 4h más?' }
     ],
-    'email': [
+    email: [
       { label: '📧 Enviar ahora', query: 'Enviame el reporte' },
       { label: '📝 Redactar correo', query: 'Redactá un correo formal' }
     ]
@@ -290,23 +317,47 @@ function aiEnrichResponse(originalText, intent, userContext, entities, turnosAll
 // _gl() ya está disponible al momento de usar los getters.
 
 function _aiColGreetings() {
-  return (typeof _gl === 'function') ? _gl('greetings') : ['parce', 'vecino', 'compadre', 'socio', 'mi llave', 'hermano'];
+  return typeof _gl === 'function'
+    ? _gl('greetings')
+    : ['parce', 'vecino', 'compadre', 'socio', 'mi llave', 'hermano'];
 }
 function _aiColEncouragements() {
-  return (typeof _gl === 'function') ? _gl('enthusiasm') : ['¡Así se hace!', 'Con toda, parce.', 'Vamos por más.', 'Esa es la actitud.', 'Sin miedo al éxito.', 'Dándole con toda.', 'A fuego, mi llave.'];
+  return typeof _gl === 'function'
+    ? _gl('enthusiasm')
+    : [
+        '¡Así se hace!',
+        'Con toda, parce.',
+        'Vamos por más.',
+        'Esa es la actitud.',
+        'Sin miedo al éxito.',
+        'Dándole con toda.',
+        'A fuego, mi llave.'
+      ];
 }
 function _aiColEmpathy() {
-  return (typeof _gl === 'function') ? _gl('consolation') : ['Tranqui, todo bien.', 'Así es la vuelta.', 'No pasa nada, socio.', 'Tranquilo, vos podés.'];
+  return typeof _gl === 'function'
+    ? _gl('consolation')
+    : ['Tranqui, todo bien.', 'Así es la vuelta.', 'No pasa nada, socio.', 'Tranquilo, vos podés.'];
 }
 function _aiColClosings() {
-  return (typeof _gl === 'function') ? _gl('followUp') : ['¿Algo más en que te colabore?', '¿Qué más necesitás, parce?', '¿Qué otra cosa te ayudo?'];
+  return typeof _gl === 'function'
+    ? _gl('followUp')
+    : ['¿Algo más en que te colabore?', '¿Qué más necesitás, parce?', '¿Qué otra cosa te ayudo?'];
 }
 
 var _aiColombianismo = {
-  get greetings() { return _aiColGreetings(); },
-  get encouragements() { return _aiColEncouragements(); },
-  get empathy() { return _aiColEmpathy(); },
-  get closings() { return _aiColClosings(); }
+  get greetings() {
+    return _aiColGreetings();
+  },
+  get encouragements() {
+    return _aiColEncouragements();
+  },
+  get empathy() {
+    return _aiColEmpathy();
+  },
+  get closings() {
+    return _aiColClosings();
+  }
 };
 
 function aiRandomPick(arr) {
@@ -332,12 +383,17 @@ function _aiExpandir(original, intent, userContext) {
   // Contexto adicional según el intent
   if (intent === 'total_ganado' || intent === 'stats') {
     if (c.pctSalario >= 80) {
-      addon += '\n\n🎯 ¡Estás cerca de tu meta! Al ritmo actual te faltan aproximadamente ' + Math.max(1, Math.ceil((100 - c.pctSalario) / (c.pctSalario / Math.max(1, c.diasTrab)))) + ' días para alcanzarla.';
+      addon +=
+        '\n\n🎯 ¡Estás cerca de tu meta! Al ritmo actual te faltan aproximadamente ' +
+        Math.max(1, Math.ceil((100 - c.pctSalario) / (c.pctSalario / Math.max(1, c.diasTrab)))) +
+        ' días para alcanzarla.';
     } else if (c.pctSalario < 30 && c.diasTrab > 0) {
-      addon += '\n\n💡 Tip: Si metés turnos nocturnos o en festivo, tus ingresos suben más rápido. Un turno nocturno te paga 35% extra — en 8 horas son como 11 horas diurnas.';
+      addon +=
+        '\n\n💡 Tip: Si metés turnos nocturnos o en festivo, tus ingresos suben más rápido. Un turno nocturno te paga 35% extra — en 8 horas son como 11 horas diurnas.';
     }
     if (c.nocturnasMins < c.totalMins * 0.1 && c.totalMins > 600) {
-      addon += '\n\n🌙 Dato curioso: si hacés turnos de noche, cada hora te rinde 35% más. Es como trabajar menos por la misma plata.';
+      addon +=
+        '\n\n🌙 Dato curioso: si hacés turnos de noche, cada hora te rinde 35% más. Es como trabajar menos por la misma plata.';
     }
   }
 
@@ -345,22 +401,27 @@ function _aiExpandir(original, intent, userContext) {
     if (c.proy && c.salario && c.proy > c.salario * 1.2) {
       addon += '\n\n🔥 Vas a superar tu salario base por mucho. ¡Este mes viene con bonos!';
     }
-    addon += '\n\n💡 Recordá: la proyección se basa en tu ritmo actual. Si metés más horas extra o trabajás en festivos, ese número sube. Si descansás, baja. Es un estimado, no una promesa.';
+    addon +=
+      '\n\n💡 Recordá: la proyección se basa en tu ritmo actual. Si metés más horas extra o trabajás en festivos, ese número sube. Si descansás, baja. Es un estimado, no una promesa.';
   }
 
   if (intent === 'bienestar') {
     if (c.rachaActual >= 5) {
-      addon += '\n\n🧘 La ley colombiana exige al menos un día de descanso por cada 6 trabajados. Es tu derecho. Usalo sin culpa.';
+      addon +=
+        '\n\n🧘 La ley colombiana exige al menos un día de descanso por cada 6 trabajados. Es tu derecho. Usalo sin culpa.';
     }
-    addon += '\n\n💤 Dormir bien después de un turno nocturno es clave. Oscuridad total, sin pantallas, 7-8 horas. Tu cuerpo te lo agradece y tu productividad también.';
+    addon +=
+      '\n\n💤 Dormir bien después de un turno nocturno es clave. Oscuridad total, sin pantallas, 7-8 horas. Tu cuerpo te lo agradece y tu productividad también.';
   }
 
   if (intent === 'comparativa_mes') {
-    addon += '\n\n📈 Cada mes que pasa tenés más datos. Con el tiempo vas a ver patrones — qué días te rinden más, qué semanas son más flojas. Esa info es poder para negociar tus horarios.';
+    addon +=
+      '\n\n📈 Cada mes que pasa tenés más datos. Con el tiempo vas a ver patrones — qué días te rinden más, qué semanas son más flojas. Esa info es poder para negociar tus horarios.';
   }
 
   if (intent === 'ayuda_navegacion' || intent === 'ayuda_app') {
-    addon += '\n\n💎 Dato extra: también podés preguntarme cosas como "¿cuánto gané hoy?", "¿cómo voy vs el mes pasado?", o "enviame el reporte por correo". Soy más conversacional de lo que parezco.';
+    addon +=
+      '\n\n💎 Dato extra: también podés preguntarme cosas como "¿cuánto gané hoy?", "¿cómo voy vs el mes pasado?", o "enviame el reporte por correo". Soy más conversacional de lo que parezco.';
   }
 
   // Ánimo aleatorio (20% de probabilidad)
@@ -378,7 +439,11 @@ function _aiExpandir(original, intent, userContext) {
       '\n\n🧘 La ley colombiana dice que después de 6 días trabajados, tenés derecho a uno de descanso. Es tu derecho, no un favor.'
     ];
     if (c && c.totalMins > 0) {
-      defaults.push('\n\n📈 Vas ' + (c.diasTrab || 0) + ' turnos este mes. Cada uno es un ladrillo más en tu pared. ¡Seguí construyendo!');
+      defaults.push(
+        '\n\n📈 Vas ' +
+          (c.diasTrab || 0) +
+          ' turnos este mes. Cada uno es un ladrillo más en tu pared. ¡Seguí construyendo!'
+      );
     }
     addon += defaults[Math.floor(Math.random() * defaults.length)];
   }
@@ -394,7 +459,15 @@ function _aiExpandir(original, intent, userContext) {
 // ─── API PÚBLICA ──────────────────────────────────────────────
 // Pipeline unificado de enriquecimiento con contexto compartido.
 
-function aiEnhancedRespond(originalResponse, intent, topic, question, userContext, entities, turnosAll) {
+function aiEnhancedRespond(
+  originalResponse,
+  intent,
+  topic,
+  question,
+  userContext,
+  entities,
+  turnosAll
+) {
   // Contexto unificado — todos los módulos reciben lo mismo
   var shared = {
     c: userContext || {},
@@ -405,12 +478,18 @@ function aiEnhancedRespond(originalResponse, intent, topic, question, userContex
   };
 
   // 1. Memoria
-  try { aiRemember('user', question, intent, topic, userContext); } catch (_) {}
-  try { aiRemember('ai', (originalResponse || '').substring(0, 120), intent, topic, userContext); } catch (_) {}
+  try {
+    aiRemember('user', question, intent, topic, userContext);
+  } catch (_) {}
+  try {
+    aiRemember('ai', (originalResponse || '').substring(0, 120), intent, topic, userContext);
+  } catch (_) {}
 
   // 2. Expansión base (tips + contexto)
   var text = originalResponse;
-  try { text = _aiExpandir(text, intent, userContext); } catch (_) {}
+  try {
+    text = _aiExpandir(text, intent, userContext);
+  } catch (_) {}
 
   // 3. Análisis financiero
   try {
@@ -426,18 +505,37 @@ function aiEnhancedRespond(originalResponse, intent, topic, question, userContex
 
   // 5. Capa personal: logros + psicología + proactivo + asesor
   try {
-    if (intent === 'total_ganado' || intent === 'hoy' || intent === 'stats' || intent === 'proyeccion') {
+    if (
+      intent === 'total_ganado' ||
+      intent === 'hoy' ||
+      intent === 'stats' ||
+      intent === 'proyeccion'
+    ) {
       if (typeof aiCheckAchievements === 'function') {
-        var ach = aiFormatAchievements ? aiFormatAchievements(aiCheckAchievements(userContext)) : null;
+        var ach = aiFormatAchievements
+          ? aiFormatAchievements(aiCheckAchievements(userContext))
+          : null;
         if (ach) text += ach;
       }
     }
   } catch (_) {}
 
-  try { if (typeof aiPsychRespond === 'function') { var pt = aiPsychRespond(userContext, intent); if (pt) text += pt; } } catch (_) {}
-  try { if (typeof aiProactive === 'function') { var prt = aiProactive(userContext, intent); if (prt) text += prt; } } catch (_) {}
   try {
-    if (typeof aiAdvisorRespond === 'function' && intent !== 'total_ganado' && intent !== 'stats') {
+    if (typeof aiPsychRespond === 'function') {
+      var pt = aiPsychRespond(userContext, intent);
+      if (pt) text += pt;
+    }
+  } catch (_) {}
+  try {
+    if (typeof aiProactive === 'function') {
+      var prt = aiProactive(userContext, intent);
+      if (prt) text += prt;
+    }
+  } catch (_) {}
+  try {
+    // Excluir intents que ya tienen respuesta completa en _aiDispatchNLP para evitar duplicar contenido
+    var _advisorExcluded = { total_ganado: 1, stats: 1, simulacion: 1, liquidacion: 1, ahorro: 1 };
+    if (typeof aiAdvisorRespond === 'function' && !_advisorExcluded[intent]) {
       var at = aiAdvisorRespond(intent, userContext, null);
       if (at) text += '\n\n' + at;
     }
@@ -445,9 +543,49 @@ function aiEnhancedRespond(originalResponse, intent, topic, question, userContex
 
   // 6. Pulido final: personalidad + conversación
   var mood = { mood: 'neutral' };
-  try { mood = typeof aiAnalyzeMood === 'function' ? aiAnalyzeMood(question, userContext) : { mood: 'neutral' }; } catch (_) {}
-  try { text = aiColombianizar(text, mood.mood); } catch (_) {}
-  try { if (typeof aiConvOrchestrate === 'function') text = aiConvOrchestrate(text, intent, userContext); } catch (_) {}
+  try {
+    mood =
+      typeof aiAnalyzeMood === 'function'
+        ? aiAnalyzeMood(question, userContext)
+        : { mood: 'neutral' };
+  } catch (_) {}
+  try {
+    text = aiColombianizar(text, mood.mood);
+  } catch (_) {}
+  try {
+    if (typeof aiConvOrchestrate === 'function')
+      text = aiConvOrchestrate(text, intent, userContext);
+  } catch (_) {}
+
+  // Avanzar nivel conversacional para que el usuario vea respuestas más ricas
+  // con cada interacción (solo cuando el intent es de datos, no conversacional)
+  try {
+    var _convIntents = {
+      total_ganado: 1,
+      hoy: 1,
+      ayer: 1,
+      proyeccion: 1,
+      horas_trabajadas: 1,
+      promedio: 1,
+      comparativa_mes: 1,
+      comparativa_semana: 1,
+      mejor_dia: 1,
+      peor_dia: 1,
+      racha: 1,
+      distribucion: 1,
+      simulacion: 1,
+      festivos: 1,
+      bienestar: 1,
+      liquidacion: 1,
+      ley: 1,
+      laboral: 1,
+      ahorro: 1,
+      stats: 1
+    };
+    if (intent && _convIntents[intent] && typeof aiConvAdvance === 'function') {
+      aiConvAdvance(intent);
+    }
+  } catch (_) {}
 
   enriched.text = text;
   return enriched;
