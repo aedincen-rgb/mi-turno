@@ -404,6 +404,6 @@ export default [
   },
 
   {
-    ignores: ['node_modules/**', 'dist/**', '*.min.js'],
+    ignores: ['node_modules/**', 'dist/**', '*.min.js', 'js/lib/**'],
   },
 ];

@@ -2,23 +2,25 @@
 //  MI TURNO · SERVICE WORKER
 //  Split cache: SHELL_CACHE (archivos de la app, se invalida en cada release)
 //               CDN_CACHE   (librerías externas, sobrevive entre releases)
-const SHELL_CACHE = 'mt-shell-v237'; // bump con scripts/bump.sh
+const SHELL_CACHE = 'mt-shell-v238'; // bump con scripts/bump.sh
 const CDN_CACHE   = 'mt-cdn-v2';    // solo bump cuando cambien URLs de CDN
 
+// Supabase SDK y Chart.js son self-hosted → van en appResources (SHELL_CACHE).
+// React, jsPDF y XLSX siguen desde cdnjs (CDN_CACHE, sobrevive entre releases).
 const CDN = [
   'https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js',
-  'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',
   'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
-  'https://cdn.jsdelivr.net/npm/chart.js'
+  'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'
 ];
 
 const appResources = [
   './',
   './index.html',
   './app.html',
+  './js/lib/supabase.min.js',
+  './js/lib/chart.min.js',
   './manifest.json',
   './sw.js',
   './version.json',

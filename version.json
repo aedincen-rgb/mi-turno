@@ -1,4 +1,4 @@
 {
-  "v": "v237",
-  "label": "Fix asistente — opciones de descarte (No hace falta) ya no confunden a la IA"
+  "v": "v238",
+  "label": "Self-host Supabase SDK y Chart.js — elimina dependencia de jsDelivr (bandera roja en iOS)"
 }

@@ -110,11 +110,9 @@
 }
 </script>
 
-<!-- Preconnect a CDNs de scripts (React, Supabase, jsPDF, XLSX, Chart.js).
-     Bajar 100-300ms en LCP al adelantar el handshake DNS+TLS antes de la
-     primera <script src=cdnjs...> del bloque CDN. -->
+<!-- Preconnect a CDNs de scripts (React, jsPDF, XLSX desde cdnjs).
+     Supabase SDK y Chart.js son self-hosted — no necesitan preconnect. -->
 <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
-<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 
 <!-- Preload de archivos críticos para evitar cascada en Vercel -->
 <link rel="preload" href="js/config/globals.js" as="script">
@@ -133,7 +131,6 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://yrpqvmqmchsxpotytxiy.supabase.co" crossorigin>
 <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
-<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,200;9..40,300;9..40,400;9..40,500;9..40,600;9..40,700;9..40,800;9..40,900&family=Nunito:wght@900&display=swap" rel="stylesheet">
 
 <!-- CSS FRAGMENTADO -->
@@ -188,14 +185,15 @@
 
 <link rel="stylesheet" href="css/animations/keyframes.css">
 
-<!-- Librerías externas -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" integrity="sha384-o+Hkm/usHFhCEWo1Ae1cLsOLiQQNrD2UfI424QDAaiZR7URnC8v35ey7s2sbGZHB" crossorigin="anonymous" onerror="window.__onScriptError && window.__onScriptError(this, 'Supabase SDK (jsdelivr)')"></script>
+<!-- Librerías self-hosted (sin dependencia de CDN externo) -->
+<script src="js/lib/supabase.min.js"></script>
+<!-- React, jsPDF y XLSX desde cdnjs (Cloudflare CDN — más confiable en iOS) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js" integrity="sha384-tMH8h3BGESGckSAVGZ82T9n90ztNXxvdwvdM6UoR56cYcf+0iGXBliJ29D+wZ/x8" crossorigin="anonymous" onerror="window.__onScriptError && window.__onScriptError(this, 'React 18 (cdnjs)')"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js" integrity="sha384-bm7MnzvK++ykSwVJ2tynSE5TRdN+xL418osEVF2DE/L/gfWHj91J2Sphe582B1Bh" crossorigin="anonymous" onerror="window.__onScriptError && window.__onScriptError(this, 'ReactDOM 18 (cdnjs)')"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" integrity="sha384-JcnsjUPPylna1s1fvi1u12X5qjY5OL56iySh75FdtrwhO/SWXgMjoVqcKyIIWOLk" crossorigin="anonymous" onerror="window.__onScriptError && window.__onScriptError(this, 'jsPDF (cdnjs)')"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js" integrity="sha384-vxxMdt1K6XlME6zkLsgFrrHIeC7XIdAo1GW/uhhObjJXnymxiIi/eoMXsKJA13ZJ" crossorigin="anonymous" onerror="window.__onScriptError && window.__onScriptError(this, 'jsPDF AutoTable (cdnjs)')"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" integrity="sha384-vtjasyidUo0kW94K5MXDXntzOJpQgBKXmE7e2Ga4LG0skTTLeBi97eFAXsqewJjw" crossorigin="anonymous" onerror="window.__onScriptError && window.__onScriptError(this, 'XLSX (cdnjs)')"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js" integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ" crossorigin="anonymous" onerror="window.__onScriptError && window.__onScriptError(this, 'Chart.js (jsdelivr)')"></script>
+<script src="js/lib/chart.min.js"></script>
 
 </head>
 <body>
