@@ -244,6 +244,15 @@ const projectGlobals = {
   aiClearMemory: 'readonly',
   aiGetMemorySnapshot: 'readonly',
   aiRestoreHistory: 'readonly',
+  aiThink: 'readonly',
+  // services/ai-engage.js
+  aiEngageQuestion: 'readonly',
+  aiEngageActions: 'readonly',
+  aiEngageCuriosidad: 'readonly',
+  aiEngageTrivia: 'readonly',
+  aiEngageCheckTrivia: 'readonly',
+  aiEngageReset: 'readonly',
+  _aiMemory: 'readonly',
   // services/ai-memory.js
   aiMemoryLoad: 'readonly',
   aiMemorySave: 'readonly',
@@ -251,6 +260,7 @@ const projectGlobals = {
   aiMemoryOnFirstMessage: 'readonly',
   aiMemoryResetSession: 'readonly',
   // services/ai-conversation.js
+  aiConvLevel: 'readonly',
   aiConvReset: 'readonly',
   aiConvAdvance: 'readonly',
   aiConvOrchestrate: 'readonly',

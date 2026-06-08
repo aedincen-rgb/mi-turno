@@ -678,15 +678,33 @@ function AsistenteTab(props) {
                 role: 'ai',
                 content: resp.text,
                 actions: resp.actions,
-                chart: resp.chart
+                chart: resp.chart,
+                triviaOptions: resp.triviaOptions || null
               };
             }
           } else if (resp && typeof resp === 'object' && resp.action) {
-            newMsg = { role: 'ai', content: resp.text, action: resp.action, chart: resp.chart };
+            newMsg = {
+              role: 'ai',
+              content: resp.text,
+              action: resp.action,
+              chart: resp.chart,
+              triviaOptions: resp.triviaOptions || null
+            };
           } else if (resp && typeof resp === 'object' && resp.actions) {
-            newMsg = { role: 'ai', content: resp.text, actions: resp.actions, chart: resp.chart };
+            newMsg = {
+              role: 'ai',
+              content: resp.text,
+              actions: resp.actions,
+              chart: resp.chart,
+              triviaOptions: resp.triviaOptions || null
+            };
           } else if (resp && typeof resp === 'object') {
-            newMsg = { role: 'ai', content: resp.text || String(resp), chart: resp.chart };
+            newMsg = {
+              role: 'ai',
+              content: resp.text || String(resp),
+              chart: resp.chart,
+              triviaOptions: resp.triviaOptions || null
+            };
           } else {
             newMsg = { role: 'ai', content: String(resp) };
           }
@@ -1108,6 +1126,70 @@ function AsistenteTab(props) {
                             a.label
                           );
                         })
+                      )
+                    : null,
+                  // Widget de trivia interactiva (ai-engage.js)
+                  m.triviaOptions
+                    ? h(
+                        'div',
+                        { className: 'asistente-trivia' },
+                        h('div', { className: 'asistente-trivia-header' }, '🎮 Trivia laboral'),
+                        h('div', { className: 'asistente-trivia-q' }, m.triviaOptions.q),
+                        h(
+                          'div',
+                          { className: 'asistente-trivia-opts' },
+                          m.triviaOptions.opts.map(function (opt, oi) {
+                            var res = m.triviaResult;
+                            var answered = !!res;
+                            var isCorrect = oi === m.triviaOptions.correcta;
+                            var wasChosen = res && res.idx === oi;
+                            var cls = 'asistente-trivia-opt';
+                            if (answered) {
+                              if (isCorrect) cls += ' correct';
+                              else if (wasChosen) cls += ' wrong';
+                              else cls += ' dimmed';
+                            }
+                            return h(
+                              'button',
+                              {
+                                key: oi,
+                                className: cls,
+                                disabled: answered,
+                                onClick: function () {
+                                  var correct = oi === m.triviaOptions.correcta;
+                                  setMsgs(function (prev) {
+                                    return prev.map(function (msg, mi) {
+                                      if (mi === i) {
+                                        return Object.assign({}, msg, {
+                                          triviaResult: {
+                                            idx: oi,
+                                            correct: correct,
+                                            explicacion: m.triviaOptions.explicacion
+                                          }
+                                        });
+                                      }
+                                      return msg;
+                                    });
+                                  });
+                                  haptic();
+                                }
+                              },
+                              opt
+                            );
+                          })
+                        ),
+                        m.triviaResult
+                          ? h(
+                              'div',
+                              {
+                                className:
+                                  'asistente-trivia-result ' +
+                                  (m.triviaResult.correct ? 'correct' : 'wrong')
+                              },
+                              m.triviaResult.correct ? '✅ ¡Correcto! ' : '❌ Casi. ',
+                              m.triviaResult.explicacion
+                            )
+                          : null
                       )
                     : null,
                   // Gráfico visual (Rich UI)

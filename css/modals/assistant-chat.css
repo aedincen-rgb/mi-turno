@@ -1040,6 +1040,97 @@
     inset 0 1px 0 var(--spec-top);
 }
 
+/* ── Trivia interactiva (ai-engage.js) ── */
+.asistente-trivia {
+  margin-top: 10px;
+  padding: 12px 14px;
+  background: color-mix(in srgb, var(--accent) 6%, var(--glass-mid));
+  border: 1.5px solid color-mix(in srgb, var(--accent) 20%, var(--border));
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.asistente-trivia-header {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+  text-transform: uppercase;
+}
+
+.asistente-trivia-q {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.4;
+}
+
+.asistente-trivia-opts {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.asistente-trivia-opt {
+  padding: 9px 14px;
+  border-radius: 10px;
+  background: var(--glass-mid);
+  border: 1.5px solid var(--border);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.18s var(--spring);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.asistente-trivia-opt:not(:disabled):active {
+  transform: scale(0.97);
+}
+
+.asistente-trivia-opt.correct {
+  background: color-mix(in srgb, #22c55e 15%, var(--glass-mid));
+  border-color: #22c55e;
+  color: #16a34a;
+  font-weight: 700;
+}
+
+.asistente-trivia-opt.wrong {
+  background: color-mix(in srgb, #ef4444 12%, var(--glass-mid));
+  border-color: #ef4444;
+  color: #dc2626;
+}
+
+.asistente-trivia-opt.dimmed {
+  opacity: 0.45;
+}
+
+.asistente-trivia-opt:disabled {
+  cursor: default;
+}
+
+.asistente-trivia-result {
+  font-size: 12.5px;
+  line-height: 1.45;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.asistente-trivia-result.correct {
+  background: color-mix(in srgb, #22c55e 12%, transparent);
+  color: #15803d;
+}
+
+.asistente-trivia-result.wrong {
+  background: color-mix(in srgb, #ef4444 10%, transparent);
+  color: #b91c1c;
+}
+
 /* ── Micrófono: voz a texto (SpeechRecognition) ── */
 .asistente-mic {
   width: 50px;

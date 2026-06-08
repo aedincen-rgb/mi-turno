@@ -1337,6 +1337,218 @@ var AI_INTENTS = [
       ['resumen rápido', 3],
       ['cifras', 3]
     ]
+  },
+
+  // ── Conversacionales emocionales ──
+
+  {
+    id: 'celebracion',
+    kw: [
+      ['lo logre', 3],
+      ['lo logré', 3],
+      ['cumplí la meta', 3],
+      ['cumpli la meta', 3],
+      ['lo hice', 3],
+      ['gane la meta', 3],
+      ['alcance la meta', 3],
+      ['alcancé la meta', 3],
+      ['que mes tan bueno', 3],
+      ['que mes más bueno', 3],
+      ['super bien', 3],
+      ['superé', 2],
+      ['supere', 2],
+      ['meta cumplida', 3],
+      ['logré el objetivo', 3],
+      ['logre el objetivo', 3],
+      ['exito', 2],
+      ['éxito', 2],
+      ['celebrar', 3],
+      ['feliz con el mes', 3],
+      ['contento con el mes', 3],
+      ['estoy feliz', 2],
+      ['qué bien me fue', 3],
+      ['me fue muy bien', 3],
+      ['buen mes', 2]
+    ]
+  },
+
+  {
+    id: 'motivacion',
+    kw: [
+      ['dame animo', 3],
+      ['dame ánimo', 3],
+      ['necesito motivacion', 3],
+      ['necesito motivación', 3],
+      ['motivame', 3],
+      ['motívame', 3],
+      ['sin fuerzas', 3],
+      ['sin energia', 3],
+      ['sin energía', 3],
+      ['me siento bajo', 3],
+      ['me siento baja', 3],
+      ['necesito fuerzas', 3],
+      ['no tengo ganas', 3],
+      ['sin ganas', 3],
+      ['desanimado', 3],
+      ['desanimada', 3],
+      ['desmotivado', 3],
+      ['desmotivada', 3],
+      ['levantame el animo', 3],
+      ['levantame el ánimo', 3],
+      ['animame', 3],
+      ['anímate', 3],
+      ['dame fuerzas', 3],
+      ['como sigo', 2],
+      ['cómo sigo', 2],
+      ['ayudame a seguir', 3]
+    ]
+  },
+
+  {
+    id: 'queja_fatiga',
+    kw: [
+      ['que semana tan dura', 3],
+      ['qué semana tan dura', 3],
+      ['semana pesada', 3],
+      ['no aguanto mas', 3],
+      ['no aguanto más', 3],
+      ['estoy hasta aca', 3],
+      ['estoy hasta acá', 3],
+      ['no puedo mas', 3],
+      ['no puedo más', 3],
+      ['demasiado trabajo', 3],
+      ['mucho trabajo', 2],
+      ['me tienen quemado', 3],
+      ['me tienen quemada', 3],
+      ['harto', 2],
+      ['harta', 2],
+      ['no da mas', 3],
+      ['no da más', 3],
+      ['estoy quemado', 3],
+      ['estoy quemada', 3],
+      ['que cansancio', 3],
+      ['qué cansancio', 3],
+      ['turno horrible', 3],
+      ['terrible turno', 3],
+      ['dia horrible', 2],
+      ['día horrible', 2],
+      ['jornada larga', 2],
+      ['no descanse', 2],
+      ['no descanso', 2]
+    ]
+  },
+
+  {
+    id: 'estado_animo',
+    kw: [
+      ['como estas', 3],
+      ['cómo estás', 3],
+      ['como andas', 3],
+      ['cómo andás', 3],
+      ['como te va', 3],
+      ['cómo te va', 3],
+      ['que tal estas', 3],
+      ['qué tal estás', 3],
+      ['bien vos', 2],
+      ['como estas vos', 3],
+      ['y vos como', 3],
+      ['y vos cómo', 3],
+      ['como estas tu', 3],
+      ['sos inteligente', 2],
+      ['te gusta trabajar', 2],
+      ['como te sientes', 3],
+      ['cómo te sentís', 3]
+    ]
+  },
+
+  // ── Conversacionales exploratorias ──
+
+  {
+    id: 'curiosidad_app',
+    kw: [
+      ['sorprendeme', 3],
+      ['sorpréndeme', 3],
+      ['contame algo', 3],
+      ['contame algo interesante', 3],
+      ['algo interesante', 2],
+      ['que mas sabes', 3],
+      ['qué más sabés', 3],
+      ['que mas podes', 3],
+      ['qué más podés', 3],
+      ['algo nuevo', 2],
+      ['dame un dato', 3],
+      ['dame un tip', 3],
+      ['sabia que', 2],
+      ['sabía que', 2],
+      ['que no sepa', 3],
+      ['cuéntame algo', 3],
+      ['cuentame algo', 3],
+      ['dato curioso', 3],
+      ['curiosidad', 2],
+      ['que mas hay', 3],
+      ['qué más hay', 3],
+      ['que mas puedes', 3],
+      ['enséñame algo', 3],
+      ['ensenname algo', 3]
+    ]
+  },
+
+  {
+    id: 'reflexion',
+    kw: [
+      ['como me fue', 3],
+      ['cómo me fue', 3],
+      ['como estuve', 3],
+      ['cómo estuve', 3],
+      ['que tal me fue', 3],
+      ['qué tal me fue', 3],
+      ['que piensas de mi', 3],
+      ['qué pensás de mi', 3],
+      ['como me ves', 3],
+      ['cómo me ves', 3],
+      ['que tal mi rendimiento', 3],
+      ['qué tal mi rendimiento', 3],
+      ['como voy en general', 3],
+      ['cómo voy en general', 3],
+      ['evalua mi mes', 3],
+      ['evaluá mi mes', 3],
+      ['dame tu opinion', 3],
+      ['dame tu opinión', 3],
+      ['que opinas', 3],
+      ['qué opinás', 3],
+      ['analiza mi trabajo', 3],
+      ['analizá mi trabajo', 3],
+      ['como estuvo mi semana', 3],
+      ['cómo estuvo mi semana', 3]
+    ]
+  },
+
+  {
+    id: 'planificacion_semana',
+    kw: [
+      ['que hago esta semana', 3],
+      ['qué hago esta semana', 3],
+      ['ayudame a planear', 3],
+      ['ayudame a planificar', 3],
+      ['como me organizo', 3],
+      ['cómo me organizo', 3],
+      ['plan de la semana', 3],
+      ['planear esta semana', 3],
+      ['organizar mis turnos', 3],
+      ['que turnos convienen', 3],
+      ['qué turnos convienen', 3],
+      ['como maximizo', 3],
+      ['cómo maximizo', 3],
+      ['estrategia de turnos', 3],
+      ['cuantos turnos hacer', 3],
+      ['cuántos turnos hacer', 3],
+      ['planificar semana', 3],
+      ['organizar semana', 3],
+      ['que me conviene', 3],
+      ['qué me conviene', 3],
+      ['como planifico', 3],
+      ['cómo planifico', 3]
+    ]
   }
 ];
 
@@ -1492,6 +1704,10 @@ function _aiIntentTopic(intentId) {
     agradecimiento: 'conversacion',
     identidad: 'conversacion',
     capacidades: 'conversacion',
+    celebracion: 'conversacion',
+    motivacion: 'conversacion',
+    estado_animo: 'conversacion',
+    reflexion: 'conversacion',
     total_ganado: 'dinero',
     hoy: 'dinero',
     ayer: 'dinero',
@@ -1510,9 +1726,11 @@ function _aiIntentTopic(intentId) {
     simulacion: 'dinero',
     festivos: 'informacion',
     bienestar: 'salud',
+    queja_fatiga: 'salud',
     liquidacion: 'dinero',
     ley: 'informacion',
     laboral: 'informacion',
+    curiosidad_app: 'informacion',
     ahorro: 'dinero',
     email: 'accion',
     correo_formal: 'accion',
@@ -1522,6 +1740,7 @@ function _aiIntentTopic(intentId) {
     navegar_ajustes: 'accion',
     navegar_historial: 'accion',
     optimizador: 'dinero',
+    planificacion_semana: 'accion',
     ayuda_app: 'informacion',
     stats: 'dinero'
   };
@@ -1537,6 +1756,18 @@ function _aiTopicBonus(intentId, lastTopic) {
   if (topic === 'dinero' && lastTopic === 'comparativa') return 1;
   if (topic === 'comparativa' && lastTopic === 'dinero') return 1;
   if (topic === 'patrones' && lastTopic === 'dinero') return 1;
+  // Intents emocionales reciben bonus cuando el contexto previo es relevante
+  if (intentId === 'celebracion' && (lastTopic === 'dinero' || lastTopic === 'comparativa'))
+    return 2;
+  if (
+    intentId === 'reflexion' &&
+    (lastTopic === 'dinero' || lastTopic === 'comparativa' || lastTopic === 'patrones')
+  )
+    return 2;
+  if (intentId === 'motivacion' && lastTopic === 'salud') return 2;
+  if (intentId === 'queja_fatiga' && lastTopic === 'salud') return 2;
+  if (intentId === 'planificacion_semana' && (lastTopic === 'dinero' || lastTopic === 'accion'))
+    return 1;
   return 0;
 }
 

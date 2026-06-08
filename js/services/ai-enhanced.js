@@ -173,7 +173,7 @@ function aiProactiveSuggest(userContext) {
 // Devuelve { text, actions, execute } donde actions es array de {label, query}
 // y execute es un objeto { type, payload } para que la UI lo procese.
 
-function aiEnrichResponse(originalText, intent, userContext, entities, turnosAll) {
+function aiEnrichResponse(originalText, intent, userContext, entities, turnosAll, engageStrategy) {
   var actions = [];
   var execute = null;
 
@@ -214,12 +214,19 @@ function aiEnrichResponse(originalText, intent, userContext, entities, turnosAll
     originalText = 'Abriendo tu historial de turnos.';
   }
 
-  // 2. Seguimiento contextual según el intent (botones sugeridos)
-  //    El motor de engagement (ai-engage.js) garantiza siempre 2 opciones.
-  //    Si no está disponible, se usa el pool de fallback legacy (compatibilidad).
-  if (typeof aiEngageActions === 'function') {
+  // 2. Seguimiento contextual según el intent (botones sugeridos + pregunta).
+  //    aiEngageQuestion devuelve {q, actions} — la pregunta se guarda en
+  //    el objeto retornado para que aiEnhancedRespond la agregue al texto
+  //    al final, cuando todo el contenido ya está ensamblado.
+  var _engageQ = null;
+  if (typeof aiEngageQuestion === 'function') {
     var convLevel = typeof aiConvLevel === 'function' ? aiConvLevel() : 0;
-    actions = aiEngageActions(intent, userContext, convLevel);
+    var _eq = aiEngageQuestion(intent, userContext, convLevel, engageStrategy || 'financial');
+    actions = _eq.actions;
+    _engageQ = _eq.q;
+  } else if (typeof aiEngageActions === 'function') {
+    var convLevel2 = typeof aiConvLevel === 'function' ? aiConvLevel() : 0;
+    actions = aiEngageActions(intent, userContext, convLevel2);
   }
   // Pool legacy de respaldo (si ai-engage.js no está cargado)
   if (!actions || actions.length === 0) {
@@ -311,7 +318,8 @@ function aiEnrichResponse(originalText, intent, userContext, entities, turnosAll
 
   return {
     text: originalText,
-    actions: (actions && actions.length > 0) ? actions.slice(0, 2) : null
+    actions: actions && actions.length > 0 ? actions.slice(0, 2) : null,
+    engageQ: _engageQ || null
   };
 }
 
@@ -538,6 +546,117 @@ function aiRestoreHistory(recentIntents, lastIntent, lastTopic, pendingSuggestio
   }
 }
 
+// ─── MÓDULO DE RAZONAMIENTO ───────────────────────────────────
+// Decide QUÉ necesita el usuario antes de construir la respuesta.
+// Evita correr módulos costosos cuando el intent no lo justifica.
+
+var _AI_FINANCIAL_INTENTS = {
+  total_ganado: 1,
+  hoy: 1,
+  ayer: 1,
+  proyeccion: 1,
+  stats: 1,
+  distribucion: 1,
+  liquidacion: 1,
+  ahorro: 1,
+  comparativa_mes: 1,
+  comparativa_semana: 1,
+  mejor_dia: 1,
+  peor_dia: 1,
+  horas_trabajadas: 1,
+  promedio: 1,
+  velocidad: 1,
+  simulacion: 1,
+  festivos: 1,
+  racha: 1,
+  configurar_salario: 1,
+  informe_completo: 1
+};
+
+// Intents conversacionales: no activan módulos financieros en aiThink
+var _AI_CONVERSATIONAL_INTENTS = {
+  saludo: 1,
+  despedida: 1,
+  agradecimiento: 1,
+  identidad: 1,
+  capacidades: 1,
+  celebracion: 1,
+  motivacion: 1,
+  queja_fatiga: 1,
+  estado_animo: 1,
+  curiosidad_app: 1,
+  reflexion: 1,
+  planificacion_semana: 1
+};
+
+function aiThink(question, intent, userContext, convHistory) {
+  var c = userContext || {};
+  var histLen = convHistory ? convHistory.length : 0;
+
+  var mood = 'neutral';
+  try {
+    if (typeof aiAnalyzeMood === 'function') {
+      mood = (aiAnalyzeMood(question, userContext) || {}).mood || 'neutral';
+    }
+  } catch (_) {}
+
+  var isFinancial = !!_AI_FINANCIAL_INTENTS[intent];
+  var isConversational = !!_AI_CONVERSATIONAL_INTENTS[intent];
+  var isStressed =
+    mood === 'frustrated' ||
+    mood === 'sad' ||
+    mood === 'stressed' ||
+    mood === 'tired' ||
+    intent === 'queja_fatiga' ||
+    intent === 'bienestar';
+  var isCelebrating =
+    mood === 'happy' ||
+    mood === 'excited' ||
+    intent === 'celebracion' ||
+    intent === 'agradecimiento' ||
+    (isFinancial && c.pctSalario >= 100);
+
+  var primaryNeed = 'conversation';
+  if (isFinancial) primaryNeed = 'information';
+  if (intent === 'reflexion') primaryNeed = 'information';
+  if (intent === 'planificacion_semana') primaryNeed = 'information';
+  if (isStressed || intent === 'motivacion') primaryNeed = 'support';
+  if (isCelebrating) primaryNeed = 'celebration';
+
+  var responseStyle = 'conversational';
+  if (histLen < 3) responseStyle = 'brief';
+  if (isFinancial && histLen >= 3) responseStyle = 'detailed';
+  if (isStressed || intent === 'motivacion') responseStyle = 'empathetic';
+  if (isCelebrating) responseStyle = 'celebratory';
+
+  var engageStrategy = 'financial';
+  if (isStressed || intent === 'motivacion') engageStrategy = 'personal';
+  else if (isCelebrating || intent === 'reflexion') engageStrategy = 'reflexion';
+  else if (intent === 'curiosidad_app' || (isConversational && histLen >= 2))
+    engageStrategy = 'discovery';
+  else if (!isFinancial && histLen >= 2) engageStrategy = 'discovery';
+  else if (histLen >= 6 && isFinancial) engageStrategy = 'trivia';
+
+  var skipModules = {};
+  if (!isFinancial) {
+    skipModules.insights = true;
+    skipModules.advisor = true;
+    skipModules.achievements = true;
+  }
+  if (isStressed || primaryNeed === 'support') {
+    skipModules.proactive = true;
+  }
+
+  return {
+    primaryNeed: primaryNeed,
+    responseStyle: responseStyle,
+    engageStrategy: engageStrategy,
+    skipModules: skipModules,
+    mood: mood,
+    isFinancial: isFinancial
+  };
+}
+
 // ─── API PÚBLICA ──────────────────────────────────────────────
 // Pipeline unificado de enriquecimiento con contexto compartido.
 
@@ -558,6 +677,12 @@ function aiEnhancedRespond(
     question: question || '',
     baseResponse: originalResponse || ''
   };
+
+  // Razonamiento previo: determina qué necesita el usuario antes de activar módulos
+  var _thought = {};
+  try {
+    _thought = aiThink(question, intent, userContext, _aiMemory.history) || {};
+  } catch (_) {}
 
   // 0. Memoria persistente entre sesiones — solo en la primera llamada de cada sesión
   var _welcomePrefix = '';
@@ -582,37 +707,50 @@ function aiEnhancedRespond(
     aiRemember('ai', (originalResponse || '').substring(0, 120), intent, topic, userContext);
   } catch (_) {}
 
-  // 2. Análisis financiero
+  // 2. Análisis financiero — solo para intents financieros
   var text = originalResponse;
   try {
-    if (typeof aiInsightFull === 'function') {
+    if (
+      typeof aiInsightFull === 'function' &&
+      (!_thought.skipModules || !_thought.skipModules.insights)
+    ) {
       var insight = aiInsightFull(userContext, intent);
       if (insight) text += insight;
     }
   } catch (_) {}
 
   // 3. Enriquecimiento (acciones + follow-ups)
-  var enriched = aiEnrichResponse(text, intent, userContext, entities, turnosAll);
+  var enriched = aiEnrichResponse(
+    text,
+    intent,
+    userContext,
+    entities,
+    turnosAll,
+    (_thought && _thought.engageStrategy) || 'financial'
+  );
   text = enriched.text;
 
   // 4. Capa personal: logros + psicología + proactivo + asesor
   try {
-    if (
-      intent === 'total_ganado' ||
-      intent === 'hoy' ||
-      intent === 'stats' ||
-      intent === 'proyeccion'
-    ) {
-      if (typeof aiCheckAchievements === 'function') {
-        var ach =
-          typeof aiFormatAchievements === 'function'
-            ? aiFormatAchievements(aiCheckAchievements(userContext))
-            : null;
-        if (ach) text += ach;
+    if (!_thought.skipModules || !_thought.skipModules.achievements) {
+      if (
+        intent === 'total_ganado' ||
+        intent === 'hoy' ||
+        intent === 'stats' ||
+        intent === 'proyeccion'
+      ) {
+        if (typeof aiCheckAchievements === 'function') {
+          var ach =
+            typeof aiFormatAchievements === 'function'
+              ? aiFormatAchievements(aiCheckAchievements(userContext))
+              : null;
+          if (ach) text += ach;
+        }
       }
     }
   } catch (_) {}
 
+  // psicología: siempre activa (suma en cualquier contexto)
   try {
     if (typeof aiPsychRespond === 'function') {
       var pt = aiPsychRespond(userContext, intent);
@@ -620,7 +758,10 @@ function aiEnhancedRespond(
     }
   } catch (_) {}
   try {
-    if (typeof aiProactive === 'function') {
+    if (
+      typeof aiProactive === 'function' &&
+      (!_thought.skipModules || !_thought.skipModules.proactive)
+    ) {
       var prt = aiProactive(userContext, intent);
       if (prt) text += prt;
     }
@@ -628,7 +769,11 @@ function aiEnhancedRespond(
   try {
     // Excluir intents que ya tienen respuesta completa en _aiDispatchNLP para evitar duplicar contenido
     var _advisorExcluded = { total_ganado: 1, stats: 1, simulacion: 1, liquidacion: 1, ahorro: 1 };
-    if (typeof aiAdvisorRespond === 'function' && !_advisorExcluded[intent]) {
+    if (
+      typeof aiAdvisorRespond === 'function' &&
+      !_advisorExcluded[intent] &&
+      (!_thought.skipModules || !_thought.skipModules.advisor)
+    ) {
       var at = aiAdvisorRespond(intent, userContext, null);
       if (at) text += '\n\n' + at;
     }
@@ -639,22 +784,36 @@ function aiEnhancedRespond(
     text = _aiExpandir(text, intent, userContext);
   } catch (_) {}
 
-  // 5b. Engagement — curiosidades, trivia, preguntas de seguimiento
-  //      Garantiza que el usuario siempre tenga al menos 1 pregunta y 2 opciones.
+  // 5b. Engagement — curiosidades, trivia, pregunta de seguimiento garantizada.
+  //     Orden: curiosidad (25% chance) → trivia (20% chance, ≥4 turnos) →
+  //     pregunta de engage (siempre, al final del texto).
+  var _triviaOptions = null;
   try {
-    // Curiosidad ocasional (1 de cada 3 respuestas cortas)
-    if (typeof aiEngageCuriosidad === 'function' && text && text.length < 350 && Math.random() < 0.33) {
+    // Curiosidad ocasional (1 de cada 4 respuestas cortas)
+    if (
+      typeof aiEngageCuriosidad === 'function' &&
+      text &&
+      text.length < 350 &&
+      Math.random() < 0.25
+    ) {
       text = aiEngageCuriosidad(text);
     }
-    // Trivia ocasional (1 de cada 5 respuestas, si ya hay conversación)
-    if (typeof aiEngageTrivia === 'function' && text && _aiMemory.history && _aiMemory.history.length >= 4 && Math.random() < 0.2) {
-      var triviaText = aiEngageTrivia(text);
-      if (triviaText) text = triviaText;
+    // Trivia como widget interactivo (no texto — se renderiza como botones en la UI)
+    if (
+      typeof aiEngageTrivia === 'function' &&
+      text &&
+      _aiMemory.history &&
+      _aiMemory.history.length >= 4 &&
+      Math.random() < 0.2
+    ) {
+      var _triviaResult = aiEngageTrivia(text);
+      if (_triviaResult && _triviaResult.triviaOptions) {
+        _triviaOptions = _triviaResult.triviaOptions;
+      }
     }
-    // Verificar si el usuario respondió a una trivia
-    if (typeof aiEngageCheckTrivia === 'function') {
-      var triviaCheck = aiEngageCheckTrivia(question);
-      if (triviaCheck) text = triviaCheck + '\n\n' + _welcomePrefix; // reemplazar bienvenida
+    // Pregunta de seguimiento al final del texto (siempre, sin condición de azar)
+    if (enriched.engageQ) {
+      text += '\n\n' + enriched.engageQ;
     }
   } catch (_) {}
 
@@ -696,8 +855,10 @@ function aiEnhancedRespond(
   } catch (_) {}
 
   enriched.text = text;
+  if (_triviaOptions) enriched.triviaOptions = _triviaOptions;
   return enriched;
 }
 
 // ─── INICIALIZACIÓN ──────────────────────────────────────────
+window.aiThink = aiThink;
 console.log('[MT] ai-enhanced.js cargado — IA potenciada v124');

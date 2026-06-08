@@ -662,6 +662,120 @@ function _aiDispatchNLP(intent, c, state, q, t) {
     return 'Estas son mis capacidades:\n\n💰 **Finanzas:** sueldo neto, liquidación, proyección\n⚖️ **Legal:** Ley 2101, recargos, auxilio de transporte\n📊 **Estadísticas:** KPIs, comparativas, rachas\n🔮 **Simulaciones:** ¿cuánto si trabajo X horas más?\n📅 **Festivos:** próximos, cuántos este mes\n🧘 **Bienestar:** análisis de fatiga, recomendaciones\n📧 **Reportes:** envío de PDF/Excel por correo\n📖 **Guías:** preguntame "¿cómo exporto?" o "¿cómo cambio mi foto?" para ayuda paso a paso';
   }
 
+  // ── Conversacionales emocionales ──
+  if (intent === 'celebracion') {
+    var logros = [];
+    if (c.pctSalario >= 100) logros.push('superaste tu salario base');
+    if (c.diasTrab >= 20) logros.push('trabajaste ' + c.diasTrab + ' turnos este mes');
+    if (c.rachaActual >= 5) logros.push('llevas ' + c.rachaActual + ' días seguidos sin parar');
+    var logroStr = logros.length ? ' Te puedo decir que ' + logros.join(', ') + '. ' : '';
+    var enc =
+      typeof _gl === 'function'
+        ? _gl('enthusiasm')
+        : ['¡Así se hace!', '¡Con toda!', '¡Sin miedo al éxito!'];
+    return (
+      '🎉 ¡' +
+      enc[Math.floor(Math.random() * enc.length)] +
+      ' ' +
+      logroStr +
+      'Los éxitos se celebran y también se analizan — así se repiten.\n\n¿Querés ver el detalle de lo que lograste este mes?'
+    );
+  }
+  if (intent === 'motivacion') {
+    var enc2 =
+      typeof _gl === 'function' ? _gl('enthusiasm') : ['¡Vamos con todo!', '¡Sin miedo al éxito!'];
+    var apoyos = [
+      'Cada turno que hacés, cada hora que ponés, es un ladrillo más. No se ven de cerca, pero desde lejos se ve el edificio.',
+      'Los días difíciles son los que más te fortalecen. Si fuera fácil, todos lo harían.',
+      'No medís el progreso día a día. Medís el progreso mes a mes. Y ahí es donde se nota lo que valés.',
+      'Tenés ' + c.diasTrab + ' turnos encima este mes. Eso no lo hace cualquiera.',
+      'El cansancio de hoy es el resultado de mañana. Seguí.'
+    ];
+    var apoyo = apoyos[Math.floor(Math.random() * apoyos.length)];
+    return (
+      '💪 ' +
+      enc2[Math.floor(Math.random() * enc2.length)] +
+      '\n\n' +
+      apoyo +
+      '\n\n¿Querés ver cómo vas este mes para recordarte por qué vale la pena?'
+    );
+  }
+  if (intent === 'queja_fatiga') {
+    var empat =
+      typeof _gl === 'function' ? _gl('consolation') : ['Tranqui, todo bien.', 'Así es la vuelta.'];
+    var resp = empat[Math.floor(Math.random() * empat.length)];
+    var rachaMsg =
+      c.rachaActual >= 6
+        ? ' Llevás ' +
+          c.rachaActual +
+          ' días seguidos — la ley te da derecho a un descanso cada 6 días trabajados. No es un lujo, es tu derecho.'
+        : ' A veces el cuerpo manda señales. Escuchalo.';
+    return '🤝 ' + resp + rachaMsg + '\n\n¿Querés que revisemos si tenés algún descanso pendiente?';
+  }
+  if (intent === 'estado_animo') {
+    var respuestas = [
+      'Yo bien, gracias por preguntar. 😄 Procesando números y listo para ayudarte. ¿Vos cómo andás?',
+      'Todo en orden por acá. Sin fatiga, sin burnout — ventajas de ser digital. 🤖 ¿En qué te puedo ayudar hoy?',
+      'Funcionando al 100%, como siempre. La pregunta es ¿cómo estás vos? Si querés, te cuento cómo vas este mes.'
+    ];
+    return respuestas[Math.floor(Math.random() * respuestas.length)];
+  }
+
+  // ── Conversacionales exploratorias ──
+  if (intent === 'curiosidad_app') {
+    var curiosidades = [
+      'La hora extra nocturna en festivo es la tarifa más cara del mercado laboral colombiano: 75% de recargo sobre el valor hora. Si trabajás 8 horas en esas condiciones, es como cobrar 14 horas diurnas.',
+      'Esta app no envía nada a ningún servidor externo durante los cálculos. Todo el motor de nómina corre en tu dispositivo, sin internet. Podés usarla en el metro sin señal.',
+      'El auxilio de transporte no es proporcional si trabajás menos de 15 días. Si ingresaste a mitad de mes, solo aplica desde la fecha de ingreso.',
+      'Podés exportar todo tu historial como PDF o Excel desde la pestaña Historial. Útil si alguna vez tenés que demostrar tus ingresos o negociar un crédito.',
+      'El simulador de escenarios puede calcular cuánto ganarías si solo hicieras turnos nocturnos, o si agregaras 2 horas extra por día. Preguntame "simular" y lo arrancamos.',
+      'Tenés un backup de todos tus datos disponible en Ajustes. Exportá el archivo antes de cambiar de celular para no perder nada.',
+      'En Colombia hay exactamente 18 festivos fijos por año. Si trabajaras todos, serían 31.5 días extra de ingresos. El rey de los festivos puede ganar más que alguien con 30% más de salario base.'
+    ];
+    var cur = curiosidades[Math.floor(Math.random() * curiosidades.length)];
+    return '💡 ' + cur + '\n\n¿Querés que profundice en algo de esto?';
+  }
+  if (intent === 'reflexion') {
+    var calificacion = '';
+    if (c.pctSalario >= 100) calificacion = '⭐ Excelente mes — superaste tu salario base.';
+    else if (c.pctSalario >= 80)
+      calificacion = '👍 Buen mes — vas al ' + c.pctSalario.toFixed(0) + '% de tu meta.';
+    else if (c.pctSalario >= 50)
+      calificacion =
+        '📊 Mes en progreso — llegas al ' + c.pctSalario.toFixed(0) + '% de tu salario base.';
+    else if (c.diasTrab === 0) calificacion = '📋 No tengo datos de este mes todavía.';
+    else
+      calificacion =
+        '💡 Mes arrancando — ' +
+        c.diasTrab +
+        ' turno' +
+        (c.diasTrab !== 1 ? 's' : '') +
+        ' registrado' +
+        (c.diasTrab !== 1 ? 's' : '') +
+        ' hasta ahora.';
+    return (
+      calificacion +
+      '\n\nEn números: **' +
+      fCOP(c.totalCOP) +
+      '** brutos en ' +
+      c.diasTrab +
+      ' turnos, promedio **' +
+      fCOP(c.prom) +
+      '** por turno.\n\n¿Querés compararlo con el mes pasado o ver qué podría mejorar?'
+    );
+  }
+  if (intent === 'planificacion_semana') {
+    var faltaDinero =
+      c.falta > 0
+        ? 'Te faltan **' + fCOP(c.falta) + '** para llegar a tu salario base.'
+        : 'Ya alcanzaste tu salario base este mes.';
+    return (
+      '📅 Para planear bien la semana necesito saber qué buscás:\n\n• Si querés **maximizar ingresos** → los turnos nocturnos y en festivo pagan hasta 75% más.\n• Si querés **descansar más** → un día libre cada 6 trabajados es tu derecho legal.\n• Si querés **alcanzar tu meta** → ' +
+      faltaDinero +
+      '\n\n¿Cuántos turnos estás pensando hacer esta semana?'
+    );
+  }
+
   // ── Dinero ──
   if (intent === 'total_ganado') {
     return (
