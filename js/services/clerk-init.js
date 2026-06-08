@@ -124,6 +124,96 @@
     // Esto garantiza que la fila en public.perfiles existe para el uid
     // de Clerk antes de que cualquier dato de turno se intente guardar.
     _clerkUpsertPerfil(ses.uid, ses.email);
+
+    // Sincronizar PIN — flujo equivalente al de root.js aplicar().
+    // Se corre después de setear window._mtSession para que los
+    // helpers de PIN puedan leer la sesión si lo necesitan.
+    _sincronizarPIN(ses.uid, ses.email);
+  }
+
+  // ── _sincronizarPIN ───────────────────────────────────────────
+  // Replica el flujo de PIN de root.js aplicar() (líneas 236-301)
+  // para el path de autenticación con Clerk.
+  //
+  // Orden de prioridad:
+  //   1. PIN en pin_lookup (nube) → guardar local + actualizar sesión
+  //   2. PIN local válido          → subirlo a la nube
+  //   3. Sin nada                  → generar nuevo + subir + guardar
+  //
+  // No bloquea el flujo — todo es asíncrono y silencia errores no
+  // críticos igual que root.js.
+  function _sincronizarPIN(uid, email) {
+    if (!uid) return;
+    if (!email) return;
+    if (typeof SUPA === 'undefined' || !SUPA) return;
+    if (typeof withTimeout !== 'function') return;
+    if (typeof generarPINUnico !== 'function') return;
+    if (typeof guardarPINEnNube !== 'function') return;
+
+    withTimeout(
+      SUPA.from('pin_lookup').select('pin').eq('user_id', uid).maybeSingle(),
+      6000,
+      'PIN lookup Clerk'
+    )
+      .then(function (res) {
+        // Error de RLS, timeout sin throw, etc. — preservar PIN local
+        // para no pisar el del usuario (misma lógica defensiva que root.js v53).
+        if (res && res.error) {
+          console.warn(
+            '[MT Clerk] PIN lookup error — preservando PIN local:',
+            res.error.message || res.error
+          );
+          return;
+        }
+
+        if (res.data && res.data.pin) {
+          // PIN encontrado en la nube → sincronizar localmente.
+          var pinNube = res.data.pin;
+          grabar('mt_pin_' + uid, pinNube);
+          var sesActual = window._mtSession;
+          if (sesActual) {
+            var sesActualizada = Object.assign({}, sesActual, { pin: pinNube });
+            if (pinNube === '9999') sesActualizada.isAdmin = true;
+            grabar(SKEY, sesActualizada);
+            window._mtSession = sesActualizada;
+          }
+          return;
+        }
+
+        // res.data === null y sin error → no hay PIN en la nube.
+        // Antes de generar uno nuevo, verificar si hay uno local válido.
+        var pinLocal = leer('mt_pin_' + uid, null);
+        if (pinLocal && /^\d{4}$/.test(String(pinLocal))) {
+          // Subir PIN local a la nube — no generar otro encima.
+          guardarPINEnNube(uid, email, pinLocal)
+            .catch(function (e) {
+              console.warn('[MT Clerk] No se pudo subir PIN local:', e);
+            });
+          return;
+        }
+
+        // Primer login real: generar PIN único, subirlo y guardarlo.
+        generarPINUnico(uid)
+          .then(function (pin) {
+            return guardarPINEnNube(uid, email, pin).then(function (result) {
+              if (result.success) {
+                grabar('mt_pin_' + uid, pin);
+                var sesActual = window._mtSession;
+                if (sesActual) {
+                  var sesActualizada = Object.assign({}, sesActual, { pin: pin });
+                  grabar(SKEY, sesActualizada);
+                  window._mtSession = sesActualizada;
+                }
+              }
+            });
+          })
+          .catch(function (e) {
+            console.warn('[MT Clerk] No se pudo generar PIN inicial:', e);
+          });
+      })
+      .catch(function (e) {
+        console.warn('[MT Clerk] PIN lookup falló (no crítico):', e.message || e);
+      });
   }
 
   // ── _clerkClearSession ────────────────────────────────────────

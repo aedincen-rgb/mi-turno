@@ -7,8 +7,23 @@
 // ════════════════════════════════════════════════════════════════
 
 function ClerkAuthScreen(props) {
-  // modo: 'login' | 'register'
-  var md = useState('login');
+  // modo: 'pin' | 'login' | 'register'
+  // Si el device es conocido (mt_last_user + mt_pin_<uid> existen)
+  // arrancamos en 'pin' para mostrar FastPinScreen directamente.
+  var _modoInicial = (function () {
+    try {
+      var lastUser = leer('mt_last_user', null);
+      if (lastUser && lastUser.uid) {
+        var pinGuardado = leer('mt_pin_' + lastUser.uid, null);
+        if (pinGuardado && /^\d{4}$/.test(String(pinGuardado))) {
+          return 'pin';
+        }
+      }
+    } catch (_) {}
+    return 'login';
+  }());
+
+  var md = useState(_modoInicial);
   var modo  = md[0],
       setModo = md[1];
 
@@ -128,6 +143,53 @@ function ClerkAuthScreen(props) {
       }
     };
   }, [modo]); // Re-ejecutar solo cuando cambia el modo.
+
+  // ── Modo PIN: device conocido ─────────────────────────────────
+  // Si hay un usuario previo con PIN local válido, mostramos
+  // FastPinScreen directamente. El botón "Usar otro método" vuelve
+  // al modo login de Clerk (bypass del PIN).
+  if (modo === 'pin') {
+    var lastUser = leer('mt_last_user', null);
+    // Doble verificación — leer es barato y evita estado inconsistente.
+    var pinActivo = lastUser && lastUser.uid
+      ? leer('mt_pin_' + lastUser.uid, null)
+      : null;
+
+    if (lastUser && lastUser.uid && pinActivo && typeof FastPinScreen === 'function') {
+      return h(
+        'div',
+        { style: { position: 'relative' } },
+        h(FastPinScreen, {
+          session:  lastUser,
+          onAuth:   props.onAuth,
+          // onBack permite volver al login normal de Clerk.
+          onBack:   function () { setModo('login'); }
+        }),
+        // Botón de escape al login completo de Clerk.
+        h(
+          'button',
+          {
+            className:    'auth-link',
+            'aria-label': 'Usar otro método de inicio de sesión',
+            style: {
+              display:    'block',
+              margin:     '12px auto 0',
+              textAlign:  'center',
+              fontSize:   13
+            },
+            onClick: function () {
+              haptic();
+              setModo('login');
+            }
+          },
+          'Usar otro método'
+        )
+      );
+    }
+    // Si los datos de device conocido ya no son válidos (se limpiaron),
+    // caer al login normal sin bucle.
+    // No usar setModo acá (render en curso) — se controla via _modoInicial.
+  }
 
   // ── Fallback: Clerk no disponible ─────────────────────────────
   // Si el SDK no cargó o la key no está configurada, mostramos
