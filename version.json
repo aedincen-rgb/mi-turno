@@ -1,4 +1,4 @@
 {
-  "v": "v210",
-  "label": "PIN como identificador en informes + integración completa con Clerk"
+  "v": "v211",
+  "label": "Fix Clerk — dominio correcto + versión SDK pinada"
 }
