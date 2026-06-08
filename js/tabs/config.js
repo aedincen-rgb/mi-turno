@@ -1677,50 +1677,95 @@ function ConfigTabInner(props) {
     // Modal Gestionar cuenta
     showMgtAcct &&
       typeof ManageAccountModal !== 'undefined' &&
-      h(ManageAccountModal, {
-        session: session,
-        onSessionPatch: props.onSessionPatch,
-        onClose: function () {
-          setShowMgtAcct(false);
-        }
-      }),
+      h(
+        'div',
+        {
+          className: 'ovl',
+          onClick: function (e) {
+            if (e.target === e.currentTarget) setShowMgtAcct(false);
+          }
+        },
+        h(ManageAccountModal, {
+          session: session,
+          onSessionPatch: props.onSessionPatch,
+          onClose: function () {
+            setShowMgtAcct(false);
+          }
+        })
+      ),
 
     // Modales admin
     showUsuarios &&
       typeof UsuariosModal !== 'undefined' &&
-      h(UsuariosModal, {
-        session: session,
-        onClose: function () {
-          setShowUsuarios(false);
-        }
-      }),
+      h(
+        'div',
+        {
+          className: 'ovl',
+          onClick: function (e) {
+            if (e.target === e.currentTarget) setShowUsuarios(false);
+          }
+        },
+        h(UsuariosModal, {
+          session: session,
+          onClose: function () {
+            setShowUsuarios(false);
+          }
+        })
+      ),
 
     showPins &&
       typeof AsignarPINsModal !== 'undefined' &&
-      h(AsignarPINsModal, {
-        session: session,
-        onClose: function () {
-          setShowPins(false);
-        }
-      }),
+      h(
+        'div',
+        {
+          className: 'ovl',
+          onClick: function (e) {
+            if (e.target === e.currentTarget) setShowPins(false);
+          }
+        },
+        h(AsignarPINsModal, {
+          session: session,
+          onClose: function () {
+            setShowPins(false);
+          }
+        })
+      ),
 
     showDiag &&
       typeof DiagnosticoModal !== 'undefined' &&
-      h(DiagnosticoModal, {
-        session: session,
-        onClose: function () {
-          setShowDiag(false);
-        }
-      }),
+      h(
+        'div',
+        {
+          className: 'ovl',
+          onClick: function (e) {
+            if (e.target === e.currentTarget) setShowDiag(false);
+          }
+        },
+        h(DiagnosticoModal, {
+          session: session,
+          onClose: function () {
+            setShowDiag(false);
+          }
+        })
+      ),
 
     showErrorViewer &&
       typeof ErrorViewerModal !== 'undefined' &&
-      h(ErrorViewerModal, {
-        session: session,
-        onClose: function () {
-          setShowErrorViewer(false);
-        }
-      }),
+      h(
+        'div',
+        {
+          className: 'ovl',
+          onClick: function (e) {
+            if (e.target === e.currentTarget) setShowErrorViewer(false);
+          }
+        },
+        h(ErrorViewerModal, {
+          session: session,
+          onClose: function () {
+            setShowErrorViewer(false);
+          }
+        })
+      ),
 
     false // (install guide ahora es inline, no modal)
   );
