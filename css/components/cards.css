@@ -4,13 +4,16 @@
    ════════════════════════════════════════════════════════════════ */
 
 .card {
-  padding: var(--sz-3); /* 24px para un look más espacioso */
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.78);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: var(--sz-3);
+  border-radius: var(--radius);
+  background: var(--glass-heavy);
+  backdrop-filter: var(--blur-md);
+  -webkit-backdrop-filter: var(--blur-md);
+  border: 1px solid var(--glass-border);
+  box-shadow:
+    inset 0 1.5px 0 var(--spec-top),
+    inset 0 -0.5px 0 var(--spec-bot),
+    var(--sh-2);
 }
 
 .card-ttl {

@@ -1,4 +1,4 @@
 {
-  "v": "v224",
-  "label": "Fix tab bar — floating pill con todas las esquinas redondeadas visibles"
+  "v": "v225",
+  "label": "iOS 26 design — consistencia de glass tokens y border-radius en toda la app"
 }
