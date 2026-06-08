@@ -14,7 +14,8 @@ var AI_KNOWLEDGE = {
     '• Extra diurna dominical: **2.00x** (100% extra)\n' +
     '• Extra nocturna dominical: **2.50x** (150% extra)\n\n' +
     '📐 **Cómo calcularlo:** valor_hora × factor. Si tu hora vale $10,000, una hora dominical diurna son $17,500.\n\n' +
-    '💡 También tenés derecho a un descanso compensatorio si trabajás domingo.',
+    '💡 También tenés derecho a un descanso compensatorio si trabajás domingo.\n\n' +
+    '📌 **Sábado:** NO es festivo. Se paga como día ordinario, salvo que sea festivo por ley (ej. Sábado Santo).',
   'nocturno': '🌙 **El recargo nocturno es del 35%** sobre el valor hora ordinario.\n\n' +
     'Aplica entre las **9:00 PM y las 6:00 AM**.\n\n' +
     '• Hora nocturna ordinaria: **1.35x** (35% extra)\n' +
@@ -63,7 +64,7 @@ function aiKnowledgeSearch(text) {
 
   // Buscar palabras clave en orden de especificidad
   var keywords = [
-    { words: ['domingo', 'dominical', 'festivo vale', 'cuanto pagan domingo', 'recargo dominical', 'trabajar domingo', 'pagan domingo'], key: 'domingo' },
+    { words: ['domingo', 'dominical', 'sabado', 'sábado', 'festivo vale', 'cuanto pagan domingo', 'recargo dominical', 'trabajar domingo', 'pagan domingo', 'pagan sabado', 'cuanto pagan sabado'], key: 'domingo' },
     { words: ['nocturno', 'noche', 'recargo noche', 'horario nocturno', 'pagan noche', 'cuanto pagan nocturno', 'vale hora noche'], key: 'nocturno' },
     { words: ['extra', 'extras', 'hora extra', 'sobretiempo', 'recargo extra', 'pagan extra', 'cuanto extra'], key: 'extra' },
     { words: ['festivo', 'feriado', 'fest', 'festividad', 'recargo festivo', 'cuanto festivo'], key: 'festivo' },

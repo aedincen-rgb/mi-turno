@@ -415,9 +415,9 @@ var AI_SYNONYMS = {
   findesemana: 'fin de semana',
   'finde semana': 'fin de semana',
   'fin semana': 'fin de semana',
-  sabado: 'fin de semana',
-  // ⚠️ domingo NO es sinónimo de fin de semana — es un día con recargo
-  // específico que debe preservarse para el matching de conocimiento laboral.
+  // ⚠️ sabado y domingo NO son sinónimos de "fin de semana" — son días
+  // con recargos específicos que deben preservarse para el matching
+  // de conocimiento laboral y preguntas tipo "cuánto pagan un sábado".
   // Festivo
   feriado: 'festivo',
   festividad: 'festivo',
