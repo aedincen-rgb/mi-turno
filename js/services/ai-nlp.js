@@ -1666,6 +1666,22 @@ function aiClassify(text, convState, userContext) {
       score += 2;
     }
 
+    // ── BONUS POR ANCLAJE DE CONOCIMIENTO LABORAL ──
+    // "qué es una hora dominical", "cuánto vale la nocturna", "recargo festivo"
+    // son preguntas de CONOCIMIENTO → intent `ley`. Sin esto, la palabra "hora"
+    // hace que `horas_trabajadas` (que la tiene en ~8 keywords, acumulando match
+    // parcial) gane y responda "trabajaste X horas" en vez de explicar el recargo.
+    if (
+      intent.id === 'ley' &&
+      (_raw.indexOf('dominical') >= 0 ||
+        _raw.indexOf('domingo') >= 0 ||
+        _raw.indexOf('nocturn') >= 0 ||
+        _raw.indexOf('festiv') >= 0 ||
+        _raw.indexOf('recargo') >= 0)
+    ) {
+      score += 7;
+    }
+
     if (score > bestScore) {
       secondScore = bestScore;
       bestScore = score;

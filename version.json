@@ -1,4 +1,4 @@
 {
-  "v": "v238",
-  "label": "Self-host Supabase SDK y Chart.js — elimina dependencia de jsDelivr (bandera roja en iOS)"
+  "v": "v239",
+  "label": "Fix IA — preguntas sobre hora dominical/nocturna/festiva ya no caen en horas_trabajadas"
 }
