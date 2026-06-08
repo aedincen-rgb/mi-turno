@@ -407,10 +407,19 @@ function ConfigTabInner(props) {
     ? 'Datos en este dispositivo'
     : typeof CLOUD_MODE !== 'undefined' && CLOUD_MODE
       ? syncPendingCount > 0
-        ? 'Sincronizando ' + syncPendingCount + ' cambio' + (syncPendingCount !== 1 ? 's' : '') + '…'
+        ? 'Sincronizando ' +
+          syncPendingCount +
+          ' cambio' +
+          (syncPendingCount !== 1 ? 's' : '') +
+          '…'
         : 'Sincronizado en la nube'
       : syncPendingCount > 0
-        ? 'Sin conexión · ' + syncPendingCount + ' cambio' + (syncPendingCount !== 1 ? 's' : '') + ' pendiente' + (syncPendingCount !== 1 ? 's' : '')
+        ? 'Sin conexión · ' +
+          syncPendingCount +
+          ' cambio' +
+          (syncPendingCount !== 1 ? 's' : '') +
+          ' pendiente' +
+          (syncPendingCount !== 1 ? 's' : '')
         : 'Datos locales';
 
   return h(
@@ -1126,7 +1135,31 @@ function ConfigTabInner(props) {
             h('div', { className: 'ajustes-row-sub' }, 'Recuperá un respaldo anterior')
           ),
           h('div', { className: 'ajustes-row-chev' }, '↑')
-        )
+        ),
+        typeof syncWithCalendar === 'function' &&
+          h(
+            'button',
+            {
+              className: 'ajustes-row ajustes-row-tap',
+              onClick: function () {
+                haptic();
+                syncWithCalendar();
+              },
+              'aria-label': 'Sincronizar con calendario'
+            },
+            h('div', { className: 'ajustes-row-ico' }, '📅'),
+            h(
+              'div',
+              { className: 'ajustes-row-mid' },
+              h('div', { className: 'ajustes-row-ttl' }, 'Sincronizar con calendario'),
+              h(
+                'div',
+                { className: 'ajustes-row-sub' },
+                'Importar turnos desde Google Calendar o Apple Calendar'
+              )
+            ),
+            h('div', { className: 'ajustes-row-chev' }, '›')
+          )
       )
     ),
 

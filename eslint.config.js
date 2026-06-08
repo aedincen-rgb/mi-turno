@@ -242,11 +242,21 @@ const projectGlobals = {
   aiEnhancedRespond: 'readonly',
   aiCheckFollowUp: 'readonly',
   aiClearMemory: 'readonly',
+  aiGetMemorySnapshot: 'readonly',
+  aiRestoreHistory: 'readonly',
+  // services/ai-memory.js
+  aiMemoryLoad: 'readonly',
+  aiMemorySave: 'readonly',
+  aiMemoryRestore: 'readonly',
+  aiMemoryOnFirstMessage: 'readonly',
+  aiMemoryResetSession: 'readonly',
   // services/ai-conversation.js
   aiConvReset: 'readonly',
   aiConvAdvance: 'readonly',
   aiConvOrchestrate: 'readonly',
   aiConvNextStep: 'readonly',
+  aiConvGetState: 'readonly',
+  aiConvRestore: 'readonly',
   // services/ai-nlp.js
   aiExtractEntities: 'readonly',
   _aiIntentTopic: 'readonly',
@@ -272,6 +282,8 @@ const projectGlobals = {
   aiAdvisorAhorro: 'readonly',
   aiAdvisorRespond: 'readonly',
   // services/ai-calendar.js
+  syncWithCalendar: 'readonly',
+  processCalendarEvents: 'readonly',
   aiExportCalendar: 'readonly',
   aiGenerateICS: 'readonly',
   // services/ai-psychology.js

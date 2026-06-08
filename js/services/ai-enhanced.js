@@ -95,6 +95,7 @@ function aiClearMemory() {
   _aiMemory.userState = {};
   _aiMemory.proactiveCount = 0;
   _aiMemory.lastSuggestion = null;
+  if (typeof aiMemoryResetSession === 'function') aiMemoryResetSession();
 }
 
 // ─── SUGERENCIAS PROACTIVAS ────────────────────────────────────
@@ -451,6 +452,88 @@ function _aiExpandir(original, intent, userContext) {
   return original + addon;
 }
 
+// ─── SNAPSHOT DE MEMORIA SEMÁNTICA ───────────────────────────
+// Extrae del historial en RAM los datos necesarios para persistir
+// entre sesiones. Llamado por aiMemorySave() en ai-memory.js.
+
+function aiGetMemorySnapshot() {
+  var h = _aiMemory.history;
+  var recentIntents = [];
+  var lastIntent = null;
+  var lastTopic = null;
+  var i, entry;
+
+  // Recolectar los últimos 5 intents únicos de mensajes de usuario
+  for (i = h.length - 1; i >= 0; i--) {
+    entry = h[i];
+    if (entry.role === 'user' && entry.intent && entry.intent !== 'unknown') {
+      var yaEsta = false;
+      for (var j = 0; j < recentIntents.length; j++) {
+        if (recentIntents[j] === entry.intent) {
+          yaEsta = true;
+          break;
+        }
+      }
+      if (!yaEsta) recentIntents.push(entry.intent);
+      if (recentIntents.length >= 5) break;
+    }
+  }
+
+  // Último intent y topic no-genérico mirando desde el final
+  for (i = h.length - 1; i >= 0; i--) {
+    entry = h[i];
+    if (!lastIntent && entry.intent && entry.intent !== 'unknown') {
+      lastIntent = entry.intent;
+    }
+    if (!lastTopic && entry.topic && entry.topic !== 'general') {
+      lastTopic = entry.topic;
+    }
+    if (lastIntent && lastTopic) break;
+  }
+
+  return {
+    recentIntents: recentIntents,
+    lastIntent: lastIntent,
+    lastTopic: lastTopic,
+    pendingSuggestion: _aiMemory.lastSuggestion ? _aiMemory.lastSuggestion.text || null : null,
+    lastEarnings:
+      _aiMemory.userState && _aiMemory.userState.totalCOP ? _aiMemory.userState.totalCOP : 0,
+    streakDays:
+      _aiMemory.userState && _aiMemory.userState.rachaActual ? _aiMemory.userState.rachaActual : 0
+  };
+}
+
+// Inserta intents de sesiones anteriores como entradas sintéticas
+// al inicio del historial en RAM, para dar continuidad al pipeline.
+function aiRestoreHistory(recentIntents, lastIntent, lastTopic, pendingSuggestion) {
+  if (!recentIntents || !recentIntents.length) return;
+
+  var synthetic = [];
+  var i;
+  for (i = 0; i < recentIntents.length; i++) {
+    synthetic.push({
+      role: 'user',
+      text: '[sesión anterior]',
+      intent: recentIntents[i],
+      topic: recentIntents[i],
+      ts: 0
+    });
+  }
+
+  // Insertar al inicio y recortar si supera maxTurns
+  _aiMemory.history = synthetic.concat(_aiMemory.history);
+  if (_aiMemory.history.length > _aiMemory.maxTurns) {
+    _aiMemory.history = _aiMemory.history.slice(_aiMemory.history.length - _aiMemory.maxTurns);
+  }
+
+  if (pendingSuggestion) {
+    _aiMemory.lastSuggestion = {
+      intent: lastIntent || 'unknown',
+      text: pendingSuggestion
+    };
+  }
+}
+
 // ─── API PÚBLICA ──────────────────────────────────────────────
 // Pipeline unificado de enriquecimiento con contexto compartido.
 
@@ -471,6 +554,21 @@ function aiEnhancedRespond(
     question: question || '',
     baseResponse: originalResponse || ''
   };
+
+  // 0. Memoria persistente entre sesiones — solo en la primera llamada de cada sesión
+  var _welcomePrefix = '';
+  try {
+    if (typeof aiMemoryOnFirstMessage === 'function') {
+      var _uid = userContext && userContext.uid ? userContext.uid : null;
+      _welcomePrefix = aiMemoryOnFirstMessage(_uid, userContext) || '';
+    }
+  } catch (_) {}
+  try {
+    if (_welcomePrefix && typeof aiMemoryRestore === 'function') {
+      var _uid2 = userContext && userContext.uid ? userContext.uid : null;
+      aiMemoryRestore(_uid2);
+    }
+  } catch (_) {}
 
   // 1. Memoria
   try {
@@ -502,9 +600,10 @@ function aiEnhancedRespond(
       intent === 'proyeccion'
     ) {
       if (typeof aiCheckAchievements === 'function') {
-        var ach = aiFormatAchievements
-          ? aiFormatAchievements(aiCheckAchievements(userContext))
-          : null;
+        var ach =
+          typeof aiFormatAchievements === 'function'
+            ? aiFormatAchievements(aiCheckAchievements(userContext))
+            : null;
         if (ach) text += ach;
       }
     }
@@ -560,6 +659,16 @@ function aiEnhancedRespond(
         if (enriched.actions.length < 3)
           enriched.actions.push({ label: ns.label, query: ns.query });
       }
+    }
+  } catch (_) {}
+
+  // Anteponer bienvenida de vuelta si la hay
+  if (_welcomePrefix) text = _welcomePrefix + '\n\n' + text;
+
+  // Persistir memoria semántica después de cada respuesta
+  try {
+    if (typeof aiMemorySave === 'function' && userContext && userContext.uid) {
+      aiMemorySave(userContext.uid);
     }
   } catch (_) {}
 

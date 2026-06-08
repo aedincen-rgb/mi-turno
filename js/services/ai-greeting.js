@@ -537,3 +537,8 @@ function _aiHeroPhrases(props) {
 
   return f;
 }
+
+// ─── EXPORT ──────────────────────────────────────────────────
+window._saludoHora = _saludoHora;
+window._aiNombrePersonal = _aiNombrePersonal;
+window._aiHeroPhrases = _aiHeroPhrases;

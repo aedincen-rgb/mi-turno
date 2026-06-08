@@ -113,6 +113,7 @@ const appResources = [
   './js/services/ai-achievements.js',
   './js/services/voice-agent.js',
   './js/services/ai-history.js',
+  './js/services/ai-memory.js',
   './js/services/ai-greeting.js',
   './js/services/ai-insights.js',
   './js/services/ai-proactive.js',

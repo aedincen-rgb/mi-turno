@@ -49,3 +49,9 @@ function _aiFormat(text) {
     )
     .replace(/\*([^*]+)\*/g, '<em>$1</em>');
 }
+
+// ─── EXPORT ──────────────────────────────────────────────────
+window._aiLoadHistory = _aiLoadHistory;
+window._aiSaveHistory = _aiSaveHistory;
+window._aiClearHistory = _aiClearHistory;
+window._aiFormat = _aiFormat;

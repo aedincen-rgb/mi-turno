@@ -616,11 +616,11 @@ function _trend(curr, prev) {
 function _aiDispatchNLP(intent, c, state, q, t) {
   // ── Conversacionales ──
   if (intent === 'saludo') {
-    var h = c.ahora.getHours();
-    var s = h < 12 ? '¡Buenos días' : h < 19 ? '¡Buenas tardes' : '¡Buenas noches';
+    var s = typeof _saludoHora === 'function' ? _saludoHora(c.ahora) : 'Hola';
     var nm = state.session && state.session.email ? state.session.email.split('@')[0] : '';
     var nombre = nm ? ', ' + nm.charAt(0).toUpperCase() + nm.slice(1) : '';
     return (
+      '¡' +
       s +
       nombre +
       '! ☀️ Soy tu copiloto de turno. Puedo decirte cómo vas este mes, proyectar tus ingresos, calcular tu liquidación o avisarte si necesitás un descanso. ¿Qué querés mirar hoy?'
@@ -1946,9 +1946,9 @@ function aiAnswer(question, state) {
 
   // ── INTERACCIÓN HUMANA ──
   if (_aiHas(t, 'hola', 'buenas', 'hey', 'que tal', 'saludos', 'que hubo', 'holi', 'ola')) {
-    var hora = c.ahora.getHours();
-    var saludo = hora < 12 ? '¡Buenos días!' : hora < 19 ? '¡Buenas tardes!' : '¡Buenas noches!';
+    var saludo = (typeof _saludoHora === 'function' ? _saludoHora(c.ahora) : 'Hola') + '!';
     return (
+      '¡' +
       saludo +
       ' Soy tu copiloto de turno 🤖✨ Puedo contarte cómo vas este mes, proyectar tus ingresos, calcular tu liquidación o avisarte si necesitas un descanso. También sé redactar correos para tu jefe. 🚀\n\n' +
       _aiPickFollowUp('hola')

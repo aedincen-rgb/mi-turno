@@ -38,6 +38,24 @@ function aiConvReset() {
   _aiConvLevel.seenFeatures = {};
 }
 
+function aiConvGetState() {
+  return {
+    level: _aiConvLevel.value,
+    seenFeatures: _aiConvLevel.seenFeatures,
+    lastIntent: _aiConvLevel.lastIntent
+  };
+}
+
+function aiConvRestore(level, seenFeatures) {
+  _aiConvLevel.value = typeof level === 'number' && level >= 0 && level <= 3 ? level : 0;
+  if (seenFeatures && typeof seenFeatures === 'object') {
+    var keys = Object.keys(seenFeatures);
+    for (var i = 0; i < keys.length; i++) {
+      _aiConvLevel.seenFeatures[keys[i]] = seenFeatures[keys[i]];
+    }
+  }
+}
+
 // ─── ENVOLTORIO PROGRESIVO ────────────────────────────────────
 
 /**
@@ -49,16 +67,21 @@ function aiConvReset() {
  */
 function aiConvWrap(text, intent, c) {
   var level = aiConvLevel();
-  var nm = typeof _aiNombrePersonal === 'function' ? _aiNombrePersonal({session: {uid: null}}) : '';
+  var nm =
+    typeof _aiNombrePersonal === 'function' ? _aiNombrePersonal({ session: { uid: null } }) : '';
   var nombre = nm || '';
 
   // Nunca abrumar en el primer contacto
   if (level === 0) {
     // Solo la respuesta base + un gancho suave
     var ganchos = [
-      '\n\n💡 ' + (nombre ? nombre + ', ' : '') + 'cuando quieras, puedo mostrarte más detalles. Solo decime.',
+      '\n\n💡 ' +
+        (nombre ? nombre + ', ' : '') +
+        'cuando quieras, puedo mostrarte más detalles. Solo decime.',
       '\n\n✨ ¿Sabías que también puedo comparar este mes con el anterior? Cuando gustes.',
-      '\n\n🌟 ' + (nombre ? nombre + ', ' : '') + 'si te sirve, la próxima puedo ser más detallada. Vos mandás.'
+      '\n\n🌟 ' +
+        (nombre ? nombre + ', ' : '') +
+        'si te sirve, la próxima puedo ser más detallada. Vos mandás.'
     ];
     return text + ganchos[Math.floor(Math.random() * ganchos.length)];
   }
@@ -71,7 +94,10 @@ function aiConvWrap(text, intent, c) {
     }
     // Si no ha visto simulaciones, sugerir
     if (!aiConvHasSeen('simulacion') && c.vh > 0) {
-      text += '\n\n🔮 ' + (nombre ? nombre + ', ' : '') + '¿probaste decir "simular 4h nocturnas"? Te muestra escenarios hipotéticos.';
+      text +=
+        '\n\n🔮 ' +
+        (nombre ? nombre + ', ' : '') +
+        '¿probaste decir "simular 4h nocturnas"? Te muestra escenarios hipotéticos.';
       aiConvMarkSeen('simulacion');
     }
     return text;
@@ -106,15 +132,21 @@ function _aiConvTips(c) {
   var tips = [];
 
   if (c.vh > 0 && !aiConvHasSeen('nocturno')) {
-    tips.push('🌙 Tip rápido: si trabajás de noche (9pm-6am), cada hora vale 35% más. Un turno nocturno de 8h te paga como 10.8h diurnas.');
+    tips.push(
+      '🌙 Tip rápido: si trabajás de noche (9pm-6am), cada hora vale 35% más. Un turno nocturno de 8h te paga como 10.8h diurnas.'
+    );
     aiConvMarkSeen('nocturno');
   }
   if (c.salario > 0 && c.salario <= SMIN * 2 && !aiConvHasSeen('auxilio')) {
-    tips.push('🚌 ¿Sabías que tenés derecho a auxilio de transporte? Activá la opción en Ajustes y sumalo a tus ingresos.');
+    tips.push(
+      '🚌 ¿Sabías que tenés derecho a auxilio de transporte? Activá la opción en Ajustes y sumalo a tus ingresos.'
+    );
     aiConvMarkSeen('auxilio');
   }
   if (!aiConvHasSeen('comandos')) {
-    tips.push('⌨️ Probá comandos como /stats, /tendencia o /logros para info rápida sin escribir mucho.');
+    tips.push(
+      '⌨️ Probá comandos como /stats, /tendencia o /logros para info rápida sin escribir mucho.'
+    );
     aiConvMarkSeen('comandos');
   }
 
@@ -128,7 +160,8 @@ function _aiConvTips(c) {
  */
 function aiConvWelcomeBack() {
   if (_aiConvLevel.value > 0) {
-    var nm = typeof _aiNombrePersonal === 'function' ? _aiNombrePersonal({session: {uid: null}}) : '';
+    var nm =
+      typeof _aiNombrePersonal === 'function' ? _aiNombrePersonal({ session: { uid: null } }) : '';
     var regresos = [
       '¡Qué bueno verte de nuevo' + (nm ? ', ' + nm : '') + '!',
       'Acá estoy' + (nm ? ', ' + nm : '') + '. ¿En qué te ayudo hoy?',
@@ -192,5 +225,7 @@ window.aiConvWrap = aiConvWrap;
 window.aiConvWelcomeBack = aiConvWelcomeBack;
 window.aiConvNextStep = aiConvNextStep;
 window.aiConvOrchestrate = aiConvOrchestrate;
+window.aiConvGetState = aiConvGetState;
+window.aiConvRestore = aiConvRestore;
 
 console.log('[MT] ai-conversation.js cargado — conversación progresiva ✓');
