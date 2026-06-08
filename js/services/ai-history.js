@@ -41,6 +41,10 @@ function _aiClearHistory(uid) {
 // ── Markdown ligero → HTML para las burbujas de la IA ──────────
 function _aiFormat(text) {
   return String(text)
+    .replace(
+      /^---$/gm,
+      '<hr style="border:none;border-top:1px solid var(--border);margin:8px 0;opacity:0.5">'
+    )
     .replace(/\n/g, '<br>')
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(
