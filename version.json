@@ -1,4 +1,4 @@
 {
-  "v": "v226",
-  "label": "iOS 26 general — glass en toda la UI: modales, auth, inputs, botones, orb extra"
+  "v": "v227",
+  "label": "Fix — busyRef no se reseteaba en _startLocalOtp, bloqueando doVerify silenciosamente"
 }

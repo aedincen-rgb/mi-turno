@@ -125,6 +125,7 @@ function ManageAccountModal(props) {
     setCodeInput('');
     setFeedback(null);
     setBusy(false);
+    busyRef.current = false;
     setPrepSec(15);
     setVfStep('preparando');
     prepIntervalRef.current = setInterval(function () {
@@ -786,11 +787,7 @@ function ManageAccountModal(props) {
     h(
       'div',
       { className: 'manage-section' },
-      h(
-        'div',
-        { className: 'manage-section-header' },
-        'Cuenta'
-      ),
+      h('div', { className: 'manage-section-header' }, 'Cuenta'),
       // Email actual
       h(
         'div',
@@ -830,9 +827,25 @@ function ManageAccountModal(props) {
     isPinOnly
       ? h(
           'div',
-          { style: { background: 'var(--warning-dim, rgba(255,159,67,0.12))', borderRadius: 'var(--radius-sm)', padding: '14px 18px', display: 'flex', gap: '12px', alignItems: 'flex-start', fontSize: '13px', color: 'var(--text)', lineHeight: '1.5' } },
+          {
+            style: {
+              background: 'var(--warning-dim, rgba(255,159,67,0.12))',
+              borderRadius: 'var(--radius-sm)',
+              padding: '14px 18px',
+              display: 'flex',
+              gap: '12px',
+              alignItems: 'flex-start',
+              fontSize: '13px',
+              color: 'var(--text)',
+              lineHeight: '1.5'
+            }
+          },
           h('span', { style: { fontSize: '16px', flexShrink: 0 } }, '💡'),
-          h('span', null, 'Registrate con email y contraseña para activar la sincronización en la nube y respaldo automático.')
+          h(
+            'span',
+            null,
+            'Registrate con email y contraseña para activar la sincronización en la nube y respaldo automático.'
+          )
         )
       : null,
 
@@ -844,7 +857,10 @@ function ManageAccountModal(props) {
         'button',
         {
           className: 'manage-segmented-btn' + (tab === 0 ? ' active' : ''),
-          onClick: function () { setTab(0); setFeedback(null); }
+          onClick: function () {
+            setTab(0);
+            setFeedback(null);
+          }
         },
         '🔐 PIN'
       ),
@@ -852,7 +868,10 @@ function ManageAccountModal(props) {
         'button',
         {
           className: 'manage-segmented-btn' + (tab === 1 ? ' active' : ''),
-          onClick: function () { setTab(1); setFeedback(null); },
+          onClick: function () {
+            setTab(1);
+            setFeedback(null);
+          },
           disabled: isPinOnly
         },
         '✉ Email'
@@ -861,7 +880,10 @@ function ManageAccountModal(props) {
         'button',
         {
           className: 'manage-segmented-btn' + (tab === 2 ? ' active' : ''),
-          onClick: function () { setTab(2); setFeedback(null); },
+          onClick: function () {
+            setTab(2);
+            setFeedback(null);
+          },
           disabled: isPinOnly
         },
         '🔑 Contraseña'
@@ -877,13 +899,29 @@ function ManageAccountModal(props) {
           storedPin
             ? h(
                 'div',
-                { style: { display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 0', fontSize: '13px', color: 'var(--muted)' } },
+                {
+                  style: {
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '10px 0',
+                    fontSize: '13px',
+                    color: 'var(--muted)'
+                  }
+                },
                 h('span', null, '🔒 PIN actual:'),
                 h('span', { className: 'manage-badge ok' }, '••••')
               )
             : h(
                 'div',
-                { style: { fontSize: '13px', color: 'var(--muted)', padding: '10px 0', lineHeight: '1.4' } },
+                {
+                  style: {
+                    fontSize: '13px',
+                    color: 'var(--muted)',
+                    padding: '10px 0',
+                    lineHeight: '1.4'
+                  }
+                },
                 'No tenés PIN configurado. Creá uno de 4 dígitos para acceso rápido.'
               ),
           h('input', {
@@ -893,10 +931,16 @@ function ManageAccountModal(props) {
             placeholder: 'Nuevo PIN',
             className: 'manage-input pin-style',
             value: pinVal,
-            onChange: function (e) { setPinVal(e.target.value.replace(/\D/g, '')); }
+            onChange: function (e) {
+              setPinVal(e.target.value.replace(/\D/g, ''));
+            }
           }),
           feedback
-            ? h('div', { className: 'manage-feedback ' + (feedback[0] === '✓' ? 'ok' : 'err') }, feedback)
+            ? h(
+                'div',
+                { className: 'manage-feedback ' + (feedback[0] === '✓' ? 'ok' : 'err') },
+                feedback
+              )
             : null,
           h(
             'button',
@@ -920,14 +964,34 @@ function ManageAccountModal(props) {
           session.email
             ? h(
                 'div',
-                { style: { display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 0', fontSize: '13px', color: 'var(--muted)' } },
+                {
+                  style: {
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '10px 0',
+                    fontSize: '13px',
+                    color: 'var(--muted)'
+                  }
+                },
                 h('span', null, '📧 Actual:'),
-                h('span', { style: { fontWeight: 600, color: 'var(--text)', fontSize: '14px' } }, session.email)
+                h(
+                  'span',
+                  { style: { fontWeight: 600, color: 'var(--text)', fontSize: '14px' } },
+                  session.email
+                )
               )
             : null,
           h(
             'div',
-            { style: { fontSize: '13px', color: 'var(--muted)', padding: '6px 0 12px', lineHeight: '1.5' } },
+            {
+              style: {
+                fontSize: '13px',
+                color: 'var(--muted)',
+                padding: '6px 0 12px',
+                lineHeight: '1.5'
+              }
+            },
             'Se enviará un código de verificación a tu nuevo correo. El cambio se reflejará en todos tus dispositivos.'
           ),
           h('input', {
@@ -936,12 +1000,18 @@ function ManageAccountModal(props) {
             placeholder: 'nuevo@correo.com',
             className: 'manage-input',
             value: emailVal,
-            onChange: function (e) { setEmailVal(e.target.value); },
+            onChange: function (e) {
+              setEmailVal(e.target.value);
+            },
             autoComplete: 'off',
             spellCheck: false
           }),
           feedback
-            ? h('div', { className: 'manage-feedback ' + (feedback[0] === '✓' ? 'ok' : 'err') }, feedback)
+            ? h(
+                'div',
+                { className: 'manage-feedback ' + (feedback[0] === '✓' ? 'ok' : 'err') },
+                feedback
+              )
             : null,
           h(
             'button',
@@ -964,7 +1034,14 @@ function ManageAccountModal(props) {
           h('div', { className: 'manage-field-label' }, '🔑 ', 'Cambiar contraseña'),
           h(
             'div',
-            { style: { fontSize: '13px', color: 'var(--muted)', padding: '6px 0 12px', lineHeight: '1.5' } },
+            {
+              style: {
+                fontSize: '13px',
+                color: 'var(--muted)',
+                padding: '6px 0 12px',
+                lineHeight: '1.5'
+              }
+            },
             'Mínimo 6 caracteres. Se requiere conexión a internet para este cambio.'
           ),
           h('input', {
@@ -973,10 +1050,16 @@ function ManageAccountModal(props) {
             autoComplete: 'new-password',
             className: 'manage-input',
             value: passVal,
-            onChange: function (e) { setPassVal(e.target.value); }
+            onChange: function (e) {
+              setPassVal(e.target.value);
+            }
           }),
           feedback
-            ? h('div', { className: 'manage-feedback ' + (feedback[0] === '✓' ? 'ok' : 'err') }, feedback)
+            ? h(
+                'div',
+                { className: 'manage-feedback ' + (feedback[0] === '✓' ? 'ok' : 'err') },
+                feedback
+              )
             : null,
           h(
             'button',
