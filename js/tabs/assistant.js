@@ -594,8 +594,33 @@ function AsistenteTab(props) {
     return null;
   }
 
+  // Detecta frases de descarte/cierre ("no hace falta", "no gracias"...).
+  // Las opciones rápidas negativas del motor de engagement llegan con
+  // intent === null; tipear la frase también cae acá. No las mandamos al
+  // clasificador NLP porque no tienen intent y la IA respondía confundida.
+  function _isDismissal(text) {
+    var t = (text || '')
+      .toLowerCase()
+      .trim()
+      .replace(/[.!¡¿?]+$/, '');
+    return /^(no hace falta|no,? gracias|no me interesa|ya lo s[ée]|con eso basta|no por ahora|otro d[íi]a|as[íi] est[áa] bien|no,? siguiente)$/.test(
+      t
+    );
+  }
+
+  function _aiDismissReply() {
+    var opts = [
+      'Listo 👍 Cuando quieras seguimos.',
+      'De una. Acá estoy si necesitás algo más.',
+      'Perfecto, lo dejamos así. Cualquier cosa me preguntás.',
+      'Dale 🙌 Si surge algo, escribime.',
+      'Va. Quedo atento por si necesitás otra cosa.'
+    ];
+    return opts[Math.floor(Math.random() * opts.length)];
+  }
+
   var send = useCallback(
-    function (text) {
+    function (text, quickIntent) {
       var q = (text || input).trim();
       if (!q || busy) return;
       haptic();
@@ -648,6 +673,24 @@ function AsistenteTab(props) {
         }
         // Ni sí ni no: descartamos la acción pendiente y seguimos normal.
         pendingActionRef.current = null;
+      }
+
+      // ── Quick-reply de descarte / cierre suave ──
+      // El botón negativo trae intent === null explícito (lo distingue de
+      // los positivos que traen un intent string, y de los botones de ai.js
+      // que traen intent === undefined). Tipear la frase ("no hace falta")
+      // también cae acá. Cerramos amable sin pasar por NLP — era lo que
+      // confundía a la IA (caía en fallback sin intent que despachar).
+      // Va DESPUÉS del bloque de acción pendiente: si hay una acción
+      // esperando confirmación, "no" debe cancelarla, no cerrar el chat.
+      if (quickIntent === null || _isDismissal(q)) {
+        setMsgs(function (p) {
+          return p.concat([
+            { role: 'user', content: q },
+            { role: 'ai', content: _aiDismissReply() }
+          ]);
+        });
+        return;
       }
 
       setMsgs(function (p) {
@@ -1122,7 +1165,9 @@ function AsistenteTab(props) {
                               key: j,
                               className: 'asistente-action-btn',
                               onClick: function () {
-                                send(a.query);
+                                // a.intent === null → descarte (cierre suave).
+                                // string → intent real. undefined → acción de ai.js.
+                                send(a.query, a.intent);
                               }
                             },
                             a.label
