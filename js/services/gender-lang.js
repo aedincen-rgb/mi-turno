@@ -26,16 +26,21 @@ var _GL_VOCAB = {
     male: [
       '¡Así se hace!', 'Con toda, parce.', 'Vamos por más.',
       'Esa es la actitud.', 'Sin miedo al éxito.', 'Dándole con toda.',
-      'A fuego, mi llave.', 'Sos un duro.'
+      'A fuego, mi llave.', 'Sos un duro.', '¡Qué máquina!',
+      '¡Eso es todo!', 'De una, sin mente.', 'Metéle que va.',
+      'Eso es, ¡con berraquera!', '¡A romperla toda!'
     ],
     female: [
       '¡Así se hace!', 'Con toda, amiga.', 'Vamos por más.',
       'Esa es la actitud.', 'Sin miedo al éxito.', 'Dándole con toda.',
-      'A fuego, reina.', 'Sos una dura.'
+      'A fuego, reina.', 'Sos una dura.', '¡Qué máquina!',
+      '¡Eso es todo!', 'De una, sin mente.', 'Metéle que va.',
+      'Eso es, ¡con berraquera!', '¡A romperla toda!'
     ],
     neutral: [
       '¡Así se hace!', 'Con toda.', 'Vamos por más.',
-      'Esa es la actitud.', 'Sin miedo al éxito.', 'Dándole con toda.'
+      'Esa es la actitud.', 'Sin miedo al éxito.', 'Dándole con toda.',
+      '¡Qué bien!', '¡Eso es todo!', 'De una.', 'Metéle que va.'
     ]
   },
 
