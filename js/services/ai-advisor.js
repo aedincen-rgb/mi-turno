@@ -11,7 +11,9 @@
 // ═══════════════════════════════════════════════════════════════
 
 function aiAdvisorLiquidacion(c) {
-  if (!c || !c.salario) return '';
+  if (!c || !c.salario) {
+    return 'Para calcular tu liquidación y prestaciones, necesito saber tu salario base. Podés configurarlo en **Ajustes > Preferencias de pago** o decirme "mi salario es de X".';
+  }
   var sal = c.salario || SMIN;
   var diasTrab = c.diasTrab || 0;
   var mesesAntiguedad = 12; // asumimos 1 año si no sabemos
@@ -44,14 +46,17 @@ function aiAdvisorLiquidacion(c) {
     auxTransporte = (AUX_TRANSPORTE_2026 / 30) * diasProporcional;
   }
 
-  // Total
-  var totalPrestaciones = cesantiasProporcional + intCesantias + primaProporcional + vacacionesProporcional + auxTransporte;
+  // Total prestaciones (vacaciones no incluye auxilio de transporte en su base)
+  var totalPrestaciones = cesantiasProporcional + intCesantias + primaProporcional + vacacionesProporcional;
 
-  // Descuentos de nómina
-  var salud = c.totalCOP * 0.04; // 4%
-  var pension = c.totalCOP * 0.04; // 4%
+  // Descuentos de nómina (Salud y Pensión se calculan sobre el devengado SIN auxilio de transporte)
+  var baseSeguridadSocial = c.totalCOP; // Asumimos que c.totalCOP no incluye auxilio de transporte aún
+  var salud = baseSeguridadSocial * 0.04; // 4%
+  var pension = baseSeguridadSocial * 0.04; // 4%
   var totalDeducciones = salud + pension;
-  var netoPagar = c.totalCOP - totalDeducciones + auxTransporte;
+  
+  // El neto a pagar suma el auxilio de transporte DESPUÉS de las deducciones
+  var netoPagar = baseSeguridadSocial - totalDeducciones + auxTransporte;
 
   var resp = '💰 **Liquidación y prestaciones**\n\n';
 
@@ -79,7 +84,9 @@ function aiAdvisorLiquidacion(c) {
 // ═══════════════════════════════════════════════════════════════
 
 function aiAdvisorSimular(c, horas, tipo) {
-  if (!c || !c.vh) return '';
+  if (!c || !c.vh) {
+    return 'Para hacer simulaciones, necesito saber tu salario base. Podés configurarlo en **Ajustes > Preferencias de pago** o decirme "mi salario es de X".';
+  }
   var vh = c.vh || 0;
   var sal = c.salario || SMIN;
   var escenarios = [];

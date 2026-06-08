@@ -150,7 +150,22 @@ var AI_STOP = {
   y: 1,
   e: 1,
   ni: 1,
-  al: 1
+  al: 1,
+  // Stop words coloquiales colombianas
+  pues: 1,
+  entonces: 1,
+  oiga: 1,
+  venga: 1,
+  mire: 1,
+  listo: 1,
+  hágale: 1,
+  hagale: 1,
+  dale: 1,
+  claro: 1,
+  obvio: 1,
+  eh: 1,
+  ah: 1,
+  uy: 1
 };
 
 // ─── PREPROCESADOR CONVERSACIONAL ──────────────────────────────
@@ -329,12 +344,55 @@ function aiLevenshtein(a, b) {
   return d[m][n];
 }
 
-// ¿Coincide con tolerancia de 1 error para palabras cortas?
+// ¿Coincide con tolerancia de 1 error para palabras cortas o 2 para largas?
 function aiFuzzyMatch(word, target) {
   if (word === target) return true;
-  if (Math.abs(word.length - target.length) > 1) return false;
-  if (word.length <= 5 && aiLevenshtein(word, target) <= 1) return true;
-  return false;
+  var diff = Math.abs(word.length - target.length);
+  if (diff > 2) return false;
+  
+  var dist = aiLevenshtein(word, target);
+  if (target.length <= 5) return dist <= 1;
+  return dist <= 2;
+}
+
+// ─── EXTRACCIÓN DE ENTIDADES (ENTITY EXTRACTION) ──────────────
+// Extrae números, dinero y fechas relativas del texto
+function aiExtractEntities(text) {
+  var t = (text || '').toLowerCase();
+  var entities = {
+    number: null,
+    money: null,
+    timeRelative: null
+  };
+
+  // 1. Extraer dinero coloquial colombiano
+  // Ej: "2 millones", "1.5 millones", "50 lucas", "50k", "1500000"
+  var moneyMatch = t.match(/(\d+(?:\.\d+)?)\s*(millones|millon|lucas|k|mil)/);
+  if (moneyMatch) {
+    var val = parseFloat(moneyMatch[1]);
+    var unit = moneyMatch[2];
+    if (unit === 'millones' || unit === 'millon') entities.money = val * 1000000;
+    else if (unit === 'lucas' || unit === 'k' || unit === 'mil') entities.money = val * 1000;
+  } else {
+    // Buscar número crudo grande (asumimos que es dinero si es > 1000)
+    var rawNum = t.replace(/\./g, '').match(/(\d{4,})/);
+    if (rawNum) entities.money = parseInt(rawNum[1], 10);
+  }
+
+  // 2. Extraer número simple (horas, días)
+  var simpleNum = t.match(/\b(\d{1,3})\b/);
+  if (simpleNum && !entities.money) {
+    entities.number = parseInt(simpleNum[1], 10);
+  }
+
+  // 3. Extraer tiempo relativo
+  if (t.indexOf('ayer') >= 0) entities.timeRelative = 'ayer';
+  else if (t.indexOf('hoy') >= 0) entities.timeRelative = 'hoy';
+  else if (t.indexOf('mañana') >= 0) entities.timeRelative = 'mañana';
+  else if (t.indexOf('semana pasada') >= 0) entities.timeRelative = 'semana_pasada';
+  else if (t.indexOf('mes pasado') >= 0) entities.timeRelative = 'mes_pasado';
+
+  return entities;
 }
 
 // ─── DICCIONARIO DE SINÓNIMOS ────────────────────────────────
@@ -1192,6 +1250,60 @@ var AI_INTENTS = [
     ]
   },
 
+  // ── Acciones del Agente (Agentic AI) ──
+  {
+    id: 'configurar_salario',
+    kw: [
+      ['cambiar salario', 3],
+      ['mi salario es', 3],
+      ['gano', 2],
+      ['actualizar sueldo', 3],
+      ['poner salario', 3],
+      ['configurar salario', 3]
+    ]
+  },
+  {
+    id: 'iniciar_turno',
+    kw: [
+      ['iniciar turno', 3],
+      ['empezar turno', 3],
+      ['arrancar turno', 3],
+      ['inicia mi turno', 3],
+      ['empieza mi turno', 3],
+      ['llegue al trabajo', 3]
+    ]
+  },
+  {
+    id: 'cerrar_turno',
+    kw: [
+      ['cerrar turno', 3],
+      ['terminar turno', 3],
+      ['acabar turno', 3],
+      ['cierra mi turno', 3],
+      ['termine de trabajar', 3],
+      ['sali del trabajo', 3]
+    ]
+  },
+  {
+    id: 'navegar_ajustes',
+    kw: [
+      ['ir a ajustes', 3],
+      ['abrir configuracion', 3],
+      ['llevame a ajustes', 3],
+      ['quiero configurar', 3],
+      ['preferencias', 3]
+    ]
+  },
+  {
+    id: 'navegar_historial',
+    kw: [
+      ['ir a historial', 3],
+      ['abrir historial', 3],
+      ['llevame al historial', 3],
+      ['ver mis turnos pasados', 3],
+      ['lista de turnos', 3]
+    ]
+  },
   // ── Stats rápido ──
   {
     id: 'stats',
@@ -1371,6 +1483,11 @@ function _aiIntentTopic(intentId) {
     ahorro: 'dinero',
     email: 'accion',
     correo_formal: 'accion',
+    configurar_salario: 'accion',
+    iniciar_turno: 'accion',
+    cerrar_turno: 'accion',
+    navegar_ajustes: 'accion',
+    navegar_historial: 'accion',
     ayuda_app: 'informacion',
     stats: 'dinero'
   };

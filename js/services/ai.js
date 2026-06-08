@@ -789,6 +789,12 @@ function _aiDispatchNLP(intent, c, state, q, t) {
       '• Proyección: ' + fCOP(c.proy);
   }
 
+  // ── Acciones del Agente ──
+  if (intent === 'configurar_salario' || intent === 'iniciar_turno' || intent === 'cerrar_turno' || intent === 'navegar_ajustes' || intent === 'navegar_historial') {
+    // Devolvemos un string temporal, aiEnhancedRespond lo reemplazará con el texto final y la acción
+    return 'Procesando acción...';
+  }
+
   // ── Email ──
   if (intent === 'email') {
     // Usar el mismo builder que el sistema clásico para acción real
@@ -931,6 +937,12 @@ function aiAnswer(question, state) {
   var _nlp = typeof aiClassifyIntent === 'function'
     ? aiClassifyIntent(question, aiGetConversation(), c)
     : null;
+  
+  // Extraer entidades (dinero, números, tiempo)
+  var _entities = typeof aiExtractEntities === 'function'
+    ? aiExtractEntities(question)
+    : null;
+
   if (_nlp && _nlp.confidence >= 0.5) {
     aiUpdateConversation(_nlp.intent, _nlp.topic);
     var _mood = typeof aiAnalyzeMood === 'function'
@@ -949,7 +961,7 @@ function aiAnswer(question, state) {
       var _text = _isAction ? _resp.text : _resp;
       var _final = _pref + _text + _suff;
       if (typeof aiEnhancedRespond === 'function') {
-        var _enriched = aiEnhancedRespond(_final, _nlp.intent, _nlp.topic, q, c);
+        var _enriched = aiEnhancedRespond(_final, _nlp.intent, _nlp.topic, q, c, _entities);
         if (_enriched && _enriched.text) {
           if (_isAction) _enriched.action = _resp.action;
           return _enriched;

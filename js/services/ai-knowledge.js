@@ -48,7 +48,21 @@ var AI_KNOWLEDGE = {
     '• 2027 en adelante: 42h/semana\n\n' +
     'La app ajusta automáticamente el cálculo según la fecha del turno.\n\n' +
     '📐 **CST Art. 159:** jornada máxima diaria 8h.\n' +
-    '📐 **CST Art. 168-171:** recargos nocturnos, extras, dominicales.'
+    '📐 **CST Art. 168-171:** recargos nocturnos, extras, dominicales.',
+  'licencia': '👶 **Licencias legales en Colombia:**\n\n' +
+    '• **Maternidad:** 18 semanas remuneradas al 100%.\n' +
+    '• **Paternidad:** 2 semanas remuneradas al 100%.\n' +
+    '• **Luto:** 5 días hábiles remunerados por fallecimiento de familiar hasta 2° grado de consanguinidad.\n' +
+    '• **Calamidad doméstica:** Tiempo razonable según reglamento interno.',
+  'incapacidad': '🏥 **Incapacidades médicas:**\n\n' +
+    '• **Días 1 y 2:** Los paga el empleador al 100% del salario.\n' +
+    '• **Día 3 al 90:** Los paga la EPS al 66.66% del salario.\n' +
+    '• **Día 91 al 180:** Los paga la EPS al 50% del salario.\n\n' +
+    '💡 *Nota:* El pago nunca puede ser inferior a 1 Salario Mínimo Legal Vigente.',
+  'dotacion': '👕 **Dotación (Calzado y vestido de labor):**\n\n' +
+    '• Tienes derecho si ganas hasta 2 Salarios Mínimos.\n' +
+    '• Se entrega 3 veces al año: 30 de abril, 31 de agosto y 20 de diciembre.\n' +
+    '• Requisito: Llevar más de 3 meses trabajando en la empresa.'
 };
 
 // ─── MOTOR DE BÚSQUEDA ────────────────────────────────────────
@@ -69,7 +83,10 @@ function aiKnowledgeSearch(text) {
     { words: ['extra', 'extras', 'hora extra', 'sobretiempo', 'recargo extra', 'pagan extra', 'cuanto extra'], key: 'extra' },
     { words: ['festivo', 'feriado', 'fest', 'festividad', 'recargo festivo', 'cuanto festivo'], key: 'festivo' },
     { words: ['salario', 'sueldo', 'minimo', 'mínimo', 'base', 'cuanto es salario', 'cuanto pagan'], key: 'salario' },
-    { words: ['ley', '2101', 'jornada', 'cst', 'codigo', 'código', 'legal', 'normativa', 'legislacion', 'derechos'], key: 'ley' }
+    { words: ['ley', '2101', 'jornada', 'cst', 'codigo', 'código', 'legal', 'normativa', 'legislacion', 'derechos'], key: 'ley' },
+    { words: ['licencia', 'maternidad', 'paternidad', 'luto', 'calamidad'], key: 'licencia' },
+    { words: ['incapacidad', 'enfermedad', 'eps', 'medica', 'médica', 'enfermo'], key: 'incapacidad' },
+    { words: ['dotacion', 'dotación', 'uniforme', 'ropa', 'zapatos', 'calzado'], key: 'dotacion' }
   ];
 
   for (var i = 0; i < keywords.length; i++) {

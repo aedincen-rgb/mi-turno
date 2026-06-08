@@ -417,7 +417,36 @@ function AsistenteTab(props) {
             session: props.session
           });
           var newMsg;
-          if (resp && typeof resp === 'object' && resp.action) {
+          if (resp && typeof resp === 'object' && resp.execute) {
+            // Ejecutar acción del agente
+            if (resp.execute.type === 'SET_SALARY') {
+              grabar('mt_s_' + props.session.user.id, resp.execute.payload);
+              grabar('mt_sc_' + props.session.user.id, true);
+              if (typeof queueAction === 'function') {
+                queueAction(props.session.user.id, 'set_salario', { salario_base: resp.execute.payload });
+              }
+              // Forzar recarga para que la app tome el nuevo salario
+              setTimeout(function() { window.location.reload(); }, 2000);
+            } else if (resp.execute.type === 'START_SHIFT') {
+              if (typeof queueAction === 'function') {
+                queueAction(props.session.user.id, 'start_shift', { inicio: new Date().toISOString() });
+              }
+              setTimeout(function() { window.location.reload(); }, 2000);
+            } else if (resp.execute.type === 'END_SHIFT') {
+              if (typeof queueAction === 'function') {
+                queueAction(props.session.user.id, 'end_shift', { fin: new Date().toISOString() });
+              }
+              setTimeout(function() { window.location.reload(); }, 2000);
+            } else if (resp.execute.type === 'NAVIGATE') {
+              // Simular click en el tab correspondiente
+              setTimeout(function() {
+                var tabId = resp.execute.payload === 'ajustes' ? 'config' : resp.execute.payload;
+                var btn = document.querySelector('.tab-btn[data-tab="' + tabId + '"]');
+                if (btn) btn.click();
+              }, 1500);
+            }
+            newMsg = { role: 'ai', content: resp.text, actions: resp.actions };
+          } else if (resp && typeof resp === 'object' && resp.action) {
             newMsg = { role: 'ai', content: resp.text, action: resp.action };
           } else if (resp && typeof resp === 'object' && resp.actions) {
             newMsg = { role: 'ai', content: resp.text, actions: resp.actions };

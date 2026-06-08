@@ -138,14 +138,42 @@ function aiProactiveSuggest(userContext) {
   return null;
 }
 
-// ─── RESPUESTAS ENRIQUECIDAS ───────────────────────────────────
-// Añade botones de acción rápida a las respuestas.
-// Devuelve { text, actions } donde actions es array de {label, query}.
+// ─── RESPUESTAS ENRIQUECIDAS Y ACCIONES (AGENTIC AI) ───────────
+// Añade botones de acción rápida a las respuestas y permite
+// que la IA ejecute acciones en la app (cambiar tabs, iniciar turnos).
+// Devuelve { text, actions, execute } donde actions es array de {label, query}
+// y execute es un objeto { type, payload } para que la UI lo procese.
 
-function aiEnrichResponse(originalText, intent, userContext) {
+function aiEnrichResponse(originalText, intent, userContext, entities) {
   var actions = [];
+  var execute = null;
 
-  // Seguimiento contextual según el intent
+  // 1. Procesar acciones directas basadas en entidades extraídas
+  if (intent === 'configurar_salario' && entities && entities.money) {
+    execute = { type: 'SET_SALARY', payload: entities.money };
+    originalText = '¡Listo! He actualizado tu salario base a ' + fCOP(entities.money) + '. ¿Quieres que recalcule tu proyección con este nuevo valor?';
+    actions.push({ label: 'Sí, recalcular', query: 'proyección' });
+  }
+  else if (intent === 'iniciar_turno') {
+    execute = { type: 'START_SHIFT' };
+    originalText = '¡Turno iniciado! Que te rinda mucho. Te avisaré si llevas muchas horas.';
+    actions.push({ label: 'Ver mi turno', query: 'ir a inicio' });
+  }
+  else if (intent === 'cerrar_turno') {
+    execute = { type: 'END_SHIFT' };
+    originalText = 'Turno cerrado correctamente. ¡Buen descanso!';
+    actions.push({ label: 'Ver resumen de hoy', query: 'cuanto gané hoy' });
+  }
+  else if (intent === 'navegar_ajustes') {
+    execute = { type: 'NAVIGATE', payload: 'ajustes' };
+    originalText = 'Te llevo a la pantalla de Ajustes.';
+  }
+  else if (intent === 'navegar_historial') {
+    execute = { type: 'NAVIGATE', payload: 'historial' };
+    originalText = 'Abriendo tu historial de turnos.';
+  }
+
+  // 2. Seguimiento contextual según el intent (botones sugeridos)
   var followUps = {
     'total_ganado': [
       { label: '📊 VS mes pasado', query: '¿vs mes pasado?' },
@@ -354,7 +382,7 @@ function _aiExpandir(original, intent, userContext) {
 // ─── API PÚBLICA ──────────────────────────────────────────────
 // Pipeline unificado de enriquecimiento con contexto compartido.
 
-function aiEnhancedRespond(originalResponse, intent, topic, question, userContext) {
+function aiEnhancedRespond(originalResponse, intent, topic, question, userContext, entities) {
   // Contexto unificado — todos los módulos reciben lo mismo
   var shared = {
     c: userContext || {},
@@ -381,7 +409,7 @@ function aiEnhancedRespond(originalResponse, intent, topic, question, userContex
   } catch (_) {}
 
   // 4. Enriquecimiento (acciones + follow-ups)
-  var enriched = aiEnrichResponse(text, intent, userContext);
+  var enriched = aiEnrichResponse(text, intent, userContext, entities);
   text = enriched.text; // ahora text tiene acciones
 
   // 5. Capa personal: logros + psicología + proactivo + asesor

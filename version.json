@@ -1,4 +1,4 @@
 {
-  "v": "v203",
-  "label": "Fix de IA: formato de fecha, estructura de datos y duplicados"
+  "v": "v204",
+  "label": "Evolución a Agente Autónomo: NLP con Levenshtein, extracción de entidades y ejecución de acciones"
 }
