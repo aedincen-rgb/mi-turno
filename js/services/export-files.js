@@ -2,7 +2,7 @@
 //  MI TURNO · services/export-files.js
 //  Exportar PDF y Excel locales
 // ════════════════════════════════════════════════════════════════
-function exportPDF(turnos, calc, salario) {
+function exportPDF(turnos, calc, salario, session) {
   if (!window.jspdf) {
     alert('PDF no disponible');
     return;
@@ -19,13 +19,23 @@ function exportPDF(turnos, calc, salario) {
   doc.text('Período: ' + mes, 14, 27);
   doc.text('Generado: ' + ahora.toLocaleString('es-CO'), 14, 32);
 
+  // Línea de empleado y PIN (solo si hay sesión)
+  var resumenY = 44;
+  if (session) {
+    var empleadoNombre = (session.pname) || (session.email) || 'Anónimo';
+    var empleadoTexto = 'Empleado: ' + empleadoNombre;
+    if (session.pin) empleadoTexto = empleadoTexto + '   PIN: ' + session.pin;
+    doc.text(empleadoTexto, 14, 38);
+    resumenY = 50;
+  }
+
   doc.setFontSize(14);
   doc.setTextColor(40);
-  doc.text('Resumen del mes', 14, 44);
+  doc.text('Resumen del mes', 14, resumenY);
   doc.setFontSize(10);
   doc.setTextColor(80);
-  doc.text('Total: ' + fCOP(calc.totalCOP), 14, 52);
-  doc.text('Horas: ' + fDur(calc.totalMins), 14, 58);
+  doc.text('Total: ' + fCOP(calc.totalCOP), 14, resumenY + 8);
+  doc.text('Horas: ' + fDur(calc.totalMins), 14, resumenY + 14);
   doc.text(
     'Salario base: ' +
       fCOP(salario) +
@@ -33,7 +43,7 @@ function exportPDF(turnos, calc, salario) {
       ((calc.totalCOP / salario) * 100).toFixed(1) +
       '%',
     14,
-    64
+    resumenY + 20
   );
 
   var rows = Object.keys(calc.bd)
@@ -49,7 +59,7 @@ function exportPDF(turnos, calc, salario) {
       ];
     });
   doc.autoTable({
-    startY: 72,
+    startY: resumenY + 28,
     head: [['Tipo', 'Horas', 'Factor', 'Pago']],
     body: rows,
     headStyles: {
@@ -96,7 +106,7 @@ function exportPDF(turnos, calc, salario) {
   doc.save('mi-turno-' + ahora.toISOString().slice(0, 10) + '.pdf');
 }
 
-function exportExcel(turnos, calc, salario) {
+function exportExcel(turnos, calc, salario, session) {
   if (!window.XLSX) {
     alert('Excel no disponible');
     return;

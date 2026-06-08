@@ -1,4 +1,4 @@
 {
-  "v": "v209",
-  "label": "Migración silenciosa UUID→Clerk + UI Clerk adaptada a Mi Turno"
+  "v": "v210",
+  "label": "PIN como identificador en informes + integración completa con Clerk"
 }

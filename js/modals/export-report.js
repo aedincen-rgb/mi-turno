@@ -24,8 +24,8 @@ function ExportReportModal(props) {
   function handleDownload() {
     haptic();
     try {
-      if (format === 'pdf') exportPDF(props.turnos, props.calc, props.salario);
-      else exportExcel(props.turnos, props.calc, props.salario);
+      if (format === 'pdf') exportPDF(props.turnos, props.calc, props.salario, props.session);
+      else exportExcel(props.turnos, props.calc, props.salario, props.session);
       setStep('done');
       setSuccess('✓ ' + formatLabel + ' descargado en tu dispositivo');
       setTimeout(function () {
@@ -58,8 +58,8 @@ function ExportReportModal(props) {
     // Generar el archivo en base64
     var fileBase64;
     try {
-      if (format === 'pdf') fileBase64 = exportPDFBase64(props.turnos, props.calc, props.salario);
-      else fileBase64 = exportExcelBase64(props.turnos, props.calc, props.salario);
+      if (format === 'pdf') fileBase64 = exportPDFBase64(props.turnos, props.calc, props.salario, props.session);
+      else fileBase64 = exportExcelBase64(props.turnos, props.calc, props.salario, props.session);
     } catch (e) {
       setStep('error');
       setError('Error generando el archivo: ' + (e.message || 'desconocido'));
