@@ -1,4 +1,4 @@
 {
-  "v": "v240",
-  "label": "Perf — defer de jsPDF/XLSX/Chart.js saca ~1MB del camino crítico de arranque"
+  "v": "v241",
+  "label": "rediseño botón grabar voz: ícono micrófono real, 50x50, estados idle/listening, dark mode"
 }
