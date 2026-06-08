@@ -1,4 +1,4 @@
 {
-  "v": "v205",
-  "label": "Fix IA: Cálculo exacto en COP para preguntas de recargos y horas específicas"
+  "v": "v206",
+  "label": "IA de Clase Mundial: Auditor de turnos, Optimizador, Gráficos UI, Flujos multi-paso y Modo Manos Libres"
 }

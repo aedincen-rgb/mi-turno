@@ -445,13 +445,13 @@ function AsistenteTab(props) {
                 if (btn) btn.click();
               }, 1500);
             }
-            newMsg = { role: 'ai', content: resp.text, actions: resp.actions };
+            newMsg = { role: 'ai', content: resp.text, actions: resp.actions, chart: resp.chart };
           } else if (resp && typeof resp === 'object' && resp.action) {
-            newMsg = { role: 'ai', content: resp.text, action: resp.action };
+            newMsg = { role: 'ai', content: resp.text, action: resp.action, chart: resp.chart };
           } else if (resp && typeof resp === 'object' && resp.actions) {
-            newMsg = { role: 'ai', content: resp.text, actions: resp.actions };
+            newMsg = { role: 'ai', content: resp.text, actions: resp.actions, chart: resp.chart };
           } else if (resp && typeof resp === 'object') {
-            newMsg = { role: 'ai', content: resp.text || String(resp) };
+            newMsg = { role: 'ai', content: resp.text || String(resp), chart: resp.chart };
           } else {
             newMsg = { role: 'ai', content: String(resp) };
           }
@@ -809,6 +809,35 @@ function AsistenteTab(props) {
                         })
                       )
                     : null,
+                  // Gráfico visual (Rich UI)
+                  m.chart
+                    ? h(
+                        'div',
+                        { className: 'asistente-chart-container' },
+                        h('div', { className: 'asistente-chart-title' }, m.chart.title),
+                        h(
+                          'div',
+                          { className: 'asistente-chart-bars' },
+                          m.chart.data.map(function (d, j) {
+                            return h(
+                              'div',
+                              { key: j, className: 'asistente-chart-bar-row' },
+                              h('div', { className: 'asistente-chart-bar-label' }, d.label),
+                              h(
+                                'div',
+                                { className: 'asistente-chart-bar-track' },
+                                h('div', {
+                                  className: 'asistente-chart-bar-fill',
+                                  style: { width: d.pct + '%', backgroundColor: d.color || 'var(--accent)' }
+                                })
+                              ),
+                              h('div', { className: 'asistente-chart-bar-val' }, d.val)
+                            );
+                          })
+                        )
+                      )
+                    : null,
+                  // Tarjeta de correo (si aplica)
                   m.action && m.action.type === 'email_compose'
                     ? h(EmailComposeCard, {
                         data: m.action.data,
@@ -894,38 +923,49 @@ function AsistenteTab(props) {
       // Micrófono: voz a texto (SpeechRecognition)
       (typeof SpeechRecognition !== 'undefined' || typeof webkitSpeechRecognition !== 'undefined')
         ? h(
-            'button',
-            {
-              className: 'asistente-mic' + (listening ? ' listening' : ''),
-              onClick: function () {
-                haptic();
-                if (listening) {
-                  stopListening();
-                  return;
-                }
-                startListening();
+            'div',
+            { className: 'asistente-mic-group' },
+            h(
+              'button',
+              {
+                className: 'asistente-mic' + (listening ? ' listening' : ''),
+                onClick: function () {
+                  haptic();
+                  if (listening) {
+                    stopListening();
+                    return;
+                  }
+                  startListening();
+                },
+                disabled: busy && !listening,
+                'aria-label': listening ? 'Grabando… tocá para detener' : 'Hablar por voz',
+                title: listening ? 'Grabando… tocá para detener' : 'Hablar por voz'
               },
-              disabled: busy && !listening,
-              'aria-label': listening ? 'Grabando… tocá para detener' : 'Hablar por voz',
-              title: listening ? 'Grabando… tocá para detener' : 'Hablar por voz'
-            },
-            h('svg', {
-              viewBox: '0 0 24 24',
-              width: 22, height: 22,
-              fill: 'none',
-              stroke: 'currentColor',
-              'stroke-width': 2,
-              'stroke-linecap': 'round',
-              'stroke-linejoin': 'round'
-            },
-              // Cuerpo del micrófono (rectángulo redondeado)
-              h('rect', { x: 9, y: 1, width: 6, height: 11, rx: 3 }),
-              // Línea inferior (base)
-              h('line', { x1: 12, y1: 17, x2: 12, y2: 22 }),
-              // Arco de la base
-              h('path', { d: 'M8 22h8' }),
-              // Ondas de sonido (arcos laterales) — solo cuando NO está escuchando
-              listening ? null : h('path', { d: 'M5 9a7 7 0 0 0 0 5M19 9a7 7 0 0 1 0 5' })
+              listening
+                ? h('div', { className: 'asistente-mic-pulse', style: { transform: 'scale(' + (1 + audioLevel * 0.5) + ')' } })
+                : null,
+              '🎤'
+            ),
+            // Botón de Manos Libres (Voice-First)
+            h(
+              'button',
+              {
+                className: 'asistente-handsfree-btn' + (handsFree ? ' active' : ''),
+                onClick: function () {
+                  haptic();
+                  var newState = !handsFree;
+                  setHandsFree(newState);
+                  setAutoRead(newState); // Si activa manos libres, activa auto-lectura
+                  if (newState && !listening) {
+                    startListening();
+                  } else if (!newState && listening) {
+                    stopListening();
+                  }
+                },
+                'aria-label': handsFree ? 'Desactivar manos libres' : 'Activar manos libres',
+                title: 'Modo Manos Libres (Conversación continua)'
+              },
+              '🎧'
             )
           )
         : null

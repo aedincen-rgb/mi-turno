@@ -1304,6 +1304,29 @@ var AI_INTENTS = [
       ['lista de turnos', 3]
     ]
   },
+  {
+    id: 'optimizador',
+    kw: [
+      ['como gano', 3],
+      ['que turnos hago', 3],
+      ['que me recomiendas', 3],
+      ['como hago para ganar', 3],
+      ['necesito ganar', 3],
+      ['quiero ganar', 3],
+      ['como llego a', 3],
+      ['que hago para ganar', 3]
+    ]
+  },
+  {
+    id: 'planear_vacaciones',
+    kw: [
+      ['planear vacaciones', 3],
+      ['quiero vacaciones', 3],
+      ['pedir vacaciones', 3],
+      ['calcular vacaciones', 3],
+      ['irme de vacaciones', 3]
+    ]
+  },
   // ── Stats rápido ──
   {
     id: 'stats',
@@ -1326,7 +1349,14 @@ var _aiConv = {
   lastTopic: null,
   turnCount: 0,
   contextHints: [],
-  askedFollowUp: false
+  askedFollowUp: false,
+  // Máquina de estados para flujos multi-paso
+  stateMachine: {
+    active: false,
+    flow: null, // ej: 'vacaciones'
+    step: 0,
+    data: {}
+  }
 };
 
 function aiGetConv() {
@@ -1339,6 +1369,7 @@ function aiResetConv() {
   _aiConv.turnCount = 0;
   _aiConv.contextHints = [];
   _aiConv.askedFollowUp = false;
+  _aiConv.stateMachine = { active: false, flow: null, step: 0, data: {} };
 }
 
 // ─── CLASIFICADOR DE INTENCIONES ─────────────────────────────
@@ -1488,6 +1519,7 @@ function _aiIntentTopic(intentId) {
     cerrar_turno: 'accion',
     navegar_ajustes: 'accion',
     navegar_historial: 'accion',
+    optimizador: 'dinero',
     ayuda_app: 'informacion',
     stats: 'dinero'
   };

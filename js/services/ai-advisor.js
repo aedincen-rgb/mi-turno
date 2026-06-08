@@ -148,7 +148,42 @@ function aiAdvisorSimular(c, horas, tipo) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// 3. PLANIFICADOR DE AHORRO
+// 3. OPTIMIZADOR DE HORARIOS (SHIFT PLANNER)
+// ═══════════════════════════════════════════════════════════════
+
+function aiAdvisorOptimizador(c, metaExtra) {
+  if (!c || !c.vh || !metaExtra || metaExtra <= 0) {
+    return 'Para recomendarte turnos, necesito saber tu salario base y cuánto dinero extra quieres ganar. Por ejemplo: "Quiero ganar 150 lucas extra".';
+  }
+  
+  var vh = c.vh;
+  var resp = '🎯 **Optimizador de Horarios**\n\nPara ganar **' + fCOP(metaExtra) + '** extra con tu salario actual, tienes estas opciones:\n\n';
+  
+  // Opción A: Turnos nocturnos (8h)
+  var valorTurnoNocturno = (vh * 1.35) * 8;
+  var turnosNocturnos = Math.ceil(metaExtra / valorTurnoNocturno);
+  resp += '🌙 **Opción A: ' + turnosNocturnos + ' turnos nocturnos**\n';
+  resp += 'Trabajando de noche (recargo 35%), cada turno de 8h te paga ' + fCOP(valorTurnoNocturno) + '.\n\n';
+  
+  // Opción B: Domingos/Festivos diurnos (8h)
+  var valorTurnoDomingo = (vh * 1.75) * 8;
+  var turnosDomingos = Math.ceil(metaExtra / valorTurnoDomingo);
+  resp += '⛪ **Opción B: ' + turnosDomingos + ' turnos dominicales/festivos**\n';
+  resp += 'Trabajando un domingo de día (recargo 75%), cada turno de 8h te paga ' + fCOP(valorTurnoDomingo) + '.\n\n';
+  
+  // Opción C: Horas extra diurnas repartidas
+  var valorExtraDiurna = vh * 1.25;
+  var horasExtra = Math.ceil(metaExtra / valorExtraDiurna);
+  resp += '⏱️ **Opción C: ' + horasExtra + ' horas extra diurnas**\n';
+  resp += 'Repartidas en la semana (recargo 25%). Son aprox ' + (horasExtra / 5).toFixed(1) + ' horas extra por día durante 5 días.\n\n';
+  
+  resp += '💡 *Consejo:* La Opción B es la más rápida, pero sacrifica tu fin de semana. La Opción C es más suave pero alarga tus jornadas diarias.';
+  
+  return resp;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 4. PLANIFICADOR DE AHORRO
 // ═══════════════════════════════════════════════════════════════
 
 function aiAdvisorAhorro(c, meta, plazoMeses) {

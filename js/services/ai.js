@@ -695,7 +695,42 @@ function _aiDispatchNLP(intent, c, state, q, t) {
     var lines = Object.keys(c.bd).filter(function (k) { return c.bd[k].mins > 0; }).map(function (k) {
       return '• ' + RC[k].label + ': ' + fCOP(c.bd[k].cop) + ' (' + fDur(c.bd[k].mins) + ')';
     }).join('\n');
-    return '📊 **Distribución de tus ingresos:**\n\n' + lines;
+    
+    // Generar datos para el gráfico visual
+    var chartData = [];
+    var colors = {
+      'ord': '#5b86e5',
+      'noc': '#3a5cb5',
+      'ext_d': '#ff9f43',
+      'ext_n': '#ff7675',
+      'fest_d': '#1dd1a1',
+      'fest_n': '#10ac84',
+      'ext_fd': '#feca57',
+      'ext_fn': '#ff6b6b'
+    };
+    
+    var totalMins = c.totalMins || 1;
+    for (var k in c.bd) {
+      if (c.bd[k].mins > 0) {
+        chartData.push({
+          label: RC[k].label,
+          val: fDur(c.bd[k].mins),
+          pct: (c.bd[k].mins / totalMins) * 100,
+          color: colors[k] || 'var(--accent)'
+        });
+      }
+    }
+    
+    // Ordenar de mayor a menor
+    chartData.sort(function(a, b) { return b.pct - a.pct; });
+    
+    return {
+      text: '📊 **Distribución de tus horas:**\n\n' + lines,
+      chart: {
+        title: 'Distribución de Tiempo',
+        data: chartData
+      }
+    };
   }
   if (intent === 'velocidad') {
     return '⚡ Tu velocidad es de **' + fCOP(c.copPorHoraReal) + ' por hora** trabajada.\n\n' +
@@ -811,6 +846,29 @@ function _aiDispatchNLP(intent, c, state, q, t) {
       '• En horas base: ' + (faltaMeta / (c.vh || 1)).toFixed(1) + 'h';
   }
 
+  // ── Optimizador de Horarios ──
+  if (intent === 'optimizador') {
+    var metaExtra = _aiNum(t);
+    if (!metaExtra || metaExtra < 1000) {
+      return 'Para recomendarte turnos, necesito saber cuánto dinero extra quieres ganar. Por ejemplo: "Quiero ganar 150 lucas extra".';
+    }
+    if (typeof aiAdvisorOptimizador === 'function') {
+      return aiAdvisorOptimizador(c, metaExtra);
+    }
+  }
+
+  // ── Planificador de Vacaciones (State Machine) ──
+  if (intent === 'planear_vacaciones') {
+    var conv = typeof aiGetConversation === 'function' ? aiGetConversation() : null;
+    if (conv && conv.stateMachine) {
+      conv.stateMachine.active = true;
+      conv.stateMachine.flow = 'vacaciones';
+      conv.stateMachine.step = 1;
+      return '🌴 ¡Qué bueno! Planear vacaciones es importante. ¿Cuántos días hábiles te quieres tomar?';
+    }
+    return '🌴 Para planear tus vacaciones, ve a la pestaña de Ajustes.';
+  }
+
   // ── Stats ──
   if (intent === 'stats') {
     return '⚡ **Resumen rápido:**\n' +
@@ -908,6 +966,36 @@ function aiAnswer(question, state) {
   var c = buildContext(state);
   var isAdmin = state.session && state.session.isAdmin;
 
+  // ── MÁQUINA DE ESTADOS (Flujos Multi-paso) ──
+  var conv = typeof aiGetConversation === 'function' ? aiGetConversation() : null;
+  if (conv && conv.stateMachine && conv.stateMachine.active) {
+    var sm = conv.stateMachine;
+    
+    if (sm.flow === 'vacaciones') {
+      if (sm.step === 1) {
+        var dias = _aiNum(t);
+        if (dias) {
+          sm.data.dias = dias;
+          sm.step = 2;
+          return 'Perfecto, ' + dias + ' días hábiles. ¿A partir de qué fecha te los quieres tomar? (ej. "del 10 de agosto")';
+        }
+        return 'No entendí cuántos días. Por favor dime un número, ej. "15 días".';
+      }
+      if (sm.step === 2) {
+        // Simulación simple de fecha
+        sm.data.fecha = question;
+        sm.active = false; // Terminar flujo
+        
+        var valorVacaciones = (c.salario / 30) * sm.data.dias;
+        return '🌴 **Resumen de Vacaciones:**\n\n' +
+          '• Días hábiles: ' + sm.data.dias + '\n' +
+          '• Fecha de inicio: ' + sm.data.fecha + '\n' +
+          '• Valor estimado a recibir: **' + fCOP(valorVacaciones) + '**\n\n' +
+          '¡Que las disfrutes mucho! ¿Te ayudo con algo más?';
+      }
+    }
+  }
+
   // ── MODO DESARROLLADOR Y DIAGNÓSTICO ──
   if (isAdmin && _aiHas(t, 'donde', 'archivo', 'modulo', 'cambio', 'eliminar', 'mover', 'codigo', 'error', 'falla', 'supabase', 'vercel', 'red', 'conexion', 'luna', 'oscuro', 'tema', 'que es', 'para que', 'significa', 'diccionario', 'reglas')) {
     var map = c._devMap;
@@ -992,7 +1080,7 @@ function aiAnswer(question, state) {
       var _text = _isAction ? _resp.text : _resp;
       var _final = _pref + _text + _suff;
       if (typeof aiEnhancedRespond === 'function') {
-        var _enriched = aiEnhancedRespond(_final, _nlp.intent, _nlp.topic, q, c, _entities);
+        var _enriched = aiEnhancedRespond(_final, _nlp.intent, _nlp.topic, q, c, _entities, state.turnosAll);
         if (_enriched && _enriched.text) {
           if (_isAction) _enriched.action = _resp.action;
           return _enriched;
@@ -1010,7 +1098,7 @@ function aiAnswer(question, state) {
       var _fuResp = _aiDispatchNLP(_fuIntent, c, state, q, t);
       if (_fuResp) {
         if (typeof aiEnhancedRespond === 'function') {
-          var _fuEnriched = aiEnhancedRespond(_fuResp, _fuIntent, _aiIntentTopic(_fuIntent), q, c);
+          var _fuEnriched = aiEnhancedRespond(_fuResp, _fuIntent, _aiIntentTopic(_fuIntent), q, c, null, state.turnosAll);
           if (_fuEnriched && _fuEnriched.text) return _fuEnriched;
         }
         return _fuResp;

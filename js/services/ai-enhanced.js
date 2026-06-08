@@ -144,9 +144,21 @@ function aiProactiveSuggest(userContext) {
 // Devuelve { text, actions, execute } donde actions es array de {label, query}
 // y execute es un objeto { type, payload } para que la UI lo procese.
 
-function aiEnrichResponse(originalText, intent, userContext, entities) {
+function aiEnrichResponse(originalText, intent, userContext, entities, turnosAll) {
   var actions = [];
   var execute = null;
+  
+  // 0. Auditoría Inteligente (Anomaly Detection)
+  // Si hay una anomalía grave, la inyectamos al principio de la respuesta
+  if (typeof aiAuditShifts === 'function' && turnosAll) {
+    var anomaly = aiAuditShifts(userContext, turnosAll);
+    if (anomaly && _aiMemory.proactiveCount % 2 === 0) { // No spamear siempre
+      originalText = anomaly.text + '\n\n---\n\n' + originalText;
+      if (anomaly.action) {
+        actions.push(anomaly.action);
+      }
+    }
+  }
 
   // 1. Procesar acciones directas basadas en entidades extraídas
   if (intent === 'configurar_salario' && entities && entities.money) {
@@ -382,7 +394,7 @@ function _aiExpandir(original, intent, userContext) {
 // ─── API PÚBLICA ──────────────────────────────────────────────
 // Pipeline unificado de enriquecimiento con contexto compartido.
 
-function aiEnhancedRespond(originalResponse, intent, topic, question, userContext, entities) {
+function aiEnhancedRespond(originalResponse, intent, topic, question, userContext, entities, turnosAll) {
   // Contexto unificado — todos los módulos reciben lo mismo
   var shared = {
     c: userContext || {},
@@ -409,7 +421,7 @@ function aiEnhancedRespond(originalResponse, intent, topic, question, userContex
   } catch (_) {}
 
   // 4. Enriquecimiento (acciones + follow-ups)
-  var enriched = aiEnrichResponse(text, intent, userContext, entities);
+  var enriched = aiEnrichResponse(text, intent, userContext, entities, turnosAll);
   text = enriched.text; // ahora text tiene acciones
 
   // 5. Capa personal: logros + psicología + proactivo + asesor
