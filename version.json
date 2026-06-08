@@ -1,4 +1,4 @@
 {
-  "v": "v212",
-  "label": "Revert — eliminar integración Clerk, restaurar Supabase Auth"
+  "v": "v213",
+  "label": "Fix: manage-account CSS — clases manage-* alineadas con JS"
 }
