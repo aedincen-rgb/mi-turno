@@ -103,6 +103,22 @@ const projectGlobals = {
   hapticError: 'readonly',
   hapticWarning: 'readonly',
 
+  // services/audio-sfx.js
+  sfxDing: 'readonly',
+  sfxError: 'readonly',
+  sfxWhoosh: 'readonly',
+  sfxSwitch: 'readonly',
+  sfxClick: 'readonly',
+  sfxPageTurn: 'readonly',
+  sfxShutter: 'readonly',
+  sfxWow: 'readonly',
+  sfxYippee: 'readonly',
+  sfxBruh: 'readonly',
+  sfxPlay: 'readonly',
+  sfxPreload: 'readonly',
+  SFX: 'readonly',
+  Audio: 'readonly',
+
   // utils/network.js
   traducirError: 'readonly',
   withTimeout: 'readonly',

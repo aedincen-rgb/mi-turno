@@ -418,6 +418,9 @@ function App(props) {
       else if (t === 'error' && typeof hapticError === 'function') hapticError();
       else if (t === 'warning' && typeof hapticWarning === 'function') hapticWarning();
     } catch (_) {}
+    // 🎵 SFX Remotion: sonido al mostrar toast
+    if (t === 'success' && typeof sfxDing === 'function') sfxDing();
+    else if (t === 'error' && typeof sfxError === 'function') sfxError();
   }
   // Exponemos showToast a la cola de sync para que pueda avisar
   // errores permanentes (ej. PIN duplicado al sincronizar offline).

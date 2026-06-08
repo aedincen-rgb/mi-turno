@@ -1,4 +1,4 @@
 {
-  "v": "v241",
-  "label": "rediseño botón grabar voz: ícono micrófono real, 50x50, estados idle/listening, dark mode"
+  "v": "v242",
+  "label": "Remotion SFX integración: audio-sfx.js con 32 sonidos CDN + precarga"
 }
