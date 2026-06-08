@@ -72,6 +72,7 @@ const appResources = [
   './css/modals/misc.css',
   './css/modals/manage-account.css',
   './css/modals/onboarding.css',
+  './css/modals/manage-account.css',
   './css/modals/dark-overrides.css',
   './css/animations/keyframes.css',
   // JS (39 archivos)

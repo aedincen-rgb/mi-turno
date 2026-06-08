@@ -780,25 +780,49 @@ function ManageAccountModal(props) {
   // ═══ RENDER: PANTALLA PRINCIPAL DE GESTIÓN ═══
   return h(
     'div',
-    { className: 'modal-card' },
+    { className: 'manage-card' },
 
     // ── Header profesional ──
     h(
       'div',
-      { className: 'mgmt-header' },
-      h('div', { className: 'mgmt-header-icon' }, '⚙'),
+      { className: 'manage-section' },
       h(
         'div',
-        { className: 'mgmt-header-info' },
-        h('div', { className: 'mgmt-header-title' }, 'Gestionar cuenta'),
+        { className: 'manage-section-header' },
+        'Cuenta'
+      ),
+      // Email actual
+      h(
+        'div',
+        { className: 'manage-row' },
+        h('div', { className: 'manage-row-label' }, '📧 Correo'),
         h(
           'div',
-          { className: 'mgmt-header-sub' },
-          isPinOnly ? 'Modo local' : (session.email || 'Usuario')
-        ),
-        isPinOnly
-          ? h('span', { className: 'mgmt-header-badge' }, '📌 Sin nube')
-          : null
+          { className: 'manage-row-value' },
+          session.email || (isPinOnly ? 'Modo local' : '—')
+        )
+      ),
+      // PIN state
+      h(
+        'div',
+        { className: 'manage-row' },
+        h('div', { className: 'manage-row-label' }, '🔒 PIN'),
+        h(
+          'span',
+          { className: 'manage-badge ' + (storedPin ? 'ok' : 'muted') },
+          storedPin ? 'Configurado' : 'Sin PIN'
+        )
+      ),
+      // Conexión
+      h(
+        'div',
+        { className: 'manage-row' },
+        h('div', { className: 'manage-row-label' }, '📡 Conexión'),
+        h(
+          'span',
+          { className: 'manage-badge ' + (CLOUD_MODE ? 'ok' : 'pending') },
+          CLOUD_MODE ? 'Sincronizado' : 'Local'
+        )
       )
     ),
 
@@ -806,24 +830,20 @@ function ManageAccountModal(props) {
     isPinOnly
       ? h(
           'div',
-          { className: 'mgmt-banner' },
-          h('span', { className: 'mgmt-banner-icon' }, '💡'),
-          h(
-            'span',
-            null,
-            'Registrate con email y contraseña para activar la sincronización en la nube y respaldo automático.'
-          )
+          { style: { background: 'var(--warning-dim, rgba(255,159,67,0.12))', borderRadius: 'var(--radius-sm)', padding: '14px 18px', display: 'flex', gap: '12px', alignItems: 'flex-start', fontSize: '13px', color: 'var(--text)', lineHeight: '1.5' } },
+          h('span', { style: { fontSize: '16px', flexShrink: 0 } }, '💡'),
+          h('span', null, 'Registrate con email y contraseña para activar la sincronización en la nube y respaldo automático.')
         )
       : null,
 
     // ── Segmented control (iOS style) ──
     h(
       'div',
-      { className: 'mgmt-segmented' },
+      { className: 'manage-segmented' },
       h(
         'button',
         {
-          className: 'mgmt-seg-btn' + (tab === 0 ? ' active' : ''),
+          className: 'manage-segmented-btn' + (tab === 0 ? ' active' : ''),
           onClick: function () { setTab(0); setFeedback(null); }
         },
         '🔐 PIN'
@@ -831,7 +851,7 @@ function ManageAccountModal(props) {
       h(
         'button',
         {
-          className: 'mgmt-seg-btn' + (tab === 1 ? ' active' : ''),
+          className: 'manage-segmented-btn' + (tab === 1 ? ' active' : ''),
           onClick: function () { setTab(1); setFeedback(null); },
           disabled: isPinOnly
         },
@@ -840,7 +860,7 @@ function ManageAccountModal(props) {
       h(
         'button',
         {
-          className: 'mgmt-seg-btn' + (tab === 2 ? ' active' : ''),
+          className: 'manage-segmented-btn' + (tab === 2 ? ' active' : ''),
           onClick: function () { setTab(2); setFeedback(null); },
           disabled: isPinOnly
         },
@@ -852,19 +872,18 @@ function ManageAccountModal(props) {
     tab === 0
       ? h(
           'div',
-          { className: 'mgmt-field' },
-          h('div', { className: 'mgmt-field-label' }, '🔐 ', 'Cambiar PIN'),
+          { className: 'manage-field' },
+          h('div', { className: 'manage-field-label' }, '🔐 ', 'Cambiar PIN'),
           storedPin
             ? h(
                 'div',
-                { className: 'mgmt-field-current' },
-                h('span', { className: 'mgmt-field-current-icon' }, '🔒'),
-                'PIN actual: ',
-                h('span', { className: 'mgmt-field-current-val' }, '••••')
+                { style: { display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 0', fontSize: '13px', color: 'var(--muted)' } },
+                h('span', null, '🔒 PIN actual:'),
+                h('span', { className: 'manage-badge ok' }, '••••')
               )
             : h(
                 'div',
-                { className: 'mgmt-field-hint' },
+                { style: { fontSize: '13px', color: 'var(--muted)', padding: '10px 0', lineHeight: '1.4' } },
                 'No tenés PIN configurado. Creá uno de 4 dígitos para acceso rápido.'
               ),
           h('input', {
@@ -872,26 +891,22 @@ function ManageAccountModal(props) {
             inputMode: 'numeric',
             maxLength: '4',
             placeholder: 'Nuevo PIN',
-            className: 'mgmt-input pin-style',
+            className: 'manage-input pin-style',
             value: pinVal,
             onChange: function (e) { setPinVal(e.target.value.replace(/\D/g, '')); }
           }),
           feedback
-            ? h('div', { className: 'mgmt-feedback ' + (feedback[0] === '✓' ? 'ok' : 'err') }, feedback)
+            ? h('div', { className: 'manage-feedback ' + (feedback[0] === '✓' ? 'ok' : 'err') }, feedback)
             : null,
           h(
-            'div',
-            { className: 'mgmt-actions' },
-            h(
-              'button',
-              {
-                className: 'mgmt-btn-save',
-                onClick: savePIN,
-                disabled: busy
-              },
-              busy ? h('span', { className: 'sp-in' }) : null,
-              busy ? 'Guardando…' : 'Guardar nuevo PIN'
-            )
+            'button',
+            {
+              className: 'manage-btn',
+              onClick: savePIN,
+              disabled: busy
+            },
+            busy ? h('span', { className: 'sp-in' }) : null,
+            busy ? 'Guardando…' : 'Guardar nuevo PIN'
           )
         )
       : null,
@@ -900,48 +915,43 @@ function ManageAccountModal(props) {
     tab === 1
       ? h(
           'div',
-          { className: 'mgmt-field' },
-          h('div', { className: 'mgmt-field-label' }, '✉ ', 'Cambiar correo electrónico'),
+          { className: 'manage-field' },
+          h('div', { className: 'manage-field-label' }, '✉ ', 'Cambiar correo electrónico'),
           session.email
             ? h(
                 'div',
-                { className: 'mgmt-field-current' },
-                h('span', { className: 'mgmt-field-current-icon' }, '📧'),
-                'Actual: ',
-                h('span', { className: 'mgmt-field-current-val', style: { letterSpacing: '0' } }, session.email)
+                { style: { display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 0', fontSize: '13px', color: 'var(--muted)' } },
+                h('span', null, '📧 Actual:'),
+                h('span', { style: { fontWeight: 600, color: 'var(--text)', fontSize: '14px' } }, session.email)
               )
             : null,
           h(
             'div',
-            { className: 'mgmt-field-hint' },
+            { style: { fontSize: '13px', color: 'var(--muted)', padding: '6px 0 12px', lineHeight: '1.5' } },
             'Se enviará un código de verificación a tu nuevo correo. El cambio se reflejará en todos tus dispositivos.'
           ),
           h('input', {
             type: 'email',
             inputMode: 'email',
             placeholder: 'nuevo@correo.com',
-            className: 'mgmt-input',
+            className: 'manage-input',
             value: emailVal,
             onChange: function (e) { setEmailVal(e.target.value); },
             autoComplete: 'off',
             spellCheck: false
           }),
           feedback
-            ? h('div', { className: 'mgmt-feedback ' + (feedback[0] === '✓' ? 'ok' : 'err') }, feedback)
+            ? h('div', { className: 'manage-feedback ' + (feedback[0] === '✓' ? 'ok' : 'err') }, feedback)
             : null,
           h(
-            'div',
-            { className: 'mgmt-actions' },
-            h(
-              'button',
-              {
-                className: 'mgmt-btn-save',
-                onClick: saveEmail,
-                disabled: busy || !CLOUD_MODE || isPinOnly
-              },
-              busy ? h('span', { className: 'sp-in' }) : null,
-              busy ? 'Cambiando…' : 'Cambiar correo'
-            )
+            'button',
+            {
+              className: 'manage-btn',
+              onClick: saveEmail,
+              disabled: busy || !CLOUD_MODE || isPinOnly
+            },
+            busy ? h('span', { className: 'sp-in' }) : null,
+            busy ? 'Cambiando…' : 'Cambiar correo'
           )
         )
       : null,
@@ -950,37 +960,33 @@ function ManageAccountModal(props) {
     tab === 2
       ? h(
           'div',
-          { className: 'mgmt-field' },
-          h('div', { className: 'mgmt-field-label' }, '🔑 ', 'Cambiar contraseña'),
+          { className: 'manage-field' },
+          h('div', { className: 'manage-field-label' }, '🔑 ', 'Cambiar contraseña'),
           h(
             'div',
-            { className: 'mgmt-field-hint' },
+            { style: { fontSize: '13px', color: 'var(--muted)', padding: '6px 0 12px', lineHeight: '1.5' } },
             'Mínimo 6 caracteres. Se requiere conexión a internet para este cambio.'
           ),
           h('input', {
             type: 'password',
             placeholder: 'Nueva contraseña (mín. 6 caracteres)',
             autoComplete: 'new-password',
-            className: 'mgmt-input',
+            className: 'manage-input',
             value: passVal,
             onChange: function (e) { setPassVal(e.target.value); }
           }),
           feedback
-            ? h('div', { className: 'mgmt-feedback ' + (feedback[0] === '✓' ? 'ok' : 'err') }, feedback)
+            ? h('div', { className: 'manage-feedback ' + (feedback[0] === '✓' ? 'ok' : 'err') }, feedback)
             : null,
           h(
-            'div',
-            { className: 'mgmt-actions' },
-            h(
-              'button',
-              {
-                className: 'mgmt-btn-save',
-                onClick: savePassword,
-                disabled: busy || !CLOUD_MODE || isPinOnly
-              },
-              busy ? h('span', { className: 'sp-in' }) : null,
-              busy ? 'Cambiando…' : 'Cambiar contraseña'
-            )
+            'button',
+            {
+              className: 'manage-btn',
+              onClick: savePassword,
+              disabled: busy || !CLOUD_MODE || isPinOnly
+            },
+            busy ? h('span', { className: 'sp-in' }) : null,
+            busy ? 'Cambiando…' : 'Cambiar contraseña'
           )
         )
       : null,
@@ -989,7 +995,7 @@ function ManageAccountModal(props) {
     h(
       'button',
       {
-        className: 'btn btn-ghost btn-block',
+        className: 'manage-btn ghost',
         onClick: function () {
           haptic();
           resetVf();
