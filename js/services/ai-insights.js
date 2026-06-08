@@ -141,10 +141,11 @@ function aiInsightEfficiency(c) {
   }
 
   // Día más rentable de la semana (por patrón)
-  if (c.bestDow && c.bestDow.dia && c.bestDow.count > 0) {
+  if (c.bestDowInfo && c.bestDowInfo.count > 0) {
     var dowNames = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
-    resp += '• 📅 **Día más rentable:** ' + dowNames[c.bestDow.dia] + ' (promedio ' + fCOP(c.bestDow.cop / Math.max(1, c.bestDow.count)) + '/día)\n';
-    if (c.bestDow.dia === 0) {
+    var bestDia = c.bestDowInfo.dia;
+    resp += '• 📅 **Día más rentable:** ' + dowNames[bestDia] + ' (promedio ' + fCOP(c.bestDowInfo.cop / Math.max(1, c.bestDowInfo.count)) + '/día)\n';
+    if (bestDia === 0) {
       resp += '  Los domingos pagan recargo del 75%. Trabajar domingos es la forma más rápida de aumentar tu ingreso.\n';
     }
   }

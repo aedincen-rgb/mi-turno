@@ -55,7 +55,7 @@ function aiCheckFollowUp(text) {
   if (!sug) return null;
   var t = (text || '').toLowerCase().trim();
   // Respuestas afirmativas a sugerencias
-  var affirm = ['si','sí','dale','bueno','ok','vale','de una','hagale','hágale','mostrame','mostrame','dime','decime','quiero','claro','obvio','porfa','porfi','sisas','va','vamos'];
+  var affirm = ['si','sí','dale','bueno','ok','vale','de una','hagale','hágale','mostrame','dime','decime','quiero','claro','obvio','porfa','porfi','sisas','va','vamos'];
   for (var i = 0; i < affirm.length; i++) {
     if (t === affirm[i] || t.indexOf(affirm[i]) === 0) {
       var intent = sug.intent;

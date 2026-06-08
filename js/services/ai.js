@@ -313,6 +313,11 @@ function buildContext(state) {
     if (dowCOP[i] > 0 && (worstDow < 0 || dowCOP[i] < dowCOP[worstDow])) worstDow = i;
   }
   if (worstDow < 0) worstDow = 0;
+  var bestDowInfo = {
+    dia: bestDow,
+    cop: dowCOP[bestDow],
+    count: dowCount[bestDow]
+  };
 
   // ── Próximos festivos del año ──
   var festSet = getColombianHolidays(ahora.getFullYear());
@@ -376,8 +381,9 @@ function buildContext(state) {
   var festDiasCount = festTrab.length;
   var hoyEsRecord = false;
   if (mejor && dias.length > 0) {
-    var hoyKey = ahora.getFullYear() + '-' +
-      String(ahora.getMonth() + 1).padStart(2, '0') +
+    var hoyKey =
+      ahora.getFullYear() + '-' +
+      String(ahora.getMonth() + 1).padStart(2, '0') + '-' +
       String(ahora.getDate()).padStart(2, '0');
     hoyEsRecord = mejor.fecha === hoyKey;
   }
@@ -517,6 +523,7 @@ function buildContext(state) {
     dowCOP: dowCOP,
     dowCount: dowCount,
     bestDow: bestDow,
+    bestDowInfo: bestDowInfo,
     worstDow: worstDow,
     // Festivos / extras
     proxFests: proxFests,
