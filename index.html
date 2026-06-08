@@ -262,6 +262,133 @@
   .btn-enter:hover::after { opacity: 0.6; }
   .btn-enter:active { transform: scale(0.96); }
 
+  /* ─── VIDEO SHOWCASE ────────────────────────────────────────── */
+  .video-section {
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 6px 24px 44px;
+    text-align: center;
+  }
+  .video-eyebrow {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent-strong);
+    margin-bottom: 8px;
+    opacity: 0;
+    transform: translateY(14px);
+    transition: opacity 0.6s, transform 0.6s;
+  }
+  .video-section h2 {
+    font-size: clamp(22px, 5vw, 28px);
+    font-weight: 800;
+    letter-spacing: -0.8px;
+    margin-bottom: 22px;
+    line-height: 1.2;
+    opacity: 0;
+    transform: translateY(14px);
+    transition: opacity 0.6s 0.08s, transform 0.6s 0.08s;
+  }
+  .video-section.visible .video-eyebrow,
+  .video-section.visible h2 { opacity: 1; transform: translateY(0); }
+
+  /* Marco cinematográfico con anillo de gradiente giratorio */
+  .video-frame {
+    position: relative;
+    border-radius: 22px;
+    padding: 3px;                 /* grosor del anillo */
+    background: var(--bg-card);
+    opacity: 0;
+    transform: translateY(28px) scale(0.97);
+    transition: opacity 0.7s 0.15s cubic-bezier(0.16,1,0.3,1),
+                transform 0.7s 0.15s cubic-bezier(0.16,1,0.3,1);
+  }
+  .video-section.visible .video-frame { opacity: 1; transform: translateY(0) scale(1); }
+
+  /* Anillo cónico giratorio detrás del contenido */
+  .video-frame::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 22px;
+    padding: 3px;
+    background: conic-gradient(
+      from 0deg,
+      #5b86e5, #7da8ff, #a78bfa, #5b6ce5, #7da8ff, #5b86e5
+    );
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+            mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+            mask-composite: exclude;
+    animation: ringSpin 6s linear infinite;
+  }
+  @keyframes ringSpin { to { transform: rotate(360deg); } }
+
+  /* Halo difuso debajo del marco */
+  .video-frame::after {
+    content: '';
+    position: absolute;
+    inset: 8px;
+    border-radius: 22px;
+    background: var(--gradient);
+    filter: blur(34px);
+    opacity: 0.32;
+    z-index: -1;
+    animation: haloPulse 4s ease-in-out infinite;
+  }
+  @keyframes haloPulse {
+    0%, 100% { opacity: 0.22; }
+    50%      { opacity: 0.42; }
+  }
+
+  .video-window {
+    position: relative;
+    border-radius: 19px;
+    overflow: hidden;
+    background: #0a0c12;
+  }
+  /* Barra superior estilo navegador */
+  .video-chrome {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 10px 14px;
+    background: rgba(10,12,18,0.92);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .video-dot { width: 11px; height: 11px; border-radius: 50%; }
+  .video-dot.r { background: #ff5f57; }
+  .video-dot.y { background: #febc2e; }
+  .video-dot.g { background: #28c840; }
+  .video-chrome-url {
+    margin-left: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.45);
+    letter-spacing: 0.3px;
+  }
+  .video-window video {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    background: #0a0c12;
+  }
+
+  .video-caption {
+    font-size: 12.5px;
+    color: var(--text-dim);
+    margin-top: 16px;
+    opacity: 0.8;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .video-frame::before { animation: none; }
+    .video-frame::after { animation: none; }
+  }
+
   /* ─── CALCULADORA INTERACTIVA ───────────────────────────────── */
   .calc-section {
     max-width: 480px;
@@ -544,6 +671,7 @@
     .feat { opacity: 1; transform: none; }
     .feat:hover { transform: none; }
     .btn-enter::after { display: none; }
+    .video-eyebrow, .video-section h2, .video-frame { opacity: 1; transform: none; }
   }
 </style>
 </head>
@@ -579,6 +707,34 @@
     <p class="sub">Calculá cada turno con todos los recargos de ley. Sin internet, sin Excel, sin perder plata.</p>
     <a href="/app" class="btn-enter">Calcular mi salario →</a>
   </div>
+</div>
+
+<!-- ═══════ VIDEO SHOWCASE ═══════ -->
+<div class="video-section" id="videoSection">
+  <div class="video-eyebrow">En 25 segundos</div>
+  <h2>Mirá Mi Turno en acción</h2>
+  <div class="video-frame">
+    <div class="video-window">
+      <div class="video-chrome" aria-hidden="true">
+        <span class="video-dot r"></span>
+        <span class="video-dot y"></span>
+        <span class="video-dot g"></span>
+        <span class="video-chrome-url">miturno.one</span>
+      </div>
+      <video
+        id="demoVideo"
+        poster="video/demo-poster.jpg"
+        muted
+        loop
+        playsinline
+        autoplay
+        preload="none"
+        aria-label="Video demostrativo de Mi Turno: registro de turnos, recargos automáticos y cálculo de salario">
+        <source src="video/demo.mp4" type="video/mp4">
+      </video>
+    </div>
+  </div>
+  <p class="video-caption">Sin sonido · se reproduce sola · loop infinito</p>
 </div>
 
 <!-- ═══════ CALCULADORA INTERACTIVA ═══════ -->
@@ -706,7 +862,7 @@
       <a href="https://github.com/aedincen-rgb/mi-turno-BETA/releases/latest/download/app-release-signed.apk" class="btn-download" id="btnDownload" style="display:inline-block;padding:13px 28px;border-radius:26px;background:linear-gradient(135deg,#34c759,#30b350);color:#fff;font-size:15px;font-weight:700;text-decoration:none;box-shadow:0 4px 16px rgba(52,199,89,0.3);transition:transform 0.2s,box-shadow 0.2s;">
         ⬇️ Descargar APK · 1.6 MB
       </a>
-      <p style="font-size:10.5px;color:var(--text-dim);margin-top:12px;opacity:0.65;">También disponible como PWA desde el navegador · v132</p>
+      <p style="font-size:10.5px;color:var(--text-dim);margin-top:12px;opacity:0.65;">También disponible como PWA desde el navegador · v236</p>
     </div>
   </div>
 </div>
@@ -732,7 +888,7 @@
 <div class="footer">
   <a href="/privacy.html">Política de privacidad</a> · 
   <a href="mailto:aedincen@gmail.com">Contacto</a> · 
-  Hecho en Colombia 🇨🇴 · v132
+  Hecho en Colombia 🇨🇴 · v236
 </div>
 
 <!-- ═══════ SCRIPTS ═══════ -->
@@ -809,6 +965,29 @@
 
   // Calcular al cargar
   recalcular();
+
+  // ── VIDEO SHOWCASE: reveal + lazy play/pause ─────────────────
+  var videoSection = document.getElementById('videoSection');
+  var demoVideo = document.getElementById('demoVideo');
+  if (videoSection && demoVideo) {
+    var videoLoaded = false;
+    var vidObserver = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          videoSection.classList.add('visible');
+          if (!videoLoaded) {
+            demoVideo.load();
+            videoLoaded = true;
+          }
+          var p = demoVideo.play();
+          if (p && p.catch) { p.catch(function(){}); }
+        } else if (videoLoaded) {
+          demoVideo.pause();
+        }
+      });
+    }, { threshold: 0.35 });
+    vidObserver.observe(videoSection);
+  }
 
   // ── SCROLL REVEAL para features ─────────────────────────────
   var feats = document.querySelectorAll('.feat');
