@@ -254,7 +254,7 @@ function AsistenteTab(props) {
     return (text || '')
       .replace(/\*\*|__|\*|`/g, '')
       .replace(/🏆/g, function () {
-        return ' ¡' + (typeof _glTerm === 'function' ? _glTerm('champion') : 'campeón') + '! ';
+        return ' ¡' + ((typeof _glTerm === 'function') ? _glTerm('terms', 'champion') : 'campeón') + '! ';
       })
       .replace(/[🔥🚀✨💪🙌🎉🎯💡⚡🌟👑💎📊💰📅🔮🤖📖⚖️📡📱♿🔗📧⚠️✅📋⏱📤💬🔊🛡📦📂🔑🛠🐞👥◷✦🎬🍎🇨🇴]/g, '')
       .replace(/(\d+)mins\b/g, '$1 minutos')

@@ -1660,7 +1660,7 @@ var AI_EMPATHY = {
   frustrado: {
     prefixes: [
       'Te escucho. ',
-      function () { return typeof _glPick === 'function' ? _glPick('frustration') : 'Qué duro, parce. '; },
+      function () { return typeof _glPick === 'function' ? _glPick('consolation') : 'Qué duro, parce. '; },
       'Uff, te entiendo. ',
       'Fuerza con eso. ',
       'No es fácil, lo sé. ',

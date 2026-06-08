@@ -296,10 +296,10 @@ function _aiColEncouragements() {
   return (typeof _gl === 'function') ? _gl('enthusiasm') : ['¡Así se hace!', 'Con toda, parce.', 'Vamos por más.', 'Esa es la actitud.', 'Sin miedo al éxito.', 'Dándole con toda.', 'A fuego, mi llave.'];
 }
 function _aiColEmpathy() {
-  return (typeof _gl === 'function') ? _gl('consolation') : ['Tranqui, todo bien.', 'Así es la vuelta.', 'No pasa nada, socio.', 'Fresco, que vamos bien.', 'Relajado, aquí estoy.'];
+  return (typeof _gl === 'function') ? _gl('consolation') : ['Tranqui, todo bien.', 'Así es la vuelta.', 'No pasa nada, socio.', 'Tranquilo, vos podés.'];
 }
 function _aiColClosings() {
-  return (typeof _gl === 'function') ? _gl('followUp') : ['¿Algo más en que te colabore?', '¿Qué más necesitás, parce?', 'Decime si querés que profundice en algo.', 'Aquí sigo por si necesitás otra cosa.'];
+  return (typeof _gl === 'function') ? _gl('followUp') : ['¿Algo más en que te colabore?', '¿Qué más necesitás, parce?', '¿Qué otra cosa te ayudo?'];
 }
 
 var _aiColombianismo = {
