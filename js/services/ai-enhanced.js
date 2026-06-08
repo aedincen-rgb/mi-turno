@@ -96,6 +96,7 @@ function aiClearMemory() {
   _aiMemory.proactiveCount = 0;
   _aiMemory.lastSuggestion = null;
   if (typeof aiMemoryResetSession === 'function') aiMemoryResetSession();
+  if (typeof aiEngageReset === 'function') aiEngageReset();
 }
 
 // ─── SUGERENCIAS PROACTIVAS ────────────────────────────────────
@@ -214,100 +215,103 @@ function aiEnrichResponse(originalText, intent, userContext, entities, turnosAll
   }
 
   // 2. Seguimiento contextual según el intent (botones sugeridos)
-  var followUps = {
-    total_ganado: [
-      { label: '📊 VS mes pasado', query: '¿vs mes pasado?' },
-      { label: '🔮 Proyección', query: 'Proyección al cierre' },
-      { label: '📧 Enviar reporte', query: 'Enviame el reporte por correo' }
-    ],
-    hoy: [
-      { label: '📅 ¿Y ayer?', query: '¿Cuánto gané ayer?' },
-      { label: '🏆 Mejor día', query: 'Mi mejor día' },
-      { label: '⏱ Horas hoy', query: '¿Cuántas horas trabajé hoy?' }
-    ],
-    ayer: [
-      { label: '📅 ¿Y hoy?', query: '¿Cuánto gané hoy?' },
-      { label: '📊 VS mes pasado', query: '¿vs mes pasado?' },
-      { label: '🏆 Mejor día', query: 'Mi mejor día' }
-    ],
-    proyeccion: [
-      { label: '🔮 Simular extra', query: '¿Cuánto si trabajo 4h más?' },
-      { label: '📊 Distribución', query: 'Distribución por recargo' },
-      { label: '💰 ¿Cuánto falta?', query: '¿Cuánto me falta para llegar al salario base?' }
-    ],
-    bienestar: [
-      { label: '📅 Próximo descanso', query: '¿Cuándo fue mi último descanso?' },
-      { label: '📊 Mi ritmo', query: '¿Cómo voy de ritmo?' },
-      { label: '🧘 Consejo', query: '¿Cómo puedo descansar mejor?' }
-    ],
-    comparativa_mes: [
-      { label: '📅 VS semana pasada', query: '¿vs semana pasada?' },
-      { label: '🔮 Proyección', query: 'Proyección al cierre' },
-      { label: '📊 Distribución', query: 'Distribución por recargo' }
-    ],
-    comparativa_semana: [
-      { label: '📅 VS mes pasado', query: '¿vs mes pasado?' },
-      { label: '🔮 Proyección', query: 'Proyección al cierre' }
-    ],
-    horas_trabajadas: [
-      { label: '⏱ Horas extra', query: '¿Cuántas horas extra llevo?' },
-      { label: '🌙 Horas nocturnas', query: '¿Cuántas horas nocturnas?' },
-      { label: '📊 Distribución', query: 'Distribución por recargo' }
-    ],
-    promedio: [
-      { label: '💵 Por hora', query: '¿Cuánto gano por hora?' },
-      { label: '📊 VS mes pasado', query: '¿vs mes pasado?' }
-    ],
-    mejor_dia: [
-      { label: '📉 Peor día', query: '¿Cuál fue mi peor día?' },
-      { label: '📊 Promedio', query: '¿Cuál es mi promedio diario?' }
-    ],
-    racha: [
-      { label: '🧘 Descanso', query: '¿Cuánto descanso he tenido?' },
-      { label: '📊 Mi ritmo', query: '¿Cómo voy de ritmo?' }
-    ],
-    distribucion: [
-      { label: '💰 Total ganado', query: '¿Cuánto gané este mes?' },
-      { label: '🔮 Proyección', query: 'Proyección al cierre' }
-    ],
-    simulacion: [
-      { label: '🌙 Solo nocturnas', query: '¿Cuánto ganaría si solo hago nocturnas?' },
-      { label: '📅 Un turno más', query: '¿Cuánto si hago 1 turno extra?' },
-      { label: '🎯 Meta', query: '¿Cuánto necesito para llegar a 2 millones?' }
-    ],
-    festivos: [
-      { label: '📅 Próximos', query: '¿Cuáles son los próximos festivos?' },
-      { label: '💰 Ya trabajados', query: '¿Cuánto gané en festivos este mes?' }
-    ],
-    velocidad: [
-      { label: '📊 Promedio', query: '¿Cuál es mi promedio por turno?' },
-      { label: '🔮 Simular', query: '¿Cuánto si trabajo 4h más?' }
-    ],
-    email: [
-      { label: '📧 Enviar ahora', query: 'Enviame el reporte' },
-      { label: '📝 Redactar correo', query: 'Redactá un correo formal' }
-    ]
-  };
-
-  if (followUps[intent]) {
-    actions = followUps[intent].slice(0, 3);
+  //    El motor de engagement (ai-engage.js) garantiza siempre 2 opciones.
+  //    Si no está disponible, se usa el pool de fallback legacy (compatibilidad).
+  if (typeof aiEngageActions === 'function') {
+    var convLevel = typeof aiConvLevel === 'function' ? aiConvLevel() : 0;
+    actions = aiEngageActions(intent, userContext, convLevel);
+  }
+  // Pool legacy de respaldo (si ai-engage.js no está cargado)
+  if (!actions || actions.length === 0) {
+    var followUps = {
+      total_ganado: [
+        { label: '📊 VS mes pasado', query: '¿vs mes pasado?' },
+        { label: '🔮 Proyección', query: 'Proyección al cierre' },
+        { label: '📧 Enviar reporte', query: 'Enviame el reporte por correo' }
+      ],
+      hoy: [
+        { label: '📅 ¿Y ayer?', query: '¿Cuánto gané ayer?' },
+        { label: '🏆 Mejor día', query: 'Mi mejor día' }
+      ],
+      ayer: [
+        { label: '📅 ¿Y hoy?', query: '¿Cuánto gané hoy?' },
+        { label: '📊 VS mes pasado', query: '¿vs mes pasado?' }
+      ],
+      proyeccion: [
+        { label: '🔮 Simular extra', query: '¿Cuánto si trabajo 4h más?' },
+        { label: '📊 Distribución', query: 'Distribución por recargo' }
+      ],
+      bienestar: [
+        { label: '📅 Próximo descanso', query: '¿Cuándo fue mi último descanso?' },
+        { label: '📊 Mi ritmo', query: '¿Cómo voy de ritmo?' }
+      ],
+      comparativa_mes: [
+        { label: '📅 VS semana pasada', query: '¿vs semana pasada?' },
+        { label: '🔮 Proyección', query: 'Proyección al cierre' }
+      ],
+      comparativa_semana: [
+        { label: '📅 VS mes pasado', query: '¿vs mes pasado?' },
+        { label: '🔮 Proyección', query: 'Proyección al cierre' }
+      ],
+      horas_trabajadas: [
+        { label: '⏱ Horas extra', query: '¿Cuántas horas extra llevo?' },
+        { label: '🌙 Horas nocturnas', query: '¿Cuántas horas nocturnas?' }
+      ],
+      promedio: [
+        { label: '💵 Por hora', query: '¿Cuánto gano por hora?' },
+        { label: '📊 VS mes pasado', query: '¿vs mes pasado?' }
+      ],
+      mejor_dia: [
+        { label: '📉 Peor día', query: '¿Cuál fue mi peor día?' },
+        { label: '📊 Promedio', query: '¿Cuál es mi promedio diario?' }
+      ],
+      racha: [
+        { label: '🧘 Descanso', query: '¿Cuánto descanso he tenido?' },
+        { label: '📊 Mi ritmo', query: '¿Cómo voy de ritmo?' }
+      ],
+      distribucion: [
+        { label: '💰 Total ganado', query: '¿Cuánto gané este mes?' },
+        { label: '🔮 Proyección', query: 'Proyección al cierre' }
+      ],
+      simulacion: [
+        { label: '🌙 Solo nocturnas', query: '¿Cuánto ganaría si solo hago nocturnas?' },
+        { label: '📅 Un turno más', query: '¿Cuánto si hago 1 turno extra?' }
+      ],
+      festivos: [
+        { label: '📅 Próximos', query: '¿Cuáles son los próximos festivos?' },
+        { label: '💰 Ya trabajados', query: '¿Cuánto gané en festivos este mes?' }
+      ],
+      velocidad: [
+        { label: '📊 Promedio', query: '¿Cuál es mi promedio por turno?' },
+        { label: '🔮 Simular', query: '¿Cuánto si trabajo 4h más?' }
+      ],
+      email: [
+        { label: '📧 Enviar ahora', query: 'Enviame el reporte' },
+        { label: '📝 Redactar correo', query: 'Redactá un correo formal' }
+      ]
+    };
+    if (followUps[intent]) {
+      actions = followUps[intent].slice(0, 2);
+    }
   }
 
-  // Sugerencia proactiva ocasional
-  var proactive = aiProactiveSuggest(userContext);
-  if (proactive && actions.length === 0) {
-    actions.push({ label: '💡 ' + proactive.action, query: proactive.action });
-    _aiMemory.lastSuggestion = { intent: proactive.intent, text: proactive.action };
+  // Sugerencia proactiva ocasional (solo si no hay acciones aún)
+  if (!actions || actions.length === 0) {
+    var proactive = aiProactiveSuggest(userContext);
+    if (proactive) {
+      actions = [{ label: '💡 ' + proactive.action, query: proactive.action }];
+      _aiMemory.lastSuggestion = { intent: proactive.intent, text: proactive.action };
+    }
   }
 
   // Guardar la primera acción como sugerencia activa
-  if (actions.length > 0 && !_aiMemory.lastSuggestion) {
+  if (actions && actions.length > 0 && !_aiMemory.lastSuggestion) {
     _aiMemory.lastSuggestion = { intent: intent, text: actions[0].label };
   }
 
   return {
     text: originalText,
-    actions: actions.length > 0 ? actions : null
+    actions: (actions && actions.length > 0) ? actions.slice(0, 2) : null
   };
 }
 
@@ -633,6 +637,25 @@ function aiEnhancedRespond(
   // 5. Expansión contextual — rellena con tips/ánimo solo si la respuesta sigue siendo corta
   try {
     text = _aiExpandir(text, intent, userContext);
+  } catch (_) {}
+
+  // 5b. Engagement — curiosidades, trivia, preguntas de seguimiento
+  //      Garantiza que el usuario siempre tenga al menos 1 pregunta y 2 opciones.
+  try {
+    // Curiosidad ocasional (1 de cada 3 respuestas cortas)
+    if (typeof aiEngageCuriosidad === 'function' && text && text.length < 350 && Math.random() < 0.33) {
+      text = aiEngageCuriosidad(text);
+    }
+    // Trivia ocasional (1 de cada 5 respuestas, si ya hay conversación)
+    if (typeof aiEngageTrivia === 'function' && text && _aiMemory.history && _aiMemory.history.length >= 4 && Math.random() < 0.2) {
+      var triviaText = aiEngageTrivia(text);
+      if (triviaText) text = triviaText;
+    }
+    // Verificar si el usuario respondió a una trivia
+    if (typeof aiEngageCheckTrivia === 'function') {
+      var triviaCheck = aiEngageCheckTrivia(question);
+      if (triviaCheck) text = triviaCheck + '\n\n' + _welcomePrefix; // reemplazar bienvenida
+    }
   } catch (_) {}
 
   // 6. Pulido final: personalidad + conversación
