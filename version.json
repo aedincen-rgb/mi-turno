@@ -1,4 +1,4 @@
 {
-  "v": "v211",
-  "label": "Fix Clerk — dominio correcto + versión SDK pinada"
+  "v": "v212",
+  "label": "Revert — eliminar integración Clerk, restaurar Supabase Auth"
 }

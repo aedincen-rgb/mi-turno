@@ -134,7 +134,6 @@
 <link rel="preconnect" href="https://yrpqvmqmchsxpotytxiy.supabase.co" crossorigin>
 <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-<link rel="preconnect" href="https://intense-cricket-8.clerk.accounts.dev" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,200;9..40,300;9..40,400;9..40,500;9..40,600;9..40,700;9..40,800;9..40,900&family=Nunito:wght@900&display=swap" rel="stylesheet">
 
 <!-- CSS FRAGMENTADO -->
@@ -144,7 +143,6 @@
 <link rel="stylesheet" href="css/base/background.css">
 <link rel="stylesheet" href="css/base/media-queries.css">
 <link rel="stylesheet" href="css/base/blur-fix.css">
-<link rel="stylesheet" href="css/base/clerk.css">
 
 <link rel="stylesheet" href="css/layout/header.css">
 <link rel="stylesheet" href="css/layout/scroll.css">
@@ -190,12 +188,6 @@
 <link rel="stylesheet" href="css/animations/keyframes.css">
 
 <!-- Librerías externas -->
-<!-- Clerk: debe cargarse ANTES de los scripts de la app para que window.Clerk
-     esté disponible cuando clerk-init.js se ejecute. Sin integrity hash porque
-     Clerk no publica SRI; crossorigin es suficiente para CORS. Cuando el usuario
-     pegue su Publishable Key en clerk-init.js, activar también la integración
-     JWT de Supabase en el dashboard de Clerk (JWT Templates → Supabase). -->
-<script src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@5.62.0/dist/clerk.browser.js" crossorigin="anonymous" onerror="window.__onScriptError && window.__onScriptError(this, 'Clerk SDK (jsdelivr)')"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" integrity="sha384-o+Hkm/usHFhCEWo1Ae1cLsOLiQQNrD2UfI424QDAaiZR7URnC8v35ey7s2sbGZHB" crossorigin="anonymous" onerror="window.__onScriptError && window.__onScriptError(this, 'Supabase SDK (jsdelivr)')"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js" integrity="sha384-tMH8h3BGESGckSAVGZ82T9n90ztNXxvdwvdM6UoR56cYcf+0iGXBliJ29D+wZ/x8" crossorigin="anonymous" onerror="window.__onScriptError && window.__onScriptError(this, 'React 18 (cdnjs)')"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js" integrity="sha384-bm7MnzvK++ykSwVJ2tynSE5TRdN+xL418osEVF2DE/L/gfWHj91J2Sphe582B1Bh" crossorigin="anonymous" onerror="window.__onScriptError && window.__onScriptError(this, 'ReactDOM 18 (cdnjs)')"></script>
@@ -263,7 +255,6 @@
 <!-- 3. Servicios -->
 <script src="js/services/supabase.js"></script>
 <script src="js/services/supabase-init.js"></script>
-<script src="js/services/clerk-init.js"></script>
 <script src="js/services/session-sync.js"></script>
 <script src="js/services/calculator.js"></script>
 <script src="js/services/quincena.js"></script>
@@ -314,7 +305,6 @@
 
 <!-- 6. App top-level -->
 <script src="js/app/auth-screen.js"></script>
-<script src="js/app/clerk-auth-screen.js"></script>
 <script src="js/app/fast-pin-screen.js"></script>
 <script src="js/app/app-main.js"></script>
 <script src="js/app/root.js"></script>

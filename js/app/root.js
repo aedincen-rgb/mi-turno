@@ -65,14 +65,8 @@ function Root() {
     try {
       limpiarSesionLocal(actual);
       setSession(null);
-      if (window.CLERK_MODE) {
-        // Delegar el signOut a Clerk. Async fire-and-forget: la sesión
-        // local ya está limpia; no necesitamos esperar la confirmación.
-        if (typeof window.clerkSignOut === 'function') {
-          window.clerkSignOut().catch(function () {});
-        }
-      } else if (wasCloud && CLOUD_MODE && SUPA && SUPA.auth) {
-        // scope 'global': revoca la sesión en TODOS los dispositivos.
+      // scope 'global': revoca la sesión en TODOS los dispositivos.
+      if (wasCloud && CLOUD_MODE && SUPA && SUPA.auth) {
         SUPA.auth.signOut({ scope: 'global' }).catch(function () {});
       }
     } catch (e) {
@@ -144,29 +138,8 @@ function Root() {
     };
   }, []);
 
-  // ── Sesión en la nube: escuchar cambios de Clerk (cuando está activo) ──
-  // Si CLERK_MODE está activo, la sesión la gestiona clerk-init.js vía
-  // addListener. Aquí solo necesitamos arrancar con la sesión ya existente
-  // si Clerk la restauró antes del primer render.
-  useEffect(function () {
-    if (!window.CLERK_MODE) return;
-    if (session) return; // ya hay sesión, no necesitamos hacer nada
-
-    var alive = true;
-    window.clerkReady().then(function (ok) {
-      if (!alive) return;
-      if (ok && window._mtSession && window._mtSession.uid) {
-        handleAuth(window._mtSession);
-      }
-    });
-    return function () { alive = false; };
-  }, []);
-
   // ── Sesión en la nube: aplicar y escuchar cambios de Supabase ──
-  // Solo se activa cuando NO estamos en CLERK_MODE (compatibilidad
-  // con el sistema de auth anterior).
   useEffect(function () {
-    if (window.CLERK_MODE) return; // Clerk maneja la sesión
     if (!CLOUD_MODE || !SUPA) return;
 
     var applying = false;
@@ -419,10 +392,7 @@ function Root() {
           : null
       );
     }
-    // Usar ClerkAuthScreen si el SDK está disponible; AuthScreen como fallback.
-    var AuthComponent =
-      (typeof ClerkAuthScreen === 'function') ? ClerkAuthScreen : AuthScreen;
-    return h(AuthComponent, { onAuth: handleAuth });
+    return h(AuthScreen, { onAuth: handleAuth });
   }
 
   return h(

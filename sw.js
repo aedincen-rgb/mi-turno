@@ -2,14 +2,13 @@
 //  MI TURNO · SERVICE WORKER
 //  Split cache: SHELL_CACHE (archivos de la app, se invalida en cada release)
 //               CDN_CACHE   (librerías externas, sobrevive entre releases)
-const SHELL_CACHE = 'mt-shell-v211'; // bump con scripts/bump.sh
+const SHELL_CACHE = 'mt-shell-v212'; // bump con scripts/bump.sh
 const CDN_CACHE   = 'mt-cdn-v2';    // solo bump cuando cambien URLs de CDN
 
 const CDN = [
   'https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js',
   'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',
-  'https://cdn.jsdelivr.net/npm/@clerk/clerk-js@5/dist/clerk.browser.js',
   'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
@@ -37,7 +36,6 @@ const appResources = [
   './css/base/background.css',
   './css/base/media-queries.css',
   './css/base/blur-fix.css',
-  './css/base/clerk.css',
   './css/layout/header.css',
   './css/layout/scroll.css',
   './css/layout/hero-card.css',
@@ -98,7 +96,6 @@ const appResources = [
   './js/utils/password-hash.js',
   './js/services/supabase.js',
   './js/services/supabase-init.js',
-  './js/services/clerk-init.js',
   './js/services/calculator.js',
   './js/services/quincena.js',
   './js/services/data.js',
@@ -143,7 +140,6 @@ const appResources = [
   './js/modals/export-report.js',
   './js/modals/onboarding.js',
   './js/app/auth-screen.js',
-  './js/app/clerk-auth-screen.js',
   './js/app/fast-pin-screen.js',
   './js/app/app-main.js',
   './js/app/root.js',

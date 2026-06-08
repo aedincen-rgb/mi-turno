@@ -2,7 +2,7 @@
 //  MI TURNO · services/export-email.js
 //  Exportar a base64 y enviar por email
 // ════════════════════════════════════════════════════════════════
-function exportPDFBase64(turnos, calc, salario, session) {
+function exportPDFBase64(turnos, calc, salario) {
   // Generar el PDF en memoria sin descargar, devolver base64
   var doc = new jspdf.jsPDF();
   var hoy = new Date();
@@ -15,22 +15,12 @@ function exportPDFBase64(turnos, calc, salario, session) {
   doc.setTextColor(100);
   doc.text('Reporte de turnos · ' + mes, 14, 28);
 
-  // Línea de empleado y PIN (solo si hay sesión)
-  var cursorY = 36;
-  if (session) {
-    var empleadoNombre = (session.pname) || (session.email) || 'Anónimo';
-    var empleadoTexto = 'Empleado: ' + empleadoNombre;
-    if (session.pin) empleadoTexto = empleadoTexto + '   PIN: ' + session.pin;
-    doc.text(empleadoTexto, 14, cursorY);
-    cursorY = 44;
-  }
-
   doc.setFontSize(11);
   doc.setTextColor(0);
-  doc.text('Salario base mensual: ' + fCOP(salario), 14, cursorY);
-  doc.text('Total devengado: ' + fCOP(calc.total), 14, cursorY + 8);
-  doc.text('Horas trabajadas: ' + fDur(calc.totalMin), 14, cursorY + 16);
-  doc.text('Días con turno: ' + (turnos ? turnos.length : 0), 14, cursorY + 24);
+  doc.text('Salario base mensual: ' + fCOP(salario), 14, 42);
+  doc.text('Total devengado: ' + fCOP(calc.total), 14, 50);
+  doc.text('Horas trabajadas: ' + fDur(calc.totalMin), 14, 58);
+  doc.text('Días con turno: ' + (turnos ? turnos.length : 0), 14, 66);
 
   if (turnos && turnos.length) {
     var rows = turnos
@@ -51,7 +41,7 @@ function exportPDFBase64(turnos, calc, salario, session) {
     doc.autoTable({
       head: [['Fecha', 'Inicio', 'Fin', 'Duración', 'Pago']],
       body: rows,
-      startY: cursorY + 32,
+      startY: 76,
       theme: 'striped',
       headStyles: { fillColor: [82, 127, 204] },
       styles: { fontSize: 9 }
@@ -63,24 +53,13 @@ function exportPDFBase64(turnos, calc, salario, session) {
   return pdfBase64;
 }
 
-function exportExcelBase64(turnos, calc, salario, session) {
+function exportExcelBase64(turnos, calc, salario) {
   var wb = XLSX.utils.book_new();
   var hoy = new Date();
 
   var rows = [
     ['Mi Turno · Colombia'],
-    ['Reporte: ' + hoy.toLocaleDateString('es-CO', { month: 'long', year: 'numeric' })]
-  ];
-
-  // Fila de empleado y PIN (solo si hay sesión)
-  if (session) {
-    var empleadoNombre = (session.pname) || (session.email) || 'Anónimo';
-    var empleadoCelda = 'Empleado: ' + empleadoNombre;
-    if (session.pin) empleadoCelda = empleadoCelda + '   PIN: ' + session.pin;
-    rows.push([empleadoCelda]);
-  }
-
-  rows.push(
+    ['Reporte: ' + hoy.toLocaleDateString('es-CO', { month: 'long', year: 'numeric' })],
     [],
     ['Salario base mensual', salario],
     ['Total devengado', calc.total],
@@ -88,7 +67,7 @@ function exportExcelBase64(turnos, calc, salario, session) {
     ['Días con turno', turnos ? turnos.length : 0],
     [],
     ['Fecha', 'Inicio', 'Fin', 'Duración (min)', 'Pago (COP)']
-  );
+  ];
 
   if (turnos && turnos.length) {
     turnos

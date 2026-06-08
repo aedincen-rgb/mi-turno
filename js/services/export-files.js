@@ -2,7 +2,7 @@
 //  MI TURNO · services/export-files.js
 //  Exportar PDF y Excel locales
 // ════════════════════════════════════════════════════════════════
-function exportPDF(turnos, calc, salario, session) {
+function exportPDF(turnos, calc, salario) {
   if (!window.jspdf) {
     alert('PDF no disponible');
     return;
@@ -19,23 +19,13 @@ function exportPDF(turnos, calc, salario, session) {
   doc.text('Período: ' + mes, 14, 27);
   doc.text('Generado: ' + ahora.toLocaleString('es-CO'), 14, 32);
 
-  // Línea de empleado y PIN (solo si hay sesión)
-  var resumenY = 44;
-  if (session) {
-    var empleadoNombre = (session.pname) || (session.email) || 'Anónimo';
-    var empleadoTexto = 'Empleado: ' + empleadoNombre;
-    if (session.pin) empleadoTexto = empleadoTexto + '   PIN: ' + session.pin;
-    doc.text(empleadoTexto, 14, 38);
-    resumenY = 50;
-  }
-
   doc.setFontSize(14);
   doc.setTextColor(40);
-  doc.text('Resumen del mes', 14, resumenY);
+  doc.text('Resumen del mes', 14, 44);
   doc.setFontSize(10);
   doc.setTextColor(80);
-  doc.text('Total: ' + fCOP(calc.totalCOP), 14, resumenY + 8);
-  doc.text('Horas: ' + fDur(calc.totalMins), 14, resumenY + 14);
+  doc.text('Total: ' + fCOP(calc.totalCOP), 14, 52);
+  doc.text('Horas: ' + fDur(calc.totalMins), 14, 58);
   doc.text(
     'Salario base: ' +
       fCOP(salario) +
@@ -43,7 +33,7 @@ function exportPDF(turnos, calc, salario, session) {
       ((calc.totalCOP / salario) * 100).toFixed(1) +
       '%',
     14,
-    resumenY + 20
+    64
   );
 
   var rows = Object.keys(calc.bd)
@@ -59,7 +49,7 @@ function exportPDF(turnos, calc, salario, session) {
       ];
     });
   doc.autoTable({
-    startY: resumenY + 28,
+    startY: 72,
     head: [['Tipo', 'Horas', 'Factor', 'Pago']],
     body: rows,
     headStyles: {
@@ -106,7 +96,7 @@ function exportPDF(turnos, calc, salario, session) {
   doc.save('mi-turno-' + ahora.toISOString().slice(0, 10) + '.pdf');
 }
 
-function exportExcel(turnos, calc, salario, session) {
+function exportExcel(turnos, calc, salario) {
   if (!window.XLSX) {
     alert('Excel no disponible');
     return;

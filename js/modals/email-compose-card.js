@@ -44,12 +44,11 @@ function EmailComposeCard(props) {
           total: props.parent.calc.totalCOP,
           totalMin: props.parent.calc.totalMins
         };
-        var sess = (props.parent && props.parent.session) || window._mtSession || null;
         if (format[0] === 'pdf')
-          fileBase64 = exportPDFBase64(turnosParaExport, calcAdapt, props.parent.salario, sess);
-        else fileBase64 = exportExcelBase64(turnosParaExport, calcAdapt, props.parent.salario, sess);
+          fileBase64 = exportPDFBase64(turnosParaExport, calcAdapt, props.parent.salario);
+        else fileBase64 = exportExcelBase64(turnosParaExport, calcAdapt, props.parent.salario);
       } else {
-        fileBase64 = exportPDFBase64([], { total: 0, totalMin: 0 }, props.parent.salario, null);
+        fileBase64 = exportPDFBase64([], { total: 0, totalMin: 0 }, props.parent.salario);
         filename = 'mi-turno-sin-adjunto.pdf';
       }
 
