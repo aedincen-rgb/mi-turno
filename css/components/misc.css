@@ -181,11 +181,11 @@ button:focus:not(:focus-visible) {
   bottom: calc(var(--sab) + 12px);
   left: 50%;
   transform: translateX(-50%);
-  width: calc(100% - 32px);
-  max-width: 460px;
+  width: calc(100% - 48px);
+  max-width: 420px;
   z-index: 100;
-  border-radius: 32px;
-  padding: 10px 8px;
+  border-radius: 999px;
+  padding: 7px 6px;
   background: rgba(255, 255, 255, 0.72);
   backdrop-filter: blur(40px) saturate(180%);
   -webkit-backdrop-filter: blur(40px) saturate(180%);
@@ -199,11 +199,11 @@ button:focus:not(:focus-visible) {
 
 .tab-indicator {
   position: absolute;
-  top: 10px;
-  bottom: 10px;
-  left: 8px;
-  width: calc((100% - 16px) / 5);
-  border-radius: 24px;
+  top: 7px;
+  bottom: 7px;
+  left: 6px;
+  width: calc((100% - 12px) / 5);
+  border-radius: 999px;
   background: rgba(91, 134, 229, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.32);
   box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.55);
@@ -215,12 +215,12 @@ button:focus:not(:focus-visible) {
 
 .tab-btn {
   flex: 1;
-  padding: 11px 4px 9px;
-  border-radius: 24px;
+  padding: 8px 4px 7px;
+  border-radius: 999px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   color: var(--muted);
   transition: color 0.3s var(--ease);
   position: relative;
@@ -234,26 +234,26 @@ button:focus:not(:focus-visible) {
 }
 
 .tab-icon-svg {
-  width: 26px;
-  height: 26px;
+  width: 22px;
+  height: 22px;
   transition: transform 0.45s var(--spring);
   display: block;
   flex-shrink: 0;
 }
 
 .tab-btn.on .tab-icon-svg {
-  transform: scale(1.12);
+  transform: scale(1.1);
 }
 
 .tab-label {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0;
   line-height: 1.1;
   white-space: nowrap;
 }
 
 .tab-btn.on .tab-label {
-  font-weight: 800;
-  font-size: 11.5px;
+  font-weight: 700;
+  font-size: 10px;
 }
