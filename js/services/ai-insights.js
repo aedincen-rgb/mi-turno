@@ -19,46 +19,84 @@ function aiInsightBreakdown(c) {
   var bd = c.bd;
 
   // Horas nocturnas
-  var noctMins = ((bd.noctOrd || {}).mins || 0) + ((bd.extraNoct || {}).mins || 0) +
-    ((bd.noctFest || {}).mins || 0) + ((bd.extraFestNoct || {}).mins || 0);
+  var noctMins =
+    ((bd.noctOrd || {}).mins || 0) +
+    ((bd.extraNoct || {}).mins || 0) +
+    ((bd.noctFest || {}).mins || 0) +
+    ((bd.extraFestNoct || {}).mins || 0);
   if (noctMins > 0) {
-    var noctPct = c.totalMins > 0 ? (noctMins / c.totalMins * 100) : 0;
-    parts.push('🌙 **' + (noctPct > 40 ? 'Alta carga nocturna' : 'Horas nocturnas') + ':** ' +
-      fDur(noctMins) + ' (' + noctPct.toFixed(0) + '% del total). ' +
-      (noctPct > 40
-        ? 'La ley no pone límite a las horas nocturnas, pero estudios recomiendan no superar el 50% para preservar la salud. Cada hora nocturna te rinde 35% más que una diurna.'
-        : 'Las horas nocturnas pagan 35% extra. Si aumentaras un 10% tus horas de noche, ganarías aproximadamente ' + fCOP(c.totalCOP * 0.035) + ' adicionales este mes.'));
+    var noctPct = c.totalMins > 0 ? (noctMins / c.totalMins) * 100 : 0;
+    parts.push(
+      '🌙 **' +
+        (noctPct > 40 ? 'Alta carga nocturna' : 'Horas nocturnas') +
+        ':** ' +
+        fDur(noctMins) +
+        ' (' +
+        noctPct.toFixed(0) +
+        '% del total). ' +
+        (noctPct > 40
+          ? 'La ley no pone límite a las horas nocturnas, pero estudios recomiendan no superar el 50% para preservar la salud. Cada hora nocturna te rinde 35% más que una diurna.'
+          : 'Las horas nocturnas pagan 35% extra. Si aumentaras un 10% tus horas de noche, ganarías aproximadamente ' +
+            fCOP(c.totalCOP * 0.035) +
+            ' adicionales este mes.')
+    );
   }
 
   // Horas festivas
-  var festMins = ((bd.diurnaFest || {}).mins || 0) + ((bd.noctFest || {}).mins || 0) +
-    ((bd.extraFestDiur || {}).mins || 0) + ((bd.extraFestNoct || {}).mins || 0);
+  var festMins =
+    ((bd.diurnaFest || {}).mins || 0) +
+    ((bd.noctFest || {}).mins || 0) +
+    ((bd.extraFestDiur || {}).mins || 0) +
+    ((bd.extraFestNoct || {}).mins || 0);
   if (festMins > 0) {
-    parts.push('⛪ **Festivos trabajados:** ' + fDur(festMins) + ' en ' + (c.festDiasCount || 0) + ' día(s). ' +
-      'El recargo festivo es del 75% (diurno) o 110% (nocturno). ' +
-      'Por ley, el trabajo en domingo o festivo debe compensarse con descanso o pago doble. ' +
-      'Cada festivo trabajado suma aproximadamente ' + fCOP((c.salario || 0) / 30 * 0.75) + ' extra sobre un día normal.');
+    parts.push(
+      '⛪ **Festivos trabajados:** ' +
+        fDur(festMins) +
+        ' en ' +
+        (c.festDiasCount || 0) +
+        ' día(s). ' +
+        'El recargo festivo es del 75% (diurno) o 110% (nocturno). ' +
+        'Por ley, el trabajo en domingo o festivo debe compensarse con descanso o pago doble. ' +
+        'Cada festivo trabajado suma aproximadamente ' +
+        fCOP(((c.salario || 0) / 30) * 0.75) +
+        ' extra sobre un día normal.'
+    );
   }
 
   // Horas extra
-  var extraMins = ((bd.extraDiurna || {}).mins || 0) + ((bd.extraNoct || {}).mins || 0) +
-    ((bd.extraFestDiur || {}).mins || 0) + ((bd.extraFestNoct || {}).mins || 0);
+  var extraMins =
+    ((bd.extraDiurna || {}).mins || 0) +
+    ((bd.extraNoct || {}).mins || 0) +
+    ((bd.extraFestDiur || {}).mins || 0) +
+    ((bd.extraFestNoct || {}).mins || 0);
   if (extraMins > 0) {
-    parts.push('➕ **Horas extra:** ' + fDur(extraMins) + '. ' +
-      'El CST limita las horas extra a 2 por día y 12 por semana. ' +
-      (extraMins / 60 > 12
-        ? '⚠️ Ya superaste el límite semanal de 12h extra. Verificá que tu empleador esté cumpliendo con los descansos obligatorios.'
-        : 'Aún tenés margen: podrías hacer hasta ' + (12 - extraMins / 60).toFixed(0) + 'h extra más esta semana sin exceder el límite legal.'));
+    parts.push(
+      '➕ **Horas extra:** ' +
+        fDur(extraMins) +
+        '. ' +
+        'El CST limita las horas extra a 2 por día y 12 por semana. ' +
+        (extraMins / 60 > 12
+          ? '⚠️ Ya superaste el límite semanal de 12h extra. Verificá que tu empleador esté cumpliendo con los descansos obligatorios.'
+          : 'Aún tenés margen: podrías hacer hasta ' +
+            (12 - extraMins / 60).toFixed(0) +
+            'h extra más esta semana sin exceder el límite legal.')
+    );
   }
 
   // Días ordinarios
   var ordMins = ((bd.diurnaOrd || {}).mins || 0) + ((bd.noctOrd || {}).mins || 0);
   if (c.totalMins > 0) {
-    var ordPct = (ordMins / c.totalMins * 100);
-    parts.push('📊 **Composición:** ' + ordPct.toFixed(0) + '% ordinario, ' + (100 - ordPct).toFixed(0) + '% con recargo. ' +
-      (ordPct > 85
-        ? 'Casi todo tu ingreso es tarifa plana. Si buscás maximizar, intentá trabajar más domingos o noches — cada uno paga entre 35% y 110% extra.'
-        : 'Buena mezcla de recargos. Estás aprovechando los beneficios de la ley para maximizar tu ingreso.'));
+    var ordPct = (ordMins / c.totalMins) * 100;
+    parts.push(
+      '📊 **Composición:** ' +
+        ordPct.toFixed(0) +
+        '% ordinario, ' +
+        (100 - ordPct).toFixed(0) +
+        '% con recargo. ' +
+        (ordPct > 85
+          ? 'Casi todo tu ingreso es tarifa plana. Si buscás maximizar, intentá trabajar más domingos o noches — cada uno paga entre 35% y 110% extra.'
+          : 'Buena mezcla de recargos. Estás aprovechando los beneficios de la ley para maximizar tu ingreso.')
+    );
   }
 
   return parts.length > 0 ? '\n\n📋 **Análisis de tus recargos**\n' + parts.join('\n\n') : '';
@@ -76,17 +114,20 @@ function aiInsightScenarios(c) {
   var diasRestantes = c.diasRestantes || 0;
   if (diasRestantes <= 0) return '';
 
-  var promDiario = c.prom || (c.totalCOP / Math.max(1, c.diasTrab));
-  var promHoras = c.promHoras || (c.totalMins / Math.max(1, c.diasTrab) / 60);
+  var promDiario = c.prom || c.totalCOP / Math.max(1, c.diasTrab);
+  var promHoras = c.promHoras || c.totalMins / Math.max(1, c.diasTrab) / 60;
 
   // Escenarios
-  var optimista = c.totalCOP + (promDiario * 1.3 * diasRestantes);
-  var realista = c.proy || (c.totalCOP + promDiario * diasRestantes);
-  var pesimista = c.totalCOP + (promDiario * 0.5 * Math.max(1, diasRestantes - 3));
+  var optimista = c.totalCOP + promDiario * 1.3 * diasRestantes;
+  var realista = c.proy || c.totalCOP + promDiario * diasRestantes;
+  var pesimista = c.totalCOP + promDiario * 0.5 * Math.max(1, diasRestantes - 3);
 
   var resp = '\n\n🔮 **Proyecciones al cierre**\n';
 
-  resp += '• ☀️ **Optimista:** ' + fCOP(optimista) + ' — Si mantenés el ritmo y metés horas extra o festivos.\n';
+  resp +=
+    '• ☀️ **Optimista:** ' +
+    fCOP(optimista) +
+    ' — Si mantenés el ritmo y metés horas extra o festivos.\n';
   resp += '• 📊 **Realista:** ' + fCOP(realista) + ' — A tu ritmo actual sin cambios.\n';
   resp += '• 🌧 **Pesimista:** ' + fCOP(pesimista) + ' — Si trabajás menos días o reducís horas.\n';
 
@@ -94,10 +135,22 @@ function aiInsightScenarios(c) {
   var falta = Math.max(0, (c.salario || 0) - c.totalCOP);
   if (falta > 0 && promDiario > 0) {
     var diasParaMeta = Math.ceil(falta / promDiario);
-    resp += '\n🎯 Para alcanzar tu salario base de ' + fCOP(c.salario) + ', necesitás ≈ ' + diasParaMeta + ' día(s) más a tu ritmo actual.\n';
+    resp +=
+      '\n🎯 Para alcanzar tu salario base de ' +
+      fCOP(c.salario) +
+      ', necesitás ≈ ' +
+      diasParaMeta +
+      ' día(s) más a tu ritmo actual.\n';
     if (promHoras > 0) {
       var horasDiarias = promHoras;
-      resp += 'Si hicieras ' + (horasDiarias + 2).toFixed(0) + 'h en vez de ' + horasDiarias.toFixed(1) + 'h por día, llegarías en ≈ ' + Math.ceil(falta / (c.copPorHoraReal * (horasDiarias + 2))) + ' días.\n';
+      resp +=
+        'Si hicieras ' +
+        (horasDiarias + 2).toFixed(0) +
+        'h en vez de ' +
+        horasDiarias.toFixed(1) +
+        'h por día, llegarías en ≈ ' +
+        Math.ceil(falta / (c.copPorHoraReal * (horasDiarias + 2))) +
+        ' días.\n';
     }
   }
 
@@ -114,29 +167,54 @@ function aiInsightScenarios(c) {
 function aiInsightEfficiency(c) {
   if (!c || !c.dias || c.dias.length === 0) return '';
   var dias = c.dias;
-  var mejor = dias.reduce(function (a, b) { return b.cop > a.cop ? b : a; }, dias[0]);
-  var peor = dias.reduce(function (a, b) { return b.cop < a.cop ? b : a; }, dias[0]);
+  var mejor = dias.reduce(function (a, b) {
+    return b.cop > a.cop ? b : a;
+  }, dias[0]);
+  var peor = dias.reduce(function (a, b) {
+    return b.cop < a.cop ? b : a;
+  }, dias[0]);
 
   var resp = '\n\n⚡ **Eficiencia**\n';
 
   // Mejor día
   if (mejor && mejor.fecha) {
-    resp += '• 🏆 **Mejor día:** ' + _formatFecha(mejor.fecha) + ' — ' + fCOP(mejor.cop) + ' en ' + fDur(mejor.mins) + '\n';
+    resp +=
+      '• 🏆 **Mejor día:** ' +
+      _formatFecha(mejor.fecha) +
+      ' — ' +
+      fCOP(mejor.cop) +
+      ' en ' +
+      fDur(mejor.mins) +
+      '\n';
   }
 
   // Peor día
   if (peor && peor.fecha && peor.fecha !== (mejor ? mejor.fecha : '')) {
-    resp += '• 📉 **Día más bajo:** ' + _formatFecha(peor.fecha) + ' — ' + fCOP(peor.cop) + ' en ' + fDur(peor.mins) + '\n';
+    resp +=
+      '• 📉 **Día más bajo:** ' +
+      _formatFecha(peor.fecha) +
+      ' — ' +
+      fCOP(peor.cop) +
+      ' en ' +
+      fDur(peor.mins) +
+      '\n';
   }
 
   // COP por hora
   if (c.copPorHoraReal && c.vh) {
-    var eficienciaPct = ((c.copPorHoraReal / c.vh - 1) * 100);
-    resp += '• 💵 **Valor hora efectivo:** ' + fCOP(c.copPorHoraReal) + ' (' + (eficienciaPct >= 0 ? '+' : '') + eficienciaPct.toFixed(0) + '% sobre la base)\n';
+    var eficienciaPct = (c.copPorHoraReal / c.vh - 1) * 100;
+    resp +=
+      '• 💵 **Valor hora efectivo:** ' +
+      fCOP(c.copPorHoraReal) +
+      ' (' +
+      (eficienciaPct >= 0 ? '+' : '') +
+      eficienciaPct.toFixed(0) +
+      '% sobre la base)\n';
     if (eficienciaPct > 20) {
       resp += '  ¡Excelente! Tus recargos están potenciando tu hora en más del 20%.\n';
     } else if (eficienciaPct < 5) {
-      resp += '  Tus recargos son bajos. Considerá turnos nocturnos o festivos para aumentar este número.\n';
+      resp +=
+        '  Tus recargos son bajos. Considerá turnos nocturnos o festivos para aumentar este número.\n';
     }
   }
 
@@ -144,9 +222,15 @@ function aiInsightEfficiency(c) {
   if (c.bestDowInfo && c.bestDowInfo.count > 0) {
     var dowNames = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
     var bestDia = c.bestDowInfo.dia;
-    resp += '• 📅 **Día más rentable:** ' + dowNames[bestDia] + ' (promedio ' + fCOP(c.bestDowInfo.cop / Math.max(1, c.bestDowInfo.count)) + '/día)\n';
+    resp +=
+      '• 📅 **Día más rentable:** ' +
+      dowNames[bestDia] +
+      ' (promedio ' +
+      fCOP(c.bestDowInfo.cop / Math.max(1, c.bestDowInfo.count)) +
+      '/día)\n';
     if (bestDia === 0) {
-      resp += '  Los domingos pagan recargo del 75%. Trabajar domingos es la forma más rápida de aumentar tu ingreso.\n';
+      resp +=
+        '  Los domingos pagan recargo del 75%. Trabajar domingos es la forma más rápida de aumentar tu ingreso.\n';
     }
   }
 
@@ -166,30 +250,48 @@ function aiInsightLegal(c) {
 
   // Verificar horas semanales
   if (c.hrsSemanales && c.hrsSemanales > 44) {
-    parts.push('⚖️ **Jornada semanal:** ' + c.hrsSemanales.toFixed(1) + 'h. ' +
-      'La Ley 2101 de 2021 establece un máximo de 44h/semana para 2026. ' +
-      'Si estás superando este límite de forma habitual, tu empleador debe pagar las horas extra correspondientes.');
+    parts.push(
+      '⚖️ **Jornada semanal:** ' +
+        c.hrsSemanales.toFixed(1) +
+        'h. ' +
+        'La Ley 2101 de 2021 establece un máximo de 44h/semana para 2026. ' +
+        'Si estás superando este límite de forma habitual, tu empleador debe pagar las horas extra correspondientes.'
+    );
   }
 
   // Verificar racha de días
   if (c.rachaActual >= 6) {
-    parts.push('⚠️ **Racha de ' + c.rachaActual + ' días:** La ley exige al menos 1 día de descanso por cada 6 trabajados (Art. 77 CST). ' +
-      'Si no te dan ese descanso, te corresponde pago doble por el día trabajado de más.');
+    parts.push(
+      '⚠️ **Racha de ' +
+        c.rachaActual +
+        ' días:** La ley exige al menos 1 día de descanso por cada 6 trabajados (Art. 77 CST). ' +
+        'Si no te dan ese descanso, te corresponde pago doble por el día trabajado de más.'
+    );
   }
 
   // Auxilio de transporte
-  var auxilioAplicable = (c.salario || 0) <= (SMIN * 2);
+  var auxilioAplicable = (c.salario || 0) <= SMIN * 2;
   if (auxilioAplicable) {
     var auxDiario = AUX_TRANSPORTE_2026 / 30;
-    parts.push('🚌 **Auxilio de transporte:** Tenés derecho a $' + AUX_TRANSPORTE_2026.toLocaleString() + ' mensuales ' +
-      '(≈$' + auxDiario.toFixed(0) + '/día). Esto aplica si ganás hasta 2 SMMLV. Activá esta opción en Ajustes > Preferencias.');
+    parts.push(
+      '🚌 **Auxilio de transporte:** Tenés derecho a $' +
+        AUX_TRANSPORTE_2026.toLocaleString() +
+        ' mensuales ' +
+        '(≈$' +
+        auxDiario.toFixed(0) +
+        '/día). Esto aplica si ganás hasta 2 SMMLV. Activá esta opción en Ajustes > Preferencias.'
+    );
   }
 
   // Prestaciones
   if (c.totalCOP > 0) {
     var prestEst = c.totalCOP * 0.218;
-    parts.push('💰 **Prestaciones estimadas:** ≈' + fCOP(prestEst) + ' (21.8% sobre bruto — incluye prima, cesantías, vacaciones e intereses). ' +
-      'Este es un estimado. El cálculo exacto depende de tu contrato y antigüedad.');
+    parts.push(
+      '💰 **Prestaciones estimadas:** ≈' +
+        fCOP(prestEst) +
+        ' (21.8% sobre bruto — incluye prima, cesantías, vacaciones e intereses). ' +
+        'Este es un estimado. El cálculo exacto depende de tu contrato y antigüedad.'
+    );
   }
 
   return parts.length > 0 ? '\n\n⚖️ **Contexto legal**\n' + parts.join('\n\n') : '';
@@ -208,28 +310,50 @@ function aiInsightRecommendations(c) {
 
   // Si el % del salario es bajo
   if (c.pctSalario < 40 && c.diasRestantes > 5) {
-    tips.push('💡 Vas al ' + c.pctSalario.toFixed(0) + '% de tu salario base. Para llegar al 100%, necesitás ≈' +
-      fCOP((c.salario - c.totalCOP) * 1.1) + ' más. Probá trabajar fines de semana o noches — pagan entre 35% y 75% extra.');
+    tips.push(
+      '💡 Vas al ' +
+        c.pctSalario.toFixed(0) +
+        '% de tu salario base. Para llegar al 100%, necesitás ≈' +
+        fCOP((c.salario - c.totalCOP) * 1.1) +
+        ' más. Probá trabajar fines de semana o noches — pagan entre 35% y 75% extra.'
+    );
   }
 
   // Si casi no tiene recargos
-  var hasNocturno = ((c.bd && c.bd.noctOrd && c.bd.noctOrd.mins > 0) || (c.bd && c.bd.extraNoct && c.bd.extraNoct.mins > 0));
-  var hasFestivo = ((c.bd && c.bd.diurnaFest && c.bd.diurnaFest.mins > 0) || (c.bd && c.bd.noctFest && c.bd.noctFest.mins > 0));
+  var hasNocturno =
+    (c.bd && c.bd.noctOrd && c.bd.noctOrd.mins > 0) ||
+    (c.bd && c.bd.extraNoct && c.bd.extraNoct.mins > 0);
+  var hasFestivo =
+    (c.bd && c.bd.diurnaFest && c.bd.diurnaFest.mins > 0) ||
+    (c.bd && c.bd.noctFest && c.bd.noctFest.mins > 0);
   if (!hasNocturno && !hasFestivo && c.diasTrab > 3) {
-    tips.push('🌙 No has trabajado turnos nocturnos ni festivos este mes. Si hicieras 8h nocturnas una vez por semana, sumarías ≈' +
-      fCOP(c.vh * 8 * 0.35 * 4) + ' extra al mes (35% de recargo).');
+    tips.push(
+      '🌙 No has trabajado turnos nocturnos ni festivos este mes. Si hicieras 8h nocturnas una vez por semana, sumarías ≈' +
+        fCOP(c.vh * 8 * 0.35 * 4) +
+        ' extra al mes (35% de recargo).'
+    );
   }
 
   // Si la racha es larga
   if (c.rachaActual >= 5) {
-    tips.push('🧘 Llevás ' + c.rachaActual + ' días sin descanso. Considerá tomarte un día libre — tu productividad y salud lo agradecerán. La ley además te protege.');
+    tips.push(
+      '🧘 Llevás ' +
+        c.rachaActual +
+        ' días sin descanso. Considerá tomarte un día libre — tu productividad y salud lo agradecerán. La ley además te protege.'
+    );
   }
 
   // Optimización de horario
   if (c.copPorHoraReal && c.vh && c.copPorHoraReal < c.vh * 1.1 && c.diasTrab > 3) {
-    tips.push('📊 Tu valor hora efectivo es ' + fCOP(c.copPorHoraReal) + ', apenas un ' +
-      (((c.copPorHoraReal / c.vh) - 1) * 100).toFixed(0) + '% sobre la base. Si movieras el 20% de tus horas a horario nocturno, ganarías ≈' +
-      fCOP(c.totalCOP * 0.07) + ' extra sin trabajar más horas.');
+    tips.push(
+      '📊 Tu valor hora efectivo es ' +
+        fCOP(c.copPorHoraReal) +
+        ', apenas un ' +
+        ((c.copPorHoraReal / c.vh - 1) * 100).toFixed(0) +
+        '% sobre la base. Si movieras el 20% de tus horas a horario nocturno, ganarías ≈' +
+        fCOP(c.totalCOP * 0.07) +
+        ' extra sin trabajar más horas.'
+    );
   }
 
   return tips.length > 0 ? '\n\n💡 **Recomendaciones**\n' + tips.join('\n\n') : '';
@@ -247,23 +371,29 @@ function aiInsightRecommendations(c) {
 function aiInsightFull(c, intent) {
   if (!c || c.diasTrab === 0) return '';
 
+  // Esta función solo se llama desde aiEnhancedRespond cuando _verboso=true,
+  // pero se refuerza acá: solo intents de análisis explícito generan el bloque completo.
   var sections = [];
 
-  // Solo agregar secciones según el intent
-  if (intent === 'total_ganado' || intent === 'stats' || intent === 'proyeccion' || intent === 'analisis' || intent === 'distribucion') {
+  if (intent === 'analisis' || intent === 'informe_completo' || intent === 'distribucion') {
     sections.push(aiInsightBreakdown(c));
     sections.push(aiInsightEfficiency(c));
     sections.push(aiInsightScenarios(c));
     sections.push(aiInsightLegal(c));
     sections.push(aiInsightRecommendations(c));
-  } else if (intent === 'comparativa_mes' || intent === 'comparativa_semana') {
+  } else if (intent === 'total_ganado' || intent === 'stats' || intent === 'proyeccion') {
+    // En modo verboso, mostrar eficiencia + escenarios (sin legal/recomendaciones que son muy largas)
     sections.push(aiInsightEfficiency(c));
-    sections.push(aiInsightRecommendations(c));
-  } else if (intent === 'hoy' || intent === 'ayer') {
+    sections.push(aiInsightScenarios(c));
+  } else if (intent === 'comparativa_mes' || intent === 'comparativa_semana') {
     sections.push(aiInsightEfficiency(c));
   }
 
-  return sections.filter(function (s) { return s && s.length > 0; }).join('\n');
+  return sections
+    .filter(function (s) {
+      return s && s.length > 0;
+    })
+    .join('\n');
 }
 
 // ─── HELPERS ──────────────────────────────────────────────────

@@ -854,21 +854,45 @@ function _aiDispatchNLP(intent, c, state, q, t) {
 
   // ── Dinero ──
   if (intent === 'total_ganado') {
+    // Con desglose solo si el usuario lo pidió explícitamente
+    var _quiereDesglose = _aiHas(
+      t,
+      'desglose',
+      'detalle',
+      'distribucion',
+      'recargo',
+      'desglosame',
+      'distribucion',
+      'como se divide'
+    );
+    if (_quiereDesglose) {
+      return (
+        'Este mes llevás **' +
+        fCOP(c.totalCOP) +
+        '** brutos, en ' +
+        c.diasTrab +
+        ' turnos.\n\n' +
+        _bdLines(c.bd) +
+        '\n\n' +
+        '📊 Vas al ' +
+        c.pctSalario.toFixed(1) +
+        '% de tu salario base.\n' +
+        '🔮 Proyección al cierre: **' +
+        fCOP(c.proy) +
+        '**'
+      );
+    }
     return (
       'Este mes llevás **' +
       fCOP(c.totalCOP) +
-      '** brutos, en ' +
+      '** brutos en ' +
       c.diasTrab +
-      ' turnos.\n\n' +
-      _bdLines(c.bd) +
-      '\n\n' +
-      '📊 Vas al ' +
+      ' turnos — ' +
       c.pctSalario.toFixed(1) +
-      '% de tu salario base.\n' +
-      '🔮 Proyección al cierre: **' +
+      '% de tu meta.\n' +
+      'Proyección al cierre: **' +
       fCOP(c.proy) +
-      '**\n\n' +
-      (typeof aiFollowUp === 'function' ? aiFollowUp('total_ganado') : '')
+      '**'
     );
   }
   if (intent === 'hoy') {
@@ -902,44 +926,51 @@ function _aiDispatchNLP(intent, c, state, q, t) {
   }
   if (intent === 'proyeccion') {
     return (
-      '🔮 Al cierre del mes proyectás **' +
+      '🔮 Proyección al cierre: **' +
       fCOP(c.proy) +
-      '**.\n\n' +
-      '• Días trabajados: ' +
-      c.diasTrab +
-      ' de ' +
-      c.diasMes +
-      '\n' +
-      '• Promedio por turno: ' +
-      fCOP(c.prom) +
-      '\n' +
-      '• Días restantes: ' +
-      c.diasRestantes +
-      '\n\n' +
-      '💰 Eso es el ' +
+      '** — ' +
       c.pctSalario.toFixed(1) +
-      '% de tu salario base.\n\n' +
-      (typeof aiFollowUp === 'function' ? aiFollowUp('proyeccion') : '')
+      '% de tu meta.\n' +
+      '• ' +
+      c.diasTrab +
+      ' días trabajados, ' +
+      c.diasRestantes +
+      ' restantes.'
     );
   }
   if (intent === 'horas_trabajadas') {
+    var _quiereDetHoras = _aiHas(
+      t,
+      'detalle',
+      'desglose',
+      'nocturna',
+      'festiva',
+      'extra',
+      'distribucion'
+    );
+    if (_quiereDetHoras) {
+      return (
+        '⏱ Llevás **' +
+        fDur(c.totalMins) +
+        '** este mes:\n' +
+        '• Nocturnas: ' +
+        fDur(c.nocturnasMins) +
+        '\n' +
+        '• Festivas: ' +
+        fDur(c.festMins) +
+        '\n' +
+        '• Extra: ' +
+        fDur(c.extraMins)
+      );
+    }
     return (
       '⏱ Llevás **' +
       fDur(c.totalMins) +
-      '** este mes (' +
-      (c.totalMins / 60).toFixed(1) +
-      ' horas).\n\n' +
-      '• Promedio por turno: ' +
+      '** este mes en ' +
+      c.diasTrab +
+      ' turnos — promedio ' +
       c.promHoras.toFixed(1) +
-      'h\n' +
-      '• Horas nocturnas: ' +
-      fDur(c.nocturnasMins) +
-      '\n' +
-      '• Horas festivas: ' +
-      fDur(c.festMins) +
-      '\n' +
-      '• Horas extra: ' +
-      fDur(c.extraMins)
+      'h por turno.'
     );
   }
   if (intent === 'promedio') {
@@ -1151,58 +1182,39 @@ function _aiDispatchNLP(intent, c, state, q, t) {
 
   // ── Bienestar ──
   if (intent === 'bienestar') {
-    var _fu = typeof aiFollowUp === 'function' ? '\n\n' + aiFollowUp('bienestar') : '';
-    // Turno largo activo → alerta inmediata
     if (c.alertaTurnoLargo) {
       return (
-        '⚠️ **Turno muy largo:** Llevas **' +
+        '⚠️ Llevas **' +
         Math.round(c.minutosEnTurnoActual / 60) +
-        ' horas** en este turno.' +
-        (c.alertaNocturnaActivo ? ' Y encima de noche.' : '') +
-        '\n\n🛑 El límite legal diario son 10 horas. Considerá cerrar el turno y descansar.\n\n' +
-        '💡 Un descanso ahora es mejor que un accidente o una baja de productividad mañana.' +
-        _fu
+        'h** en turno.' +
+        (c.alertaNocturnaActivo ? ' De noche.' : '') +
+        ' El límite legal son 10h. Considerá cerrar y descansar.'
       );
     }
     if (c.estadoBienestar === 'critico' || c.burnout) {
       return (
-        '⚠️ **Alerta de fatiga:** Tu ritmo (' +
-        c.hrsSemanales.toFixed(1) +
-        'h/sem) y racha de ' +
+        '⚠️ Ritmo alto: ' +
+        c.hrsSemanales.toFixed(0) +
+        'h/sem y ' +
         c.rachaActual +
-        ' días seguidos indican que necesitás un descanso urgente.\n\n' +
-        '💡 **Recomendación:** Tomate al menos un día libre esta semana. La ley te ampara: un día de descanso cada 6 trabajados es tu derecho.' +
-        _fu
+        ' días seguidos. Necesitás descanso — es tu derecho legal cada 6 días.'
       );
     }
     if (c.estadoBienestar === 'cansado') {
       return (
-        '🟡 **Atención:** Llevas ' +
+        '🟡 ' +
         c.rachaActual +
         ' días seguidos (' +
-        c.hrsSemanales.toFixed(1) +
-        'h/sem esta semana).\n\n' +
-        '💡 Estás dentro del límite pero acercándote al borde. Planificá un día de descanso pronto.' +
-        _fu
-      );
-    }
-    if (c.estadoBienestar === 'optimo') {
-      return (
-        '✅ **Excelente equilibrio:** Tu carga de ' +
-        c.hrsSemanales.toFixed(1) +
-        'h/sem y ' +
-        c.rachaActual +
-        ' días de racha son sostenibles.\n\n' +
-        '💡 Seguí así. El descanso bien distribuido es lo que mantiene el rendimiento a largo plazo.' +
-        _fu
+        c.hrsSemanales.toFixed(0) +
+        'h/sem). Cerca del límite — planificá un descanso pronto.'
       );
     }
     return (
-      '✅ **Estado:** Tu carga está dentro de lo saludable (' +
-      c.hrsSemanales.toFixed(1) +
-      'h/sem).\n\n' +
-      '💡 Mantené al menos un día de desconexión total a la semana.' +
-      _fu
+      '✅ Carga saludable: ' +
+      c.hrsSemanales.toFixed(0) +
+      'h/sem, ' +
+      c.rachaActual +
+      ' días de racha. Vas bien.'
     );
   }
 
@@ -1410,21 +1422,13 @@ function _aiDispatchNLP(intent, c, state, q, t) {
   // ── Stats ──
   if (intent === 'stats') {
     return (
-      '⚡ **Resumen rápido:**\n' +
-      '• ' +
+      '⚡ ' +
       c.diasTrab +
       ' turnos · ' +
-      fDur(c.totalMins) +
-      '\n' +
-      '• ' +
       fCOP(c.totalCOP) +
-      ' (' +
+      ' · ' +
       c.pctSalario.toFixed(1) +
-      '% de tu meta)\n' +
-      '• Mejor día: ' +
-      (c.mejor ? _fechaLarga(c.mejor.fecha) + ' ' + fCOP(c.mejor.cop) : '—') +
-      '\n' +
-      '• Proyección: ' +
+      '% meta · Proy: ' +
       fCOP(c.proy)
     );
   }

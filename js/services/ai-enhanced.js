@@ -442,22 +442,14 @@ function _aiExpandir(original, intent, userContext) {
     addon += '\n\n' + aiRandomPick(_aiColombianismo.encouragements);
   }
 
-  // Default: siempre agregar algo útil si la respuesta es muy corta
-  if (!addon && original.length < 300) {
+  // Default: solo agregar si la respuesta es muy corta Y no tiene datos numéricos propios.
+  // Evitar inflar respuestas que ya contienen información útil aunque sean breves.
+  if (!addon && original.length < 150) {
     var defaults = [
-      '\n\n💡 ¿Sabías que podés preguntarme "¿cómo voy vs el mes pasado?" o "¿cuál fue mi mejor día?"? Soy más útil de lo que parezco.',
-      '\n\n📊 Tip: En la pestaña Análisis tenés gráficos, KPIs y proyección. Y ahora también botones para compartir por WhatsApp.',
-      '\n\n🔮 Probá preguntarme "¿cuánto ganaría si trabajo 4 horas extra?" — te hago la simulación al instante.',
-      '\n\n💎 Dato curioso: esta app no envía tus datos a ningún servidor. Todo se procesa acá, en tu dispositivo. 100% privado.',
-      '\n\n🧘 La ley colombiana dice que después de 6 días trabajados, tenés derecho a uno de descanso. Es tu derecho, no un favor.'
+      '\n\n💡 También podés preguntarme "¿vs el mes pasado?" o "¿cuál fue mi mejor día?"',
+      '\n\n🔮 Probá "/simular 4h" para calcular escenarios.',
+      '\n\n📊 "/stats" te da un resumen rápido en cualquier momento.'
     ];
-    if (c && c.totalMins > 0) {
-      defaults.push(
-        '\n\n📈 Vas ' +
-          (c.diasTrab || 0) +
-          ' turnos este mes. Cada uno es un ladrillo más en tu pared. ¡Seguí construyendo!'
-      );
-    }
     addon += defaults[Math.floor(Math.random() * defaults.length)];
   }
 
@@ -697,6 +689,43 @@ function aiThink(question, intent, userContext, convHistory) {
   };
 }
 
+// ─── DETECTOR DE MODO VERBOSO ────────────────────────────────
+// El usuario pide explícitamente una respuesta larga/detallada.
+// Solo en ese caso se activan los módulos de expansión completa.
+
+function _aiModoVerboso(question) {
+  if (!question) return false;
+  var t = question.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  var palabras = [
+    'informe',
+    'reporte',
+    'resumen completo',
+    'analisis completo',
+    'analisis detallado',
+    'detalle',
+    'desglose',
+    'explicame todo',
+    'cuentame mas',
+    'cuentame todo',
+    'dame todo',
+    'quiero saber todo',
+    'analiza',
+    'analisis',
+    'desglosame',
+    'en detalle',
+    'con detalle',
+    'completo',
+    'ampliado',
+    'profundiza',
+    '/informe',
+    '/historial'
+  ];
+  for (var i = 0; i < palabras.length; i++) {
+    if (t.indexOf(palabras[i]) >= 0) return true;
+  }
+  return false;
+}
+
 // ─── API PÚBLICA ──────────────────────────────────────────────
 // Pipeline unificado de enriquecimiento con contexto compartido.
 
@@ -717,6 +746,10 @@ function aiEnhancedRespond(
     question: question || '',
     baseResponse: originalResponse || ''
   };
+
+  // Detectar si el usuario pidió una respuesta extensa explícitamente.
+  // Solo en ese caso se activan los módulos de expansión (insights, expandir, engage).
+  var _verboso = _aiModoVerboso(question);
 
   // Razonamiento previo: determina qué necesita el usuario antes de activar módulos
   var _thought = {};
@@ -747,10 +780,12 @@ function aiEnhancedRespond(
     aiRemember('ai', (originalResponse || '').substring(0, 120), intent, topic, userContext);
   } catch (_) {}
 
-  // 2. Análisis financiero — solo para intents financieros
+  // 2. Análisis financiero — solo en modo verboso y para intents financieros.
+  // En modo normal se omite para no sobrecargar la respuesta con bloques de análisis.
   var text = originalResponse;
   try {
     if (
+      _verboso &&
       typeof aiInsightFull === 'function' &&
       (!_thought.skipModules || !_thought.skipModules.insights)
     ) {
@@ -819,18 +854,22 @@ function aiEnhancedRespond(
     }
   } catch (_) {}
 
-  // 5. Expansión contextual — rellena con tips/ánimo solo si la respuesta sigue siendo corta
+  // 5. Expansión contextual — solo en modo verboso.
+  // En modo normal se omite para no agregar tips/ánimo sin que el usuario los pidiera.
   try {
-    text = _aiExpandir(text, intent, userContext);
+    if (_verboso) {
+      text = _aiExpandir(text, intent, userContext);
+    }
   } catch (_) {}
 
-  // 5b. Engagement — curiosidades, trivia, pregunta de seguimiento garantizada.
-  //     Orden: curiosidad (25% chance) → trivia (20% chance, ≥4 turnos) →
-  //     pregunta de engage (siempre, al final del texto).
+  // 5b. Engagement — curiosidades, trivia, pregunta de seguimiento.
+  //     La pregunta de seguimiento (engageQ) se muestra siempre — es corta y útil.
+  //     Curiosidad y trivia solo en modo verboso para no sobrecargar respuestas normales.
   var _triviaOptions = null;
   try {
-    // Curiosidad ocasional (1 de cada 4 respuestas cortas)
+    // Curiosidad ocasional — solo modo verboso
     if (
+      _verboso &&
       typeof aiEngageCuriosidad === 'function' &&
       text &&
       text.length < 350 &&
@@ -838,8 +877,9 @@ function aiEnhancedRespond(
     ) {
       text = aiEngageCuriosidad(text);
     }
-    // Trivia como widget interactivo (no texto — se renderiza como botones en la UI)
+    // Trivia como widget interactivo — solo modo verboso
     if (
+      _verboso &&
       typeof aiEngageTrivia === 'function' &&
       text &&
       _aiMemory.history &&
@@ -851,13 +891,15 @@ function aiEnhancedRespond(
         _triviaOptions = _triviaResult.triviaOptions;
       }
     }
-    // Pregunta de seguimiento al final del texto (siempre, sin condición de azar)
+    // Pregunta de seguimiento al final del texto (siempre — es corta)
     if (enriched.engageQ) {
       text += '\n\n' + enriched.engageQ;
     }
   } catch (_) {}
 
-  // 6. Pulido final: personalidad + conversación
+  // 6. Pulido final: personalidad + conversación.
+  // aiColombianizar y aiConvOrchestrate (que agrega ganchos/tips) solo en modo verboso.
+  // En modo normal se avanza el nivel conversacional pero no se agrega texto extra.
   var mood = { mood: 'neutral' };
   try {
     mood =
@@ -866,11 +908,12 @@ function aiEnhancedRespond(
         : { mood: 'neutral' };
   } catch (_) {}
   try {
-    text = aiColombianizar(text, mood.mood);
+    if (_verboso) text = aiColombianizar(text, mood.mood);
   } catch (_) {}
   try {
-    if (typeof aiConvOrchestrate === 'function')
+    if (_verboso && typeof aiConvOrchestrate === 'function')
       text = aiConvOrchestrate(text, intent, userContext);
+    else if (!_verboso && typeof aiConvAdvance === 'function') aiConvAdvance(intent);
   } catch (_) {}
   // aiConvNextStep: sugerencia contextual inteligente → agrega a las acciones rápidas
   try {
