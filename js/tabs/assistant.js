@@ -698,8 +698,8 @@ function AsistenteTab(props) {
       });
       setBusy(true);
       setTimeout(
-        function () {
-          var resp = aiAnswer(q, {
+        async function () {
+          var aiState = {
             turnos: props.turnos,
             turnosAll: props.turnosAll || props.turnos,
             calc: props.calc,
@@ -707,8 +707,48 @@ function AsistenteTab(props) {
             vh: props.vh,
             session: props.session,
             activo: props.activo || null
-          });
+          };
+          var resp = aiAnswer(q, aiState);
           var newMsg;
+
+          // Detectar respuesta de fallback del NLP local para escalar a Gemini.
+          // El fallback genérico siempre contiene esta frase distintiva.
+          var respText =
+            resp && typeof resp === 'object' ? resp.text || '' : resp ? String(resp) : '';
+          var isLocalFallback = respText.indexOf('No estoy seguro de qué buscas') !== -1;
+
+          if (isLocalFallback && typeof aiGeminiAsk === 'function' && isOnline()) {
+            // Indicador sutil: reemplaza el fallback por "pensando..." mientras Gemini responde
+            setMsgs(function (p) {
+              return p.concat([{ role: 'ai', content: '...', _geminiPending: true }]);
+            });
+            try {
+              var geminiReply = await aiGeminiAsk(q, aiState);
+              if (geminiReply) {
+                resp = geminiReply;
+                // Quitar el placeholder antes de poner la respuesta real
+                setMsgs(function (p) {
+                  return p.filter(function (m) {
+                    return !m._geminiPending;
+                  });
+                });
+              } else {
+                // Gemini falló → mantener la respuesta local original
+                setMsgs(function (p) {
+                  return p.filter(function (m) {
+                    return !m._geminiPending;
+                  });
+                });
+              }
+            } catch (_e) {
+              setMsgs(function (p) {
+                return p.filter(function (m) {
+                  return !m._geminiPending;
+                });
+              });
+            }
+          }
+
           if (resp && typeof resp === 'object' && resp.execute) {
             if (_needsConfirm(resp.execute)) {
               // Acción que modifica datos → pedimos confirmación hablada

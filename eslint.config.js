@@ -308,6 +308,8 @@ const projectGlobals = {
   aiListAllAchievements: 'readonly',
   aiCheckAchievements: 'readonly',
   aiFormatAchievements: 'readonly',
+  // services/ai-gemini.js
+  aiGeminiAsk: 'readonly',
   // services/ai-advisor.js
   aiAdvisorOptimizador: 'readonly',
   aiAdvisorInforme: 'readonly',

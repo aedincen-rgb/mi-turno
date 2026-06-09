@@ -128,6 +128,7 @@ const appResources = [
   './js/services/ai-auditor.js',
   './js/services/ai-conversation.js',
   './js/services/ai-advisor.js',
+  './js/services/ai-gemini.js',
   './js/tabs/home.js',
   './js/tabs/dashboard.js',
   './js/tabs/assistant.js',
