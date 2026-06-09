@@ -288,6 +288,12 @@ const projectGlobals = {
   _aiIntentTopic: 'readonly',
   aiTokenize: 'readonly',
   aiStem: 'readonly',
+  // services/ai-synonyms.js
+  AI_SYNONYMS_DICT: 'readonly',
+  AI_SYN_MAP: 'readonly',
+  aiSynExpand: 'readonly',
+  aiSynExpandPhrase: 'readonly',
+
   // services/ai-knowledge.js
   aiKnowledgeSearch: 'readonly',
   // services/ai-insights.js

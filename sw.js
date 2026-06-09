@@ -104,6 +104,7 @@ const appResources = [
   './js/services/data.js',
   './js/services/session-sync.js',
   './js/services/backup.js',
+  './js/services/ai-synonyms.js',
   './js/services/ai-nlp.js',
   './js/services/ai.js',
   './js/services/gender-lang.js',

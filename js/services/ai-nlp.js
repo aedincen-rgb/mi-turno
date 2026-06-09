@@ -658,6 +658,12 @@ var AI_SYNONYMS = {
 };
 
 function aiExpandSynonym(w) {
+  // Si el diccionario externo (ai-synonyms.js) está cargado, usarlo primero.
+  // Cubre frases de 2-3 palabras que el lookup plano de AI_SYNONYMS no puede.
+  if (typeof aiSynExpand === 'function') {
+    var expanded = aiSynExpand(w);
+    if (expanded !== w) return expanded;
+  }
   return AI_SYNONYMS[w] || w;
 }
 
@@ -1586,12 +1592,16 @@ function aiResetConv() {
 // score: puntaje bruto del mejor intent
 // confidence: score normalizado (0-1) considerando cantidad de tokens
 function aiClassify(text, convState, userContext) {
-  var tokens = aiTokenize(text);
+  // Expandir frases antes de tokenizar (captura bigramas y trigramas).
+  // Ej: "fin de semana" → "dominical", "auxilio transporte" → "auxilio_transporte"
+  var textForTokens = typeof aiSynExpandPhrase === 'function' ? aiSynExpandPhrase(text) : text;
+
+  var tokens = aiTokenize(textForTokens);
   if (!tokens.length) {
     return { intent: null, score: 0, confidence: 0, tokens: tokens, topic: null };
   }
 
-  // Expandir sinónimos en los tokens
+  // Expandir sinónimos también en los tokens individuales (cobertura doble)
   var expandedTokens = tokens.map(function (t) {
     return aiExpandSynonym(t);
   });
@@ -2121,5 +2131,5 @@ window._aiIntentTopic = _aiIntentTopic;
 
 // ─── INICIALIZACIÓN ──────────────────────────────────────────
 console.log(
-  '[MT] ai-nlp.js cargado — NLP mejorado v169 (compound matching + time anchoring + 80+ sinónimos)'
+  '[MT] ai-nlp.js cargado — NLP mejorado v169 (compound matching + time anchoring + ai-synonyms.js integrado)'
 );
