@@ -1012,6 +1012,39 @@ function AsistenteTab(props) {
         },
         h('span', { className: 'asistente-chip-ico' }, '📈'),
         'Tendencia'
+      ),
+      h(
+        'button',
+        {
+          className: 'asistente-chip',
+          onClick: function () {
+            send('Dame el desglose de mis recargos de este mes');
+          }
+        },
+        h('span', { className: 'asistente-chip-ico' }, '🔍'),
+        'Desglose recargos'
+      ),
+      h(
+        'button',
+        {
+          className: 'asistente-chip',
+          onClick: function () {
+            send('Hazme un informe de mis últimas 4 semanas');
+          }
+        },
+        h('span', { className: 'asistente-chip-ico' }, '📋'),
+        'Informe 4 semanas'
+      ),
+      h(
+        'button',
+        {
+          className: 'asistente-chip',
+          onClick: function () {
+            send('¿Qué significa el recargo dominical y cuánto vale el mío?');
+          }
+        },
+        h('span', { className: 'asistente-chip-ico' }, '📖'),
+        'Recargo dominical'
       )
     ),
 
