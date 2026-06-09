@@ -310,12 +310,17 @@ const projectGlobals = {
   aiFormatAchievements: 'readonly',
   // services/ai-gemini.js
   aiGeminiAsk: 'readonly',
+  aiGeminiExtract: 'readonly',
+  // services/ai.js (helpers internos usados en assistant.js)
+  _aiDispatchCalc: 'readonly',
   // services/ai-advisor.js
   aiAdvisorOptimizador: 'readonly',
   aiAdvisorInforme: 'readonly',
   aiAdvisorHistorico: 'readonly',
   aiAdvisorAhorro: 'readonly',
   aiAdvisorRespond: 'readonly',
+  aiAdvisorSimular: 'readonly',
+  aiAdvisorLiquidacion: 'readonly',
   // services/ai-calendar.js
   syncWithCalendar: 'readonly',
   processCalendarEvents: 'readonly',

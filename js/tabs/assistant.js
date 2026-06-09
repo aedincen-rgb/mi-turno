@@ -733,21 +733,34 @@ function AsistenteTab(props) {
           var resp = aiAnswer(q, aiState);
           var newMsg;
 
-          // Modo Gemini forzado: saltar el NLP local completamente.
-          if (window._geminiModeOn && typeof aiGeminiAsk === 'function' && isOnline()) {
+          // Modo Gemini activado: pipeline "Gemini entiende, la app calcula"
+          // Flujo: Gemini extrae {intent, params, needs_calculation}
+          //   → si needs_calculation: llamar calculadora local con los params
+          //   → si !needs_calculation (concepto/ayuda): Gemini responde en prosa
+          if (window._geminiModeOn && typeof aiGeminiExtract === 'function' && isOnline()) {
             setMsgs(function (p) {
               return p.concat([{ role: 'ai', content: '...', _geminiPending: true }]);
             });
             try {
-              var geminiForced = await aiGeminiAsk(q, aiState);
+              var extraction = await aiGeminiExtract(q, aiState);
               setMsgs(function (p) {
                 return p.filter(function (m) {
                   return !m._geminiPending;
                 });
               });
-              if (geminiForced) {
-                resp = geminiForced;
+              if (extraction && extraction.needs_calculation) {
+                // Calculadora local con los params extraídos — CERO alucinaciones
+                var calcResp = _aiDispatchCalc(extraction.intent, extraction.params, aiState);
+                if (calcResp) {
+                  resp = calcResp;
+                }
+                // Si la calculadora local no manejó el intent, mantener resp local
+              } else if (extraction && !extraction.needs_calculation) {
+                // Pregunta conceptual o ayuda: Gemini responde en prosa
+                var geminiProsa = await aiGeminiAsk(q, aiState);
+                if (geminiProsa) resp = geminiProsa;
               }
+              // extraction null → mantener resp local (Gemini falló)
             } catch (_ge) {
               setMsgs(function (p) {
                 return p.filter(function (m) {

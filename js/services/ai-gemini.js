@@ -81,5 +81,43 @@
     });
   }
 
+  // Llama al proxy en modo extractor. Devuelve {intent, params, needs_calculation, confidence}
+  // o null si falla. El caller decide qué calculadora invocar.
+  function aiGeminiExtract(message, state) {
+    var body = { message: message, mode: 'extract' };
+
+    var fetchPromise = fetch(EDGE_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: window.SUPABASE_CONFIG.anonKey
+      },
+      body: JSON.stringify(body)
+    })
+      .then(function (res) {
+        if (!res.ok) {
+          return res.json().then(function (e) {
+            throw new Error(e.error || 'HTTP ' + res.status);
+          });
+        }
+        return res.json();
+      })
+      .then(function (data) {
+        if (data && data.extraction) {
+          return data.extraction;
+        }
+        return null;
+      })
+      .catch(function (err) {
+        console.warn('[ai-gemini] extract fallo:', err.message);
+        return null;
+      });
+
+    return withTimeout(fetchPromise, 8000, 'ai-extract').catch(function () {
+      return null;
+    });
+  }
+
   window.aiGeminiAsk = aiGeminiAsk;
+  window.aiGeminiExtract = aiGeminiExtract;
 })();

@@ -64,6 +64,66 @@ function _aiNum(t) {
   return null;
 }
 
+// ─── DETECCIÓN DE TIPO DE HORA (para simulador) ──────────────
+// Detecta el tipo de hora mencionado en el texto y devuelve una
+// clave canónica. Retorna null si no hay tipo específico.
+// Orden de evaluación: combinaciones primero, luego simples.
+function _aiDetectarTipoHora(t) {
+  var s = (t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  var esFest =
+    s.indexOf('festiv') >= 0 ||
+    s.indexOf('feriado') >= 0 ||
+    s.indexOf('dominical') >= 0 ||
+    s.indexOf('domingo') >= 0;
+  var esNoct =
+    s.indexOf('nocturn') >= 0 ||
+    s.indexOf('noche') >= 0 ||
+    s.indexOf('madrugad') >= 0 ||
+    s.indexOf('noct') >= 0;
+  var esExtra =
+    s.indexOf('extra') >= 0 || s.indexOf('sobretiemp') >= 0 || s.indexOf('adicional') >= 0;
+
+  // Combinaciones primero (más específicas)
+  if (esFest && esNoct && esExtra) return 'extraFestNoct';
+  if (esFest && esNoct) return 'noctFest';
+  if (esFest && esExtra) return 'extraFestDiur';
+  if (esFest) return 'diurnaFest';
+  if (esNoct && esExtra) return 'extraNoct';
+  if (esNoct) return 'noctOrd';
+  if (esExtra) return 'extraDiurna';
+  return null;
+}
+
+// Factores de recargo por tipo (fuente: RC en globals.js)
+function _aiFactor(tipo) {
+  var factores = {
+    diurnaOrd: 1.0,
+    noctOrd: 1.35,
+    diurnaFest: 1.75,
+    noctFest: 2.1,
+    extraDiurna: 1.25,
+    extraNoct: 1.75,
+    extraFestDiur: 2.0,
+    extraFestNoct: 2.5
+  };
+  return factores[tipo] || 1.0;
+}
+
+// Etiquetas legibles por tipo
+function _aiLabelTipo(tipo) {
+  var labels = {
+    diurnaOrd: 'diurnas ordinarias',
+    noctOrd: 'nocturnas (+35%)',
+    diurnaFest: 'festivas diurnas (+75%)',
+    noctFest: 'festivas nocturnas (+110%)',
+    extraDiurna: 'extra diurnas (+25%)',
+    extraNoct: 'extra nocturnas (+75%)',
+    extraFestDiur: 'extra festivas diurnas (+100%)',
+    extraFestNoct: 'extra festivas nocturnas (+150%)'
+  };
+  return labels[tipo] || tipo;
+}
+
 // ─── VARIACIÓN DE FRASES CONVERSACIONALES ────────────────────
 var _aiPhraseVariants = {
   total: [
@@ -1142,6 +1202,42 @@ function _aiDispatchNLP(intent, c, state, q, t) {
   if (intent === 'simulacion') {
     var hrs = _aiNum(t);
     if (hrs === null) hrs = 4;
+    // Detectar tipo específico para dar respuesta focalizada
+    var _simTipo = _aiDetectarTipoHora(t);
+    if (_simTipo) {
+      var _simFactor = _aiFactor(_simTipo);
+      var _simLabel = _aiLabelTipo(_simTipo);
+      var _simExtra = hrs * c.vh * _simFactor;
+      var _simTotal = ((c && c.totalCOP) || 0) + _simExtra;
+      var _simSal = (c && c.salario) || 1;
+      return (
+        '🔮 **Simulación: +' +
+        hrs +
+        'h ' +
+        _simLabel +
+        '**\n\n' +
+        '• Valor hora base: ' +
+        fCOP(c.vh) +
+        '\n' +
+        '• Factor: ' +
+        (_simFactor * 100).toFixed(0) +
+        '% → ' +
+        fCOP(c.vh * _simFactor) +
+        '/h\n' +
+        '• Extra estimado: ≈ ' +
+        fCOP(_simExtra) +
+        '\n' +
+        '• Nuevo total: ≈ ' +
+        fCOP(_simTotal) +
+        ' (' +
+        ((_simTotal / _simSal) * 100).toFixed(1) +
+        '% del salario)\n\n' +
+        '💡 Probá **/meta ' +
+        Math.round(_simTotal / 100000) * 100000 +
+        '** para ver si llegás.'
+      );
+    }
+    // Sin tipo específico → mostrar comparativa de todos los escenarios
     return (
       '🔮 Si trabajás **' +
       hrs +
@@ -1149,17 +1245,19 @@ function _aiDispatchNLP(intent, c, state, q, t) {
       '• Diurna ordinaria: +' +
       fCOP(hrs * c.vh * 1.0) +
       '\n' +
-      '• Nocturna: +' +
+      '• Nocturna (35%): +' +
       fCOP(hrs * c.vh * 1.35) +
       '\n' +
-      '• Extra diurna: +' +
+      '• Extra diurna (25%): +' +
       fCOP(hrs * c.vh * 1.25) +
       '\n' +
-      '• Festiva diurna: +' +
+      '• Festiva diurna (75%): +' +
       fCOP(hrs * c.vh * 1.75) +
       '\n' +
-      '• Festiva nocturna: +' +
-      fCOP(hrs * c.vh * 2.1)
+      '• Festiva nocturna (110%): +' +
+      fCOP(hrs * c.vh * 2.1) +
+      '\n\n' +
+      '💡 Decime el tipo (ej. "4 horas nocturnas") para un cálculo exacto.'
     );
   }
 
@@ -2019,16 +2117,16 @@ function aiAnswer(question, state) {
     if (!numHoras || numHoras <= 0) {
       return '💡 Usá **/simular 4h** o **/simular 4h nocturnas** para calcular un escenario.\n\nEjemplos:\n• "/simular 4h" → 4 horas diurnas extra\n• "/simular 4h nocturnas" → 4 horas extra de noche';
     }
-    var esNocturno = _aiHas(t, 'nocturn', 'noche', 'noct');
+    var _simTipoSlash = _aiDetectarTipoHora(t);
     var _vh = c.vh || 0;
-    var factor = esNocturno ? 1.75 : 1.25;
+    var factor = _simTipoSlash ? _aiFactor(_simTipoSlash) : 1.25;
+    var labelSlash = _simTipoSlash ? _aiLabelTipo(_simTipoSlash) : 'diurnas extra';
     var extraEstimado = numHoras * _vh * factor;
     var nuevoTotal = ((c && c.totalCOP) || 0) + extraEstimado;
     var _sal = (c && c.salario) || 1;
-    var respSim =
-      '🔮 **Simulación: +' + numHoras + 'h' + (esNocturno ? ' nocturnas' : ' diurnas') + '**\n\n';
+    var respSim = '🔮 **Simulación: +' + numHoras + 'h ' + labelSlash + '**\n\n';
     respSim += '• Valor hora base: ' + fCOP(_vh) + '\n';
-    respSim += '• Factor recargo: ' + (factor * 100).toFixed(0) + '%\n';
+    respSim += '• Factor: ' + (factor * 100).toFixed(0) + '% → ' + fCOP(_vh * factor) + '/h\n';
     respSim += '• Extra estimado: ≈ ' + fCOP(extraEstimado) + '\n';
     respSim +=
       '• Nuevo total: ≈ ' +
@@ -3506,4 +3604,154 @@ function _aiBuildEmail(raw, t, c, state) {
       attach: attach
     }
   };
+}
+
+// ════════════════════════════════════════════════════════════════
+//  DESPACHADOR DE CALCULADORAS PARA EL PIPELINE GEMINI EXTRACTOR
+//  Recibe {intent, params} del extractor y llama a la calculadora
+//  local correcta. Retorna string de respuesta o null.
+// ════════════════════════════════════════════════════════════════
+function _aiDispatchCalc(intent, params, state) {
+  var c = buildContext(state);
+  if (!c) return null;
+
+  if (intent === 'simular') {
+    var horas = (params && params.horas) || 4;
+    var tipo = (params && params.tipo) || null;
+    if (!c.vh) {
+      return 'Para simular necesito tu salario base. Configurálo en Ajustes > Preferencias de pago.';
+    }
+    if (tipo && tipo !== 'diurnaOrd') {
+      var factor = _aiFactor(tipo);
+      var label = _aiLabelTipo(tipo);
+      var extra = horas * c.vh * factor;
+      var nuevo = (c.totalCOP || 0) + extra;
+      var sal = c.salario || 1;
+      return (
+        '🔮 **Simulación: +' +
+        horas +
+        'h ' +
+        label +
+        '**\n\n' +
+        '• Valor hora base: ' +
+        fCOP(c.vh) +
+        '\n' +
+        '• Factor: ' +
+        (factor * 100).toFixed(0) +
+        '% → ' +
+        fCOP(c.vh * factor) +
+        '/h\n' +
+        '• Extra estimado: ≈ ' +
+        fCOP(extra) +
+        '\n' +
+        '• Nuevo total: ≈ ' +
+        fCOP(nuevo) +
+        ' (' +
+        ((nuevo / sal) * 100).toFixed(1) +
+        '% del salario)\n\n' +
+        '💡 Probá **/meta ' +
+        Math.round(nuevo / 100000) * 100000 +
+        '** para ver si llegás.'
+      );
+    }
+    // Sin tipo → mostrar todos los escenarios (ya manejado por aiAdvisorSimular)
+    if (typeof aiAdvisorSimular === 'function') {
+      return aiAdvisorSimular(c, horas, 'completo');
+    }
+  }
+
+  if (intent === 'total_ganado') {
+    var periodo = (params && params.periodo) || 'mes';
+    if (periodo === 'hoy') {
+      var hoy = new Date();
+      var hoyStr = hoy.toLocaleDateString('es-CO', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long'
+      });
+      return (
+        '📅 **Hoy (' + hoyStr + '):**\n\n' + fCOP(c.totalCOP) + ' ganados en ' + fDur(c.totalMins)
+      );
+    }
+    return (
+      '💰 **Total acumulado (' +
+      periodo +
+      '):** ' +
+      fCOP(c.totalCOP) +
+      '\n' +
+      '• Horas: ' +
+      fDur(c.totalMins) +
+      '\n' +
+      '• Proyección al cierre: ' +
+      fCOP(c.proy)
+    );
+  }
+
+  if (intent === 'proyeccion') {
+    if (!c.proy) return 'Sin datos suficientes para proyectar.';
+    return (
+      '📈 **Proyección al cierre del mes:** ' +
+      fCOP(c.proy) +
+      '\n' +
+      '• Llevas: ' +
+      fCOP(c.totalCOP) +
+      ' (' +
+      c.diaActual +
+      'º día)\n' +
+      '• Días restantes: ~' +
+      (c.diasMes - c.diaActual) +
+      '\n' +
+      '💡 Basado en tu ritmo actual de ' +
+      fCOP(c.copDiario || c.totalCOP / Math.max(1, c.diasTrab)) +
+      '/día.'
+    );
+  }
+
+  if (intent === 'liquidacion') {
+    if (typeof aiAdvisorLiquidacion === 'function') {
+      return aiAdvisorLiquidacion(c);
+    }
+    return null;
+  }
+
+  if (intent === 'valor_hora') {
+    if (!c.vh) {
+      return 'Configurá tu salario base en Ajustes para calcular tu valor hora.';
+    }
+    return (
+      '⏱️ **Tu valor hora:** ' +
+      fCOP(c.vh) +
+      '\n' +
+      '• Fórmula: ' +
+      fCOP(c.salario) +
+      ' (salario) / 240 horas\n' +
+      '• Nocturna: ' +
+      fCOP(c.vh * 1.35) +
+      ' (+35%)\n' +
+      '• Dominical diurna: ' +
+      fCOP(c.vh * 1.75) +
+      ' (+75%)\n' +
+      '• Extra nocturna: ' +
+      fCOP(c.vh * 1.75) +
+      ' (+75%)'
+    );
+  }
+
+  if (intent === 'ahorro') {
+    var meta = (params && params.meta) || (c.salario || 0) * 3;
+    if (typeof aiAdvisorAhorro === 'function') {
+      return aiAdvisorAhorro(c, meta, 12);
+    }
+    return null;
+  }
+
+  if (intent === 'optimizador') {
+    var metaExtra = (params && params.meta_extra) || 0;
+    if (typeof aiAdvisorOptimizador === 'function' && metaExtra > 0) {
+      return aiAdvisorOptimizador(c, metaExtra);
+    }
+    return null;
+  }
+
+  return null;
 }
