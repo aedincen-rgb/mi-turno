@@ -899,7 +899,7 @@ function AsistenteTab(props) {
       preguntas: [
         '¿Cuántas horas llevo?',
         '¿Cuántas horas trabajé ayer?',
-        '¿Cómo voy de ritmo?',
+        '¿Cuántos días seguidos llevo trabajando?',
         'Días trabajados este mes',
         '¿Cuánto descanso he tenido?',
         '¿Cuánto gano por hora?'
@@ -911,11 +911,11 @@ function AsistenteTab(props) {
       titulo: 'Análisis',
       desc: 'Festivos, horas extras, recargos y distribuciones',
       preguntas: [
-        'Festivos trabajados',
-        'Horas extras',
-        'Horas nocturnas',
-        'Resumen general',
-        'Distribución por recargo',
+        '¿Cuántos días festivos trabajé este mes?',
+        '¿Cuántas horas extra llevo?',
+        '¿Cuántas horas nocturnas llevo?',
+        '¿Cuánto gané este mes?',
+        'Distribución y desglose de mis recargos',
         '¿Cuántos días seguidos llevo?'
       ]
     },
@@ -1129,11 +1129,11 @@ function AsistenteTab(props) {
         {
           className: 'asistente-chip',
           onClick: function () {
-            send('Hazme un informe de mis últimas 4 semanas');
+            send('Enviá mi reporte e informe por correo');
           }
         },
         h('span', { className: 'asistente-chip-ico' }, '📋'),
-        'Informe 4 semanas'
+        'Enviar informe'
       ),
       h(
         'button',

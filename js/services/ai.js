@@ -3295,10 +3295,24 @@ function aiAnswer(question, state) {
   //  FALLBACK
   // ════════════════════════════════════════════════════════════
 
-  return (
+  var _fallbackText =
     '🤔 No estoy seguro de qué buscas. Algunas cosas que puedo responder:\n\n• "¿Cuánto gané hoy?" · "¿Y ayer?"\n• "Compara con mes pasado"\n• "¿Cuándo llego a la meta?"\n• "¿Cuánto si trabajo 4h más?"\n• "Mejor día de la semana"\n• "Próximos festivos"\n• "Mi racha"\n• **"Envía mi reporte por correo a juan@empresa.com"**\n• **"Redacta un correo formal para mi jefe"**\n\n💡 O simplemente pregúntame algo con tus palabras, ¡soy más conversacional ahora!\n\n' +
-    _aiPickFollowUp('default')
-  );
+    _aiPickFollowUp('default');
+
+  // Envolver con aiEnhancedRespond para que el fallback tenga chips funcionales
+  if (typeof aiEnhancedRespond === 'function') {
+    var _fallbackEnriched = aiEnhancedRespond(
+      _fallbackText,
+      'default',
+      'general',
+      q,
+      c,
+      null,
+      state.turnosAll
+    );
+    if (_fallbackEnriched && _fallbackEnriched.text) return _fallbackEnriched;
+  }
+  return _fallbackText;
 }
 
 // ════════════════════════════════════════════════════════════════

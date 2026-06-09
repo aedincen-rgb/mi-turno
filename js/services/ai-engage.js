@@ -64,10 +64,10 @@ var _aiEngageQuestions = {
   proyeccion: [
     {
       q: '¿Querés simular cuánto falta para tu meta?',
-      a1: 'Simular',
-      a2: 'Ver informe',
+      a1: '¿Cuánto si trabajo 4h más?',
+      a2: '¿Cuánto gané este mes?',
       i1: 'simulacion',
-      i2: 'informe_completo'
+      i2: 'total_ganado'
     },
     {
       q: '¿Sabías que los turnos nocturnos pagan 35% más?',
@@ -98,18 +98,18 @@ var _aiEngageQuestions = {
   liquidacion: [
     {
       q: '¿Querés un informe detallado de prestaciones?',
-      a1: 'Sí, informe',
-      a2: 'Con eso basta',
-      i1: 'informe_completo',
-      i2: null
+      a1: 'Enviar por email',
+      a2: 'Ver proyección',
+      i1: 'email',
+      i2: 'proyeccion'
     }
   ],
   ahorro: [
     {
       q: '¿Querés planear cuántos turnos te faltan?',
-      a1: 'Planear turnos',
-      a2: 'Ver proyección',
-      i1: 'planificar',
+      a1: 'Ver proyección al cierre',
+      a2: '¿Cuánto me falta para la meta?',
+      i1: 'proyeccion',
       i2: 'proyeccion'
     }
   ],
@@ -128,9 +128,9 @@ var _aiEngageQuestions = {
     {
       q: '¿Y si miramos el mes completo?',
       a1: 'VS mes pasado',
-      a2: 'No, siguiente',
+      a2: 'Ver proyección',
       i1: 'comparativa_mes',
-      i2: null
+      i2: 'proyeccion'
     }
   ],
 
@@ -147,17 +147,17 @@ var _aiEngageQuestions = {
   peor_dia: [
     {
       q: '¿Te muestro cómo mejorar esos días bajos?',
-      a1: 'Dame tips',
-      a2: 'No, gracias',
-      i1: 'consejo',
-      i2: null
+      a1: '¿Cómo mejorar mis días bajos?',
+      a2: 'Ver promedio',
+      i1: 'bienestar',
+      i2: 'promedio'
     }
   ],
   racha: [
     {
       q: '¿Querés un análisis de tu ritmo de trabajo?',
-      a1: 'Ver ritmo',
-      a2: 'Ver bienestar',
+      a1: '¿Cuánto gano por hora?',
+      a2: '¿Cómo estoy de bienestar?',
       i1: 'velocidad',
       i2: 'bienestar'
     }
@@ -167,26 +167,26 @@ var _aiEngageQuestions = {
   horas_trabajadas: [
     {
       q: '¿Desgloso por tipo de hora?',
-      a1: 'Desglosar',
-      a2: 'Ver extras',
+      a1: 'Ver distribución de recargos',
+      a2: '¿Cuánto gané este mes?',
       i1: 'distribucion',
-      i2: 'comparativa_mes'
+      i2: 'total_ganado'
     }
   ],
   promedio: [
     {
       q: '¿Comparo con el valor de tu hora base?',
-      a1: 'Comparar',
-      a2: 'No hace falta',
+      a1: '¿Cuánto gano por hora?',
+      a2: 'Ver proyección',
       i1: 'velocidad',
-      i2: null
+      i2: 'proyeccion'
     }
   ],
   velocidad: [
     {
       q: '¿Querés saber cómo subir tu velocidad?',
-      a1: 'Dame tips',
-      a2: 'Simular',
+      a1: '¿Cuántas horas llevo?',
+      a2: '¿Cuánto si trabajo 4h más?',
       i1: 'horas_trabajadas',
       i2: 'simulacion'
     }
@@ -196,10 +196,10 @@ var _aiEngageQuestions = {
   simulacion: [
     {
       q: '¿Probamos otro escenario?',
-      a1: 'Solo nocturnas',
-      a2: 'Un turno extra',
+      a1: '¿Cuánto si solo hago nocturnas?',
+      a2: '¿Cuánto si hago 1 turno más?',
       i1: 'simulacion',
-      i2: 'planificar'
+      i2: 'simulacion'
     },
     {
       q: '¿Querés saber cuánto necesitás para tu meta?',
@@ -214,10 +214,10 @@ var _aiEngageQuestions = {
   bienestar: [
     {
       q: '¿Querés que te recuerde cuándo descansar?',
-      a1: 'Recordarme',
-      a2: 'No por ahora',
-      i1: 'planificar',
-      i2: null
+      a1: '¿Cuándo descanso?',
+      a2: '¿Cuánto llevo esta semana?',
+      i1: 'bienestar',
+      i2: 'comparativa_semana'
     }
   ],
 
@@ -236,10 +236,10 @@ var _aiEngageQuestions = {
   ley: [
     {
       q: '¿Querés saber cómo aplicar esto a tu caso?',
-      a1: 'Aplicar a mi caso',
-      a2: 'Siguiente',
+      a1: '¿Cuánto gané este mes?',
+      a2: 'Ver mis estadísticas',
       i1: 'total_ganado',
-      i2: null
+      i2: 'stats'
     }
   ],
   laboral: [
@@ -256,10 +256,10 @@ var _aiEngageQuestions = {
   ayuda_app: [
     {
       q: '¿Hay algo específico con lo que necesités ayuda?',
-      a1: 'Exportar datos',
-      a2: 'Cambiar PIN',
-      i1: 'ayuda_exportar',
-      i2: 'ayuda_pin'
+      a1: '¿Cómo exporto mis datos?',
+      a2: '¿Cómo cambio mi PIN?',
+      i1: 'ayuda_navegacion',
+      i2: 'ayuda_navegacion'
     }
   ],
 
@@ -283,37 +283,37 @@ var _aiEngageQuestions = {
   identidad: [
     {
       q: '¿Te muestro todo lo que puedo hacer?',
-      a1: 'Sí, mostrame',
-      a2: 'Mejor preguntar',
+      a1: '¿Qué podés hacer?',
+      a2: 'Ver mis estadísticas',
       i1: 'capacidades',
-      i2: 'ayuda_app'
+      i2: 'stats'
     }
   ],
   capacidades: [
     {
       q: '¿Querés probar alguna?',
-      a1: 'Simular ingresos',
-      a2: 'Ver guías',
+      a1: '¿Cuánto si trabajo 4h más?',
+      a2: '¿Cómo cambio mi foto de perfil?',
       i1: 'simulacion',
-      i2: 'ayuda_app'
+      i2: 'ayuda_navegacion'
     }
   ],
   despedida: [
     {
       q: '¿Seguro que te vas? Todavía puedo ayudarte con algo más.',
-      a1: 'Una consulta más',
-      a2: 'Chao',
-      i1: 'default',
-      i2: null
+      a1: '¿Cuánto gané este mes?',
+      a2: 'Ver proyección',
+      i1: 'total_ganado',
+      i2: 'proyeccion'
     }
   ],
   agradecimiento: [
     {
       q: '¿Necesitás algo más?',
-      a1: 'Sí, una cosa más',
-      a2: 'Así está bien',
-      i1: 'default',
-      i2: null
+      a1: '¿Cuánto gané este mes?',
+      a2: 'Ver mis estadísticas',
+      i1: 'total_ganado',
+      i2: 'stats'
     }
   ],
 
@@ -321,24 +321,24 @@ var _aiEngageQuestions = {
   default: [
     {
       q: '¿Hay algo más en lo que te pueda ayudar?',
-      a1: 'Ver mis números',
-      a2: 'Hacer una simulación',
+      a1: 'Ver mis estadísticas',
+      a2: '¿Cuánto si trabajo 4h más?',
       i1: 'stats',
       i2: 'simulacion'
     },
     {
       q: '¿Querés explorar otra cosa?',
-      a1: 'Ver proyección',
-      a2: 'Ver distribución',
+      a1: 'Ver proyección al cierre',
+      a2: 'Distribución y desglose de mis recargos',
       i1: 'proyeccion',
       i2: 'distribucion'
     },
     {
       q: '¿Te gustaría conocer un dato curioso sobre horas extra?',
-      a1: 'Contame',
-      a2: 'Otro día',
+      a1: '¿Cuánto paga una hora nocturna?',
+      a2: '¿Cuánto gané este mes?',
       i1: 'ley',
-      i2: null
+      i2: 'total_ganado'
     }
   ]
 };
@@ -348,36 +348,36 @@ var _aiEngageQuestions = {
 _aiEngageQuestions._personal = [
   {
     q: '¿Cómo te está yendo esta semana?',
-    a1: 'Bien, gracias',
-    a2: 'Con mucho trabajo',
+    a1: '¿Cómo estoy de bienestar?',
+    a2: '¿Cuántas horas llevo?',
     i1: 'bienestar',
     i2: 'racha'
   },
   {
     q: '¿Tenés alguna meta de ingresos este mes?',
-    a1: 'Sí, tengo una',
-    a2: 'No todavía',
+    a1: '¿Cuánto me falta para la meta?',
+    a2: 'Ver proyección',
     i1: 'ahorro',
     i2: 'proyeccion'
   },
   {
     q: '¿Necesitás un respiro? La ley te ampara con un día libre cada 6 trabajados.',
-    a1: 'Ver mi racha',
-    a2: 'Estoy bien',
+    a1: '¿Cuánto llevo de racha?',
+    a2: '¿Cuánto gané este mes?',
     i1: 'racha',
-    i2: null
+    i2: 'total_ganado'
   },
   {
     q: '¿Algo en lo que te pueda dar una mano hoy?',
-    a1: 'Ver mis números',
-    a2: 'Solo quería hablar',
+    a1: 'Ver mis estadísticas',
+    a2: '¿Cómo estoy de bienestar?',
     i1: 'stats',
     i2: 'bienestar'
   },
   {
     q: '¿Cómo vas de ánimo esta semana?',
-    a1: 'Con toda',
-    a2: 'Más o menos',
+    a1: '¿Cómo estoy de bienestar?',
+    a2: '¿Cuántas horas llevo?',
     i1: 'bienestar',
     i2: 'racha'
   }
@@ -386,17 +386,17 @@ _aiEngageQuestions._personal = [
 _aiEngageQuestions._discovery = [
   {
     q: '¿Exploraste el apartado de Análisis? Tiene gráficos y proyección.',
-    a1: 'Ver Análisis',
-    a2: 'Seguir aquí',
-    i1: 'navegar_analisis',
-    i2: null
+    a1: 'Ver mis estadísticas',
+    a2: 'Ver proyección',
+    i1: 'stats',
+    i2: 'proyeccion'
   },
   {
     q: '¿Sabías que podés compartir tu resumen mensual por WhatsApp?',
-    a1: 'Cómo se hace',
-    a2: 'Lo sé',
-    i1: 'ayuda_app',
-    i2: null
+    a1: '¿Cómo se comparte por WhatsApp?',
+    a2: 'Ver mis estadísticas',
+    i1: 'ayuda_navegacion',
+    i2: 'stats'
   },
   {
     q: '¿Ya configuraste tu salario base? Sin eso, la proyección no es exacta.',
@@ -407,8 +407,8 @@ _aiEngageQuestions._discovery = [
   },
   {
     q: '¿Usaste el simulador de escenarios? Podés ver qué pasa si hacés más nocturnas.',
-    a1: 'Simular ahora',
-    a2: 'Qué más tenés',
+    a1: '¿Cuánto si trabajo 4h más?',
+    a2: '¿Qué podés hacer?',
     i1: 'simulacion',
     i2: 'capacidades'
   },
@@ -424,17 +424,17 @@ _aiEngageQuestions._discovery = [
 _aiEngageQuestions._reflexion = [
   {
     q: '¿Este mes fue mejor que el anterior?',
-    a1: 'Comparar meses',
-    a2: 'Ver el resumen',
+    a1: '¿VS mes pasado?',
+    a2: 'Ver mis estadísticas',
     i1: 'comparativa_mes',
     i2: 'stats'
   },
   {
     q: '¿Hay algo que cambiarías en tus horarios?',
-    a1: 'Optimizar turnos',
-    a2: 'Estoy bien así',
+    a1: '¿Cómo gano más?',
+    a2: '¿Cuánto gané este mes?',
     i1: 'optimizador',
-    i2: null
+    i2: 'total_ganado'
   },
   {
     q: '¿Qué harías con un ingreso extra este mes?',
@@ -445,10 +445,10 @@ _aiEngageQuestions._reflexion = [
   },
   {
     q: '¿Estás cerca de tu meta mensual?',
-    a1: 'Ver cuánto falta',
-    a2: 'Ya la cumplí',
+    a1: 'Ver proyección al cierre',
+    a2: '¿Cuánto gané este mes?',
     i1: 'proyeccion',
-    i2: 'ahorro'
+    i2: 'total_ganado'
   }
 ];
 

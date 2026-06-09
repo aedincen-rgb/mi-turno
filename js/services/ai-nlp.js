@@ -891,7 +891,11 @@ var AI_INTENTS = [
       ['vs el mes', 3],
       ['comparativa', 2],
       ['diferencia con', 2],
-      ['contra mes', 3]
+      ['contra mes', 3],
+      ['compara', 3],
+      ['comparame', 3],
+      ['cuanto mas gane', 3],
+      ['cuanto menos gane', 3]
     ]
   },
   {
@@ -1042,7 +1046,13 @@ var AI_INTENTS = [
       ['estres', 3],
       ['estresado', 3],
       ['burnout', 3],
-      ['como estoy', 2]
+      ['como estoy', 2],
+      ['estoy bien', 3],
+      ['cuando descanso', 3],
+      ['necesito descansar', 3],
+      ['como me siento', 2],
+      ['como estoy de salud', 3],
+      ['como va mi cuerpo', 3]
     ]
   },
 
