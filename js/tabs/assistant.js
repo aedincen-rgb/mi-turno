@@ -60,6 +60,16 @@ function AsistenteTab(props) {
   var autoRead = ar[0],
     setAutoRead = ar[1];
 
+  // Sincronizar el global _geminiModeOn con el estado React al montar.
+  // Necesario porque send() lee window._geminiModeOn (closure captura el ref global,
+  // no el estado React, para evitar que la closure quede desactualizada en el setTimeout).
+  useEffect(
+    function () {
+      window._geminiModeOn = geminiMode;
+    },
+    [geminiMode]
+  );
+
   // Cleanup al desmontar el componente (evita memory leaks)
   useEffect(function () {
     return function () {
@@ -95,6 +105,18 @@ function AsistenteTab(props) {
   // Acción del agente pendiente de confirmación hablada (modo manos libres).
   // Guarda el objeto execute mientras el agente espera un "sí"/"no".
   var pendingActionRef = useRef(null);
+
+  // Modo Gemini forzado: bypass completo del NLP local.
+  // Persistido sin uid porque es preferencia del device, no del usuario.
+  var gm = useState(function () {
+    try {
+      return localStorage.getItem('mt_gemini_mode') === '1';
+    } catch (_) {
+      return false;
+    }
+  });
+  var geminiMode = gm[0],
+    setGeminiMode = gm[1];
 
   var tieneConversacion = msgs.length > 0;
 
@@ -711,11 +733,36 @@ function AsistenteTab(props) {
           var resp = aiAnswer(q, aiState);
           var newMsg;
 
+          // Modo Gemini forzado: saltar el NLP local completamente.
+          if (window._geminiModeOn && typeof aiGeminiAsk === 'function' && isOnline()) {
+            setMsgs(function (p) {
+              return p.concat([{ role: 'ai', content: '...', _geminiPending: true }]);
+            });
+            try {
+              var geminiForced = await aiGeminiAsk(q, aiState);
+              setMsgs(function (p) {
+                return p.filter(function (m) {
+                  return !m._geminiPending;
+                });
+              });
+              if (geminiForced) {
+                resp = geminiForced;
+              }
+            } catch (_ge) {
+              setMsgs(function (p) {
+                return p.filter(function (m) {
+                  return !m._geminiPending;
+                });
+              });
+            }
+          }
+
           // Detectar respuesta de fallback del NLP local para escalar a Gemini.
           // El fallback genérico siempre contiene esta frase distintiva.
           var respText =
             resp && typeof resp === 'object' ? resp.text || '' : resp ? String(resp) : '';
-          var isLocalFallback = respText.indexOf('No estoy seguro de qué buscas') !== -1;
+          var isLocalFallback =
+            !window._geminiModeOn && respText.indexOf('No estoy seguro de qué buscas') !== -1;
 
           if (isLocalFallback && typeof aiGeminiAsk === 'function' && isOnline()) {
             // Indicador sutil: reemplaza el fallback por "pensando..." mientras Gemini responde
@@ -1407,23 +1454,50 @@ function AsistenteTab(props) {
     h(
       'div',
       { className: 'asistente-composer' },
-      h('textarea', {
-        ref: inputRef,
-        className: 'asistente-input' + (listening ? ' listening' : ''),
-        'aria-label': 'Tu mensaje al asistente',
-        placeholder: listening ? 'Escuchando…' : 'Escribe o mantén pulsado para hablar…',
-        value: input,
-        onChange: function (e) {
-          setInput(e.target.value);
-        },
-        onKeyDown: function (e) {
-          if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            send();
-          }
-        },
-        rows: 1
-      }),
+
+      // Wrapper relativo para poder posicionar el toggle dentro del input
+      h(
+        'div',
+        { className: 'asistente-input-wrap' },
+        h('textarea', {
+          ref: inputRef,
+          className: 'asistente-input' + (listening ? ' listening' : ''),
+          'aria-label': 'Tu mensaje al asistente',
+          placeholder: listening ? 'Escuchando…' : 'Escribe o mantén pulsado para hablar…',
+          value: input,
+          onChange: function (e) {
+            setInput(e.target.value);
+          },
+          onKeyDown: function (e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              send();
+            }
+          },
+          rows: 1
+        }),
+
+        // Toggle Gemini: posicionado absolute dentro del textarea
+        h(
+          'button',
+          {
+            className: 'gem-toggle' + (geminiMode ? ' active' : ''),
+            title: geminiMode ? 'Gemini' : 'IA local',
+            'aria-label': geminiMode ? 'Modo Gemini activo' : 'Modo IA local activo',
+            'aria-pressed': geminiMode,
+            onClick: function () {
+              haptic();
+              var next = !geminiMode;
+              setGeminiMode(next);
+              window._geminiModeOn = next;
+              try {
+                localStorage.setItem('mt_gemini_mode', next ? '1' : '0');
+              } catch (_) {}
+            }
+          },
+          '✦'
+        )
+      ),
 
       // Botón inteligente: tap = enviar (si hay texto) / tap = alternar mic (sin texto)
       //                    mantener pulsado = grabar voz
