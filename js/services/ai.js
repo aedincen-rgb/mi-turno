@@ -1238,6 +1238,28 @@ function _aiDispatchNLP(intent, c, state, q, t) {
 
   // ── Ley / Conocimiento laboral ──
   if (intent === 'ley' || intent === 'laboral') {
+    // Preguntas conceptuales/definitorias ("qué es", "qué significa", "cómo funciona el recargo")
+    // van siempre a la base de conocimiento, incluso si tenemos el salario del usuario.
+    // El cálculo personalizado solo aplica cuando el usuario quiere saber su valor específico.
+    var _esDefinitoria = _aiHas(
+      t,
+      'que es',
+      'que son',
+      'que significa',
+      'como funciona',
+      'como se calcula',
+      'en que consiste',
+      'explica',
+      'explique',
+      'cuanto es el recargo',
+      'cual es el recargo',
+      'cuanto recargo'
+    );
+    if (_esDefinitoria && typeof aiKnowledgeSearch === 'function') {
+      var kRespDef = aiKnowledgeSearch(q);
+      if (kRespDef) return kRespDef;
+    }
+
     // Si el usuario pregunta por el valor de una hora específica y tenemos su salario
     if (c.vh > 0) {
       if (_aiHas(t, 'domingo', 'dominical', 'festivo')) {
@@ -2572,6 +2594,32 @@ function aiAnswer(question, state) {
       ' · ' +
       fCOP(c.bd.extraFestNoct.cop)
     );
+  }
+
+  // Preguntas conceptuales sobre recargos dominicales/nocturnos en el sistema clásico.
+  // Deben evaluarse antes del bloque "Festivos" que responde con el historial del mes,
+  // para evitar que "qué es una hora dominical" caiga en la rama de estadísticas.
+  if (
+    _aiHas(t, 'dominical', 'domingo', 'nocturn', 'recargo') &&
+    _aiHas(
+      t,
+      'que es',
+      'que son',
+      'que significa',
+      'como funciona',
+      'cuanto es',
+      'cuanto vale',
+      'cuanto pagan',
+      'cuanto se paga',
+      'cuanto recargo',
+      'cual es el recargo',
+      'que recargo'
+    )
+  ) {
+    if (typeof aiKnowledgeSearch === 'function') {
+      var kRespClas = aiKnowledgeSearch(q);
+      if (kRespClas) return kRespClas;
+    }
   }
 
   // Festivos
