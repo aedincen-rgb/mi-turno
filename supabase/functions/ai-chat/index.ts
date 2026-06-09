@@ -6,7 +6,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 
 const GEMINI_URL =
-  'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+  'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
