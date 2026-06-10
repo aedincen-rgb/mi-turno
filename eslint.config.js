@@ -366,6 +366,7 @@ const projectGlobals = {
   _gl: 'readonly',
   _glTerm: 'readonly',
   _glPick: 'readonly',
+  _glGetGender: 'readonly',
   // services/voice-agent.js
   voiceDetect: 'readonly',
   voiceExecute: 'readonly',

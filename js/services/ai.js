@@ -693,6 +693,7 @@ function buildContext(state) {
     // Setup
     salarioConfigurado: salarioConfigurado,
     tieneHistorial: tieneHistorial,
+    gender: typeof _glGetGender === 'function' ? _glGetGender() : null,
     // Bienestar compuesto
     necesitaDescanso: necesitaDescanso,
     estadoBienestar: estadoBienestar
@@ -1869,17 +1870,18 @@ function aiAnswer(question, state) {
   if (q === '/ayuda' || q === '/help' || q === '/?') {
     return (
       '⌨️ **Comandos rápidos**\n\n' +
-      '• **/stats** — Resumen exprés: plata, horas y proyección en 1 línea\n' +
-      '• **/logros** — Tus insignias desbloqueadas (rachas, récords, hitos)\n' +
-      '• **/meta 2500000** — ¿Cuánto te falta para llegar a X pesos?\n' +
-      '• **/simular 4h** — ¿Cuánto ganarías con X horas extra? (añadí "nocturnas" para simular de noche)\n' +
-      '• **/tendencia** — Comparativa de tus últimos 3 meses\n' +
-      '• **/semana** — Resumen de cuánto llevás esta semana\n' +
-      '• **/dia** — Lo que ganaste hoy\n' +
-      '• **/liquidar** — Prestaciones, descuentos y sueldo neto estimado\n' +
-      '• **/ley** — Info de la Ley 2101, jornada máxima y salario mínimo\n' +
-      '• **/salud** — Análisis de fatiga y ritmo de trabajo\n\n' +
-      '💡 También podés escribir en lenguaje natural: "¿cuánto gané ayer?", "proyección al cierre", "¿cómo cambio mi foto?"'
+      '📊 **/stats** — Resumen exprés de tu mes en 1 sola línea (plata, horas, proyección)\n' +
+      '🏆 **/logros** — Todas tus insignias: rachas, récords, hitos desbloqueados\n' +
+      '🎯 **/meta 2500000** — Calcula cuánto te falta y cuántos turnos necesitás para llegar a X pesos\n' +
+      '🔮 **/simular 4h** — ¿Cuánto ganarías con X horas extra? Agregá "nocturnas" o "festivas" para precision\n' +
+      '📈 **/tendencia** — Tus últimos 3 meses comparados: ¿vas subiendo o bajando?\n' +
+      '📅 **/semana** — Balance completo de esta semana: ingresos, horas, días trabajados\n' +
+      '📍 **/dia** — Lo que ganaste hoy con detalle de horas y turnos\n' +
+      '💰 **/liquidar** — Sueldo neto (con descuentos) + prestaciones acumuladas (prima, cesantías, vacaciones)\n' +
+      '⚖️ **/ley** — Normativa laboral vigente: Ley 2101, jornada máxima, recargos, auxilio de transporte\n' +
+      '🧘 **/salud** — Análisis de fatiga: ¿estás al límite o vas bien?\n\n' +
+      '💡 **No necesitás escribir los comandos exactos.** Podés hablar natural:\n' +
+      '"¿cuánto gané ayer?", "proyección al cierre", "¿cómo cambio mi foto?", "simulá 4 horas extra nocturnas"'
     );
   }
   if (q === '/capacidades' || q === '/skills') {
