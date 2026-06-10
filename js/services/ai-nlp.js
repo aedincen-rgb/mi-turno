@@ -1930,7 +1930,7 @@ var AI_EMPATHY = {
     prefixes: [
       'Te escucho. ',
       function () {
-        return typeof _glPick === 'function' ? _glPick('consolation') : 'Qué duro, parce. ';
+        return typeof _glPick === 'function' ? _glPick('consolation') + ' ' : 'Qué duro. ';
       },
       'Uff, te entiendo. ',
       'Fuerza con eso. ',

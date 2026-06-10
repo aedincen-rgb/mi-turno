@@ -328,9 +328,7 @@ function AsistenteTab(props) {
     return (text || '')
       .replace(/\*\*|__|\.\*|`/g, '')
       .replace(/🏆/g, function () {
-        return (
-          ' ¡' + (typeof _glTerm === 'function' ? _glTerm('terms', 'champion') : 'campeón') + '! '
-        );
+        return ' ¡' + (typeof _glTerm === 'function' ? _glTerm('champion') : 'campeón/a') + '! ';
       })
       .replace(/[\p{Extended_Pictographic}\p{Emoji_Presentation}]/gu, '')
       .replace(/(\d+)mins\b/g, '$1 minutos')
