@@ -1,4 +1,4 @@
 {
-  "v": "v253",
-  "label": "fix: atajo 'cómo' en ai.js — preguntas con 'cómo' van directo a aiHelpAnswer"
+  "v": "v254",
+  "label": "fix: '¿Cómo' con tilde al inicio en atajo ia.js + integracion aiInsights"
 }
