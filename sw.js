@@ -115,6 +115,7 @@ const appResources = [
   './js/services/export-files.js',
   './js/services/export-email.js',
   './js/services/ai-help.js',
+  './js/services/ai-app-kb.js',
   './js/services/ai-achievements.js',
   './js/services/audio-sfx.js',
   './js/services/voice-agent.js',
