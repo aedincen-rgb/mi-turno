@@ -1,4 +1,4 @@
 {
-  "v": "v250",
-  "label": "fix: voice agent alerts + handsFree guardias anti-bucle"
+  "v": "v251",
+  "label": "fix: NLP — atajo 'cómo' al inicio de aiAnswer para preguntas de ayuda"
 }
