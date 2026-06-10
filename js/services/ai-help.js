@@ -512,7 +512,6 @@ var AI_HELP_GUIDES = [
       '**Android (Chrome):** Tocá los 3 puntitos ⋮ > "Añadir a pantalla de inicio".',
       '**iPhone (Safari):** Tocá el botón Compartir (cuadro con flecha) > "Añadir a inicio".',
       'La app se instala como cualquier otra, con su ícono y nombre.',
-      'También está disponible en Google Play Store como "Mi Turno — Nómina Colombia".',
       'La PWA se actualiza automáticamente cuando abrís la app.'
     ],
     related: ['exportar_datos', 'respaldar_datos']
@@ -794,7 +793,7 @@ var AI_HELP_GUIDES = [
     ],
     steps: [
       'Las horas extra se disparan cuando superás la jornada ordinaria.',
-      'Límite diario: 8 horas. Límite semanal: 44h (2026).',
+      'Límite diario: 8 horas. Límite semanal: 44h (2026, desde jun 15). Antes del 15 de junio de 2026 rige 45h.',
       '**Extra diurna:** 25% adicional (1.25x).',
       '**Extra nocturna:** 75% adicional (1.75x).',
       '**Extra festiva diurna:** 100% adicional (2.0x).',
