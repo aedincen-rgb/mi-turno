@@ -1,4 +1,4 @@
 {
-  "v": "v252",
-  "label": "fix: atajo 'cómo' en aiAnswer + NLP dispatch actualizado + voice agent patterns mejorados"
+  "v": "v253",
+  "label": "fix: atajo 'cómo' en ai.js — preguntas con 'cómo' van directo a aiHelpAnswer"
 }

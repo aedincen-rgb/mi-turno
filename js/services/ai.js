@@ -1661,6 +1661,12 @@ function aiAnswer(question, state) {
 
   // Construcción del contexto garantizada
   var c = buildContext(state);
+
+  // ═══ ATAJO AYUDA: preguntas con "cómo" → aiHelpAnswer directo ═══
+  if ((q.indexOf("cómo ") === 0 || q.indexOf("como ") === 0) && typeof aiHelpAnswer === "function") {
+    var ayudaDirecta = aiHelpAnswer(q);
+    if (ayudaDirecta) return ayudaDirecta;
+  }
   var isAdmin = state.session && state.session.isAdmin;
 
   // ── MÁQUINA DE ESTADOS (Flujos Multi-paso) ──
