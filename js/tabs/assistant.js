@@ -60,6 +60,17 @@ function AsistenteTab(props) {
   var autoRead = ar[0],
     setAutoRead = ar[1];
 
+  // Modo manos libres: conversación continua escuchar→responder→leer→repetir
+  var hf = useState(false);
+  var handsFree = hf[0],
+    setHandsFree = hf[1];
+
+  // Nivel de audio (para visualización mientras graba)
+  var al = useState(0);
+  var audioLevel = al[0],
+    setAudioLevel = al[1];
+  var audioAnimRef = useRef(null);
+
   // Sincronizar el global _geminiModeOn con el estado React al montar.
   // Necesario porque send() lee window._geminiModeOn (closure captura el ref global,
   // no el estado React, para evitar que la closure quede desactualizada en el setTimeout).
@@ -1568,8 +1579,29 @@ function AsistenteTab(props) {
               style: { transform: 'scale(' + (1 + audioLevel * 0.5) + ')' }
             })
           : null,
-        // Icono dinámico
-        busy ? h('span', { className: 'sp-in' }) : listening ? '■' : input.trim() ? '↑' : '🎤'
+        // Icono dinámico — muestra ondas de audio cuando escucha
+        listening
+          ? h(
+              'div',
+              { className: 'asistente-audio-bars' },
+              h('span', {
+                className: 'asistente-audio-bar',
+                style: { height: 8 + audioLevel * 24 + 'px' }
+              }),
+              h('span', {
+                className: 'asistente-audio-bar',
+                style: { height: 8 + (audioLevel * 0.7 + 0.3) * 24 + 'px', animationDelay: '0.1s' }
+              }),
+              h('span', {
+                className: 'asistente-audio-bar',
+                style: { height: 8 + (audioLevel * 0.5 + 0.5) * 24 + 'px', animationDelay: '0.2s' }
+              })
+            )
+          : busy
+            ? h('span', { className: 'sp-in' })
+            : input.trim()
+              ? '↑'
+              : '🎤'
       )
     ),
 
