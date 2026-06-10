@@ -1,4 +1,4 @@
 {
-  "v": "v251",
-  "label": "fix: NLP — atajo 'cómo' al inicio de aiAnswer para preguntas de ayuda"
+  "v": "v252",
+  "label": "fix: atajo 'cómo' en aiAnswer + NLP dispatch actualizado + voice agent patterns mejorados"
 }
