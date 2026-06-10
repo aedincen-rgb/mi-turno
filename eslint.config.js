@@ -330,6 +330,38 @@ const projectGlobals = {
   aiPsychRespond: 'readonly',
   // services/ai-auditor.js
   aiAuditShifts: 'readonly',
+  // services/ai-router.js
+  aiRouteTools: 'readonly',
+  aiCacheToolResult: 'readonly',
+  aiInvalidateToolCache: 'readonly',
+  aiRouterStats: 'readonly',
+  AI_TOOLS: 'readonly',
+  AI_INTENT_TOOLS: 'readonly',
+  // services/ai-collector.js
+  aiCollectData: 'readonly',
+  aiMergeData: 'readonly',
+  // services/ai-reasoning.js
+  aiReason: 'readonly',
+  aiVarPct: 'readonly',
+  aiIsOutlier: 'readonly',
+  AI_FINDING_TYPES: 'readonly',
+  // services/ai-responder.js
+  aiGenerateResponse: 'readonly',
+  aiValidateResponse: 'readonly',
+  aiPolishResponse: 'readonly',
+  aiResponderReset: 'readonly',
+  // services/ai-insights.js (todas las funciones exportadas)
+  aiInsightBreakdown: 'readonly',
+  aiInsightScenarios: 'readonly',
+  aiInsightEfficiency: 'readonly',
+  aiInsightLegal: 'readonly',
+  aiInsightFull: 'readonly',
+  // services/ai-advisor.js (todas las funciones exportadas)
+  aiAdvisorFiscal: 'readonly',
+  aiAdvisorOferta: 'readonly',
+  aiAdvisorDescanso: 'readonly',
+  aiAdvisorAnual: 'readonly',
+  aiAdvisorRespond: 'readonly',
   // services/gender-lang.js
   _gl: 'readonly',
   _glTerm: 'readonly',
