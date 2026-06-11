@@ -1663,7 +1663,12 @@ function aiAnswer(question, state) {
   var c = buildContext(state);
 
   // ═══ ATAJO AYUDA: preguntas con "cómo" → aiHelpAnswer directo ═══
-  if ((q.indexOf("cómo ") === 0 || q.indexOf("como ") === 0) && typeof aiHelpAnswer === "function") {
+  // Quitar "¿" inicial antes de comparar para que "¿Cómo..." también dispare
+  var _qSinInterro = q.replace(/^[¿¡]+/, '');
+  if (
+    (_qSinInterro.indexOf('cómo ') === 0 || _qSinInterro.indexOf('como ') === 0) &&
+    typeof aiHelpAnswer === 'function'
+  ) {
     var ayudaDirecta = aiHelpAnswer(q);
     if (ayudaDirecta) return ayudaDirecta;
   }
