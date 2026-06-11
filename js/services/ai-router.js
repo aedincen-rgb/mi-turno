@@ -21,6 +21,21 @@ var AI_TOOLS = {
   getCalc: { src: 'local', fn: '_aiGetCalc', ttl: 30000, desc: 'Resultado de cálculo' },
   getPrefs: { src: 'local', fn: '_aiGetPrefs', ttl: 60000, desc: 'Preferencias del usuario' },
 
+  // Herramientas remotas. Se usan solo con conexión y sesión Supabase válida.
+  // El collector cae a datos locales si RLS/sesión/red no permiten leer.
+  getSupabaseSnapshot: {
+    src: 'supabase',
+    fn: '_aiGetSupabaseSnapshot',
+    ttl: 45000,
+    desc: 'Snapshot remoto de turnos, activo y perfil'
+  },
+  getReportLogs: {
+    src: 'supabase',
+    fn: '_aiGetReportLogs',
+    ttl: 120000,
+    desc: 'Auditoría de reportes enviados'
+  },
+
   // Herramientas de analítica
   analyzeBreakdown: {
     src: 'cpu',
@@ -77,26 +92,29 @@ var AI_INTENT_TOOLS = {
   reflexion: { tools: ['getCalc'], prio: 'conversational' },
 
   // Datos financieros
-  total_ganado: { tools: ['getCalc', 'getTurnosMes'], prio: 'data' },
-  hoy: { tools: ['getCalc', 'getTurnosMes', 'getActivo'], prio: 'data' },
-  ayer: { tools: ['getCalc', 'getTurnosMes'], prio: 'data' },
-  proyeccion: { tools: ['getCalc', 'analyzeScenarios'], prio: 'data' },
-  horas_trabajadas: { tools: ['getCalc', 'getTurnosMes'], prio: 'data' },
-  promedio: { tools: ['getCalc', 'getTurnosMes'], prio: 'data' },
-  comparativa_mes: { tools: ['getTurnosAll', 'getCalc'], prio: 'data' },
-  comparativa_semana: { tools: ['getTurnosMes', 'getCalc'], prio: 'data' },
-  mejor_dia: { tools: ['getCalc', 'getTurnosMes'], prio: 'data' },
-  peor_dia: { tools: ['getCalc', 'getTurnosMes'], prio: 'data' },
-  turno_largo: { tools: ['getTurnosMes', 'getCalc'], prio: 'data' },
-  turno_corto: { tools: ['getTurnosMes', 'getCalc'], prio: 'data' },
-  racha: { tools: ['getTurnosMes', 'getCalc'], prio: 'data' },
-  distribucion: { tools: ['getCalc', 'analyzeBreakdown'], prio: 'data' },
-  velocidad: { tools: ['getTurnosMes', 'getCalc'], prio: 'data' },
-  eficiencia: { tools: ['getCalc', 'analyzeEfficiency'], prio: 'data' },
-  stats: { tools: ['getCalc', 'getTurnosMes', 'getTurnosAll', 'analyzeEfficiency'], prio: 'data' },
-  planificacion_semana: { tools: ['getTurnosMes', 'getCalc'], prio: 'data' },
-  bienestar: { tools: ['getTurnosMes', 'calcDescanso'], prio: 'data' },
-  queja_fatiga: { tools: ['getTurnosMes', 'calcDescanso'], prio: 'data' },
+  total_ganado: { tools: ['getSupabaseSnapshot', 'getCalc', 'getTurnosMes'], prio: 'data' },
+  hoy: { tools: ['getSupabaseSnapshot', 'getCalc', 'getTurnosMes', 'getActivo'], prio: 'data' },
+  ayer: { tools: ['getSupabaseSnapshot', 'getCalc', 'getTurnosMes'], prio: 'data' },
+  proyeccion: { tools: ['getSupabaseSnapshot', 'getCalc', 'analyzeScenarios'], prio: 'data' },
+  horas_trabajadas: { tools: ['getSupabaseSnapshot', 'getCalc', 'getTurnosMes'], prio: 'data' },
+  promedio: { tools: ['getSupabaseSnapshot', 'getCalc', 'getTurnosMes'], prio: 'data' },
+  comparativa_mes: { tools: ['getSupabaseSnapshot', 'getTurnosAll', 'getCalc'], prio: 'data' },
+  comparativa_semana: { tools: ['getSupabaseSnapshot', 'getTurnosMes', 'getCalc'], prio: 'data' },
+  mejor_dia: { tools: ['getSupabaseSnapshot', 'getCalc', 'getTurnosMes'], prio: 'data' },
+  peor_dia: { tools: ['getSupabaseSnapshot', 'getCalc', 'getTurnosMes'], prio: 'data' },
+  turno_largo: { tools: ['getSupabaseSnapshot', 'getTurnosMes', 'getCalc'], prio: 'data' },
+  turno_corto: { tools: ['getSupabaseSnapshot', 'getTurnosMes', 'getCalc'], prio: 'data' },
+  racha: { tools: ['getSupabaseSnapshot', 'getTurnosMes', 'getCalc'], prio: 'data' },
+  distribucion: { tools: ['getSupabaseSnapshot', 'getCalc', 'analyzeBreakdown'], prio: 'data' },
+  velocidad: { tools: ['getSupabaseSnapshot', 'getTurnosMes', 'getCalc'], prio: 'data' },
+  eficiencia: { tools: ['getSupabaseSnapshot', 'getCalc', 'analyzeEfficiency'], prio: 'data' },
+  stats: {
+    tools: ['getSupabaseSnapshot', 'getCalc', 'getTurnosMes', 'getTurnosAll', 'analyzeEfficiency'],
+    prio: 'data'
+  },
+  planificacion_semana: { tools: ['getSupabaseSnapshot', 'getTurnosMes', 'getCalc'], prio: 'data' },
+  bienestar: { tools: ['getSupabaseSnapshot', 'getTurnosMes', 'calcDescanso'], prio: 'data' },
+  queja_fatiga: { tools: ['getSupabaseSnapshot', 'getTurnosMes', 'calcDescanso'], prio: 'data' },
 
   // Calculadoras
   liquidacion: { tools: ['getCalc', 'getSalario', 'calcLiquidacion'], prio: 'calc' },
@@ -120,13 +138,16 @@ var AI_INTENT_TOOLS = {
   configurar_salario: { tools: [], prio: 'action' },
   navegar_ajustes: { tools: [], prio: 'action' },
   navegar_historial: { tools: [], prio: 'action' },
-  email: { tools: ['getCalc', 'getTurnosMes'], prio: 'action' },
-  correo_formal: { tools: ['getCalc', 'getTurnosMes'], prio: 'action' },
+  email: {
+    tools: ['getSupabaseSnapshot', 'getCalc', 'getTurnosMes', 'getReportLogs'],
+    prio: 'action'
+  },
+  correo_formal: { tools: ['getSupabaseSnapshot', 'getCalc', 'getTurnosMes'], prio: 'action' },
   whatsapp_share: { tools: ['getCalc', 'getTurnosMes'], prio: 'action' },
 
   // Logros / Auditoría
   logros: { tools: ['checkAchievements'], prio: 'data' },
-  auditoria: { tools: ['getTurnosAll', 'auditShifts'], prio: 'data' },
+  auditoria: { tools: ['getSupabaseSnapshot', 'getTurnosAll', 'auditShifts'], prio: 'data' },
 
   // Contexto genérico (fallback del clasificador NLP)
   contexto: { tools: ['getCalc'], prio: 'data' }
@@ -182,7 +203,14 @@ function aiRouteTools(intent, ctx, isOnline) {
     // 2. Verificar caché (TTL)
     var cacheEntry = _aiToolCache[toolName];
     if (cacheEntry && Date.now() - cacheEntry.ts < toolDef.ttl) {
-      // Cache fresco, skip
+      selected.push({
+        name: toolName,
+        tool: toolDef,
+        reason: 'cache fresco',
+        cached: true,
+        cachedResult: cacheEntry.result,
+        cachedAge: Date.now() - cacheEntry.ts
+      });
       continue;
     }
 
@@ -232,7 +260,7 @@ function _aiContextHasData(toolName, ctx) {
   var checks = {
     getCalc: !!ctx.totalCOP,
     getTurnosMes: !!(ctx.turnosMes && ctx.turnosMes.length > 0),
-    getTurnosAll: !!(ctx.dias && ctx.dias.length > 0),
+    getTurnosAll: !!(ctx.turnosAll && ctx.turnosAll.length > 0),
     getSalario: !!ctx.salario,
     getActivo: !!ctx.activo,
     getPrefs: !!ctx.prefs
@@ -277,4 +305,6 @@ window.aiRouteTools = aiRouteTools;
 window.aiCacheToolResult = aiCacheToolResult;
 window.aiInvalidateToolCache = aiInvalidateToolCache;
 window.aiRouterStats = aiRouterStats;
+window.AI_TOOLS = AI_TOOLS;
+window.AI_INTENT_TOOLS = AI_INTENT_TOOLS;
 console.log('[MT] ai-router.js cargado — Tool Router ✓');

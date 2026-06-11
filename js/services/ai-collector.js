@@ -70,6 +70,14 @@ function _aiExecuteOneTool(item, userContext, session, bag, done) {
   var toolDef = item.tool;
 
   try {
+    if (item.cached) {
+      bag.collected[toolName] = item.cachedResult;
+      bag.sources[toolName] = 'cache';
+      bag.stale[toolName] = item.cachedAge > toolDef.ttl;
+      done();
+      return;
+    }
+
     // 1. Intentar ejecutar la función de la herramienta
     var result = _aiCallTool(toolName, toolDef, userContext, session);
 
@@ -79,6 +87,7 @@ function _aiExecuteOneTool(item, userContext, session, bag, done) {
         function (val) {
           bag.collected[toolName] = val;
           bag.sources[toolName] = toolDef.src;
+          if (typeof aiCacheToolResult === 'function') aiCacheToolResult(toolName, val);
           done();
         },
         function (err) {
@@ -93,6 +102,7 @@ function _aiExecuteOneTool(item, userContext, session, bag, done) {
     // 3. Resultado síncrono
     bag.collected[toolName] = result;
     bag.sources[toolName] = toolDef.src;
+    if (typeof aiCacheToolResult === 'function') aiCacheToolResult(toolName, result);
   } catch (e) {
     bag.errors[toolName] = (e && e.message) || 'Excepción en herramienta';
     bag.meta.errorCount++;
@@ -113,6 +123,8 @@ function _aiCallTool(toolName, toolDef, userContext, session) {
   if (fnName === '_aiGetActivo') return _aiGetActivo(userContext);
   if (fnName === '_aiGetCalc') return _aiGetCalc(userContext);
   if (fnName === '_aiGetPrefs') return _aiGetPrefs(userContext, session);
+  if (fnName === '_aiGetSupabaseSnapshot') return _aiGetSupabaseSnapshot(userContext, session);
+  if (fnName === '_aiGetReportLogs') return _aiGetReportLogs(userContext, session);
 
   // Herramientas de analítica (cpu)
   if (fnName === 'aiInsightBreakdown' && typeof aiInsightBreakdown === 'function') {
@@ -198,8 +210,8 @@ function _aiGetTurnosMes(ctx) {
 }
 
 function _aiGetTurnosAll(ctx) {
-  if (!ctx || !ctx.turnosMes) return [];
-  return ctx.turnosMes;
+  if (!ctx) return [];
+  return ctx.turnosAll || ctx.turnosMes || [];
 }
 
 function _aiGetSalario(ctx, session) {
@@ -234,6 +246,87 @@ function _aiGetPrefs(ctx, session) {
     return stored || {};
   }
   return {};
+}
+
+// ─── HERRAMIENTAS SUPABASE ────────────────────────────────────
+
+function _aiCanUseSupabase(session) {
+  return !!(
+    typeof SUPA !== 'undefined' &&
+    SUPA &&
+    typeof CLOUD_MODE !== 'undefined' &&
+    CLOUD_MODE &&
+    typeof navigator !== 'undefined' &&
+    navigator.onLine &&
+    session &&
+    session.uid
+  );
+}
+
+function _aiGetSupabaseSnapshot(ctx, session) {
+  if (!_aiCanUseSupabase(session) || typeof supaSyncDown !== 'function') {
+    return {
+      available: false,
+      reason: 'offline_or_no_session',
+      fallback: _aiBuildLocalSnapshot(ctx, session)
+    };
+  }
+
+  return supaSyncDown(session.uid).then(function (remote) {
+    if (!remote) {
+      return {
+        available: false,
+        reason: 'remote_empty_or_rls',
+        fallback: _aiBuildLocalSnapshot(ctx, session)
+      };
+    }
+    return {
+      available: true,
+      source: 'supabase',
+      fetchedAt: Date.now(),
+      turnos: remote.turnos || [],
+      activo: remote.activo || null,
+      salario: remote.salario || null,
+      salarioConfigured: remote.salarioConfigured === true
+    };
+  });
+}
+
+function _aiGetReportLogs(ctx, session) {
+  if (!_aiCanUseSupabase(session)) {
+    return { available: false, reason: 'offline_or_no_session', logs: [] };
+  }
+  return SUPA.from('email_logs')
+    .select('id,to_email,format,status,created_at,error')
+    .eq('user_id', session.uid)
+    .order('created_at', { ascending: false })
+    .limit(10)
+    .then(function (res) {
+      if (res.error) {
+        return { available: false, reason: res.error.message || 'supabase_error', logs: [] };
+      }
+      return {
+        available: true,
+        source: 'supabase.email_logs',
+        fetchedAt: Date.now(),
+        logs: res.data || []
+      };
+    })
+    .catch(function (e) {
+      return { available: false, reason: (e && e.message) || 'fetch_failed', logs: [] };
+    });
+}
+
+function _aiBuildLocalSnapshot(ctx, session) {
+  return {
+    source: 'local',
+    fetchedAt: Date.now(),
+    uid: session && session.uid ? session.uid : ctx && ctx.uid,
+    turnos: ctx && ctx.turnosAll ? ctx.turnosAll : ctx && ctx.turnosMes ? ctx.turnosMes : [],
+    activo: ctx && ctx.activo ? ctx.activo : null,
+    salario: ctx && ctx.salario ? ctx.salario : SMIN,
+    salarioConfigured: !!(ctx && ctx.salarioConfigurado)
+  };
 }
 
 // ─── BUILDERS PARA HERRAMIENTAS QUE NECESITAN PARÁMETROS ──────

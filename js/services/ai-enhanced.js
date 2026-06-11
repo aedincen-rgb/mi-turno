@@ -34,6 +34,46 @@ function aiRemember(role, text, intent, topic, userContext) {
   }
 }
 
+// ─── ÚLTIMOS MENSAJES (persistencia entre sesiones) ───────────
+// La sesión anterior guarda sus últimos 3 mensajes en ai-memory.js;
+// al arrancar una sesión nueva se siembran acá para que la IA offline
+// retome el hilo (follow-ups, aiThink, contexto conversacional).
+var _aiMsgSeeded = false;
+
+function aiGetRecentMessages(n) {
+  var lim = n || 3;
+  var h = _aiMemory.history;
+  var out = [];
+  for (var i = Math.max(0, h.length - lim); i < h.length; i++) {
+    out.push({
+      role: h[i].role,
+      text: h[i].text,
+      intent: h[i].intent,
+      topic: h[i].topic,
+      ts: h[i].ts
+    });
+  }
+  return out;
+}
+
+function aiSeedMessages(msgs) {
+  if (_aiMsgSeeded) return;
+  _aiMsgSeeded = true;
+  if (!msgs || !msgs.length || _aiMemory.history.length > 0) return;
+  for (var i = 0; i < msgs.length; i++) {
+    var m = msgs[i];
+    if (!m || !m.text) continue;
+    _aiMemory.history.push({
+      role: m.role || 'user',
+      text: String(m.text).substring(0, 120),
+      intent: m.intent || 'unknown',
+      topic: m.topic || 'general',
+      ts: m.ts || 0,
+      restored: true
+    });
+  }
+}
+
 // Obtener última interacción
 function aiLastInteraction() {
   var h = _aiMemory.history;
@@ -95,6 +135,8 @@ function aiClearMemory() {
   _aiMemory.userState = {};
   _aiMemory.proactiveCount = 0;
   _aiMemory.lastSuggestion = null;
+  // El usuario pidió borrón y cuenta nueva: no resembrar mensajes viejos
+  _aiMsgSeeded = true;
   if (typeof aiMemoryResetSession === 'function') aiMemoryResetSession();
   if (typeof aiEngageReset === 'function') aiEngageReset();
 }
@@ -512,9 +554,17 @@ function aiGetMemorySnapshot() {
 function aiRestoreHistory(recentIntents, lastIntent, lastTopic, pendingSuggestion) {
   if (!recentIntents || !recentIntents.length) return;
 
-  var synthetic = [];
+  // Intents ya cubiertos por mensajes reales restaurados (aiSeedMessages)
+  // no necesitan entrada sintética — evita duplicar el hilo.
+  var yaCubiertos = {};
   var i;
+  for (i = 0; i < _aiMemory.history.length; i++) {
+    if (_aiMemory.history[i].restored) yaCubiertos[_aiMemory.history[i].intent] = true;
+  }
+
+  var synthetic = [];
   for (i = 0; i < recentIntents.length; i++) {
+    if (yaCubiertos[recentIntents[i]]) continue;
     synthetic.push({
       role: 'user',
       text: '[sesión anterior]',
@@ -883,6 +933,81 @@ function _aiRunAgentPass(enriched, intent, question, userContext, verbose, thoug
   });
 }
 
+// ─── EVIDENCIA DE DATOS ───────────────────────────────────────
+// Pie discreto de trazabilidad: qué datos respaldan la respuesta y su
+// estado de sincronización. Solo en intents de datos financieros.
+
+var _AI_EVIDENCE_INTENTS = {
+  total_ganado: 1,
+  hoy: 1,
+  ayer: 1,
+  proyeccion: 1,
+  horas_trabajadas: 1,
+  promedio: 1,
+  comparativa_mes: 1,
+  comparativa_semana: 1,
+  distribucion: 1,
+  eficiencia: 1,
+  stats: 1,
+  racha: 1,
+  mejor_dia: 1,
+  peor_dia: 1
+};
+
+function aiSyncStateLabel(uid) {
+  try {
+    var pend = 0;
+    if (typeof leer === 'function' && uid) {
+      var colas = leer('mt_sync_queue', {});
+      pend = (colas && colas[uid] && colas[uid].length) || 0;
+    }
+    if (pend > 0) {
+      return pend + ' cambio' + (pend === 1 ? '' : 's') + ' por sincronizar';
+    }
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      return 'datos locales, sin conexión';
+    }
+    return 'sincronizado con la nube';
+  } catch (_) {
+    return '';
+  }
+}
+
+function _aiEvidenciaDatos(intent, c) {
+  if (!_AI_EVIDENCE_INTENTS[intent]) return '';
+  if (!c || !c.turnosMes || !c.turnosMes.length) return '';
+
+  var n = c.turnosMes.length;
+  var minD = null;
+  var maxD = null;
+  for (var i = 0; i < n; i++) {
+    var d = new Date(c.turnosMes[i].inicio);
+    if (isNaN(d.getTime())) continue;
+    if (!minD || d < minD) minD = d;
+    if (!maxD || d > maxD) maxD = d;
+  }
+  if (!minD) return '';
+
+  var meses = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+  var rango = minD.getDate() + ' ' + meses[minD.getMonth()];
+  if (maxD.toDateString() !== minD.toDateString()) {
+    rango += ' – ' + maxD.getDate() + ' ' + meses[maxD.getMonth()];
+  }
+
+  var sync = aiSyncStateLabel(c.uid);
+  return (
+    '\n\n📊 _Basado en ' +
+    n +
+    ' turno' +
+    (n === 1 ? '' : 's') +
+    ' (' +
+    rango +
+    ')' +
+    (sync ? ' · ' + sync : '') +
+    '_'
+  );
+}
+
 // ─── API PÚBLICA ──────────────────────────────────────────────
 // Pipeline unificado de enriquecimiento con contexto compartido.
 
@@ -907,6 +1032,15 @@ function aiEnhancedRespond(
   // Detectar si el usuario pidió una respuesta extensa explícitamente.
   // Solo en ese caso se activan los módulos de expansión (insights, expandir, engage).
   var _verboso = _aiModoVerboso(question);
+
+  // Recuperar los últimos 3 mensajes de la sesión anterior antes de razonar,
+  // para que aiThink y los follow-ups vean el hilo completo.
+  try {
+    if (!_aiMsgSeeded && typeof aiMemoryLoad === 'function' && userContext && userContext.uid) {
+      var _memPrev = aiMemoryLoad(userContext.uid);
+      if (_memPrev && _memPrev.recentMessages) aiSeedMessages(_memPrev.recentMessages);
+    }
+  } catch (_) {}
 
   // Razonamiento previo: determina qué necesita el usuario antes de activar módulos
   var _thought = {};
@@ -1047,7 +1181,7 @@ function aiEnhancedRespond(
           analyzeEfficiency: !!userContext.eficiencia
         }
       };
-      var _rResult = aiReason(_rBag, userContext, []);
+      var _rResult = aiReason(_rBag, userContext, aiGetRecentMessages(3));
       if (_rResult && _rResult.findings && _rResult.findings.length > 0) {
         var _topFindings = [];
         for (var _fi = 0; _fi < _rResult.findings.length && _topFindings.length < 2; _fi++) {
@@ -1063,6 +1197,14 @@ function aiEnhancedRespond(
           text += '\n\n' + _fLines.join(' ');
         }
       }
+    }
+  } catch (_) {}
+
+  // 4c. Evidencia de datos — trazabilidad profesional de la respuesta
+  try {
+    if (text && text.indexOf('📊 _') < 0) {
+      var _ev = _aiEvidenciaDatos(intent, userContext);
+      if (_ev) text += _ev;
     }
   } catch (_) {}
 

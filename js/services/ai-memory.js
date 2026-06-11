@@ -41,6 +41,10 @@ function aiMemorySave(uid) {
     var prev = aiMemoryLoad(uid);
     var prevCount = prev && typeof prev.sessionCount === 'number' ? prev.sessionCount : 0;
 
+    var structured = aiMemoryBuildStructured(uid, snapshot, convState);
+
+    var recentMessages = typeof aiGetRecentMessages === 'function' ? aiGetRecentMessages(3) : [];
+
     var mem = {
       v: 1,
       lastTs: Date.now(),
@@ -48,11 +52,13 @@ function aiMemorySave(uid) {
       convLevel: convState.level,
       seenFeatures: convState.seenFeatures || {},
       recentIntents: snapshot.recentIntents || [],
+      recentMessages: recentMessages,
       lastIntent: snapshot.lastIntent || convState.lastIntent || null,
       lastTopic: snapshot.lastTopic || null,
       pendingSuggestion: snapshot.pendingSuggestion || null,
       lastEarnings: snapshot.lastEarnings || 0,
-      streakDays: snapshot.streakDays || 0
+      streakDays: snapshot.streakDays || 0,
+      structured: structured
     };
 
     if (typeof grabar === 'function') {
@@ -63,12 +69,52 @@ function aiMemorySave(uid) {
   } catch (_) {}
 }
 
+// ─── MEMORIA ESTRUCTURADA ────────────────────────────────────
+// Separa conversación, finanzas, preferencias e historial para evitar
+// duplicar texto crudo y para que el agente consulte solo lo necesario.
+function aiMemoryBuildStructured(uid, snapshot, convState) {
+  var prefs = {};
+  try {
+    prefs =
+      typeof leer === 'function' && typeof dk === 'function' ? leer(dk(uid, 'prefs'), {}) : {};
+  } catch (_) {}
+  return {
+    conversation: {
+      recentMessages: typeof aiGetRecentMessages === 'function' ? aiGetRecentMessages(3) : [],
+      recentIntents: snapshot.recentIntents || [],
+      lastIntent: snapshot.lastIntent || convState.lastIntent || null,
+      lastTopic: snapshot.lastTopic || null,
+      pendingSuggestion: snapshot.pendingSuggestion || null,
+      convLevel: convState.level || 0
+    },
+    financial: {
+      lastEarnings: snapshot.lastEarnings || 0,
+      streakDays: snapshot.streakDays || 0,
+      lastUpdatedAt: Date.now()
+    },
+    userConfig: {
+      uid: uid,
+      prefs: prefs || {}
+    },
+    preferences: {
+      seenFeatures: convState.seenFeatures || {}
+    },
+    queryHistory: {
+      recentIntents: snapshot.recentIntents || []
+    }
+  };
+}
+
 // ─── RESTAURACIÓN ─────────────────────────────────────────────
 function aiMemoryRestore(uid) {
   if (!uid) return;
   try {
     var mem = aiMemoryLoad(uid);
     if (!mem) return;
+
+    if (typeof aiSeedMessages === 'function') {
+      aiSeedMessages(mem.recentMessages);
+    }
 
     if (typeof aiConvRestore === 'function') {
       aiConvRestore(mem.convLevel, mem.seenFeatures);
@@ -183,6 +229,7 @@ function aiMemoryResetSession() {
 // ─── EXPORT ──────────────────────────────────────────────────
 window.aiMemoryLoad = aiMemoryLoad;
 window.aiMemorySave = aiMemorySave;
+window.aiMemoryBuildStructured = aiMemoryBuildStructured;
 window.aiMemoryRestore = aiMemoryRestore;
 window.aiMemoryOnFirstMessage = aiMemoryOnFirstMessage;
 window.aiMemoryResetSession = aiMemoryResetSession;

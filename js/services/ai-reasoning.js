@@ -42,6 +42,11 @@ function aiReason(bag, ctx, conversationHistory) {
   var findings = [];
   var confidence = 0.85; // base
 
+  // 0. Evaluar fuentes disponibles antes de interpretar números.
+  var sourceFindings = _aiAnalyzeSources(bag, ctx);
+  findings = findings.concat(sourceFindings.findings);
+  confidence -= sourceFindings.penalty;
+
   // 1. Analizar tendencias si hay datos de cálculo
   if (bag.collected.getCalc) {
     var calcFindings = _aiAnalyzeCalcTrends(ctx);
@@ -71,7 +76,21 @@ function aiReason(bag, ctx, conversationHistory) {
         priority: 9
       });
       confidence -= 0.05;
+    } else if (auditResult && auditResult.text) {
+      findings.push({
+        type: auditResult.severity === 'high' ? 'ANOMALY' : 'RISK',
+        text: auditResult.text,
+        source: 'auditShifts',
+        priority: auditResult.severity === 'high' ? 9 : 7,
+        data: { auditType: auditResult.type }
+      });
+      confidence -= 0.03;
     }
+  }
+
+  // 4b. Detección local ligera si el auditor no fue invocado.
+  if (!bag.collected.auditShifts && ctx && ctx.turnosAll && ctx.turnosAll.length) {
+    findings = findings.concat(_aiDetectShiftOutliers(ctx.turnosAll));
   }
 
   // 5. Analizar eficiencia
@@ -98,6 +117,86 @@ function aiReason(bag, ctx, conversationHistory) {
     totalFindings: findings.length,
     topFindings: topFindings
   };
+}
+
+// ─── ANÁLISIS DE FUENTES ─────────────────────────────────────
+
+function _aiAnalyzeSources(bag, ctx) {
+  var findings = [];
+  var penalty = 0;
+  var sources = bag && bag.sources ? bag.sources : {};
+  var collected = bag && bag.collected ? bag.collected : {};
+  var remote = collected.getSupabaseSnapshot;
+
+  if (remote && remote.available) {
+    findings.push({
+      type: 'INSIGHT',
+      text:
+        'Datos verificados contra Supabase: ' +
+        ((remote.turnos && remote.turnos.length) || 0) +
+        ' turnos remotos y perfil de salario consultado.',
+      source: 'supabase.snapshot',
+      priority: 3,
+      data: { remoteTurnos: (remote.turnos && remote.turnos.length) || 0 }
+    });
+  } else if (remote && !remote.available) {
+    penalty += 0.08;
+    findings.push({
+      type: 'INSIGHT',
+      text:
+        'No pude validar Supabase ahora (' +
+        (remote.reason || 'sin detalle') +
+        '). Usé los datos locales disponibles en este dispositivo.',
+      source: 'local.fallback',
+      priority: 4
+    });
+  } else if (typeof navigator !== 'undefined' && !navigator.onLine) {
+    penalty += 0.1;
+  }
+
+  for (var k in sources) {
+    if (Object.prototype.hasOwnProperty.call(sources, k) && sources[k] === 'cache') {
+      penalty += 0.02;
+    }
+  }
+
+  if (bag && bag.meta && bag.meta.errorCount > 0) {
+    penalty += Math.min(0.2, bag.meta.errorCount * 0.05);
+  }
+
+  return { findings: findings, penalty: penalty };
+}
+
+function _aiDetectShiftOutliers(turnosAll) {
+  var findings = [];
+  var durations = [];
+  var i;
+
+  for (i = 0; i < turnosAll.length; i++) {
+    if (!turnosAll[i].fin) continue;
+    var mins = (new Date(turnosAll[i].fin) - new Date(turnosAll[i].inicio)) / 60000;
+    if (mins > 0) durations.push(mins);
+  }
+
+  if (durations.length < 4) return findings;
+
+  for (i = 0; i < durations.length; i++) {
+    if (durations[i] > 16 * 60 || aiIsOutlier(durations[i], durations)) {
+      findings.push({
+        type: 'ANOMALY',
+        text:
+          'Detecté un turno atípico de ' +
+          (durations[i] / 60).toFixed(1) +
+          'h. Conviene revisar si la hora de cierre está correcta.',
+        source: 'turnos.outlier',
+        priority: 8,
+        data: { durationMins: durations[i] }
+      });
+      break;
+    }
+  }
+
+  return findings;
 }
 
 // ─── ANÁLISIS DE TENDENCIAS ───────────────────────────────────

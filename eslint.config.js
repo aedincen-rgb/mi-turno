@@ -260,7 +260,14 @@ const projectGlobals = {
   aiClearMemory: 'readonly',
   aiGetMemorySnapshot: 'readonly',
   aiRestoreHistory: 'readonly',
+  aiGetRecentMessages: 'readonly',
+  aiSeedMessages: 'readonly',
+  aiSyncStateLabel: 'readonly',
   aiThink: 'readonly',
+  // services/ai-query.js
+  aiQueryParse: 'readonly',
+  aiQueryRun: 'readonly',
+  AI_QUERY_DICT: 'readonly',
   // services/ai-engage.js
   aiEngageQuestion: 'readonly',
   aiEngageActions: 'readonly',
@@ -355,13 +362,11 @@ const projectGlobals = {
   aiInsightScenarios: 'readonly',
   aiInsightEfficiency: 'readonly',
   aiInsightLegal: 'readonly',
-  aiInsightFull: 'readonly',
   // services/ai-advisor.js (todas las funciones exportadas)
   aiAdvisorFiscal: 'readonly',
   aiAdvisorOferta: 'readonly',
   aiAdvisorDescanso: 'readonly',
   aiAdvisorAnual: 'readonly',
-  aiAdvisorRespond: 'readonly',
   // services/gender-lang.js
   _gl: 'readonly',
   _glTerm: 'readonly',

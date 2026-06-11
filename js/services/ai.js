@@ -1674,6 +1674,40 @@ function _aiDispatchNLP(intent, c, state, q, t) {
 
 // ─── MOTOR PRINCIPAL ───────────────────────────────────────────
 
+// ─── SUGERENCIAS PARA DESAMBIGUACIÓN ──────────────────────────
+// Mapea un intent a un chip tocable. Solo intents con respuesta clara;
+// si no está acá, la desambiguación cae al fallback genérico.
+function _aiIntentSuggestion(intent) {
+  var map = {
+    total_ganado: { label: '💰 Cuánto llevo este mes', query: '¿cuánto llevo este mes?' },
+    hoy: { label: '📅 Lo de hoy', query: '¿cuánto gané hoy?' },
+    ayer: { label: '📅 Lo de ayer', query: '¿cuánto gané ayer?' },
+    proyeccion: { label: '📈 Proyección al cierre', query: 'proyección' },
+    horas_trabajadas: { label: '⏱ Horas trabajadas', query: '¿cuántas horas llevo?' },
+    promedio: { label: '📊 Mi promedio', query: '¿cuál es mi promedio por turno?' },
+    comparativa_mes: { label: '📊 Comparar con mes pasado', query: 'compara con el mes pasado' },
+    comparativa_semana: {
+      label: '📊 Comparar semanas',
+      query: 'compara esta semana con la pasada'
+    },
+    mejor_dia: { label: '🏆 Mi mejor día', query: '¿cuál fue mi mejor día?' },
+    racha: { label: '🔥 Mi racha', query: 'mi racha' },
+    eficiencia: { label: '⚡ Mi valor por hora', query: '¿cuál es mi valor por hora real?' },
+    stats: { label: '📋 Resumen del mes', query: 'resumen' },
+    distribucion: { label: '🧾 Desglose de recargos', query: 'desglose de recargos' },
+    liquidacion: { label: '🧮 Mi liquidación', query: 'calcula mi liquidación' },
+    simulacion: { label: '🎯 Simular turnos', query: 'simular' },
+    ahorro: { label: '🐷 Metas de ahorro', query: 'ahorro' },
+    bienestar: { label: '😴 Mi descanso', query: '¿cuándo descanso?' },
+    ley: { label: '⚖️ Recargos y derechos', query: '¿cuánto vale la hora nocturna?' },
+    festivos: { label: '🎉 Próximos festivos', query: 'próximos festivos' },
+    logros: { label: '🏅 Mis logros', query: '/logros' },
+    email: { label: '✉️ Enviar mi reporte', query: 'envía mi reporte por correo' },
+    auditoria: { label: '🔍 Revisar mis turnos', query: 'revisa mis turnos' }
+  };
+  return map[intent] || null;
+}
+
 function aiAnswer(question, state) {
   var q = question.toLowerCase().trim();
   var t = _aiNorm(question);
@@ -1825,6 +1859,34 @@ function aiAnswer(question, state) {
     respuesta +=
       '\nBasado en `ESTRUCTURA.md`, este cambio requiere editar el módulo mencionado y recargar la app.';
     return respuesta;
+  }
+
+  // ── CONSULTA ESTRUCTURADA A TUS DATOS ──
+  // Filtros que los intents clásicos no cubren (día de semana, festivos,
+  // mes puntual por nombre). Va directo a la tabla de turnos con doCalc.
+  if (typeof aiQueryParse === 'function' && typeof aiQueryRun === 'function') {
+    var _dq = aiQueryParse(q);
+    if (_dq) {
+      var _dqText = aiQueryRun(_dq, state.turnosAll || state.turnos || [], c);
+      if (_dqText) {
+        if (typeof aiUpdateConversation === 'function') {
+          aiUpdateConversation('consulta_datos', 'finanzas');
+        }
+        if (typeof aiEnhancedRespond === 'function') {
+          var _dqEnriched = aiEnhancedRespond(
+            _dqText,
+            'consulta_datos',
+            'finanzas',
+            q,
+            c,
+            null,
+            state.turnosAll
+          );
+          if (_dqEnriched && _dqEnriched.text) return _dqEnriched;
+        }
+        return _dqText;
+      }
+    }
   }
 
   // ── NLP MEJORADO (v76): clasificación inteligente de intenciones ──
@@ -3325,6 +3387,35 @@ function aiAnswer(question, state) {
       text: emailAction.preview,
       action: { type: 'email_compose', data: emailAction.data }
     };
+  }
+
+  // ════════════════════════════════════════════════════════════
+  //  DESAMBIGUACIÓN: confianza media → proponer interpretaciones
+  // ════════════════════════════════════════════════════════════
+  // En vez del fallback genérico, ofrecer las 2 lecturas más probables
+  // del clasificador como chips tocables. El usuario confirma con un tap.
+
+  if (
+    _nlp &&
+    _nlp.intent &&
+    _nlp.intent !== 'contexto' &&
+    _nlp.confidence >= 0.2 &&
+    _nlp.confidence < 0.5
+  ) {
+    var _sug1 = _aiIntentSuggestion(_nlp.intent);
+    var _sug2 =
+      _nlp.secondIntent && _nlp.secondIntent !== _nlp.intent
+        ? _aiIntentSuggestion(_nlp.secondIntent)
+        : null;
+    if (_sug1) {
+      var _disActions = [{ label: _sug1.label, query: _sug1.query }];
+      if (_sug2) _disActions.push({ label: _sug2.label, query: _sug2.query });
+      _disActions.push({ label: 'Ver todo lo que sé hacer', query: '/ayuda' });
+      return {
+        text: 'No estoy 100% seguro de qué necesitás, pero creo que vas por acá. ¿Cuál se acerca más?',
+        actions: _disActions
+      };
+    }
   }
 
   // ════════════════════════════════════════════════════════════

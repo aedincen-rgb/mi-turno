@@ -80,6 +80,13 @@ function aiGenerateResponse(reasoningResult, intent, ctx, bag, convLevel) {
       '\n\n📡 _Sin conexión. Datos basados en caché local. Podrían no reflejar cambios recientes._';
   }
 
+  // 5b. Evidencia usada. Mantenerlo corto para no convertir cada respuesta
+  // en un informe, pero dejar trazabilidad cuando el agente consultó fuentes.
+  var evidence = _aiBuildEvidenceLine(bag);
+  if (evidence) {
+    text += '\n\n' + evidence;
+  }
+
   // 6. Generar acciones rápidas
   actions = _aiGenerateActions(intent, ctx, findings);
 
@@ -104,6 +111,23 @@ function aiGenerateResponse(reasoningResult, intent, ctx, bag, convLevel) {
     confidence: confidence,
     hasFindings: findings.length > 0
   };
+}
+
+function _aiBuildEvidenceLine(bag) {
+  if (!bag || !bag.sources) return '';
+  var names = [];
+  var used = {};
+  for (var k in bag.sources) {
+    if (!Object.prototype.hasOwnProperty.call(bag.sources, k)) continue;
+    var src = bag.sources[k];
+    if (!src || used[src]) continue;
+    used[src] = true;
+    names.push(src);
+  }
+  if (!names.length) return '';
+  var label = names.join(', ');
+  if (label.length > 80) label = label.substring(0, 77) + '...';
+  return '_Fuentes consultadas: ' + label + '._';
 }
 
 // ─── RESPUESTAS POR INTENCIÓN (cuando no hay hallazgos) ───────

@@ -1619,6 +1619,7 @@ function aiClassify(text, convState, userContext) {
   var bestIntent = null;
   var bestScore = 0;
   var secondScore = 0;
+  var secondIntent = null;
 
   // Evaluar cada intent contra los tokens expandidos
   for (var i = 0; i < AI_INTENTS.length; i++) {
@@ -1704,10 +1705,12 @@ function aiClassify(text, convState, userContext) {
 
     if (score > bestScore) {
       secondScore = bestScore;
+      secondIntent = bestIntent;
       bestScore = score;
       bestIntent = intent;
     } else if (score > secondScore) {
       secondScore = score;
+      secondIntent = intent;
     }
   }
 
@@ -1725,6 +1728,7 @@ function aiClassify(text, convState, userContext) {
 
   return {
     intent: bestIntent ? bestIntent.id : null,
+    secondIntent: secondIntent ? secondIntent.id : null,
     score: bestScore,
     confidence: confidence,
     tokens: tokens,
