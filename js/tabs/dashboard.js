@@ -194,11 +194,15 @@ function DashboardTab(props) {
       lineChartRef.current = new window.Chart(lineCanvasRef.current.getContext('2d'), {
         type: 'line',
         data: {
-          labels: acum.map(function (d) { return d.fecha.slice(8); }),
+          labels: acum.map(function (d) {
+            return d.fecha.slice(8);
+          }),
           datasets: [
             {
               label: 'Acumulado real',
-              data: acum.map(function (d) { return d.cop; }),
+              data: acum.map(function (d) {
+                return d.cop;
+              }),
               borderColor: '#5b86e5',
               backgroundColor: 'rgba(91,134,229,0.08)',
               borderWidth: 2.5,
@@ -211,7 +215,9 @@ function DashboardTab(props) {
             },
             {
               label: 'Proyección lineal',
-              data: proy.map(function (d) { return d.cop; }),
+              data: proy.map(function (d) {
+                return d.cop;
+              }),
               borderColor: isDark ? 'rgba(125,168,255,0.4)' : 'rgba(91,134,229,0.3)',
               backgroundColor: 'transparent',
               borderWidth: 1.5,
@@ -266,7 +272,9 @@ function DashboardTab(props) {
               ticks: {
                 color: textColor,
                 font: { size: 9, family: 'DM Sans' },
-                callback: function (v) { return fCOP(v); }
+                callback: function (v) {
+                  return fCOP(v);
+                }
               }
             }
           }
@@ -517,14 +525,23 @@ function DashboardTab(props) {
       h(
         'div',
         { className: 'bar-legend' },
-        h('div', { className: 'bar-legend-item' },
-          h('div', { className: 'bar-legend-dot ld-reg' }), 'Normal'
+        h(
+          'div',
+          { className: 'bar-legend-item' },
+          h('div', { className: 'bar-legend-dot ld-reg' }),
+          'Normal'
         ),
-        h('div', { className: 'bar-legend-item' },
-          h('div', { className: 'bar-legend-dot ld-fest' }), 'Festivo'
+        h(
+          'div',
+          { className: 'bar-legend-item' },
+          h('div', { className: 'bar-legend-dot ld-fest' }),
+          'Festivo'
         ),
-        h('div', { className: 'bar-legend-item' },
-          h('div', { className: 'bar-legend-dot ld-noc' }), 'Nocturno'
+        h(
+          'div',
+          { className: 'bar-legend-item' },
+          h('div', { className: 'bar-legend-dot ld-noc' }),
+          'Nocturno'
         )
       )
     ),
@@ -550,12 +567,19 @@ function DashboardTab(props) {
         { className: 'progress-ring-card' },
         h(
           'div',
-          { className: 'progress-ring-wrap', 'aria-label': 'Avance: ' + ctx.pctSalario.toFixed(0) + '% del salario base' },
+          {
+            className: 'progress-ring-wrap',
+            'aria-label': 'Avance: ' + ctx.pctSalario.toFixed(0) + '% del salario base'
+          },
           h(
             'svg',
             { className: 'progress-ring-svg', viewBox: '0 0 100 100' },
-            h('defs', null,
-              h('linearGradient', { id: 'prGrad', x1: '0%', y1: '0%', x2: '100%', y2: '0%' },
+            h(
+              'defs',
+              null,
+              h(
+                'linearGradient',
+                { id: 'prGrad', x1: '0%', y1: '0%', x2: '100%', y2: '0%' },
                 h('stop', { offset: '0%', stopColor: '#4166d4' }),
                 h('stop', { offset: '50%', stopColor: '#5b86e5' }),
                 h('stop', { offset: '100%', stopColor: '#7da8ff' })
@@ -563,11 +587,15 @@ function DashboardTab(props) {
             ),
             h('circle', {
               className: 'progress-ring-bg',
-              cx: '50', cy: '50', r: '42'
+              cx: '50',
+              cy: '50',
+              r: '42'
             }),
             h('circle', {
               className: 'progress-ring-fg',
-              cx: '50', cy: '50', r: '42',
+              cx: '50',
+              cy: '50',
+              r: '42',
               strokeDasharray: 2 * Math.PI * 42,
               strokeDashoffset: 2 * Math.PI * 42 * (1 - Math.min(ctx.pctSalario / 100, 1))
             })
@@ -586,8 +614,12 @@ function DashboardTab(props) {
           h(
             'div',
             { className: 'progress-ring-info-sub' },
-            'Te faltan ' + fCOP(Math.max(0, salario - ctx.totalCOP)) + ' para alcanzar el 100%. ' +
-            'Al ritmo actual ' + (ctx.proy >= salario ? 'superarías' : 'no alcanzarías') + ' la meta.'
+            'Te faltan ' +
+              fCOP(Math.max(0, salario - ctx.totalCOP)) +
+              ' para alcanzar el 100%. ' +
+              'Al ritmo actual ' +
+              (ctx.proy >= salario ? 'superarías' : 'no alcanzarías') +
+              ' la meta.'
           )
         )
       )
@@ -663,7 +695,11 @@ function DashboardTab(props) {
           'div',
           { className: 'fin-summary-row' },
           h('div', { className: 'fin-summary-lbl' }, 'Días hábiles disponibles'),
-          h('div', { className: 'fin-summary-val' }, ctx.diasHabilesRest + ' de ' + ctx.diasRestantes)
+          h(
+            'div',
+            { className: 'fin-summary-val' },
+            ctx.diasHabilesRest + ' de ' + ctx.diasRestantes
+          )
         )
       )
     ),
@@ -682,22 +718,64 @@ function DashboardTab(props) {
               onClick: function () {
                 haptic();
                 var shareText =
-                  '📊 *Mi Turno* · Mis números del mes\n\n' +
-                  '💰 Total ganado: ' + fCOP(ctx.totalCOP) + '\n' +
-                  '📅 ' + ctx.diasTrab + ' turnos en ' + ctx.diasMes + ' días\n' +
-                  '⏰ ' + fDur(ctx.totalMins) + ' trabajadas\n' +
-                  '🎯 ' + ctx.pctSalario.toFixed(0) + '% del salario base (' + fCOP(salario) + ')\n' +
-                  '🔮 Proyección: ' + fCOP(ctx.proy) + '\n' +
-                  '💵 Promedio: ' + fCOP(ctx.prom) + '/turno · ' + fCOP(ctx.eficiencia) + '/h\n' +
-                  (ctx.festMins > 0 ? '⛪ Festivos: ' + fDur(ctx.festMins) + '\n' : '') +
-                  (ctx.noctMins > 0 ? '🌙 Nocturnas: ' + fDur(ctx.noctMins) + '\n' : '') +
-                  (ctx.extrasMins > 0 ? '➕ Extras: ' + fDur(ctx.extrasMins) + '\n' : '') +
-                  '\n🚀 Calculado con Mi Turno · miturno.one';
-                navigator.share({
-                  title: 'Mi Turno · Mis números del mes',
-                  text: shareText,
-                  url: 'https://miturno.one'
-                }).catch(function () {});
+                  '📊 *Mi Turno* · Resumen financiero\n\n' +
+                  '💰 *Total ganado:* ' +
+                  fCOP(ctx.totalCOP) +
+                  '\n' +
+                  '📅 ' +
+                  ctx.diasTrab +
+                  ' turnos en ' +
+                  ctx.diasMes +
+                  ' días · ' +
+                  fDur(ctx.totalMins) +
+                  ' trabajadas\n' +
+                  '🎯 ' +
+                  ctx.pctSalario.toFixed(0) +
+                  '% del salario base (' +
+                  fCOP(salario) +
+                  ')\n' +
+                  '🔮 *Proyección:* ' +
+                  fCOP(ctx.proy) +
+                  '\n\n' +
+                  '📋 *Desglose de recargos:*\n' +
+                  '  ☀️ Diurno: ' +
+                  fCOP(ctx.copDiurno || 0) +
+                  ' (' +
+                  (ctx.pctDiurno || 0).toFixed(0) +
+                  '%)\n' +
+                  '  🌙 Nocturno: ' +
+                  fCOP(ctx.copNocturno || 0) +
+                  ' (' +
+                  (ctx.pctNocturno || 0).toFixed(0) +
+                  '%)\n' +
+                  '  ⛪ Festivo: ' +
+                  fCOP(ctx.copFestivo || 0) +
+                  ' (' +
+                  (ctx.pctFestivo || 0).toFixed(0) +
+                  '%)\n' +
+                  '  ➕ Extras: ' +
+                  fCOP(ctx.copExtras || 0) +
+                  ' (' +
+                  (ctx.pctExtras || 0).toFixed(0) +
+                  '%)\n\n' +
+                  '💵 *Valor hora:* ' +
+                  fCOP(ctx.eficiencia) +
+                  '/h promedio\n' +
+                  '🌙 ' +
+                  fDur(ctx.noctMins || 0) +
+                  ' nocturnas · ⛪ ' +
+                  fDur(ctx.festMins || 0) +
+                  ' festivas · ➕ ' +
+                  fDur(ctx.extrasMins || 0) +
+                  ' extra\n\n' +
+                  '🚀 Calculado con Mi Turno · miturno.one';
+                navigator
+                  .share({
+                    title: 'Mi Turno · Mis números del mes',
+                    text: shareText,
+                    url: 'https://miturno.one'
+                  })
+                  .catch(function () {});
               },
               'aria-label': 'Compartir mis números'
             },
@@ -708,22 +786,66 @@ function DashboardTab(props) {
         'a',
         {
           className: 'dash-share-btn dash-share-wa',
-          href: 'https://api.whatsapp.com/send?text=' + encodeURIComponent(
-            '📊 *Mi Turno* · Mis números del mes\n\n' +
-            '💰 Total ganado: ' + fCOP(ctx.totalCOP) + '\n' +
-            '📅 ' + ctx.diasTrab + ' turnos en ' + ctx.diasMes + ' días\n' +
-            '⏰ ' + fDur(ctx.totalMins) + ' trabajadas\n' +
-            '🎯 ' + ctx.pctSalario.toFixed(0) + '% del salario base (' + fCOP(salario) + ')\n' +
-            '🔮 Proyección: ' + fCOP(ctx.proy) + '\n' +
-            '💵 Promedio: ' + fCOP(ctx.prom) + '/turno · ' + fCOP(ctx.eficiencia) + '/h\n' +
-            (ctx.festMins > 0 ? '⛪ Festivos: ' + fDur(ctx.festMins) + '\n' : '') +
-            (ctx.noctMins > 0 ? '🌙 Nocturnas: ' + fDur(ctx.noctMins) + '\n' : '') +
-            (ctx.extrasMins > 0 ? '➕ Extras: ' + fDur(ctx.extrasMins) + '\n' : '') +
-            '\n🚀 Calculado con Mi Turno · miturno.one'
-          ),
+          href:
+            'https://api.whatsapp.com/send?text=' +
+            encodeURIComponent(
+              '📊 *Mi Turno* · Resumen financiero\n\n' +
+                '💰 *Total ganado:* ' +
+                fCOP(ctx.totalCOP) +
+                '\n' +
+                '📅 ' +
+                ctx.diasTrab +
+                ' turnos en ' +
+                ctx.diasMes +
+                ' días · ' +
+                fDur(ctx.totalMins) +
+                ' trabajadas\n' +
+                '🎯 ' +
+                ctx.pctSalario.toFixed(0) +
+                '% del salario base (' +
+                fCOP(salario) +
+                ')\n' +
+                '🔮 *Proyección:* ' +
+                fCOP(ctx.proy) +
+                '\n\n' +
+                '📋 *Desglose de recargos:*\n' +
+                '  ☀️ Diurno: ' +
+                fCOP(ctx.copDiurno || 0) +
+                ' (' +
+                (ctx.pctDiurno || 0).toFixed(0) +
+                '%)\n' +
+                '  🌙 Nocturno: ' +
+                fCOP(ctx.copNocturno || 0) +
+                ' (' +
+                (ctx.pctNocturno || 0).toFixed(0) +
+                '%)\n' +
+                '  ⛪ Festivo: ' +
+                fCOP(ctx.copFestivo || 0) +
+                ' (' +
+                (ctx.pctFestivo || 0).toFixed(0) +
+                '%)\n' +
+                '  ➕ Extras: ' +
+                fCOP(ctx.copExtras || 0) +
+                ' (' +
+                (ctx.pctExtras || 0).toFixed(0) +
+                '%)\n\n' +
+                '💵 *Valor hora:* ' +
+                fCOP(ctx.eficiencia) +
+                '/h promedio\n' +
+                '🌙 ' +
+                fDur(ctx.noctMins || 0) +
+                ' nocturnas · ⛪ ' +
+                fDur(ctx.festMins || 0) +
+                ' festivas · ➕ ' +
+                fDur(ctx.extrasMins || 0) +
+                ' extra\n\n' +
+                '🚀 Calculado con Mi Turno · miturno.one'
+            ),
           target: '_blank',
           rel: 'noopener',
-          onClick: function () { haptic(); },
+          onClick: function () {
+            haptic();
+          },
           'aria-label': 'Enviar por WhatsApp'
         },
         '💬 WhatsApp'
@@ -735,16 +857,34 @@ function DashboardTab(props) {
       'div',
       { className: 'dash-share-preview', 'aria-label': 'Vista previa del mensaje a compartir' },
       '📊 *Mi Turno* · Mis números del mes\n\n' +
-      '💰 Total ganado: ' + fCOP(ctx.totalCOP) + '\n' +
-      '📅 ' + ctx.diasTrab + ' turnos en ' + ctx.diasMes + ' días\n' +
-      '⏰ ' + fDur(ctx.totalMins) + ' trabajadas\n' +
-      '🎯 ' + ctx.pctSalario.toFixed(0) + '% del salario base (' + fCOP(salario) + ')\n' +
-      '🔮 Proyección: ' + fCOP(ctx.proy) + '\n' +
-      '💵 Promedio: ' + fCOP(ctx.prom) + '/turno · ' + fCOP(ctx.eficiencia) + '/h\n' +
-      (ctx.festMins > 0 ? '⛪ Festivos: ' + fDur(ctx.festMins) + '\n' : '') +
-      (ctx.noctMins > 0 ? '🌙 Nocturnas: ' + fDur(ctx.noctMins) + '\n' : '') +
-      (ctx.extrasMins > 0 ? '➕ Extras: ' + fDur(ctx.extrasMins) + '\n' : '') +
-      '\n🚀 Calculado con Mi Turno · miturno.one'
+        '💰 Total ganado: ' +
+        fCOP(ctx.totalCOP) +
+        '\n' +
+        '📅 ' +
+        ctx.diasTrab +
+        ' turnos en ' +
+        ctx.diasMes +
+        ' días\n' +
+        '⏰ ' +
+        fDur(ctx.totalMins) +
+        ' trabajadas\n' +
+        '🎯 ' +
+        ctx.pctSalario.toFixed(0) +
+        '% del salario base (' +
+        fCOP(salario) +
+        ')\n' +
+        '🔮 Proyección: ' +
+        fCOP(ctx.proy) +
+        '\n' +
+        '💵 Promedio: ' +
+        fCOP(ctx.prom) +
+        '/turno · ' +
+        fCOP(ctx.eficiencia) +
+        '/h\n' +
+        (ctx.festMins > 0 ? '⛪ Festivos: ' + fDur(ctx.festMins) + '\n' : '') +
+        (ctx.noctMins > 0 ? '🌙 Nocturnas: ' + fDur(ctx.noctMins) + '\n' : '') +
+        (ctx.extrasMins > 0 ? '➕ Extras: ' + fDur(ctx.extrasMins) + '\n' : '') +
+        '\n🚀 Calculado con Mi Turno · miturno.one'
     )
   );
 }

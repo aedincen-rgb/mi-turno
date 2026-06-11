@@ -604,11 +604,22 @@ function buildContext(state) {
     diasMes: diasMes,
     diaActual: diaActual,
     diasRestantes: diasRestantes,
+    uid: state.session && state.session.uid ? state.session.uid : null,
+    email: state.session && state.session.email ? state.session.email : '',
+    online: typeof navigator !== 'undefined' ? !!navigator.onLine : !!state.online,
     // Configuración
     salario: salario,
     vh: vh,
+    prefs:
+      state.session && state.session.uid && typeof leer === 'function'
+        ? leer(dk(state.session.uid, 'prefs'), {})
+        : {},
     // Mes actual
+    turnosAll: turnosAll,
     turnosMes: turnosMes,
+    turnosMesPasado: turnosMesPasado,
+    turnosSemana: turnosSemana,
+    turnosSemPas: turnosSemPas,
     dias: dias,
     totalMins: totalMins,
     totalCOP: totalCOP,
@@ -686,6 +697,7 @@ function buildContext(state) {
     esFinDeSemana: esFinDeSemana,
     esFestivo: esFestivo,
     // Turno activo
+    activo: activoObj,
     tieneActivo: tieneActivo,
     minutosEnTurnoActual: minutosEnTurnoActual,
     alertaTurnoLargo: alertaTurnoLargo,
