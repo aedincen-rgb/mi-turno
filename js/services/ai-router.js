@@ -63,49 +63,73 @@ var AI_TOOLS = {
 };
 
 // ─── MAPA DE INTENTS → HERRAMIENTAS ────────────────────────────
-// Para cada intent, define qué herramientas se necesitan y en qué orden.
+// IDs deben coincidir exactamente con los de ai-nlp.js AI_INTENTS.
 var AI_INTENT_TOOLS = {
+  // Conversacionales (sin datos extra necesarios)
+  saludo: { tools: ['getCalc', 'getSalario', 'checkAchievements'], prio: 'greeting' },
+  despedida: { tools: [], prio: 'conversational' },
+  agradecimiento: { tools: [], prio: 'conversational' },
+  identidad: { tools: [], prio: 'conversational' },
+  capacidades: { tools: [], prio: 'conversational' },
+  celebracion: { tools: ['getCalc', 'checkAchievements'], prio: 'conversational' },
+  motivacion: { tools: ['getCalc'], prio: 'conversational' },
+  estado_animo: { tools: [], prio: 'conversational' },
+  reflexion: { tools: ['getCalc'], prio: 'conversational' },
+
+  // Datos financieros
   total_ganado: { tools: ['getCalc', 'getTurnosMes'], prio: 'data' },
-  resumen: {
-    tools: ['getCalc', 'getTurnosMes', 'getTurnosAll', 'analyzeBreakdown', 'analyzeEfficiency'],
-    prio: 'data'
-  },
+  hoy: { tools: ['getCalc', 'getTurnosMes', 'getActivo'], prio: 'data' },
+  ayer: { tools: ['getCalc', 'getTurnosMes'], prio: 'data' },
   proyeccion: { tools: ['getCalc', 'analyzeScenarios'], prio: 'data' },
-  distribucion: { tools: ['getCalc', 'analyzeBreakdown'], prio: 'data' },
   horas_trabajadas: { tools: ['getCalc', 'getTurnosMes'], prio: 'data' },
-  eficiencia: { tools: ['getCalc', 'analyzeEfficiency'], prio: 'data' },
+  promedio: { tools: ['getCalc', 'getTurnosMes'], prio: 'data' },
+  comparativa_mes: { tools: ['getTurnosAll', 'getCalc'], prio: 'data' },
+  comparativa_semana: { tools: ['getTurnosMes', 'getCalc'], prio: 'data' },
   mejor_dia: { tools: ['getCalc', 'getTurnosMes'], prio: 'data' },
   peor_dia: { tools: ['getCalc', 'getTurnosMes'], prio: 'data' },
+  turno_largo: { tools: ['getTurnosMes', 'getCalc'], prio: 'data' },
+  turno_corto: { tools: ['getTurnosMes', 'getCalc'], prio: 'data' },
+  racha: { tools: ['getTurnosMes', 'getCalc'], prio: 'data' },
+  distribucion: { tools: ['getCalc', 'analyzeBreakdown'], prio: 'data' },
+  velocidad: { tools: ['getTurnosMes', 'getCalc'], prio: 'data' },
+  eficiencia: { tools: ['getCalc', 'analyzeEfficiency'], prio: 'data' },
+  stats: { tools: ['getCalc', 'getTurnosMes', 'getTurnosAll', 'analyzeEfficiency'], prio: 'data' },
+  planificacion_semana: { tools: ['getTurnosMes', 'getCalc'], prio: 'data' },
+  bienestar: { tools: ['getTurnosMes', 'calcDescanso'], prio: 'data' },
+  queja_fatiga: { tools: ['getTurnosMes', 'calcDescanso'], prio: 'data' },
 
+  // Calculadoras
   liquidacion: { tools: ['getCalc', 'getSalario', 'calcLiquidacion'], prio: 'calc' },
   simulacion: { tools: ['getSalario', 'calcSimulacion'], prio: 'calc' },
   optimizador: { tools: ['getSalario', 'getCalc', 'calcOptimizador'], prio: 'calc' },
   ahorro: { tools: ['getCalc', 'calcAhorro'], prio: 'calc' },
-  fiscal: { tools: ['getCalc', 'calcFiscal'], prio: 'calc' },
-  oferta: { tools: ['getSalario', 'calcOferta'], prio: 'calc' },
-  informe: { tools: ['getCalc', 'getTurnosAll', 'calcInforme'], prio: 'calc' },
-  historico: { tools: ['getTurnosAll', 'calcHistorico'], prio: 'calc' },
-
-  bienestar: { tools: ['getTurnosMes', 'calcDescanso'], prio: 'data' },
+  planear_vacaciones: { tools: ['getCalc', 'getTurnosMes'], prio: 'calc' },
   descanso: { tools: ['getTurnosAll', 'calcDescanso'], prio: 'data' },
-  legal: { tools: ['analyzeLegal', 'searchKnowledge'], prio: 'knowledge' },
-  stats: { tools: ['getCalc', 'getTurnosMes', 'getTurnosAll', 'analyzeEfficiency'], prio: 'data' },
 
+  // Conocimiento / Legal
+  ley: { tools: ['analyzeLegal', 'searchKnowledge'], prio: 'knowledge' },
+  laboral: { tools: ['analyzeLegal', 'searchKnowledge'], prio: 'knowledge' },
+  festivos: { tools: ['searchKnowledge'], prio: 'knowledge' },
+  curiosidad_app: { tools: ['getHelp'], prio: 'knowledge' },
+  ayuda_app: { tools: ['getHelp'], prio: 'knowledge' },
+  ayuda_navegacion: { tools: ['getHelp'], prio: 'knowledge' },
+
+  // Acciones
   iniciar_turno: { tools: [], prio: 'action' },
-  finalizar_turno: { tools: ['getActivo'], prio: 'action' },
+  cerrar_turno: { tools: ['getActivo'], prio: 'action' },
   configurar_salario: { tools: [], prio: 'action' },
-
-  hola: { tools: ['getCalc', 'getSalario', 'checkAchievements'], prio: 'greeting' },
-  ayuda: { tools: ['getHelp'], prio: 'knowledge' },
-  conocimiento: { tools: ['searchKnowledge'], prio: 'knowledge' },
-  compartir: { tools: ['getCalc', 'getTurnosMes'], prio: 'action' },
+  navegar_ajustes: { tools: [], prio: 'action' },
+  navegar_historial: { tools: [], prio: 'action' },
+  email: { tools: ['getCalc', 'getTurnosMes'], prio: 'action' },
+  correo_formal: { tools: ['getCalc', 'getTurnosMes'], prio: 'action' },
   whatsapp_share: { tools: ['getCalc', 'getTurnosMes'], prio: 'action' },
+
+  // Logros / Auditoría
   logros: { tools: ['checkAchievements'], prio: 'data' },
   auditoria: { tools: ['getTurnosAll', 'auditShifts'], prio: 'data' },
 
-  comparar_mes: { tools: ['getTurnosAll', 'getCalc'], prio: 'data' },
-  comparar_semana: { tools: ['getTurnosMes', 'getCalc'], prio: 'data' },
-  tendencia: { tools: ['getTurnosAll', 'getCalc'], prio: 'data' }
+  // Contexto genérico (fallback del clasificador NLP)
+  contexto: { tools: ['getCalc'], prio: 'data' }
 };
 
 // ─── CACHÉ DE RESULTADOS DE HERRAMIENTAS ──────────────────────

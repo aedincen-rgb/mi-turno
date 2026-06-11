@@ -54,8 +54,8 @@ function aiReason(bag, ctx, conversationHistory) {
     findings = findings.concat(breakdownFindings);
   }
 
-  // 3. Comparar con mes anterior si hay datos
-  if (bag.collected.getTurnosAll && ctx.turnosMesPasado && ctx.turnosMesPasado.length > 0) {
+  // 3. Comparar con mes anterior — usa los campos reales de buildContext
+  if (ctx.totalCOPMesPasado && ctx.totalCOPMesPasado > 0) {
     var compareFindings = _aiComparePeriods(ctx);
     findings = findings.concat(compareFindings);
   }
@@ -234,15 +234,12 @@ function _aiAnalyzeBreakdownDeep(ctx) {
 
 function _aiComparePeriods(ctx) {
   var f = [];
-  if (!ctx || !ctx.turnosMesPasado || ctx.turnosMesPasado.length === 0) return f;
-
-  var calcPasado = ctx.calcMesPasado;
-  if (!calcPasado || calcPasado.totalCOP === 0) return f;
+  if (!ctx || !(ctx.totalCOPMesPasado > 0)) return f;
 
   var copActual = ctx.totalCOP || 0;
-  var copPasado = calcPasado.totalCOP || 0;
+  var copPasado = ctx.totalCOPMesPasado || 0;
   var minsActual = ctx.totalMins || 0;
-  var minsPasado = calcPasado.totalMins || 0;
+  var minsPasado = ctx.totalMinsMesPasado || 0;
 
   // Variación en ingresos
   var varCOP = copPasado > 0 ? ((copActual - copPasado) / copPasado) * 100 : 0;

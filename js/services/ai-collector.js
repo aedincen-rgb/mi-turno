@@ -198,8 +198,8 @@ function _aiGetTurnosMes(ctx) {
 }
 
 function _aiGetTurnosAll(ctx) {
-  if (!ctx || !ctx.dias) return [];
-  return ctx.dias;
+  if (!ctx || !ctx.turnosMes) return [];
+  return ctx.turnosMes;
 }
 
 function _aiGetSalario(ctx, session) {

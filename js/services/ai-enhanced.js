@@ -854,6 +854,61 @@ function aiEnhancedRespond(
     }
   } catch (_) {}
 
+  // 4b. Motor de razonamiento — hallazgos de alta prioridad derivados de datos reales.
+  // Solo para intents financieros. No duplica análisis de intents con respuesta ya completa.
+  try {
+    var _reasoningDataIntents = {
+      total_ganado: 1,
+      proyeccion: 1,
+      horas_trabajadas: 1,
+      promedio: 1,
+      comparativa_mes: 1,
+      comparativa_semana: 1,
+      distribucion: 1,
+      eficiencia: 1,
+      stats: 1,
+      racha: 1,
+      velocidad: 1,
+      turno_largo: 1,
+      turno_corto: 1,
+      mejor_dia: 1,
+      peor_dia: 1,
+      hoy: 1,
+      ayer: 1,
+      planificacion_semana: 1
+    };
+    if (
+      typeof aiReason === 'function' &&
+      _reasoningDataIntents[intent] &&
+      userContext &&
+      userContext.totalCOP
+    ) {
+      var _rBag = {
+        collected: {
+          getCalc: !!userContext.totalCOP,
+          analyzeBreakdown: !!userContext.bd,
+          analyzeEfficiency: !!userContext.eficiencia
+        }
+      };
+      var _rResult = aiReason(_rBag, userContext, []);
+      if (_rResult && _rResult.findings && _rResult.findings.length > 0) {
+        var _topFindings = [];
+        for (var _fi = 0; _fi < _rResult.findings.length && _topFindings.length < 2; _fi++) {
+          if ((_rResult.findings[_fi].priority || 0) >= 7) {
+            _topFindings.push(_rResult.findings[_fi]);
+          }
+        }
+        if (_topFindings.length > 0) {
+          var _fLines = [];
+          for (var _fj = 0; _fj < _topFindings.length; _fj++) {
+            _fLines.push(_topFindings[_fj].text);
+          }
+          text += '\n\n' + _fLines.join(' ');
+        }
+      }
+    }
+  } catch (_) {}
+
   // 5. Expansión contextual — solo en modo verboso.
   // En modo normal se omite para no agregar tips/ánimo sin que el usuario los pidiera.
   try {
