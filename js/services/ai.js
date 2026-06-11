@@ -3,6 +3,7 @@
 //  Motor de IA local 100% offline · 50+ capacidades
 //  Sin red, sin LLM, sin dependencias externas
 // ════════════════════════════════════════════════════════════════
+/* global aiBestSearch */
 
 // ─── NLP HELPERS ───────────────────────────────────────────────
 
@@ -1378,7 +1379,10 @@ function _aiDispatchNLP(intent, c, state, q, t) {
       'cual es el recargo',
       'cuanto recargo'
     );
-    if (_esDefinitoria && typeof aiKnowledgeSearch === 'function') {
+    if (_esDefinitoria && typeof aiBestSearch === 'function') {
+      var kRespDef = aiBestSearch(q);
+      if (kRespDef) return kRespDef;
+    } else if (_esDefinitoria && typeof aiKnowledgeSearch === 'function') {
       var kRespDef = aiKnowledgeSearch(q);
       if (kRespDef) return kRespDef;
     }
@@ -1463,7 +1467,11 @@ function _aiDispatchNLP(intent, c, state, q, t) {
     }
 
     // PRIORIDAD: buscar en la base de conocimiento para respuestas específicas
-    if (typeof aiKnowledgeSearch === 'function') {
+    // Primero keyword matching (rápido), luego semántico como fallback (v259)
+    if (typeof aiBestSearch === 'function') {
+      var kResp = aiBestSearch(q);
+      if (kResp) return kResp;
+    } else if (typeof aiKnowledgeSearch === 'function') {
       var kResp = aiKnowledgeSearch(q);
       if (kResp) return kResp;
     }
@@ -2743,7 +2751,10 @@ function aiAnswer(question, state) {
       'que recargo'
     )
   ) {
-    if (typeof aiKnowledgeSearch === 'function') {
+    if (typeof aiBestSearch === 'function') {
+      var kRespClas = aiBestSearch(q);
+      if (kRespClas) return kRespClas;
+    } else if (typeof aiKnowledgeSearch === 'function') {
       var kRespClas = aiKnowledgeSearch(q);
       if (kRespClas) return kRespClas;
     }

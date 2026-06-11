@@ -739,7 +739,7 @@ function AsistenteTab(props) {
             session: props.session,
             activo: props.activo || null
           };
-          var resp = aiAnswer(q, aiState);
+          var resp = await Promise.resolve(aiAnswer(q, aiState));
           var newMsg;
 
           // Modo Gemini activado: pipeline "Gemini entiende, la app calcula"

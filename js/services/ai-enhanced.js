@@ -726,6 +726,163 @@ function _aiModoVerboso(question) {
   return false;
 }
 
+// ─── PASADA AGENTE: INTENT → TOOLS → DATA → REASONING → RESPONSE ──
+// Usa las capas modulares ya existentes sin reemplazar la respuesta local.
+// La respuesta base sigue siendo el contrato principal; el agente añade
+// evidencia, hallazgos y guardas anti-alucinación.
+
+var _AI_AGENTIC_INTENTS = {
+  total_ganado: 1,
+  hoy: 1,
+  ayer: 1,
+  proyeccion: 1,
+  horas_trabajadas: 1,
+  promedio: 1,
+  comparativa_mes: 1,
+  comparativa_semana: 1,
+  mejor_dia: 1,
+  peor_dia: 1,
+  turno_largo: 1,
+  turno_corto: 1,
+  racha: 1,
+  distribucion: 1,
+  velocidad: 1,
+  eficiencia: 1,
+  stats: 1,
+  planificacion_semana: 1,
+  bienestar: 1,
+  queja_fatiga: 1,
+  liquidacion: 1,
+  simulacion: 1,
+  optimizador: 1,
+  ahorro: 1,
+  descanso: 1,
+  email: 1,
+  correo_formal: 1,
+  auditoria: 1
+};
+
+function _aiShouldRunAgent(intent, question, thought, verbose) {
+  if (!intent) return false;
+  if (typeof window !== 'undefined' && window._geminiModeOn) return false;
+  if (_AI_AGENTIC_INTENTS[intent]) return true;
+  if (verbose && thought && thought.isFinancial) return true;
+  return false;
+}
+
+function _aiAgentSession(ctx) {
+  return {
+    uid: ctx && ctx.uid ? ctx.uid : null,
+    email: ctx && ctx.email ? ctx.email : '',
+    user: ctx && ctx.uid ? { id: ctx.uid, email: ctx.email || '' } : null
+  };
+}
+
+function _aiIsWeakAgentBase(text) {
+  var s = String(text || '');
+  return (
+    s.indexOf('No estoy seguro de qué buscas') >= 0 ||
+    s.indexOf('Procesando acción') >= 0 ||
+    s.indexOf('necesito tus datos') >= 0 ||
+    s.indexOf('No tengo suficiente información') >= 0
+  );
+}
+
+function _aiCompactAgentEvidence(agentResp, reasoning, bag, baseText) {
+  var lines = [];
+  var findings = reasoning && reasoning.findings ? reasoning.findings : [];
+  var base = String(baseText || '');
+
+  for (var i = 0; i < findings.length && lines.length < 2; i++) {
+    var f = findings[i];
+    if ((f.priority || 0) < 7) continue;
+    if (f.text && base.indexOf(f.text.substring(0, 45)) < 0) {
+      lines.push('• ' + f.text);
+    }
+  }
+
+  var sourceLine = '';
+  if (bag && bag.sources) {
+    var srcs = [];
+    var seen = {};
+    for (var k in bag.sources) {
+      if (!Object.prototype.hasOwnProperty.call(bag.sources, k)) continue;
+      var src = bag.sources[k];
+      if (!src || seen[src]) continue;
+      seen[src] = true;
+      srcs.push(src);
+    }
+    if (srcs.length) sourceLine = '_Evidencia: ' + srcs.join(', ') + '._';
+  }
+
+  if (agentResp && agentResp.confidence < 0.65) {
+    lines.push('_Confianza moderada: faltó validar alguna fuente._');
+  }
+  if (sourceLine) lines.push(sourceLine);
+
+  return lines.join('\n');
+}
+
+function _aiRunAgentPass(enriched, intent, question, userContext, verbose, thought) {
+  if (
+    typeof aiRouteTools !== 'function' ||
+    typeof aiCollectData !== 'function' ||
+    typeof aiReason !== 'function' ||
+    typeof aiGenerateResponse !== 'function'
+  ) {
+    return enriched;
+  }
+
+  if (!_aiShouldRunAgent(intent, question, thought, verbose)) return enriched;
+
+  var ctx = userContext || {};
+  var online = typeof navigator !== 'undefined' ? !!navigator.onLine : !!ctx.online;
+  var tools = aiRouteTools(intent, ctx, online);
+  var session = _aiAgentSession(ctx);
+  var convLevel = typeof aiConvLevel === 'function' ? aiConvLevel() : 0;
+
+  return aiCollectData(tools, ctx, session).then(function (bag) {
+    var reasoning = aiReason(bag, ctx, _aiMemory.history || []);
+    var agentResp = aiGenerateResponse(reasoning, intent, ctx, bag, convLevel);
+    var currentText = enriched.text || '';
+    var finalText = currentText;
+
+    if (_aiIsWeakAgentBase(currentText) && agentResp && agentResp.text) {
+      finalText = agentResp.text;
+    } else if (verbose && agentResp && agentResp.hasFindings) {
+      finalText += '\n\n' + agentResp.text;
+    } else {
+      var evidence = _aiCompactAgentEvidence(agentResp, reasoning, bag, currentText);
+      if (evidence) finalText += '\n\n' + evidence;
+    }
+
+    if (typeof aiValidateResponse === 'function') {
+      var validation = aiValidateResponse(finalText, ctx);
+      if (validation && !validation.valid) {
+        try {
+          console.warn('[AI Agent] respuesta con posibles datos no trazados:', validation.warnings);
+        } catch (_) {}
+        finalText +=
+          '\n\n_Nota: verifiqué la respuesta contra tus datos locales; si ves un valor raro, pedime el desglose._';
+      }
+    }
+
+    if (typeof aiPolishResponse === 'function') finalText = aiPolishResponse(finalText);
+    enriched.text = finalText;
+    if ((!enriched.actions || !enriched.actions.length) && agentResp && agentResp.actions) {
+      enriched.actions = agentResp.actions.slice(0, 2);
+    }
+    enriched.sources = agentResp ? agentResp.sources : [];
+    enriched.confidence = agentResp ? agentResp.confidence : null;
+    enriched.agent = {
+      tools: tools,
+      sourceCount: bag && bag.sources ? Object.keys(bag.sources).length : 0,
+      durationMs: bag && bag.meta ? bag.meta.durationMs : 0
+    };
+    return enriched;
+  });
+}
+
 // ─── API PÚBLICA ──────────────────────────────────────────────
 // Pipeline unificado de enriquecimiento con contexto compartido.
 
@@ -994,7 +1151,7 @@ function aiEnhancedRespond(
 
   enriched.text = text;
   if (_triviaOptions) enriched.triviaOptions = _triviaOptions;
-  return enriched;
+  return _aiRunAgentPass(enriched, intent, question, userContext, _verboso, _thought);
 }
 
 // ─── INICIALIZACIÓN ──────────────────────────────────────────
