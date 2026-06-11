@@ -268,6 +268,13 @@ const projectGlobals = {
   aiQueryParse: 'readonly',
   aiQueryRun: 'readonly',
   AI_QUERY_DICT: 'readonly',
+  // services/ai-episodes.js
+  aiEpisodesLoad: 'readonly',
+  aiEpisodeRecord: 'readonly',
+  aiEpisodeFromInteraction: 'readonly',
+  aiEpisodesRecent: 'readonly',
+  aiEpisodeLast: 'readonly',
+  aiEpisodeAnswer: 'readonly',
   // services/ai-engage.js
   aiEngageQuestion: 'readonly',
   aiEngageActions: 'readonly',

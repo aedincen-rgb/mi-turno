@@ -39,6 +39,7 @@ var FILES = [
   'js/services/quincena.js',
   'js/services/calculator.js',
   'js/services/ai-query.js',
+  'js/services/ai-episodes.js',
   'js/services/ai-synonyms.js',
   'js/services/ai-nlp.js',
   'js/services/ai.js',
@@ -319,6 +320,93 @@ truthy(rDos.indexOf('2.000.000') >= 0,
 var rSim = respText(w.aiAnswer('/simular 4h nocturnas', _stMeta));
 truthy(rSim.indexOf('4h nocturnas') >= 0 || rSim.indexOf('Simulación') >= 0,
        '/simular 4h nocturnas llega a su handler');
+
+// ── memoria de tema: la conversación recuerda de qué se habla ───
+// "¿Cuántas horas trabajé los domingos?" → "¿y los sábados?" debe
+// heredar tema (datos) y métrica (horas) de la pregunta anterior.
+
+group('memoria de tema: follow-ups elípticos');
+w.aiResetConv();
+eq(w.aiQueryParse('¿y los sabados?', { topic: null }), null,
+   'elíptica SIN tema previo no se reclama (no inventar contexto)');
+eq(w.aiQueryParse('¿y los sabados?', { topic: 'conversacion' }), null,
+   'elíptica con tema no-datos tampoco se reclama');
+
+var _dom1 = primerDomingo(_hoy.getFullYear(), _hoy.getMonth());
+var _sab1 = new Date(_dom1); _sab1.setDate(_dom1.getDate() + 6);
+var _dsSem = [mkTurno(_dom1, 8), mkTurno(_sab1, 6)];
+var _stTema = {
+  turnos: _dsSem, turnosAll: _dsSem,
+  calc: w.doCalc(_dsSem, null, new Date(), 10000),
+  vh: 10000, salario: 2400000,
+  session: { uid: 'u-test', email: 'test@x.com' }
+};
+
+var rT1 = respText(w.aiAnswer('¿cuántas horas trabajé los domingos?', _stTema));
+truthy(rT1.indexOf('los domingos') >= 0, 'primera consulta responde sobre domingos');
+eq(w.aiGetConversation().lastTopic, 'dinero',
+   'el tema actual queda registrado tras la consulta');
+
+var rT2 = respText(w.aiAnswer('¿y los sabados?', _stTema));
+truthy(rT2.indexOf('los sábados') >= 0,
+       'elíptica hereda el tema y consulta sábados: ' + rT2.split('\n')[0]);
+truthy(rT2.indexOf('Trabajaste') >= 0,
+       'hereda también la métrica (horas) de la pregunta anterior');
+
+group('memoria de tema: la cascada clásica también registra el tema');
+w.aiResetConv();
+respText(w.aiAnswer('¿cuanto falta para dos millones?', _stTema));
+truthy(w.aiGetConversation().lastIntent !== null,
+       'una respuesta de la cascada clásica deja registrado el intent');
+eq(w.aiGetConversation().lastTopic, 'dinero',
+   'y el tema queda en "dinero" para el topic bonus del NLP');
+
+// ── memoria episódica (ai-episodes.js) ──────────────────────────
+group('memoria episódica: registro y dedup');
+var _epUid = 'u-episodios';
+truthy(w.aiEpisodeRecord(_epUid, 'meta', 'Te propusiste llegar a $ 2.000.000', { meta: 2000000 }),
+       'registra un episodio nuevo');
+eq(w.aiEpisodeRecord(_epUid, 'meta', 'Te propusiste llegar a $ 2.000.000', { meta: 2000000 }),
+   false, 'mismo episodio en <6h no se duplica');
+eq(w.aiEpisodesLoad(_epUid).length, 1, 'queda 1 solo episodio guardado');
+
+w.aiEpisodeFromInteraction(_epUid, 'total_ganado', 'dinero', '¿cuánto llevo?', { pctSalario: 40 });
+w.aiEpisodeFromInteraction(_epUid, 'total_ganado', 'dinero', '¿cuánto llevo?', { pctSalario: 40 });
+eq(w.aiEpisodesLoad(_epUid).length, 2, 'interacción repetida (mismo intent) no duplica');
+w.aiEpisodeFromInteraction(_epUid, 'saludo', 'conversacion', 'hola', { pctSalario: 40 });
+eq(w.aiEpisodesLoad(_epUid).length, 2, 'saludos no generan episodios');
+
+group('memoria episódica: hito de salario una vez por mes');
+w.aiEpisodeFromInteraction(_epUid, 'proyeccion', 'dinero', 'proyección', { pctSalario: 105 });
+w.aiEpisodeFromInteraction(_epUid, 'stats', 'dinero', 'resumen', { pctSalario: 110 });
+var _hitos = w.aiEpisodesLoad(_epUid).filter(function (e) { return e.tipo === 'hito'; });
+eq(_hitos.length, 1, 'superar el salario se celebra UNA vez por mes');
+
+group('memoria episódica: recuperación conversacional');
+var _epAns = w.aiEpisodeAnswer('¿de qué hablamos?', _epUid);
+truthy(_epAns && _epAns.indexOf('Te propusiste llegar a') >= 0,
+       'recuerda la meta propuesta');
+truthy(_epAns && _epAns.indexOf('Hoy:') >= 0, 'fecha relativa legible');
+eq(w.aiEpisodeAnswer('¿recuerdas cuánto gané ayer?', _epUid), null,
+   'pregunta de DATOS no es secuestrada por la memoria episódica');
+eq(w.aiEpisodeAnswer('hola', _epUid), null, 'charla normal no dispara recuerdos');
+truthy(w.aiEpisodeAnswer('/recuerdos', 'u-sin-episodios').indexOf('Todavía no tengo') >= 0,
+       'sin episodios responde honesto');
+
+group('memoria episódica: cap de 60 episodios');
+for (var _ei = 0; _ei < 70; _ei++) {
+  w.aiEpisodeRecord('u-cap', 'consulta', 'Episodio número ' + _ei, { i: _ei });
+}
+eq(w.aiEpisodesLoad('u-cap').length, 60, 'nunca guarda más de 60 (FIFO)');
+truthy(w.aiEpisodesLoad('u-cap')[0].resumen === 'Episodio número 10',
+       'descarta los más viejos primero');
+
+group('memoria episódica: integrada en aiAnswer');
+var _rEp = respText(w.aiAnswer('¿de qué hablamos?', _stTema));
+truthy(_rEp.indexOf('🧠') >= 0 && _rEp.indexOf('recuerdo') >= 0,
+       'aiAnswer responde con los episodios del usuario: u-test acumuló consultas');
+truthy(_rEp.indexOf('consulta a tus datos') >= 0 || _rEp.indexOf('Preguntaste') >= 0,
+       'los episodios vienen de las consultas reales hechas en esta suite');
 
 // ── hashPassword / verifyPassword (PBKDF2 + salt, v49) ──────────
 group('password-hash (PBKDF2 con salt)');

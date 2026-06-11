@@ -1725,9 +1725,14 @@ function _aiIntentSuggestion(intent) {
   return map[intent] || null;
 }
 
-function aiAnswer(question, state) {
+// Última clasificación NLP del turno en curso. La usa el wrapper de
+// aiAnswer para registrar el tema aunque responda la cascada clásica.
+var _aiLastNlp = null;
+
+function _aiAnswerCore(question, state) {
   var q = question.toLowerCase().trim();
   var t = _aiNorm(question);
+  _aiLastNlp = null;
   if (!q) return 'Pregúntame algo sobre tu mes.';
 
   // Construcción del contexto garantizada
@@ -1878,24 +1883,36 @@ function aiAnswer(question, state) {
     return respuesta;
   }
 
+  // ── MEMORIA EPISÓDICA: "¿de qué hablamos?" · "/recuerdos" ──
+  if (typeof aiEpisodeAnswer === 'function' && state.session && state.session.uid) {
+    var _epResp = aiEpisodeAnswer(q, state.session.uid);
+    if (_epResp) return _epResp;
+  }
+
   // ── CONSULTA ESTRUCTURADA A TUS DATOS ──
   // Filtros que los intents clásicos no cubren (día de semana, festivos,
   // mes puntual por nombre). Va directo a la tabla de turnos con doCalc.
   // Los comandos slash nunca pasan por acá ni por el NLP: son explícitos.
   var _esSlash = q.charAt(0) === '/';
   if (!_esSlash && typeof aiQueryParse === 'function' && typeof aiQueryRun === 'function') {
-    var _dq = aiQueryParse(q);
+    var _temaActual = null;
+    try {
+      _temaActual = typeof aiGetConversation === 'function' ? aiGetConversation().lastTopic : null;
+    } catch (_) {}
+    var _dq = aiQueryParse(q, { topic: _temaActual });
     if (_dq) {
       var _dqText = aiQueryRun(_dq, state.turnosAll || state.turnos || [], c);
       if (_dqText) {
         if (typeof aiUpdateConversation === 'function') {
-          aiUpdateConversation('consulta_datos', 'finanzas');
+          // 'dinero' es el vocabulario de topics del NLP (_aiIntentTopic):
+          // así el tema queda disponible para topic bonus y follow-ups.
+          aiUpdateConversation('consulta_datos', 'dinero');
         }
         if (typeof aiEnhancedRespond === 'function') {
           var _dqEnriched = aiEnhancedRespond(
             _dqText,
             'consulta_datos',
-            'finanzas',
+            'dinero',
             q,
             c,
             null,
@@ -1922,6 +1939,7 @@ function aiAnswer(question, state) {
     !_esSlash && typeof aiClassifyIntent === 'function'
       ? aiClassifyIntent(question, aiGetConversation(), c)
       : null;
+  _aiLastNlp = _nlp;
 
   // Extraer entidades (dinero, números, tiempo)
   var _entities = typeof aiExtractEntities === 'function' ? aiExtractEntities(question) : null;
@@ -1992,6 +2010,7 @@ function aiAnswer(question, state) {
       '📈 **/tendencia** — Tus últimos 3 meses comparados: ¿vas subiendo o bajando?\n' +
       '📅 **/semana** — Balance completo de esta semana: ingresos, horas, días trabajados\n' +
       '📍 **/dia** — Lo que ganaste hoy con detalle de horas y turnos\n' +
+      '🧠 **/recuerdos** — Lo que recuerdo de nuestras charlas (consultas, metas, hitos)\n' +
       '💰 **/liquidar** — Sueldo neto (con descuentos) + prestaciones acumuladas (prima, cesantías, vacaciones)\n' +
       '⚖️ **/ley** — Normativa laboral vigente: Ley 2101, jornada máxima, recargos, auxilio de transporte\n' +
       '🧘 **/salud** — Análisis de fatiga: ¿estás al límite o vas bien?\n\n' +
@@ -2072,15 +2091,28 @@ function aiAnswer(question, state) {
   }
 
   // ── INTENT: AHORRO / METAS ──
-  if (_aiHas(t, 'ahorro', 'meta', 'quiero ganar', 'para llegar a')) {
+  // Los comandos "/meta N" siguen de largo hacia su handler dedicado
+  // (que guarda la meta con aiSetGoal y registra el episodio).
+  if (q.charAt(0) !== '/' && _aiHas(t, 'ahorro', 'meta', 'quiero ganar', 'para llegar a')) {
     var meta = _aiNum(t);
-    if (!meta || meta < 1000) meta = c.salario;
+    var metaExplicita = !!(meta && meta >= 1000);
+    if (!metaExplicita) meta = c.salario;
     var faltaMeta = Math.max(0, meta - c.totalCOP);
     if (faltaMeta === 0)
       return (
         '¡Felicidades! Ya superaste la meta de ' + fCOP(meta) + '. Llevas ' + fCOP(c.totalCOP) + '.'
       );
     var turnosNec = c.prom > 0 ? Math.ceil(faltaMeta / c.prom) : '—';
+    if (metaExplicita) {
+      try {
+        if (typeof aiSetGoal === 'function') aiSetGoal(meta);
+        if (typeof aiEpisodeRecord === 'function' && state.session && state.session.uid) {
+          aiEpisodeRecord(state.session.uid, 'meta', 'Te propusiste llegar a ' + fCOP(meta), {
+            meta: meta
+          });
+        }
+      } catch (_) {}
+    }
     return (
       '🎯 **Análisis de Meta:**\n\n' +
       '• Para alcanzar ' +
@@ -2209,11 +2241,20 @@ function aiAnswer(question, state) {
     }
     resp += '\n💡 Escribí **/simular** para probar escenarios distintos.';
     // Guardar meta para seguimiento
-    if (metaVal > 0 && typeof aiSetGoal === 'function') {
+    if (metaVal > 0) {
       try {
-        aiSetGoal(metaVal);
+        if (typeof aiEpisodeRecord === 'function' && state.session && state.session.uid) {
+          aiEpisodeRecord(state.session.uid, 'meta', 'Te propusiste llegar a ' + fCOP(metaVal), {
+            meta: metaVal
+          });
+        }
       } catch (_) {}
-      resp += '\n📌 Meta guardada. Escribí **/metas** para ver tu progreso.';
+      if (typeof aiSetGoal === 'function') {
+        try {
+          aiSetGoal(metaVal);
+        } catch (_) {}
+        resp += '\n📌 Meta guardada. Escribí **/metas** para ver tu progreso.';
+      }
     }
     return resp;
   }
@@ -3473,6 +3514,41 @@ function aiAnswer(question, state) {
     if (_fallbackEnriched && _fallbackEnriched.text) return _fallbackEnriched;
   }
   return _fallbackText;
+}
+
+// ─── MEMORIA DE TEMA ──────────────────────────────────────────
+// La cascada clásica responde sin pasar por aiUpdateConversation, así
+// que el tema actual quedaba congelado en el último intent del NLP.
+// Este wrapper garantiza que CADA respuesta deje registrado de qué se
+// habló: si el turno terminó sin actualizar la conversación, usa la
+// mejor clasificación disponible (aunque no haya alcanzado el umbral).
+function aiAnswer(question, state) {
+  var _turnosAntes = null;
+  try {
+    if (typeof aiGetConversation === 'function') {
+      _turnosAntes = aiGetConversation().turnCount;
+    }
+  } catch (_) {}
+
+  var resp = _aiAnswerCore(question, state);
+
+  try {
+    var _conv = typeof aiGetConversation === 'function' ? aiGetConversation() : null;
+    if (
+      _conv &&
+      _turnosAntes !== null &&
+      _conv.turnCount === _turnosAntes &&
+      _aiLastNlp &&
+      _aiLastNlp.intent &&
+      _aiLastNlp.intent !== 'contexto' &&
+      _aiLastNlp.confidence >= 0.25 &&
+      typeof aiUpdateConversation === 'function'
+    ) {
+      aiUpdateConversation(_aiLastNlp.intent, _aiLastNlp.topic);
+    }
+  } catch (_) {}
+
+  return resp;
 }
 
 // ════════════════════════════════════════════════════════════════

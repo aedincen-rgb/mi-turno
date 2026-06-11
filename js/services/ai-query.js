@@ -62,12 +62,19 @@ function _aiqNorm(s) {
   return t;
 }
 
+// Métrica de la última consulta exitosa. Los follow-ups elípticos
+// ("¿y los sábados?") la heredan para mantener el hilo del tema.
+var _aiqLastMetric = null;
+
 // ─── PARSER ──────────────────────────────────────────────────
 // Devuelve null si la pregunta no es una consulta de datos con un
 // filtro que los intents clásicos no cubren. Solo reclama preguntas
 // con filtro explícito: día de semana, festivos, fin de semana o mes
 // puntual por nombre. (hoy/ayer/semana/mes ya los cubren los intents.)
-function aiQueryParse(question) {
+// opts.topic: tema actual de la conversación — habilita follow-ups
+// elípticos sin verbo de datos ("¿y en mayo?") cuando se viene
+// hablando de finanzas o tiempo.
+function aiQueryParse(question, opts) {
   var t = _aiqNorm(question);
   if (!t) return null;
 
@@ -92,12 +99,17 @@ function aiQueryParse(question) {
     return null;
   }
 
-  // Verbo/sustantivo de datos: sin esto no es consulta a la tabla
+  // Verbo/sustantivo de datos: sin esto no es consulta a la tabla.
+  // Excepción: pregunta elíptica corta ("¿y los sábados?") cuando el
+  // tema actual de la conversación ya es de datos — hereda el hilo.
   var hasDataWord =
     /\b(gane|ganado|ganancia|trabaje|trabajado|hice|tuve|llevo|sume|acumule|plata|dinero|horas|turnos|cuanto|cuantos|cuantas)\b/.test(
       t
     );
-  if (!hasDataWord) return null;
+  var TEMAS_DATOS = { dinero: 1, tiempo: 1, comparativa: 1, patrones: 1, finanzas: 1 };
+  var temaDatos = !!(opts && opts.topic && TEMAS_DATOS[opts.topic]);
+  var esEliptica = temaDatos && t.length <= 32 && /^[¿¡\s]*y\b/.test(t);
+  if (!hasDataWord && !esEliptica) return null;
 
   var filters = [];
   var labelParts = [];
@@ -224,10 +236,14 @@ function aiQueryParse(question) {
     }
   }
 
-  // Métrica principal (decide la frase de apertura)
-  var metric = 'plata';
+  // Métrica principal (decide la frase de apertura). Los follow-ups
+  // elípticos sin métrica explícita heredan la de la consulta anterior.
+  var metric = null;
   if (/(\bhoras?\b|trabaj)/.test(t) && !/\b(gane|ganado|plata|dinero)\b/.test(t)) metric = 'horas';
   if (/\bturnos|veces|cuantos dias|cuantas veces\b/.test(t)) metric = 'turnos';
+  if (/\b(gane|ganado|ganancia|plata|dinero)\b/.test(t)) metric = 'plata';
+  if (!metric) metric = esEliptica && _aiqLastMetric ? _aiqLastMetric : 'plata';
+  _aiqLastMetric = metric;
 
   return { filters: filters, label: labelParts.join(' '), metric: metric };
 }

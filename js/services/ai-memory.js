@@ -198,9 +198,17 @@ function aiMemoryOnFirstMessage(uid, userContext) {
     partes.push('Bienvenido de vuelta.');
   }
 
-  // Sugerencia pendiente o último intent conocido
+  // Sugerencia pendiente, último episodio o último intent conocido
+  var _epUltimo = typeof aiEpisodeLast === 'function' ? aiEpisodeLast(uid) : null;
   if (mem.pendingSuggestion) {
     partes.push('La última vez te sugerí: *' + mem.pendingSuggestion + '* ¿Lo revisaste?');
+  } else if (_epUltimo && _epUltimo.resumen && _epUltimo.tipo === 'consulta') {
+    partes.push(
+      'La última vez ' +
+        _epUltimo.resumen.charAt(0).toLowerCase() +
+        _epUltimo.resumen.slice(1) +
+        '. ¿Retomamos?'
+    );
   } else if (mem.lastIntent && mem.lastIntent !== 'unknown' && mem.lastIntent !== 'saludo') {
     var label = _aiMemIntentLabel(mem.lastIntent);
     if (label) {

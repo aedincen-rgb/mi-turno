@@ -1070,6 +1070,12 @@ function aiEnhancedRespond(
   try {
     aiRemember('ai', (originalResponse || '').substring(0, 120), intent, topic, userContext);
   } catch (_) {}
+  // Memoria episódica: interacciones significativas quedan como episodios
+  try {
+    if (typeof aiEpisodeFromInteraction === 'function' && userContext && userContext.uid) {
+      aiEpisodeFromInteraction(userContext.uid, intent, topic, question, userContext);
+    }
+  } catch (_) {}
 
   // 2. Análisis financiero — solo en modo verboso y para intents financieros.
   // En modo normal se omite para no sobrecargar la respuesta con bloques de análisis.
