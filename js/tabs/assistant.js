@@ -11,6 +11,80 @@
 // ═══════════════════════════════════════════════════════════════
 
 // ═══════════════════════════════════════════════════════════════
+//  EFECTO DE TIPEO — revela la respuesta carácter por carácter.
+//  La respuesta ya está calculada: esto es SOLO visual. Presupuesto
+//  total ~900ms sin importar el largo (paso proporcional, tick 16ms).
+//  Tocar la burbuja revela todo de inmediato.
+// ═══════════════════════════════════════════════════════════════
+
+// Cierra ** y ` impares para que el markdown parcial no muestre
+// asteriscos crudos a mitad del tipeo.
+function _aiCerrarMd(parcial) {
+  var s = parcial;
+  var bolds = (s.match(/\*\*/g) || []).length;
+  if (bolds % 2 === 1) s += '**';
+  var ticks = (s.match(/`/g) || []).length;
+  if (ticks % 2 === 1) s += '`';
+  return s;
+}
+
+function TypingBubble(props) {
+  var st = useState(0);
+  var shown = st[0],
+    setShown = st[1];
+  var doneRef = useRef(false);
+  var text = props.text || '';
+  var done = shown >= text.length;
+
+  useEffect(
+    function () {
+      if (done) {
+        if (!doneRef.current) {
+          doneRef.current = true;
+          if (props.onDone) props.onDone();
+        }
+        return;
+      }
+      var reduce = false;
+      try {
+        reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      } catch (_) {}
+      if (reduce) {
+        setShown(text.length);
+        return;
+      }
+      var step = Math.max(2, Math.ceil(text.length / 55));
+      var id = setTimeout(function () {
+        setShown(function (prev) {
+          return Math.min(text.length, prev + step);
+        });
+      }, 16);
+      if (props.onTick) props.onTick();
+      return function () {
+        clearTimeout(id);
+      };
+    },
+    [shown, done, text]
+  );
+
+  var html = done
+    ? _aiFormat(text)
+    : _aiFormat(_aiCerrarMd(text.substring(0, shown))) +
+      '<span class="asistente-caret" aria-hidden="true"></span>';
+
+  return h('div', {
+    className: 'asistente-bubble ai',
+    'aria-hidden': done ? undefined : true,
+    onClick: done
+      ? undefined
+      : function () {
+          setShown(text.length);
+        },
+    dangerouslySetInnerHTML: { __html: html }
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
 //  PESTAÑA ASISTENTE
 // ═══════════════════════════════════════════════════════════════
 function AsistenteTab(props) {
@@ -458,7 +532,13 @@ function AsistenteTab(props) {
   // Recargar el historial al cambiar de usuario
   useEffect(
     function () {
-      setMsgs(_aiLoadHistory(uid));
+      // El historial restaurado nunca se re-anima
+      setMsgs(
+        _aiLoadHistory(uid).map(function (m) {
+          if (m && m.anim) m = Object.assign({}, m, { anim: false });
+          return m;
+        })
+      );
     },
     [uid]
   );
@@ -482,6 +562,20 @@ function AsistenteTab(props) {
     },
     [msgs, busy]
   );
+
+  // Tipeo: marcar el mensaje como completado (revela chips/voz/chart)
+  function finishTyping(idx) {
+    setMsgs(function (prev) {
+      return prev.map(function (msg, mi) {
+        return mi === idx && msg.anim ? Object.assign({}, msg, { anim: false }) : msg;
+      });
+    });
+  }
+
+  // Tipeo: acompañar el crecimiento de la burbuja con el scroll
+  function typingTick() {
+    if (endRef.current) endRef.current.scrollIntoView({ block: 'end' });
+  }
 
   // Auto-grow del textarea
   useEffect(
@@ -862,6 +956,9 @@ function AsistenteTab(props) {
           } else {
             newMsg = { role: 'ai', content: String(resp) };
           }
+          // Efecto de tipeo solo para burbujas de texto (las tarjetas de
+          // acción como EmailCompose se muestran completas de una).
+          if (!newMsg.action) newMsg.anim = true;
           setMsgs(function (p) {
             return p.concat([newMsg]);
           });
@@ -1177,12 +1274,20 @@ function AsistenteTab(props) {
                 h(
                   'div',
                   { className: 'asistente-col' },
-                  h('div', {
-                    className: 'asistente-bubble ai',
-                    dangerouslySetInnerHTML: { __html: _aiFormat(m.content) }
-                  }),
+                  m.anim
+                    ? h(TypingBubble, {
+                        text: m.content,
+                        onDone: function () {
+                          finishTyping(i);
+                        },
+                        onTick: typingTick
+                      })
+                    : h('div', {
+                        className: 'asistente-bubble ai',
+                        dangerouslySetInnerHTML: { __html: _aiFormat(m.content) }
+                      }),
                   // Botón de voz: anillo de progreso con pausa/reinicio
-                  typeof speechSynthesis !== 'undefined'
+                  !m.anim && typeof speechSynthesis !== 'undefined'
                     ? h(
                         'button',
                         {
@@ -1296,7 +1401,7 @@ function AsistenteTab(props) {
                       )
                     : null,
                   // Botones de acción rápida (ai-enhanced.js)
-                  m.actions && m.actions.length
+                  !m.anim && m.actions && m.actions.length
                     ? h(
                         'div',
                         { className: 'asistente-actions' },
@@ -1318,7 +1423,7 @@ function AsistenteTab(props) {
                       )
                     : null,
                   // Widget de trivia interactiva (ai-engage.js)
-                  m.triviaOptions
+                  !m.anim && m.triviaOptions
                     ? h(
                         'div',
                         { className: 'asistente-trivia' },
@@ -1382,7 +1487,7 @@ function AsistenteTab(props) {
                       )
                     : null,
                   // Gráfico visual (Rich UI)
-                  m.chart
+                  !m.anim && m.chart
                     ? h(
                         'div',
                         { className: 'asistente-chart-container' },

@@ -1925,3 +1925,20 @@
     transform: scale(1);
   }
 }
+
+/* ── Efecto de tipeo: caret parpadeante al final del texto ── */
+.asistente-caret {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-left: 2px;
+  vertical-align: -0.15em;
+  background: var(--accent);
+  border-radius: 1px;
+  animation: asistenteCaret 0.7s steps(1) infinite;
+}
+@keyframes asistenteCaret {
+  50% {
+    opacity: 0;
+  }
+}
