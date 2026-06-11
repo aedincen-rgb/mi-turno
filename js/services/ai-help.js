@@ -104,6 +104,10 @@ var AI_HELP_GUIDES = [
     title: 'Exportar tus datos',
     keywords: [
       'exportar',
+      'exporto',
+      'exportar datos',
+      'exporto mis datos',
+      'exportar mis datos',
       'descargar',
       'pdf',
       'excel',
@@ -113,9 +117,10 @@ var AI_HELP_GUIDES = [
     ],
     steps: [
       'Andá a la pestaña **Historial**.',
-      'Tocá el botón **Exportar** (ícono de descarga).',
+      'Tocá el botón **Exportar** (ícono de descarga ⬇).',
       'Elegí entre **PDF** o **Excel**.',
-      'El archivo se descarga automáticamente en tu dispositivo.'
+      'El archivo se descarga automáticamente en tu dispositivo.',
+      '**Tip:** si querés un respaldo completo (no solo el PDF), andá a **Ajustes > Respaldar datos**.'
     ],
     related: ['enviar_reporte', 'respaldar_datos']
   },
@@ -765,9 +770,11 @@ var AI_HELP_GUIDES = [
     title: 'Recargo dominical y festivo',
     keywords: [
       'festivo',
+      'festivos',
       'domingo',
       'dominical',
       'recargo festivo',
+      'cuentan festivos',
       'cuanto pagan festivo',
       'cuanto pagan domingo'
     ],
