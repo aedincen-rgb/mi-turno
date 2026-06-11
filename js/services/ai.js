@@ -33,8 +33,19 @@ function _aiAll(t, arr) {
 function _aiNum(t) {
   // Limpiar formato de moneda común en Colombia (puntos de miles)
   var clean = t.replace(/\./g, '').replace(/,/g, '.');
-  var m = clean.match(/(\d+(?:\.\d+)?)/);
-  if (m) return parseFloat(m[1]);
+  // Multiplicadores colombianos: "2 millones" → 2000000, "150 lucas" →
+  // 150000. Sin esto "dos millones" devolvía 2 y los handlers de meta
+  // caían al salario base como si el número no existiera.
+  var m = clean.match(/(\d+(?:\.\d+)?)\s*([a-z]*)/);
+  if (m) {
+    var val = parseFloat(m[1]);
+    var unit = m[2] || '';
+    if (unit.indexOf('millon') === 0 || unit === 'palos' || unit === 'palo') {
+      return val * 1000000;
+    }
+    if (unit === 'mil' || unit === 'lucas' || unit === 'k') return val * 1000;
+    return val;
+  }
 
   // Mapeo de palabras a números
   var w = {
@@ -60,7 +71,13 @@ function _aiNum(t) {
     treinta: 30
   };
   for (var k in w) {
-    if (t.indexOf(k) >= 0) return w[k];
+    var idx = t.indexOf(k);
+    if (idx >= 0) {
+      var rest = t.substring(idx + k.length);
+      if (/^\s*millon/.test(rest)) return w[k] * 1000000;
+      if (/^\s*(mil|lucas)\b/.test(rest)) return w[k] * 1000;
+      return w[k];
+    }
   }
   return null;
 }
@@ -1864,7 +1881,9 @@ function aiAnswer(question, state) {
   // ── CONSULTA ESTRUCTURADA A TUS DATOS ──
   // Filtros que los intents clásicos no cubren (día de semana, festivos,
   // mes puntual por nombre). Va directo a la tabla de turnos con doCalc.
-  if (typeof aiQueryParse === 'function' && typeof aiQueryRun === 'function') {
+  // Los comandos slash nunca pasan por acá ni por el NLP: son explícitos.
+  var _esSlash = q.charAt(0) === '/';
+  if (!_esSlash && typeof aiQueryParse === 'function' && typeof aiQueryRun === 'function') {
     var _dq = aiQueryParse(q);
     if (_dq) {
       var _dqText = aiQueryRun(_dq, state.turnosAll || state.turnos || [], c);
@@ -1896,8 +1915,11 @@ function aiAnswer(question, state) {
   // · Contexto multi-turno ("¿y ayer?" después de "¿cuánto gané?")
   // · Detección de tono emocional para respuestas empáticas
   // Solo se activa con confianza ≥0.5; si no, cae al sistema clásico.
+  // Los comandos slash son explícitos: saltan el clasificador entero.
+  // Sin este guard, "/meta 2000000" clasificaba como `celebracion` (0.6)
+  // y respondía festejando los 2 millones como si fueran un logro.
   var _nlp =
-    typeof aiClassifyIntent === 'function'
+    !_esSlash && typeof aiClassifyIntent === 'function'
       ? aiClassifyIntent(question, aiGetConversation(), c)
       : null;
 
@@ -2631,23 +2653,34 @@ function aiAnswer(question, state) {
     );
   }
 
-  // Cuándo llego a la meta
+  // Cuándo llego a la meta. Si la pregunta trae una cifra explícita
+  // ("¿cuánto falta para dos millones?") esa es la meta, no el salario.
   if (
     _aiHas(t, 'cuando', 'cuando llego', 'cuanto falt', 'cuantas horas para', 'cuanto para llegar')
   ) {
-    if (c.totalCOP >= c.salario)
-      return '✅ Ya superaste tu salario base este mes en ' + fCOP(c.totalCOP - c.salario) + '.';
+    var metaPedida = _aiNum(t);
+    var metaObj = metaPedida && metaPedida >= 1000 ? metaPedida : c.salario;
+    var esSalario = metaObj === c.salario;
+    if (c.totalCOP >= metaObj)
+      return (
+        '✅ Ya superaste ' +
+        (esSalario ? 'tu salario base' : 'la meta de ' + fCOP(metaObj)) +
+        ' este mes en ' +
+        fCOP(c.totalCOP - metaObj) +
+        '.'
+      );
     if (c.prom <= 0) return 'Aún no tengo suficiente data para estimar cuándo llegas a la meta.';
-    var diasFaltan = Math.ceil(c.falta / c.prom);
+    var faltaObj = metaObj - c.totalCOP;
+    var diasFaltan = Math.ceil(faltaObj / c.prom);
     return (
       'A tu ritmo actual (' +
       fCOP(c.prom) +
       '/turno) necesitas **aproximadamente ' +
       diasFaltan +
       ' turnos más** para llegar a ' +
-      fCOP(c.salario) +
+      fCOP(metaObj) +
       '.\n\nEso equivale a unas ' +
-      c.horasParaMeta.toFixed(1) +
+      (c.vh > 0 ? faltaObj / c.vh : 0).toFixed(1) +
       'h al valor hora base (' +
       fCOP(c.vh) +
       '/h).'

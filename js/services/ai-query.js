@@ -192,6 +192,38 @@ function aiQueryParse(question) {
     labelParts.push(labelParts.length ? 'de ' + mLabel : 'en ' + mLabel);
   }
 
+  // Filtro: período relativo explícito ("este mes", "mes pasado", "esta
+  // semana", "semana pasada"). Acota los filtros primarios — sin esto,
+  // "¿cuántos festivos trabajé este mes?" contaba todo el historial.
+  if (month === null) {
+    var lunes = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate());
+    lunes.setDate(lunes.getDate() - ((lunes.getDay() + 6) % 7));
+    if (/este mes|del mes|en el mes/.test(t)) {
+      filters.push(function (d) {
+        return d.getMonth() === ahora.getMonth() && d.getFullYear() === ahora.getFullYear();
+      });
+      labelParts.push('de este mes');
+    } else if (/mes pasado|mes anterior/.test(t)) {
+      var mesPas = new Date(ahora.getFullYear(), ahora.getMonth() - 1, 1);
+      filters.push(function (d) {
+        return d.getMonth() === mesPas.getMonth() && d.getFullYear() === mesPas.getFullYear();
+      });
+      labelParts.push('del mes pasado');
+    } else if (/esta semana/.test(t)) {
+      filters.push(function (d) {
+        return d >= lunes;
+      });
+      labelParts.push('de esta semana');
+    } else if (/semana pasada|semana anterior/.test(t)) {
+      var lunesPas = new Date(lunes);
+      lunesPas.setDate(lunes.getDate() - 7);
+      filters.push(function (d) {
+        return d >= lunesPas && d < lunes;
+      });
+      labelParts.push('de la semana pasada');
+    }
+  }
+
   // Métrica principal (decide la frase de apertura)
   var metric = 'plata';
   if (/(\bhoras?\b|trabaj)/.test(t) && !/\b(gane|ganado|plata|dinero)\b/.test(t)) metric = 'horas';

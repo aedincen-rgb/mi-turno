@@ -37,6 +37,12 @@ var FILES = [
   'js/utils/validation.js',
   'js/utils/password-hash.js',
   'js/services/quincena.js',
+  'js/services/calculator.js',
+  'js/services/ai-query.js',
+  'js/services/ai-synonyms.js',
+  'js/services/ai-nlp.js',
+  'js/services/ai.js',
+  'js/services/ai-enhanced.js',
   // Desde v48, _saludoHora vive en su propio archivo (junto con
   // _aiNombrePersonal y _aiHeroPhrases). ai-greeting.js no toca
   // DOM ni React, es seguro cargarlo entero en node.
@@ -182,6 +188,137 @@ group('normalizePrefs');
 var pBase = w.normalizePrefs(null);
 truthy(pBase && typeof pBase === 'object', 'null devuelve objeto');
 truthy(typeof pBase.quincenaMode === 'boolean', 'tiene quincenaMode booleano');
+
+// ── ai-query (motor de consultas v260) ──────────────────────────
+// Datasets construidos relativos a HOY para que los tests no dependan
+// de la fecha en que corre CI. esFest cuenta domingos como festivo,
+// así que "primer domingo del mes" es siempre un festivo garantizado.
+
+function mkTurno(d, horas) {
+  var ini = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 8, 0, 0);
+  return {
+    id: ini.toISOString(),
+    inicio: ini.toISOString(),
+    fin: new Date(ini.getTime() + horas * 3600000).toISOString()
+  };
+}
+function primerDomingo(year, month) {
+  var d = new Date(year, month, 1);
+  while (d.getDay() !== 0) d.setDate(d.getDate() + 1);
+  return d;
+}
+function primerDiaNoFestivo(year, month) {
+  var d = new Date(year, month, 1);
+  while (w.esFest(d)) d.setDate(d.getDate() + 1);
+  return d;
+}
+var _hoy = new Date();
+var _ctx = { vh: 10000, uid: 'u-test' };
+
+group('ai-query: scoping temporal (bug preguntas precargadas de Análisis)');
+var qFest = w.aiQueryParse('¿Cuántos días festivos trabajé este mes?');
+truthy(qFest, 'pregunta precargada de Análisis es reclamada');
+truthy(qFest && qFest.label.indexOf('de este mes') >= 0,
+       'el filtro respeta "este mes" en el label');
+
+var dsFest = [
+  mkTurno(primerDomingo(_hoy.getFullYear(), _hoy.getMonth()), 8),        // festivo mes actual
+  mkTurno(primerDomingo(_hoy.getFullYear(), _hoy.getMonth() - 1), 8),    // festivo mes pasado
+  mkTurno(primerDiaNoFestivo(_hoy.getFullYear(), _hoy.getMonth()), 8)    // día normal mes actual
+];
+var rFest = w.aiQueryRun(qFest, dsFest, _ctx);
+truthy(rFest.indexOf('**1 turno**') >= 0,
+       'cuenta SOLO el festivo del mes actual (no todo el historial): ' + rFest.split('\n')[0]);
+
+var qFestPas = w.aiQueryParse('¿cuántos festivos trabajé el mes pasado?');
+truthy(qFestPas && qFestPas.label.indexOf('del mes pasado') >= 0, 'reclama "mes pasado"');
+truthy(w.aiQueryRun(qFestPas, dsFest, _ctx).indexOf('• Turnos: 1') >= 0,
+       'mes pasado cuenta solo su festivo');
+
+group('ai-query: las demás preguntas precargadas de Análisis NO se reclaman');
+[
+  '¿Cuántas horas extra llevo?',
+  '¿Cuántas horas nocturnas llevo?',
+  '¿Cuánto gané este mes?',
+  'Distribución y desglose de mis recargos',
+  '¿Cuántos días seguidos llevo?'
+].forEach(function (p) {
+  eq(w.aiQueryParse(p), null, 'NO reclamada (va al NLP): "' + p + '"');
+});
+
+group('ai-query: exclusiones (conocimiento, acciones, hipotéticos)');
+eq(w.aiQueryParse('¿qué es el recargo festivo?'), null, 'conocimiento no se reclama');
+eq(w.aiQueryParse('envía mi reporte de mayo a juan@x.com'), null, 'correo no se reclama');
+eq(w.aiQueryParse('¿cuánto ganaría si trabajo el domingo?'), null, 'hipotético no se reclama');
+eq(w.aiQueryParse('próximos festivos'), null, 'festivos futuros no se reclama');
+
+group('ai-query: filtros por día de semana');
+var qDom = w.aiQueryParse('¿cuánto gané los domingos?');
+truthy(qDom && qDom.label === 'los domingos', 'reclama "los domingos"');
+var dom1 = primerDomingo(_hoy.getFullYear(), _hoy.getMonth());
+var dom2 = primerDomingo(_hoy.getFullYear(), _hoy.getMonth() - 1);
+var dsDom = [mkTurno(dom1, 8), mkTurno(dom2, 6),
+             mkTurno(primerDiaNoFestivo(_hoy.getFullYear(), _hoy.getMonth()), 8)];
+var rDom = w.aiQueryRun(qDom, dsDom, _ctx);
+truthy(rDom.indexOf('• Turnos: 2') >= 0, 'matchea los 2 domingos del dataset');
+
+var qVie = w.aiQueryParse('¿cuánto gané el viernes pasado?');
+truthy(qVie && qVie.label.indexOf('el viernes pasado (') >= 0,
+       'singular + "pasado" resuelve a una fecha puntual');
+var viePas = new Date(_hoy.getFullYear(), _hoy.getMonth(), _hoy.getDate());
+do { viePas.setDate(viePas.getDate() - 1); } while (viePas.getDay() !== 5);
+var vieAnt = new Date(viePas); vieAnt.setDate(viePas.getDate() - 7);
+var rVie = w.aiQueryRun(qVie, [mkTurno(viePas, 5), mkTurno(vieAnt, 5)], _ctx);
+truthy(rVie.indexOf('1 coincide (') >= 0,
+       'solo coincide el viernes más reciente, no el de hace 2 semanas');
+
+group('ai-query: estados límite');
+truthy(w.aiQueryRun(qDom, [], _ctx).indexOf('no encontré') >= 0,
+       'historial vacío responde honesto, sin inventar');
+truthy(w.aiQueryRun(qDom, dsDom, { vh: 0, uid: 'u' }).indexOf('Configurá tu salario') >= 0,
+       'vh=0 avisa que falta configurar salario');
+truthy(w.aiQueryRun(qDom, [{ id: 'x', inicio: 'FECHA_ROTA', fin: null }], _ctx)
+         .indexOf('no encontré') >= 0,
+       'turno corrupto (sin fin, fecha inválida) no rompe ni cuenta');
+
+// ── comandos rápidos y parsing de cifras (bug "/meta 2000000") ──
+// El chip "¿Cuánto falta para 2 millones?" enviaba /meta 2000000 y el
+// NLP lo clasificaba como `celebracion` (festejaba los 2 millones como
+// resultado). Además _aiNum no entendía "dos millones" → caía al salario.
+
+group('_aiNum: multiplicadores colombianos');
+eq(w._aiNum('2 millones'), 2000000, '"2 millones" → 2000000');
+eq(w._aiNum('dos millones'), 2000000, '"dos millones" → 2000000 (palabra + multiplicador)');
+eq(w._aiNum('150 lucas'), 150000, '"150 lucas" → 150000');
+eq(w._aiNum('2000000'), 2000000, 'cifra plana intacta');
+eq(w._aiNum('4h'), 4, '"4h" sigue siendo 4 (no romper simulador)');
+eq(w._aiNum('quince dias'), 15, 'palabra sin multiplicador intacta');
+
+group('comandos rápidos: slash salta el NLP');
+var _stMeta = (function () {
+  var ds = [mkTurno(primerDiaNoFestivo(_hoy.getFullYear(), _hoy.getMonth()), 8)];
+  return {
+    turnos: ds, turnosAll: ds,
+    calc: w.doCalc(ds, null, new Date(), 10000),
+    vh: 10000, salario: 2400000,
+    session: { uid: 'u-test', email: 'test@x.com' }
+  };
+})();
+function respText(r) { return ((typeof r === 'object' && r ? r.text : r) || ''); }
+
+var rMeta = respText(w.aiAnswer('/meta 2000000', _stMeta));
+truthy(rMeta.indexOf('2.000.000') >= 0, '/meta 2000000 usa la meta pedida: ' +
+       rMeta.split('\n')[0]);
+truthy(rMeta.indexOf('celebran') < 0 && rMeta.indexOf('¡¡') < 0,
+       '/meta 2000000 NO festeja la cifra como logro');
+
+var rDos = respText(w.aiAnswer('¿cuanto falta para dos millones?', _stMeta));
+truthy(rDos.indexOf('2.000.000') >= 0,
+       '"dos millones" escrito se interpreta como meta de $2.000.000');
+
+var rSim = respText(w.aiAnswer('/simular 4h nocturnas', _stMeta));
+truthy(rSim.indexOf('4h nocturnas') >= 0 || rSim.indexOf('Simulación') >= 0,
+       '/simular 4h nocturnas llega a su handler');
 
 // ── hashPassword / verifyPassword (PBKDF2 + salt, v49) ──────────
 group('password-hash (PBKDF2 con salt)');

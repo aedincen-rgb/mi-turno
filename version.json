@@ -1,4 +1,4 @@
 {
-  "v": "v260",
-  "label": "IA profesional: consultas a datos + desambiguación + trazabilidad"
+  "v": "v261",
+  "label": "Fixes preguntas precargadas: scoping temporal en consultas + slash salta NLP"
 }
