@@ -229,7 +229,36 @@ var AI_PREFIX_PATTERNS = [
   'veamos ',
   'cuentame ',
   'cuéntame ',
-  'contame '
+  'contame ',
+  'cuentame cuanto ',
+  'contame cuanto ',
+  'decime vos ',
+  'decime una cosa ',
+  'una pregunta ',
+  'tengo una duda ',
+  'me ayudas ',
+  'me ayudas con ',
+  'me ayudas a ',
+  'me ayudás ',
+  'me ayudás con ',
+  'me ayudás a ',
+  'ayudame ',
+  'ayudame con ',
+  'ayudame a ',
+  'ayúdame ',
+  'ayúdame con ',
+  'ayúdame a ',
+  'podes ayudarme ',
+  'podés ayudarme ',
+  'puedes ayudarme ',
+  'podes ayudarme con ',
+  'necesito que me ',
+  'me haces el favor de ',
+  'me haces un favor ',
+  'hagame un favor ',
+  'hágame un favor ',
+  'hazme el favor ',
+  'chequeame esto '
 ];
 
 function aiPreprocess(text) {
@@ -670,7 +699,6 @@ var AI_SYNONYMS = {
   gana: 'gane',
   ganan: 'gane',
   ganamos: 'gane',
-  cobre: 'gane',
   cobra: 'gane',
   cobraste: 'gane',
   pagaste: 'gane',
@@ -686,7 +714,6 @@ var AI_SYNONYMS = {
   debengan: 'gane',
   // Tiempo
   manana: 'mañana',
-  madrugada: 'mañana',
   amanecer: 'manana',
   tarde: 'tarde',
   anochecer: 'noche',
@@ -891,6 +918,18 @@ var AI_INTENTS = [
       ['dia anterior', 3],
       ['como me fue ayer', 3],
       ['cuanto ayer', 3],
+      ['cuanto gane ayer', 4],
+      ['cuanto gané ayer', 4],
+      ['cuanto dinero ayer', 4],
+      ['cuanta plata ayer', 4],
+      ['dinero ayer', 3],
+      ['plata ayer', 3],
+      ['gane ayer', 3],
+      ['gané ayer', 3],
+      ['cobre ayer', 3],
+      ['cobré ayer', 3],
+      ['ganancias ayer', 3],
+      ['hice ayer', 3],
       ['y ayer', 3],
       ['ayer gane', 3],
       ['ayer gané', 3],
@@ -899,7 +938,8 @@ var AI_INTENTS = [
       ['resumen ayer', 3],
       ['balance ayer', 3],
       ['turnos ayer', 2],
-      ['antier', 3]
+      ['antier', 3],
+      ['anteayer', 3]
     ]
   },
   {
@@ -1751,33 +1791,41 @@ function aiClassify(text, convState, userContext) {
     var _hasTimeWord =
       _raw.indexOf('ayer') >= 0 ||
       _raw.indexOf('antier') >= 0 ||
+      _raw.indexOf('anteayer') >= 0 ||
       _raw.indexOf('hoy') >= 0 ||
       _raw.indexOf('mañana') >= 0 ||
       _raw.indexOf('semana') >= 0 ||
-      _raw.indexOf('finde') >= 0;
+      _raw.indexOf('finde') >= 0 ||
+      _raw.indexOf('fin de semana') >= 0 ||
+      _raw.indexOf('mes pasado') >= 0 ||
+      _raw.indexOf('este mes') >= 0;
     var _hasMoneyWord =
       _raw.indexOf('cuanto') >= 0 ||
       _raw.indexOf('dinero') >= 0 ||
       _raw.indexOf('plata') >= 0 ||
       _raw.indexOf('gane') >= 0 ||
-      _raw.indexOf('gan') >= 0 ||
+      _raw.indexOf('gané') >= 0 ||
+      _raw.indexOf('ganancias') >= 0 ||
+      _raw.indexOf('ganancia') >= 0 ||
       _raw.indexOf('cobre') >= 0 ||
-      _raw.indexOf('cobr') >= 0 ||
+      _raw.indexOf('cobré') >= 0 ||
+      _raw.indexOf('cobrado') >= 0 ||
       _raw.indexOf('pago') >= 0 ||
       _raw.indexOf('llevo') >= 0 ||
-      _raw.indexOf('ganancia') >= 0;
+      _raw.indexOf('hecho') >= 0 ||
+      _raw.indexOf('hice') >= 0;
     // Si el usuario menciona tiempo + dinero juntos, la intención real
     // es sobre ESE momento específico, no sobre el mes completo.
     var _combinedTimeMoney = _hasTimeWord && _hasMoneyWord;
 
-    var _timeIntentIds = { hoy: 1, ayer: 1, comparativa_semana: 1 };
+    var _timeIntentIds = { hoy: 1, ayer: 1, comparativa_semana: 1, comparativa_mes: 1 };
     if (_hasTimeWord && _timeIntentIds[intent.id]) {
-      score += _combinedTimeMoney ? 10 : 5; // boost fuerte si hay dinero+tiempo juntos
+      score += _combinedTimeMoney ? 12 : 6; // boost fuerte si hay dinero+tiempo juntos
     }
     // Penalizar intents genéricos de dinero (total_ganado, proyeccion)
     // cuando el usuario claramente pregunta por un momento específico.
     if (_combinedTimeMoney && (intent.id === 'total_ganado' || intent.id === 'proyeccion')) {
-      score -= 3; // reducir para que no compitan con ayer/hoy
+      score -= 5; // penalización más fuerte para que no compitan con ayer/hoy
     }
 
     // Si hay palabra de mes y es intent de proyección o comparativa_mes

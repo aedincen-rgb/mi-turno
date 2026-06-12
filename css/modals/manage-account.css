@@ -1,6 +1,7 @@
 /* ════════════════════════════════════════════════════════════════
    MI TURNO · modals/manage-account.css
    Panel de gestión de cuenta — estilo Ajustes iOS
+   v2: Rediseño profesional con cards de información
    ════════════════════════════════════════════════════════════════ */
 
 /* ── Contenedor principal ── */
@@ -10,7 +11,56 @@
   gap: 0;
 }
 
-/* ── Sección de info (correo, PIN, conexión) ── */
+/* ── Sección de resumen de cuenta ── */
+.manage-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.manage-summary-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.manage-summary-item {
+  flex: 1;
+  background: var(--glass-mid);
+  backdrop-filter: var(--blur-sm);
+  -webkit-backdrop-filter: var(--blur-sm);
+  border: 1px solid var(--glass-border-sm);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: border-color 0.2s var(--ease);
+}
+.manage-summary-item.full {
+  flex: none;
+  width: 100%;
+}
+.manage-summary-item-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.manage-summary-item-val {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.manage-summary-item-sub {
+  font-size: 10.5px;
+  color: var(--muted);
+}
+
+/* ── Sección antigua (info compacta) ── */
 .manage-section {
   background: var(--surface2, rgba(255, 255, 255, 0.06));
   border-radius: var(--radius-sm);
@@ -47,6 +97,197 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* ── Badges ── */
+.manage-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: var(--r-pill);
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.manage-badge.ok {
+  background: var(--success-dim);
+  color: var(--success);
+}
+.manage-badge.muted {
+  background: var(--surface2, rgba(255, 255, 255, 0.06));
+  color: var(--muted);
+}
+.manage-badge.pending {
+  background: var(--warning-dim, rgba(255, 159, 67, 0.12));
+  color: var(--warning, #ff9f43);
+}
+
+/* ── Banner informativo ── */
+.manage-info-banner {
+  background: var(--warning-dim, rgba(255, 159, 67, 0.12));
+  border: 1px solid rgba(255, 159, 67, 0.18);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.5;
+  margin-bottom: 18px;
+}
+.manage-info-banner-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+  line-height: 1.3;
+}
+
+/* ── Segmented control (iOS style) ── */
+.manage-segmented {
+  display: flex;
+  background: var(--bg-secondary);
+  border-radius: 10px;
+  padding: 3px;
+  margin-bottom: 18px;
+  gap: 2px;
+}
+.manage-segmented-btn {
+  flex: 1;
+  padding: 9px 8px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s var(--ease);
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  -webkit-tap-highlight-color: transparent;
+}
+.manage-segmented-btn.active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.08),
+    0 1px 2px rgba(0, 0, 0, 0.04);
+}
+.manage-segmented-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+[data-theme='dark'] .manage-segmented {
+  background: rgba(255, 255, 255, 0.06);
+}
+[data-theme='dark'] .manage-segmented-btn.active {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.3),
+    0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* ── Campo editable ── */
+.manage-field {
+  margin-bottom: 14px;
+}
+.manage-field-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 7px;
+}
+
+/* ── Current value hint ── */
+.manage-current {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+.manage-current-label {
+  font-weight: 600;
+  color: var(--text-2);
+  white-space: nowrap;
+}
+.manage-current-val {
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* ── Input ── */
+.manage-input {
+  width: 100%;
+  padding: 14px 16px;
+  background: var(--glass-mid);
+  backdrop-filter: var(--blur-sm);
+  -webkit-backdrop-filter: var(--blur-sm);
+  border: 1.5px solid var(--glass-border-sm);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 600;
+  outline: none;
+  box-sizing: border-box;
+  transition:
+    border-color 0.2s var(--ease),
+    box-shadow 0.2s var(--ease);
+}
+.manage-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-dim);
+}
+.manage-input.pin-style {
+  text-align: center;
+  font-size: 22px;
+  letter-spacing: 10px;
+  padding: 16px 20px;
+}
+.manage-input::placeholder {
+  color: var(--muted);
+  opacity: 0.5;
+  font-weight: 400;
+}
+
+/* ── Botón de acción ── */
+.manage-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, var(--accent2), var(--accent));
+  color: #fff;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    opacity 0.2s var(--ease),
+    transform 0.18s var(--spring),
+    box-shadow 0.2s var(--ease);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    0 6px 18px var(--accent-glow);
+  -webkit-tap-highlight-color: transparent;
+  margin-top: 10px;
 }
 
 /* ── Badges de estado ── */
