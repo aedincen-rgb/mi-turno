@@ -50,7 +50,8 @@ var FILES = [
   // _aiNombrePersonal y _aiHeroPhrases). ai-greeting.js no toca
   // DOM ni React, es seguro cargarlo entero en node.
   'js/services/ai-history.js',
-  'js/services/ai-greeting.js'
+  'js/services/ai-greeting.js',
+  'js/services/ai-proactive.js'
 ];
 
 // ── Stubs del entorno ────────────────────────────────────────────
@@ -593,6 +594,122 @@ var _helpCambio = typeof w.aiHelpSearch === 'function'
   : null;
 truthy(_helpCambio && _helpCambio.id === 'configurar_salario',
   '"cambio salario" encuentra guía configurar_salario');
+
+// ── Bug v277: clasificación de "como estuvo ayer" ──────────────
+group('NLP: intent ayer con "como estuvo ayer"');
+(function () {
+  var _nlp = typeof w.aiClassifyIntent === 'function';
+  // "como estuvo ayer" debe ir a ayer, no a curiosidad_app ni reflexion
+  var r1 = _nlp ? w.aiClassifyIntent('como estuvo ayer', null, null) : null;
+  truthy(r1 && r1.intent === 'ayer',
+    '"como estuvo ayer" → ayer (era curiosidad_app antes del fix)');
+
+  var r2 = _nlp ? w.aiClassifyIntent('cómo estuvo ayer', null, null) : null;
+  truthy(r2 && r2.intent === 'ayer',
+    '"cómo estuvo ayer" → ayer');
+
+  var r3 = _nlp ? w.aiClassifyIntent('que tal estuvo ayer', null, null) : null;
+  truthy(r3 && r3.intent === 'ayer',
+    '"que tal estuvo ayer" → ayer');
+
+  // Casos que NO deben ir a ayer
+  var r4 = _nlp ? w.aiClassifyIntent('que tal estuvo la semana', null, null) : null;
+  truthy(r4 && r4.intent !== 'ayer',
+    '"que tal estuvo la semana" no va a ayer');
+
+  // "ayer" solo sigue en ayer
+  var r5 = _nlp ? w.aiClassifyIntent('ayer', null, null) : null;
+  truthy(r5 && r5.intent === 'ayer',
+    '"ayer" solo → ayer');
+
+  // "cuánto hice ayer" sigue en ayer
+  var r6 = _nlp ? w.aiClassifyIntent('cuánto hice ayer', null, null) : null;
+  truthy(r6 && r6.intent === 'ayer',
+    '"cuánto hice ayer" → ayer');
+
+  // "cómo funciona la app" no va a ayer
+  var r7 = _nlp ? w.aiClassifyIntent('cómo funciona la app', null, null) : null;
+  truthy(r7 && r7.intent !== 'ayer',
+    '"cómo funciona la app" no va a ayer');
+})();
+
+// ── Bug v277: proyección inflada en briefing proactivo ──────────
+group('aiBriefing: porcentaje vs salario clampeado');
+(function () {
+  var _hasBriefing = typeof w.aiBriefing === 'function';
+  var _hasBuildCtx = typeof w.buildContext === 'function';
+
+  // Contexto simulado: 9 turnos, salario OK (1.900.000)
+  // El proy correcto es (648375/9)*30 = 2161250, vsSalario ~+13.7%
+  if (_hasBriefing && _hasBuildCtx) {
+    // buildContext necesita state completo — fabricamos un turno
+    var _ahora = new Date();
+    var _ini = new Date(_ahora.getFullYear(), _ahora.getMonth(), 1);
+    _ini.setHours(8, 0, 0, 0);
+    var _fin = new Date(_ini);
+    _fin.setHours(16, 0, 0, 0);
+    var _turno = { id: '1', inicio: _ini.toISOString(), fin: _fin.toISOString() };
+
+    var _state = {
+      turnos: [_turno],
+      turnosAll: [_turno],
+      calc: w.doCalc([_turno], null, _ahora, 7916.67),
+      salario: 1900000,
+      vh: 7916.67,
+      session: { uid: 'test-uid', email: 'test@test.com' },
+      activo: null
+    };
+
+    var _ctx = w.buildContext(_state);
+    truthy(_ctx && _ctx.totalCOP > 0,
+      'buildContext genera totalCOP > 0 con un turno');
+    truthy(_ctx && _ctx.diasTrab > 0,
+      'buildContext genera diasTrab > 0 con un turno');
+    truthy(_ctx && _ctx.proy > 0,
+      'buildContext genera proy > 0 con diasTrab > 0');
+    truthy(_ctx && _ctx.salario === 1900000,
+      'buildContext preserva el salario mensual (no vh)');
+
+    var _briefing = w.aiBriefing(_ctx);
+    truthy(typeof _briefing === 'string',
+      'aiBriefing retorna string');
+    truthy(_briefing.indexOf('turnos') >= 0 || _briefing.indexOf('mes') >= 0,
+      'briefing menciona turnos o mes (no "Aún no tenés turnos")');
+
+    // El porcentaje NO puede superar 300%
+    var _hasPct = _briefing.indexOf('%') >= 0;
+    if (_hasPct) {
+      var _match = _briefing.match(/\(([+-]?\d+)%/);
+      if (_match) {
+        var _pct = parseInt(_match[1], 10);
+        truthy(Math.abs(_pct) <= 300,
+          'vsSalario clampea a ±300% (era ' + _pct + '%, debería ser ≤300%)');
+      }
+    }
+  } else {
+    // Al menos verificar que la función existe
+    truthy(_hasBriefing, 'aiBriefing existe como función');
+  }
+
+  // Con salario extremadamente bajo (< 500000) no debe mostrar porcentaje absurdo
+  if (_hasBriefing) {
+    var _cBajo = {
+      diasTrab: 9,
+      totalCOP: 648375,
+      proy: 1620938,
+      salario: 7917,   // vh mal pasado como salario
+      vh: 7917,
+      turnosHoy: 0,
+      copHoy: 0,
+      minsHoy: 0,
+      rachaActual: 0
+    };
+    var _bBajo = w.aiBriefing(_cBajo);
+    // Con salario < 500000 no debe aparecer el "% vs tu salario"
+    truthy(_bBajo.indexOf('20375') < 0,
+      'briefing con salario < 500000 no muestra +20375%');
+  }
+})();
 
 // ── hashPassword / verifyPassword (PBKDF2 + salt, v49) ──────────
 group('password-hash (PBKDF2 con salt)');

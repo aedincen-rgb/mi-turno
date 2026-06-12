@@ -1233,17 +1233,19 @@ function AsistenteTab(props) {
   }
 
   var phrases = typeof _aiHeroPhrases === 'function' ? _aiHeroPhrases(props) : [];
-  if (typeof aiBriefing === 'function') {
-    var briefing = aiBriefing(
-      props.calc
-        ? Object.assign({}, props.calc, {
-            ahora: new Date(),
-            salario: props.salario,
-            vh: props.vh,
-            turnos: props.turnos
-          })
-        : null
-    );
+  if (typeof aiBriefing === 'function' && typeof buildContext === 'function') {
+    var _briefCtx = props.calc
+      ? buildContext({
+          turnos: props.turnos,
+          turnosAll: props.turnosAll || props.turnos,
+          calc: props.calc,
+          salario: props.salario,
+          vh: props.vh,
+          session: props.session,
+          activo: props.activo || null
+        })
+      : null;
+    var briefing = aiBriefing(_briefCtx);
     if (briefing) phrases = [briefing].concat(phrases);
   }
   var personalNote = phrases && phrases.length ? phrases[heroIdx % phrases.length] : '';

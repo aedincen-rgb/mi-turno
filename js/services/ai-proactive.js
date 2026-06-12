@@ -27,10 +27,19 @@ function aiBriefing(c) {
   }
 
   // Proyección
-  if (c.proy && c.proy > 0) {
-    var vsSalario = c.salario > 0 ? ((c.proy / c.salario - 1) * 100) : 0;
-    parts.push('Al cierre proyectás ' + fCOP(c.proy) +
-      (Math.abs(vsSalario) > 5 ? ' (' + (vsSalario > 0 ? '+' : '') + vsSalario.toFixed(0) + '% vs tu salario).' : '.'));
+  if (c.proy && c.proy > 0 && c.salario >= 500000) {
+    var vsSalario = (c.proy / c.salario - 1) * 100;
+    // Clampear a ±300% para evitar porcentajes absurdos por salario mal configurado
+    vsSalario = Math.max(-300, Math.min(300, vsSalario));
+    parts.push(
+      'Al cierre proyectás ' +
+        fCOP(c.proy) +
+        (Math.abs(vsSalario) > 5
+          ? ' (' + (vsSalario > 0 ? '+' : '') + vsSalario.toFixed(0) + '% vs tu salario).'
+          : '.')
+    );
+  } else if (c.proy && c.proy > 0) {
+    parts.push('Al cierre proyectás ' + fCOP(c.proy) + '.');
   }
 
   // Hoy
@@ -61,35 +70,60 @@ function aiAlerts(c) {
   var ahora = c.ahora || new Date();
   var diaSemana = ahora.getDay();
   if (diaSemana === 5 && c.pctSalario < 70) {
-    alerts.push('📅 Hoy es viernes. Si trabajás sábado y domingo, podrías sumar ≈' +
-      fCOP(c.prom * 2.5) + ' extra este fin de semana (con recargos dominicales del 75%).');
+    alerts.push(
+      '📅 Hoy es viernes. Si trabajás sábado y domingo, podrías sumar ≈' +
+        fCOP(c.prom * 2.5) +
+        ' extra este fin de semana (con recargos dominicales del 75%).'
+    );
   }
 
   // Alerta: cerca del límite legal
   if (c.hrsSemanales > 40) {
-    alerts.push('⚖️ Vas ' + c.hrsSemanales.toFixed(1) + 'h esta semana. El límite legal es 44h. ' +
-      'Si pasás de 44h, asegurate de que te paguen las extras (25% a 75% según horario).');
+    alerts.push(
+      '⚖️ Vas ' +
+        c.hrsSemanales.toFixed(1) +
+        'h esta semana. El límite legal es 44h. ' +
+        'Si pasás de 44h, asegurate de que te paguen las extras (25% a 75% según horario).'
+    );
   }
 
   // Alerta: mes casi terminado, lejos de la meta
   var diasRest = c.diasRestantes || 0;
   if (diasRest <= 5 && c.pctSalario < 80 && c.diasTrab > 0) {
-    alerts.push('⏰ Quedan solo ' + diasRest + ' días del mes y vas al ' + c.pctSalario.toFixed(0) +
-      '% de tu salario. Necesitás ≈' + fCOP((c.salario - c.totalCOP) / Math.max(1, diasRest)) + '/día para llegar al 100%.');
+    alerts.push(
+      '⏰ Quedan solo ' +
+        diasRest +
+        ' días del mes y vas al ' +
+        c.pctSalario.toFixed(0) +
+        '% de tu salario. Necesitás ≈' +
+        fCOP((c.salario - c.totalCOP) / Math.max(1, diasRest)) +
+        '/día para llegar al 100%.'
+    );
   }
 
   // Alerta: mañana es festivo
   var manana = new Date(ahora);
   manana.setDate(manana.getDate() + 1);
   if (typeof esFest === 'function' && esFest(manana)) {
-    alerts.push('⛪ ¡Mañana es festivo! Si trabajás, cada hora vale 75% más. Un turno de 8h te daría ≈' +
-      fCOP(c.vh * 8 * 1.75) + ' en vez de ' + fCOP(c.vh * 8) + '.');
+    alerts.push(
+      '⛪ ¡Mañana es festivo! Si trabajás, cada hora vale 75% más. Un turno de 8h te daría ≈' +
+        fCOP(c.vh * 8 * 1.75) +
+        ' en vez de ' +
+        fCOP(c.vh * 8) +
+        '.'
+    );
   }
 
   // Alerta: superaste tu mejor marca
   if (c.totalCOP > 0 && c.totalCOP > c.totalCOPMesPasado && c.totalCOPMesPasado > 0) {
     var diff = c.totalCOP - c.totalCOPMesPasado;
-    alerts.push('🎉 ¡Ya superaste el mes pasado por ' + fCOP(diff) + '! Y todavía faltan ' + diasRest + ' días.');
+    alerts.push(
+      '🎉 ¡Ya superaste el mes pasado por ' +
+        fCOP(diff) +
+        '! Y todavía faltan ' +
+        diasRest +
+        ' días.'
+    );
   }
 
   return alerts.length > 0 ? '\n\n🔔 **Alertas**\n' + alerts.join('\n\n') : null;
@@ -118,7 +152,11 @@ function aiSetGoal(amount) {
 function aiCheckGoals(c) {
   if (!c) return null;
   var goals;
-  try { goals = leer('mt_goals', null); } catch (_) { return null; }
+  try {
+    goals = leer('mt_goals', null);
+  } catch (_) {
+    return null;
+  }
   if (!goals || !goals.length) return null;
 
   var resp = '\n\n🎯 **Tus metas**\n';
@@ -143,7 +181,9 @@ function aiCheckGoals(c) {
 
   // Guardar metas actualizadas (marcar cumplidas)
   if (activeGoals > 0) {
-    try { grabar('mt_goals', goals); } catch (_) {}
+    try {
+      grabar('mt_goals', goals);
+    } catch (_) {}
   }
 
   return activeGoals > 0 ? resp : null;
