@@ -1,4 +1,4 @@
 {
-  "v": "v266",
-  "label": "NLP: preservar tiempo + sinónimos + compound intents + clean prefix"
+  "v": "v268",
+  "label": "Fix: NLP stop words + assistant.js reparado + manage-account rediseño"
 }

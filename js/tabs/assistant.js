@@ -1122,7 +1122,7 @@ function AsistenteTab(props) {
       'aria-label': 'Asistente AI'
     },
 
-    // ═══ STICKY TOP: hero + about + chips fijos al hacer scroll ═══
+    // ═══ STICKY TOP: hero + about + chips fijos al hacer scroll (v264) ═══
     h(
       'div',
       { className: 'asistente-sticky-top' },
@@ -1140,7 +1140,11 @@ function AsistenteTab(props) {
           'div',
           { className: 'asistente-hero-txt' },
           h('h1', { className: 'asistente-greeting' }, saludo + '.'),
-          h('div', { className: 'asistente-phrase', key: heroIdx }, phrases[heroIdx % phrases.length])
+          h(
+            'div',
+            { className: 'asistente-phrase', key: heroIdx },
+            phrases[heroIdx % phrases.length]
+          )
         )
       ),
 
@@ -1157,104 +1161,105 @@ function AsistenteTab(props) {
       h(
         'div',
         { className: 'asistente-chips' },
-      h(
-        'button',
-        {
-          className: 'asistente-chip',
-          onClick: function () {
-            send('¿Cuánto gané ayer?');
-          }
-        },
-        h('span', { className: 'asistente-chip-ico' }, '📅'),
-        'Ayer'
-      ),
-      h(
-        'button',
-        {
-          className: 'asistente-chip',
-          onClick: function () {
-            send('¿Cuánto gané este mes?');
-          }
-        },
-        h('span', { className: 'asistente-chip-ico' }, '💰'),
-        'Este mes'
-      ),
-      h(
-        'button',
-        {
-          className: 'asistente-chip',
-          onClick: function () {
-            send('Proyección al cierre');
-          }
-        },
-        h('span', { className: 'asistente-chip-ico' }, '🔮'),
-        'Proyección'
-      ),
-      h(
-        'button',
-        {
-          className: 'asistente-chip',
-          onClick: function () {
-            send('¿VS mes pasado?');
-          }
-        },
-        h('span', { className: 'asistente-chip-ico' }, '⚖'),
-        'VS mes pasado'
-      ),
-      h(
-        'button',
-        {
-          className: 'asistente-chip',
-          onClick: function () {
-            send('¿Cuánto si trabajo 4h más?');
-          }
-        },
-        h('span', { className: 'asistente-chip-ico' }, '🧮'),
-        'Simular'
-      ),
-      h(
-        'button',
-        {
-          className: 'asistente-chip',
-          onClick: function () {
-            send('/tendencia');
-          }
-        },
-        h('span', { className: 'asistente-chip-ico' }, '📈'),
-        'Tendencia'
-      ),
-      h(
-        'button',
-        {
-          className: 'asistente-chip',
-          onClick: function () {
-            send('Dame el desglose de mis recargos de este mes');
-          }
-        },
-        h('span', { className: 'asistente-chip-ico' }, '🔍'),
-        'Desglose recargos'
-      ),
-      h(
-        'button',
-        {
-          className: 'asistente-chip',
-          onClick: function () {
-            send('Enviá mi reporte e informe por correo');
-          }
-        },
-        h('span', { className: 'asistente-chip-ico' }, '📋'),
-        'Enviar informe'
-      ),
-      h(
-        'button',
-        {
-          className: 'asistente-chip',
-          onClick: function () {
-            send('¿Qué significa el recargo dominical y cuánto vale el mío?');
-          }
-        },
-        h('span', { className: 'asistente-chip-ico' }, '📖'),
-        'Recargo dominical'
+        h(
+          'button',
+          {
+            className: 'asistente-chip',
+            onClick: function () {
+              send('¿Cuánto gané ayer?');
+            }
+          },
+          h('span', { className: 'asistente-chip-ico' }, '📅'),
+          'Ayer'
+        ),
+        h(
+          'button',
+          {
+            className: 'asistente-chip',
+            onClick: function () {
+              send('¿Cuánto gané este mes?');
+            }
+          },
+          h('span', { className: 'asistente-chip-ico' }, '💰'),
+          'Este mes'
+        ),
+        h(
+          'button',
+          {
+            className: 'asistente-chip',
+            onClick: function () {
+              send('Proyección al cierre');
+            }
+          },
+          h('span', { className: 'asistente-chip-ico' }, '🔮'),
+          'Proyección'
+        ),
+        h(
+          'button',
+          {
+            className: 'asistente-chip',
+            onClick: function () {
+              send('¿VS mes pasado?');
+            }
+          },
+          h('span', { className: 'asistente-chip-ico' }, '⚖'),
+          'VS mes pasado'
+        ),
+        h(
+          'button',
+          {
+            className: 'asistente-chip',
+            onClick: function () {
+              send('¿Cuánto si trabajo 4h más?');
+            }
+          },
+          h('span', { className: 'asistente-chip-ico' }, '🧮'),
+          'Simular'
+        ),
+        h(
+          'button',
+          {
+            className: 'asistente-chip',
+            onClick: function () {
+              send('/tendencia');
+            }
+          },
+          h('span', { className: 'asistente-chip-ico' }, '📈'),
+          'Tendencia'
+        ),
+        h(
+          'button',
+          {
+            className: 'asistente-chip',
+            onClick: function () {
+              send('Dame el desglose de mis recargos de este mes');
+            }
+          },
+          h('span', { className: 'asistente-chip-ico' }, '🔍'),
+          'Desglose recargos'
+        ),
+        h(
+          'button',
+          {
+            className: 'asistente-chip',
+            onClick: function () {
+              send('Enviá mi reporte e informe por correo');
+            }
+          },
+          h('span', { className: 'asistente-chip-ico' }, '📋'),
+          'Enviar informe'
+        ),
+        h(
+          'button',
+          {
+            className: 'asistente-chip',
+            onClick: function () {
+              send('¿Qué significa el recargo dominical y cuánto vale el mío?');
+            }
+          },
+          h('span', { className: 'asistente-chip-ico' }, '📖'),
+          'Recargo dominical'
+        )
       )
     ),
 
@@ -1688,7 +1693,7 @@ function AsistenteTab(props) {
               style: { transform: 'scale(' + (1 + audioLevel * 0.5) + ')' }
             })
           : null,
-        // Icono dinámico — muestra ondas de audio cuando escucha, micrófono SVG en reposo
+        // Icono dinámico — muestra ondas de audio cuando escucha
         listening
           ? h(
               'div',
@@ -1711,7 +1716,16 @@ function AsistenteTab(props) {
             : input.trim()
               ? h(
                   'svg',
-                  { viewBox: '0 0 24 24', width: 22, height: 22, fill: 'none', stroke: 'currentColor', 'stroke-width': 2.2, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' },
+                  {
+                    viewBox: '0 0 24 24',
+                    width: 22,
+                    height: 22,
+                    fill: 'none',
+                    stroke: 'currentColor',
+                    'stroke-width': 2.2,
+                    'stroke-linecap': 'round',
+                    'stroke-linejoin': 'round'
+                  },
                   h('line', { x1: 12, y1: 19, x2: 12, y2: 23 }),
                   h('line', { x1: 8, y1: 23, x2: 16, y2: 23 }),
                   h('path', { d: 'M12 1a4 4 0 0 0-4 4v7a4 4 0 0 0 8 0V5a4 4 0 0 0-4-4z' }),
@@ -1719,7 +1733,16 @@ function AsistenteTab(props) {
                 )
               : h(
                   'svg',
-                  { viewBox: '0 0 24 24', width: 22, height: 22, fill: 'none', stroke: 'currentColor', 'stroke-width': 2.2, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' },
+                  {
+                    viewBox: '0 0 24 24',
+                    width: 22,
+                    height: 22,
+                    fill: 'none',
+                    stroke: 'currentColor',
+                    'stroke-width': 2.2,
+                    'stroke-linecap': 'round',
+                    'stroke-linejoin': 'round'
+                  },
                   h('path', { d: 'M12 1a4 4 0 0 0-4 4v7a4 4 0 0 0 8 0V5a4 4 0 0 0-4-4z' }),
                   h('path', { d: 'M19 10v2a7 7 0 0 1-14 0v-2' }),
                   h('line', { x1: 12, y1: 19, x2: 12, y2: 23 }),
