@@ -2081,8 +2081,28 @@
 .asistente-menu-prompts {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
   padding: 0 8px 10px 56px;
+}
+
+.asistente-menu-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.asistente-menu-section + .asistente-menu-section {
+  padding-top: 8px;
+}
+
+.asistente-menu-section-title {
+  color: var(--muted);
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  line-height: 1.2;
+  padding: 4px 10px 2px;
+  text-transform: uppercase;
 }
 
 .asistente-menu-prompt {

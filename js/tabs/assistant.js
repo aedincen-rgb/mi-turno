@@ -1083,12 +1083,56 @@ function AsistenteTab(props) {
 
   var menuItems = [
     { id: 'volver', label: 'Volver', hint: 'Regresar a la app', icon: '←', featured: true },
-    { id: 'ingresos', label: 'Ingresos', hint: 'Ayer, mes y proyección', icon: '$' },
-    { id: 'tiempo', label: 'Tiempo', hint: 'Horas, descansos y rachas', icon: '◷' },
-    { id: 'reportes', label: 'Reportes', hint: 'Exportar o enviar informe', icon: '▤' },
+    {
+      id: 'ingresos',
+      label: 'Ingresos',
+      hint: 'Ayer, mes, comparativas y simulaciones',
+      icon: '$',
+      catIds: ['ingresos', 'comparar', 'simular']
+    },
+    {
+      id: 'tiempo',
+      label: 'Tiempo',
+      hint: 'Horas, descansos, recargos y análisis',
+      icon: '◷',
+      catIds: ['tiempo', 'analisis']
+    },
+    {
+      id: 'reportes',
+      label: 'Reportes',
+      hint: 'Exportar, compartir o enviar informe',
+      icon: '▤',
+      sections: [
+        {
+          title: 'Reportes',
+          preguntas: [
+            {
+              label: 'Enviar mi reporte por correo',
+              query: 'Enviá mi reporte e informe por correo'
+            },
+            { label: 'Exportar PDF', query: 'Exportar PDF' },
+            { label: 'Exportar Excel', query: 'Exportar Excel' },
+            { label: '¿Cómo exporto mis datos?', query: '¿Cómo exporto mis datos?' },
+            { label: 'Compartir por WhatsApp', query: '¿Cómo comparto por WhatsApp?' }
+          ]
+        }
+      ]
+    },
     { id: 'voz', label: 'Configuración voz', hint: 'Lectura y manos libres', icon: '◉' },
-    { id: 'logros', label: 'Logros', hint: 'Insignias y metas', icon: '◇' },
-    { id: 'ayuda', label: 'Ayuda', hint: 'Guías rápidas de la app', icon: '?' }
+    {
+      id: 'logros',
+      label: 'Logros',
+      hint: 'Insignias, metas y comandos rápidos',
+      icon: '◇',
+      catIds: ['logros']
+    },
+    {
+      id: 'ayuda',
+      label: 'Ayuda',
+      hint: 'Guías rápidas y cómo funciona',
+      icon: '?',
+      catIds: ['ayuda', 'usarapp']
+    }
   ];
 
   function closeMenu() {
@@ -1101,16 +1145,6 @@ function AsistenteTab(props) {
     if (item.id === 'volver') {
       closeMenu();
       if (props.onNavigate) props.onNavigate('home', null);
-      return;
-    }
-    if (item.id === 'reportes') {
-      closeMenu();
-      send('Enviá mi reporte e informe por correo');
-      return;
-    }
-    if (item.id === 'logros') {
-      closeMenu();
-      send('/logros');
       return;
     }
     setOpenCat(openCat === item.id ? null : item.id);
@@ -1127,26 +1161,44 @@ function AsistenteTab(props) {
     if (item.id === 'voz') {
       return renderVoiceControls('drawer');
     }
-    var cat = findCat(item.id);
-    if (!cat && item.id === 'ayuda') cat = findCat('usarapp') || findCat('ayuda');
-    if (!cat) return null;
+    var sections = item.sections || [];
+    if (!sections.length && item.catIds && item.catIds.length) {
+      sections = item.catIds
+        .map(function (id) {
+          var cat = findCat(id);
+          return cat ? { title: cat.titulo, preguntas: cat.preguntas } : null;
+        })
+        .filter(Boolean);
+    }
+    if (!sections.length) {
+      var cat = findCat(item.id);
+      if (cat) sections = [{ title: cat.titulo, preguntas: cat.preguntas }];
+    }
+    if (!sections.length) return null;
     return h(
       'div',
       { className: 'asistente-menu-prompts' },
-      cat.preguntas.slice(0, 7).map(function (q, i) {
-        var label = typeof q === 'object' && q.label ? q.label : q;
-        var query = typeof q === 'object' && q.query ? q.query : q;
+      sections.map(function (section, si) {
         return h(
-          'button',
-          {
-            key: i,
-            className: 'asistente-menu-prompt',
-            onClick: function () {
-              closeMenu();
-              send(query);
-            }
-          },
-          label
+          'div',
+          { key: si, className: 'asistente-menu-section' },
+          h('div', { className: 'asistente-menu-section-title' }, section.title),
+          section.preguntas.map(function (q, i) {
+            var label = typeof q === 'object' && q.label ? q.label : q;
+            var query = typeof q === 'object' && q.query ? q.query : q;
+            return h(
+              'button',
+              {
+                key: i,
+                className: 'asistente-menu-prompt',
+                onClick: function () {
+                  closeMenu();
+                  send(query);
+                }
+              },
+              label
+            );
+          })
         );
       })
     );
@@ -1394,7 +1446,11 @@ function AsistenteTab(props) {
                       h('span', { className: 'asistente-menu-label' }, item.label),
                       h('span', { className: 'asistente-menu-hint' }, item.hint)
                     ),
-                    h('span', { className: 'asistente-menu-chevron' }, open ? '−' : '+')
+                    h(
+                      'span',
+                      { className: 'asistente-menu-chevron' },
+                      item.featured ? '→' : open ? '−' : '+'
+                    )
                   ),
                   open ? renderDrawerBody(item) : null
                 );
