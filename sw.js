@@ -2,8 +2,8 @@
 //  MI TURNO · SERVICE WORKER
 //  Split cache: SHELL_CACHE (archivos de la app, se invalida en cada release)
 //               CDN_CACHE   (librerías externas, sobrevive entre releases)
-const SHELL_CACHE = 'mt-shell-v269'; // bump con scripts/bump.sh
-const CDN_CACHE   = 'mt-cdn-v2';    // solo bump cuando cambien URLs de CDN
+const SHELL_CACHE = 'mt-shell-v270'; // bump con scripts/bump.sh
+const CDN_CACHE = 'mt-cdn-v2'; // solo bump cuando cambien URLs de CDN
 
 // Supabase SDK y Chart.js son self-hosted → van en appResources (SHELL_CACHE).
 // React, jsPDF y XLSX siguen desde cdnjs (CDN_CACHE, sobrevive entre releases).
@@ -171,53 +171,68 @@ self.addEventListener('install', function (e) {
       // Shell: siempre re-fetch con cache:'reload' para invalidar el HTTP cache de Vercel
       // (los assets tienen headers immutable/1yr, sin esto se sirve la versión vieja)
       caches.open(SHELL_CACHE).then(function (c) {
-        return Promise.allSettled(appResources.map(function (u) {
-          return fetch(u, { cache: 'reload' }).then(function (r) {
-            if (r && r.ok) return c.put(u, r);
-          });
-        }));
+        return Promise.allSettled(
+          appResources.map(function (u) {
+            return fetch(u, { cache: 'reload' }).then(function (r) {
+              if (r && r.ok) return c.put(u, r);
+            });
+          })
+        );
       }),
       // CDN: solo descargar si el cache no existe — evita re-fetch de ~1MB en cada deploy
       caches.has(CDN_CACHE).then(function (exists) {
         if (exists) return;
         return caches.open(CDN_CACHE).then(function (c) {
-          return Promise.allSettled(CDN.map(function (u) {
-            return fetch(u, { mode: 'cors', cache: 'reload' }).then(function (r) {
-              if (r && r.ok) return c.put(u, r);
-            });
-          }));
+          return Promise.allSettled(
+            CDN.map(function (u) {
+              return fetch(u, { mode: 'cors', cache: 'reload' }).then(function (r) {
+                if (r && r.ok) return c.put(u, r);
+              });
+            })
+          );
         });
       })
-    ]).then(function () { return self.skipWaiting(); })
+    ]).then(function () {
+      return self.skipWaiting();
+    })
   );
 });
 
 // ── Activate: limpiar caches viejos, habilitar Navigation Preload ──
 self.addEventListener('activate', function (e) {
   e.waitUntil(
-    caches.keys().then(function (keys) {
-      return Promise.all(
-        keys.filter(function (k) {
-          // Conservar el SHELL_CACHE actual y el CDN_CACHE; borrar todo lo demás
-          return k !== SHELL_CACHE && k !== CDN_CACHE;
-        }).map(function (k) { return caches.delete(k); })
-      );
-    }).then(function () {
-      // Navigation Preload: el browser lanza el fetch de navegación en paralelo
-      // al boot del SW, eliminando ~50-100ms de latencia en cargas de shell.
-      if (self.registration.navigationPreload) {
-        return self.registration.navigationPreload.enable();
-      }
-    }).then(function () {
-      return self.clients.claim();
-    }).then(function () {
-      // Avisar a todos los tabs que el SW se activó (para debug / diagnóstico)
-      return self.clients.matchAll({ type: 'window' }).then(function (clients) {
-        clients.forEach(function (c) {
-          c.postMessage({ type: 'SW_ACTIVATED', version: SHELL_CACHE });
+    caches
+      .keys()
+      .then(function (keys) {
+        return Promise.all(
+          keys
+            .filter(function (k) {
+              // Conservar el SHELL_CACHE actual y el CDN_CACHE; borrar todo lo demás
+              return k !== SHELL_CACHE && k !== CDN_CACHE;
+            })
+            .map(function (k) {
+              return caches.delete(k);
+            })
+        );
+      })
+      .then(function () {
+        // Navigation Preload: el browser lanza el fetch de navegación en paralelo
+        // al boot del SW, eliminando ~50-100ms de latencia en cargas de shell.
+        if (self.registration.navigationPreload) {
+          return self.registration.navigationPreload.enable();
+        }
+      })
+      .then(function () {
+        return self.clients.claim();
+      })
+      .then(function () {
+        // Avisar a todos los tabs que el SW se activó (para debug / diagnóstico)
+        return self.clients.matchAll({ type: 'window' }).then(function (clients) {
+          clients.forEach(function (c) {
+            c.postMessage({ type: 'SW_ACTIVATED', version: SHELL_CACHE });
+          });
         });
-      });
-    })
+      })
   );
 });
 
@@ -233,18 +248,21 @@ self.addEventListener('fetch', function (e) {
   if (u.hostname.indexOf('supabase') >= 0) return;
 
   var sameHost = u.hostname === self.location.hostname;
-  var isCDN = u.hostname.indexOf('cdnjs') >= 0 || u.hostname.indexOf('jsdelivr') >= 0 || u.hostname.indexOf('fonts.g') >= 0;
+  var isCDN =
+    u.hostname.indexOf('cdnjs') >= 0 ||
+    u.hostname.indexOf('jsdelivr') >= 0 ||
+    u.hostname.indexOf('fonts.g') >= 0;
   var isStatic = sameHost || isCDN;
   if (!isStatic) return;
 
   var path = u.pathname;
-  var isShell = sameHost && (
-    path === '/' ||
-    path.endsWith('/index.html') ||
-    path.endsWith('/sw.js') ||
-    path.endsWith('/version.json') ||
-    path.endsWith('/manifest.json')
-  );
+  var isShell =
+    sameHost &&
+    (path === '/' ||
+      path.endsWith('/index.html') ||
+      path.endsWith('/sw.js') ||
+      path.endsWith('/version.json') ||
+      path.endsWith('/manifest.json'));
 
   // ── Shell crítico → network-first con Navigation Preload ──
   if (isShell) {
@@ -254,13 +272,19 @@ self.addEventListener('fetch', function (e) {
         var networkPromise = Promise.resolve(e.preloadResponse).then(function (preloaded) {
           return preloaded || fetch(e.request, { cache: 'no-store' });
         });
-        return networkPromise.then(function (r) {
-          if (r && r.ok) {
-            var clone = r.clone();
-            caches.open(SHELL_CACHE).then(function (c) { c.put(e.request, clone); });
-          }
-          return r;
-        }).catch(function () { return caches.match(e.request); });
+        return networkPromise
+          .then(function (r) {
+            if (r && r.ok) {
+              var clone = r.clone();
+              caches.open(SHELL_CACHE).then(function (c) {
+                c.put(e.request, clone);
+              });
+            }
+            return r;
+          })
+          .catch(function () {
+            return caches.match(e.request);
+          });
       })()
     );
     return;
@@ -270,14 +294,20 @@ self.addEventListener('fetch', function (e) {
   e.respondWith(
     caches.match(e.request).then(function (cached) {
       if (cached) return cached;
-      return fetch(e.request).then(function (r) {
-        if (r && r.ok) {
-          var clone = r.clone();
-          var target = isCDN ? CDN_CACHE : SHELL_CACHE;
-          caches.open(target).then(function (c) { c.put(e.request, clone); });
-        }
-        return r;
-      }).catch(function () { return cached; });
+      return fetch(e.request)
+        .then(function (r) {
+          if (r && r.ok) {
+            var clone = r.clone();
+            var target = isCDN ? CDN_CACHE : SHELL_CACHE;
+            caches.open(target).then(function (c) {
+              c.put(e.request, clone);
+            });
+          }
+          return r;
+        })
+        .catch(function () {
+          return cached;
+        });
     })
   );
 });
