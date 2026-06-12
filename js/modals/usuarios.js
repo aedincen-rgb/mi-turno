@@ -58,11 +58,7 @@ function UsuariosModal(props) {
     }
     setLoading(true);
     setError(null);
-    withTimeout(
-      SUPA.from('pin_lookup').select('*').order('updated_at', { ascending: false }),
-      IS_IOS_SAFARI ? 15000 : 8000,
-      'Cargar usuarios'
-    )
+    withTimeout(SUPA.rpc('get_all_pin_lookup'), IS_IOS_SAFARI ? 15000 : 8000, 'Cargar usuarios')
       .then(function (res) {
         if (res && res.error) throw res.error;
         setUsers(res.data || []);
@@ -152,103 +148,123 @@ function UsuariosModal(props) {
   // ── Funciones de gestión admin en vista detalle ──
   function eliminarUsuarioCompleto(user) {
     if (!SUPA || !CLOUD_MODE) {
-      setFeedback({ type: "err", msg: "Sin conexión a la nube" });
+      setFeedback({ type: 'err', msg: 'Sin conexión a la nube' });
       return;
     }
-    if (!confirm("¿Estás seguro de eliminar a " + user.user_email + "?\n\nSe eliminarán todos sus datos (PIN, turnos, perfil).\n\nNota: El usuario de Auth debe eliminarse manualmente en Supabase Studio.")) return;
+    if (
+      !confirm(
+        '¿Estás seguro de eliminar a ' +
+          user.user_email +
+          '?\n\nSe eliminarán todos sus datos (PIN, turnos, perfil).\n\nNota: El usuario de Auth debe eliminarse manualmente en Supabase Studio.'
+      )
+    )
+      return;
     setBusy(true);
     setFeedback(null);
     var uid = user.user_id;
     Promise.all([
-      SUPA.from("pin_lookup").delete().eq("user_id", uid),
-      SUPA.from("perfiles").delete().eq("id", uid),
-      SUPA.from("turnos").delete().eq("user_id", uid),
-      SUPA.from("turno_activo").delete().eq("user_id", uid)
+      SUPA.rpc('admin_delete_pin_lookup', { p_user_id: uid }),
+      SUPA.from('perfiles').delete().eq('id', uid),
+      SUPA.from('turnos').delete().eq('user_id', uid),
+      SUPA.from('turno_activo').delete().eq('user_id', uid)
     ])
       .then(function (results) {
-        var errors = results.filter(function (r) { return r && r.error; });
-        if (errors.length > 0) throw new Error("Error al eliminar datos");
-        setFeedback({ type: "ok", msg: "✓ Usuario eliminado correctamente" });
+        var errors = results.filter(function (r) {
+          return r && r.error;
+        });
+        if (errors.length > 0) throw new Error('Error al eliminar datos');
+        setFeedback({ type: 'ok', msg: '✓ Usuario eliminado correctamente' });
         setDetail(null);
         cargar();
-        setTimeout(function () { setFeedback(null); }, 3000);
+        setTimeout(function () {
+          setFeedback(null);
+        }, 3000);
       })
       .catch(function (e) {
-        setFeedback({ type: "err", msg: traducirError(e) || "Error al eliminar usuario" });
+        setFeedback({ type: 'err', msg: traducirError(e) || 'Error al eliminar usuario' });
       })
-      .finally(function () { setBusy(false); });
+      .finally(function () {
+        setBusy(false);
+      });
   }
 
   function actualizarPINAdmin(user) {
     if (!SUPA || !CLOUD_MODE) {
-      setFeedback({ type: "err", msg: "Sin conexión a la nube" });
+      setFeedback({ type: 'err', msg: 'Sin conexión a la nube' });
       return;
     }
-    var nuevoPIN = prompt("Ingresa el nuevo PIN de 4 dígitos para " + user.user_email + ":");
+    var nuevoPIN = prompt('Ingresa el nuevo PIN de 4 dígitos para ' + user.user_email + ':');
     if (!nuevoPIN) return;
-    nuevoPIN = nuevoPIN.replace(/\D/g, "").slice(0, 4);
+    nuevoPIN = nuevoPIN.replace(/\D/g, '').slice(0, 4);
     if (nuevoPIN.length !== 4) {
-      setFeedback({ type: "err", msg: "El PIN debe tener exactamente 4 dígitos" });
+      setFeedback({ type: 'err', msg: 'El PIN debe tener exactamente 4 dígitos' });
       return;
     }
-    if (nuevoPIN === "9999" && user.user_email !== "admin@miturno.com") {
-      setFeedback({ type: "err", msg: "PIN 9999 reservado para admin" });
+    if (nuevoPIN === '9999' && user.user_email !== 'admin@miturno.com') {
+      setFeedback({ type: 'err', msg: 'PIN 9999 reservado para admin' });
       return;
     }
     setBusy(true);
     setFeedback(null);
-    SUPA.from("pin_lookup")
-      .upsert({
-        user_id: user.user_id,
-        user_email: user.user_email,
-        pin: nuevoPIN,
-        updated_at: new Date().toISOString()
-      }, { onConflict: "user_id" })
+    SUPA.rpc('admin_upsert_pin_lookup', {
+      p_user_id: user.user_id,
+      p_user_email: user.user_email,
+      p_pin: nuevoPIN,
+      p_updated_at: new Date().toISOString()
+    })
       .then(function (res) {
         if (res && res.error) throw res.error;
-        setFeedback({ type: "ok", msg: "✓ PIN actualizado a " + nuevoPIN });
+        setFeedback({ type: 'ok', msg: '✓ PIN actualizado a ' + nuevoPIN });
         setDetail(null);
-        setTimeout(function () { setFeedback(null); }, 3000);
+        setTimeout(function () {
+          setFeedback(null);
+        }, 3000);
       })
       .catch(function (e) {
-        setFeedback({ type: "err", msg: traducirError(e) || "Error al actualizar PIN" });
+        setFeedback({ type: 'err', msg: traducirError(e) || 'Error al actualizar PIN' });
       })
-      .finally(function () { setBusy(false); });
+      .finally(function () {
+        setBusy(false);
+      });
   }
 
   function actualizarEmailAdmin(user) {
     if (!SUPA || !CLOUD_MODE) {
-      setFeedback({ type: "err", msg: "Sin conexión a la nube" });
+      setFeedback({ type: 'err', msg: 'Sin conexión a la nube' });
       return;
     }
-    var nuevoEmail = prompt("Ingresa el nuevo correo para " + user.user_email + ":");
+    var nuevoEmail = prompt('Ingresa el nuevo correo para ' + user.user_email + ':');
     if (!nuevoEmail) return;
     nuevoEmail = nuevoEmail.trim().toLowerCase();
-    if (!nuevoEmail.includes("@")) {
-      setFeedback({ type: "err", msg: "Ingresa un correo válido" });
+    if (!nuevoEmail.includes('@')) {
+      setFeedback({ type: 'err', msg: 'Ingresa un correo válido' });
       return;
     }
     setBusy(true);
     setFeedback(null);
-    SUPA.from("pin_lookup")
-      .update({
-        user_email: nuevoEmail,
-        updated_at: new Date().toISOString()
-      })
-      .eq("user_id", user.user_id)
+    SUPA.rpc('admin_update_email_pin_lookup', {
+      p_user_id: user.user_id,
+      p_new_email: nuevoEmail,
+      p_updated_at: new Date().toISOString()
+    })
       .then(function (res) {
         if (res && res.error) throw res.error;
-        setFeedback({ type: "ok", msg: "✓ Correo actualizado en pin_lookup. El cambio en Auth debe hacerlo el usuario." });
+        setFeedback({
+          type: 'ok',
+          msg: '✓ Correo actualizado en pin_lookup. El cambio en Auth debe hacerlo el usuario.'
+        });
         setDetail(null);
-        setTimeout(function () { setFeedback(null); }, 4000);
+        setTimeout(function () {
+          setFeedback(null);
+        }, 4000);
       })
       .catch(function (e) {
-        setFeedback({ type: "err", msg: traducirError(e) || "Error al actualizar correo" });
+        setFeedback({ type: 'err', msg: traducirError(e) || 'Error al actualizar correo' });
       })
-      .finally(function () { setBusy(false); });
+      .finally(function () {
+        setBusy(false);
+      });
   }
-
-
 
   // Vista detalle
   if (detail) {

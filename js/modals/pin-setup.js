@@ -147,12 +147,12 @@ function PinSetup(props) {
     // Verificar que el PIN no esté en uso (si hay nube)
     if (CLOUD_MODE && SUPA) {
       withTimeout(
-        SUPA.from('pin_lookup').select('user_id').eq('pin', pinVal).maybeSingle(),
+        SUPA.rpc('check_pin_available', { p_pin: pinVal, p_user_id: session.uid }),
         6000,
         'Verificar PIN'
       )
         .then(function (res) {
-          if (res && res.data && res.data.user_id && res.data.user_id !== session.uid) {
+          if (res && res.data === false) {
             setErr('Este PIN ya está en uso. Elige otro.');
             setBusy(false);
             return;

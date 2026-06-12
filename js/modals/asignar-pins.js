@@ -53,13 +53,7 @@ function AsignarPINsModal(props) {
     }
     setLoading(true);
     setError(null);
-    withTimeout(
-      SUPA.from('pin_lookup')
-        .select('pin,user_email,user_id,updated_at')
-        .order('updated_at', { ascending: false }),
-      IS_IOS_SAFARI ? 15000 : 8000,
-      'Cargar usuarios'
-    )
+    withTimeout(SUPA.rpc('get_all_pin_lookup'), IS_IOS_SAFARI ? 15000 : 8000, 'Cargar usuarios')
       .then(function (res) {
         if (res && res.error) throw res.error;
         setUsers(res.data || []);
@@ -100,16 +94,12 @@ function AsignarPINsModal(props) {
   function aplicarPIN(user, pin, msgOk) {
     setBusy(true);
     setFeedback(null);
-    SUPA.from('pin_lookup')
-      .upsert(
-        {
-          user_id: user.user_id,
-          user_email: user.user_email,
-          pin: String(pin),
-          updated_at: new Date().toISOString()
-        },
-        { onConflict: 'user_id' }
-      )
+    SUPA.rpc('admin_upsert_pin_lookup', {
+      p_user_id: user.user_id,
+      p_user_email: user.user_email,
+      p_pin: String(pin),
+      p_updated_at: new Date().toISOString()
+    })
       .then(function (res) {
         if (res && res.error) throw res.error;
         setFeedback({ type: 'ok', msg: msgOk || '✓ PIN actualizado' });
@@ -132,9 +122,7 @@ function AsignarPINsModal(props) {
   function eliminarPIN(user) {
     setBusy(true);
     setFeedback(null);
-    SUPA.from('pin_lookup')
-      .delete()
-      .eq('user_id', user.user_id)
+    SUPA.rpc('admin_delete_pin_lookup', { p_user_id: user.user_id })
       .then(function (res) {
         if (res && res.error) throw res.error;
         setFeedback({ type: 'ok', msg: '✓ PIN eliminado de ' + user.user_email });

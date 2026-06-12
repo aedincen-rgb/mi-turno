@@ -52,13 +52,7 @@ function DiagnosticoModal(props) {
       setLoading(false);
       return;
     }
-    withTimeout(
-      SUPA.from('pin_lookup')
-        .select('pin,user_email,user_id,updated_at')
-        .order('updated_at', { ascending: false }),
-      8000,
-      'Diagnóstico nube'
-    )
+    withTimeout(SUPA.rpc('get_all_pin_lookup'), 8000, 'Diagnóstico nube')
       .then(function (res) {
         if (res && res.error) throw res.error;
         setCloudData(res.data || []);
@@ -106,13 +100,12 @@ function DiagnosticoModal(props) {
       return;
     }
     if (!confirm('¿Vincular el PIN ' + pin + ' a ' + session.email + '?')) return;
-    SUPA.from('pin_lookup')
-      .upsert({
-        pin: String(pin),
-        user_email: session.email,
-        user_id: session.uid,
-        updated_at: new Date().toISOString()
-      })
+    SUPA.rpc('admin_upsert_pin_lookup', {
+      p_user_id: session.uid,
+      p_user_email: session.email,
+      p_pin: String(pin),
+      p_updated_at: new Date().toISOString()
+    })
       .then(function (res) {
         if (res && res.error) throw res.error;
         alert('✓ PIN ' + pin + ' sincronizado.');

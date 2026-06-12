@@ -383,17 +383,18 @@ function AuthScreen(props) {
     if (CLOUD_MODE && SUPA) {
       if (/^\d{4}$/.test(rawIn)) {
         withTimeout(
-          SUPA.from('pin_lookup').select('user_email,user_id').eq('pin', rawIn).maybeSingle(),
+          SUPA.rpc('lookup_email_by_pin', { p_pin: rawIn }),
           IS_IOS_SAFARI ? 15000 : 8000,
           'PIN lookup'
         )
           .then(function (res) {
             if (res && res.error) throw res.error;
-            if (!res.data || !res.data.user_email) {
+            var emailFound = res.data || null;
+            if (!emailFound) {
               throw new Error('PIN no registrado. Entra con correo+contraseña primero.');
             }
             return withTimeout(
-              SUPA.auth.signInWithPassword({ email: res.data.user_email, password: pass }),
+              SUPA.auth.signInWithPassword({ email: emailFound, password: pass }),
               IS_IOS_SAFARI ? 15000 : 8000,
               'Inicio de sesión'
             );

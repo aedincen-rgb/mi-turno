@@ -1727,7 +1727,39 @@ function aiClassify(text, convState, userContext) {
   var textForTokens = typeof aiSynExpandPhrase === 'function' ? aiSynExpandPhrase(text) : text;
 
   var tokens = aiTokenize(textForTokens);
+
+  // Cuando el texto es muy corto y queda sin tokens después del filtrado de
+  // stop words (ej: "hola", "chao", "bye") intentar el lookup directo en el
+  // textStr antes de descartar. Cubre saludos y despedidas de 1 palabra.
   if (!tokens.length) {
+    var _shortText = ' ' + text.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '') + ' ';
+    var _shortBest = null;
+    var _shortScore = 0;
+    for (var _si = 0; _si < AI_INTENTS.length; _si++) {
+      var _sint = AI_INTENTS[_si];
+      for (var _sj = 0; _sj < _sint.kw.length; _sj++) {
+        var _skw = _sint.kw[_sj][0];
+        var _swt = _sint.kw[_sj][1];
+        if (_shortText.indexOf(' ' + _skw + ' ') >= 0) {
+          var _sScore = _swt * 1.5;
+          if (_sScore > _shortScore) {
+            _shortScore = _sScore;
+            _shortBest = _sint;
+          }
+        }
+      }
+    }
+    if (_shortBest && _shortScore >= 3) {
+      var _sConf = Math.min(1, _shortScore / 9);
+      return {
+        intent: _shortBest.id,
+        secondIntent: null,
+        score: _shortScore,
+        confidence: _sConf,
+        tokens: tokens,
+        topic: _aiIntentTopic(_shortBest.id)
+      };
+    }
     return { intent: null, score: 0, confidence: 0, tokens: tokens, topic: null };
   }
 
@@ -1818,13 +1850,34 @@ function aiClassify(text, convState, userContext) {
     // es sobre ESE momento específico, no sobre el mes completo.
     var _combinedTimeMoney = _hasTimeWord && _hasMoneyWord;
 
-    var _timeIntentIds = { hoy: 1, ayer: 1, comparativa_semana: 1, comparativa_mes: 1 };
-    if (_hasTimeWord && _timeIntentIds[intent.id]) {
+    // El bonus temporal sólo aplica si la palabra de tiempo del intent
+    // está literalmente presente en el texto (no sólo alguna palabra de tiempo).
+    // Evita que 'hoy'/'ayer' reciban +12 cuando el texto dice "este mes".
+    var _intentTimeMatch = false;
+    if (intent.id === 'hoy') {
+      _intentTimeMatch = _raw.indexOf('hoy') >= 0;
+    } else if (intent.id === 'ayer') {
+      _intentTimeMatch =
+        _raw.indexOf('ayer') >= 0 || _raw.indexOf('antier') >= 0 || _raw.indexOf('anteayer') >= 0;
+    } else if (intent.id === 'comparativa_semana') {
+      _intentTimeMatch = _raw.indexOf('semana') >= 0;
+    } else if (intent.id === 'comparativa_mes') {
+      // "este mes" solo → consulta del mes actual, NO comparativa
+      _intentTimeMatch = _raw.indexOf('mes') >= 0 && !_estesMesCurrent;
+    }
+    if (_intentTimeMatch) {
       score += _combinedTimeMoney ? 12 : 6; // boost fuerte si hay dinero+tiempo juntos
     }
     // Penalizar intents genéricos de dinero (total_ganado, proyeccion)
     // cuando el usuario claramente pregunta por un momento específico.
-    if (_combinedTimeMoney && (intent.id === 'total_ganado' || intent.id === 'proyeccion')) {
+    // Excepción: "este mes" (sin pasado/vs) es una consulta del mes actual → NO penalizar.
+    var _estesMesCurrent =
+      _raw.indexOf('este mes') >= 0 && _raw.indexOf('mes pasado') < 0 && _raw.indexOf('vs') < 0;
+    if (
+      _combinedTimeMoney &&
+      !_estesMesCurrent &&
+      (intent.id === 'total_ganado' || intent.id === 'proyeccion')
+    ) {
       score -= 5; // penalización más fuerte para que no compitan con ayer/hoy
     }
 
@@ -1834,6 +1887,19 @@ function aiClassify(text, convState, userContext) {
       (intent.id === 'proyeccion' || intent.id === 'comparativa_mes')
     ) {
       score += 3;
+    }
+
+    // ── BONUS TOTAL_GANADO CON "ESTE MES" ──
+    // "cuánto llevo este mes" y "mi sueldo de este mes" caían a comparativa_mes
+    // porque 'mes' le daba +3 y los tokens parciales de 'total_ganado' no competían.
+    // "este mes" sin "pasado" ni "vs" indica la consulta del mes ACTUAL, no comparativa.
+    if (
+      intent.id === 'total_ganado' &&
+      _raw.indexOf('este mes') >= 0 &&
+      _raw.indexOf('mes pasado') < 0 &&
+      _raw.indexOf('vs') < 0
+    ) {
+      score += 8;
     }
 
     // ── BONUS POR ANCLAJE DE CONOCIMIENTO LABORAL ──
@@ -1850,6 +1916,17 @@ function aiClassify(text, convState, userContext) {
         _raw.indexOf('recargo') >= 0)
     ) {
       score += 7;
+    }
+
+    // ── BONUS POR VERBO EXPLÍCITO DE SIMULACIÓN ──
+    // "simular 4 horas nocturnas" → el bonus laboral (+7 a ley) superaba a
+    // simulacion. Si el usuario menciona explícitamente "simular/simulo/simula"
+    // junto con un tipo de hora, es claramente una SIMULACIÓN, no consulta legal.
+    if (
+      intent.id === 'simulacion' &&
+      (_raw.indexOf('simul') >= 0 || _raw.indexOf('/simular') >= 0)
+    ) {
+      score += 8;
     }
 
     if (score > bestScore) {

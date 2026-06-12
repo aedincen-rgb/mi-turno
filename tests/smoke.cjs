@@ -408,6 +408,73 @@ truthy(_rEp.indexOf('🧠') >= 0 && _rEp.indexOf('recuerdo') >= 0,
 truthy(_rEp.indexOf('consulta a tus datos') >= 0 || _rEp.indexOf('Preguntaste') >= 0,
        'los episodios vienen de las consultas reales hechas en esta suite');
 
+// ── NLP: clasificación de intents críticos (v274) ──────────────
+// Prueba los 3 bugs corregidos en v274 + casos borde del clasificador.
+
+group('NLP: saludo de 1 palabra (stop-word → cortocircuito previo)');
+var _nlpHola = w.aiClassifyIntent('hola');
+eq(_nlpHola.intent, 'saludo', '"hola" sola clasifica como saludo');
+truthy(_nlpHola.confidence >= 0.5, '"hola" tiene confianza >= 0.5');
+
+var _nlpChao = w.aiClassifyIntent('chao');
+eq(_nlpChao.intent, 'despedida', '"chao" clasifica como despedida');
+
+var _nlpBye = w.aiClassifyIntent('bye');
+eq(_nlpBye.intent, 'despedida', '"bye" (stop-word) clasifica como despedida');
+
+group('NLP: "simular X horas nocturnas" → simulacion, no ley');
+var _nlpSim = w.aiClassifyIntent('simular 4 horas nocturnas');
+eq(_nlpSim.intent, 'simulacion', '"simular 4 horas nocturnas" → simulacion (no ley)');
+
+var _nlpSim2 = w.aiClassifyIntent('simula 2 horas festivas nocturnas');
+eq(_nlpSim2.intent, 'simulacion', '"simula 2 horas festivas nocturnas" → simulacion');
+
+// Debe seguir funcionando: pregunta de conocimiento puro (sin verbo simular)
+var _nlpLey = w.aiClassifyIntent('¿cuánto vale la hora nocturna?');
+eq(_nlpLey.intent, 'ley', '"cuánto vale la hora nocturna" → ley (sin simular)');
+
+group('NLP: "cuánto llevo este mes" → total_ganado, no comparativa_mes');
+var _nlpEsteMs = w.aiClassifyIntent('¿cuánto llevo este mes?');
+eq(_nlpEsteMs.intent, 'total_ganado', '"cuánto llevo este mes" → total_ganado');
+
+var _nlpSueldo = w.aiClassifyIntent('mi sueldo de este mes');
+eq(_nlpSueldo.intent, 'total_ganado', '"mi sueldo de este mes" → total_ganado');
+
+// Debe seguir funcionando: comparativa explícita
+var _nlpComp = w.aiClassifyIntent('compara con el mes pasado');
+eq(_nlpComp.intent, 'comparativa_mes', '"compara con el mes pasado" → comparativa_mes');
+
+group('NLP: typos y variaciones colombianas');
+var _nlpFestib = w.aiClassifyIntent('festibos');
+eq(_nlpFestib.intent, 'festivos', '"festibos" → festivos (fuzzy match)');
+
+var _nlpRrec = w.aiClassifyIntent('rrecargo nocturno');
+eq(_nlpRrec.intent, 'ley', '"rrecargo nocturno" → ley (fuzzy match)');
+
+var _nlpProyecc = w.aiClassifyIntent('proyecccion al cierre');
+eq(_nlpProyecc.intent, 'proyeccion', '"proyecccion" → proyeccion (fuzzy match)');
+
+group('NLP: entradas inválidas no rompen');
+var _nlpNull = w.aiClassifyIntent('');
+truthy(_nlpNull.intent === null || _nlpNull.confidence < 0.5, 'texto vacío → sin intent válido');
+
+var _nlpEmoji = w.aiClassifyIntent('👍');
+truthy(_nlpEmoji.confidence < 0.5, 'solo emoji → confianza baja');
+
+var _nlpNum = w.aiClassifyIntent('123456');
+truthy(_nlpNum.confidence < 0.5, 'número solo → confianza baja');
+
+group('NLP: fallback con contexto incompleto no crashea');
+var _stVacioSmoke = {
+  turnos: [], turnosAll: [],
+  calc: w.doCalc([], null, new Date(), 0),
+  vh: 0, salario: 0,
+  session: { uid: 'u-smoke', email: 'smoke@x.com' }
+};
+var _rVacio = w.aiAnswer('¿cuánto llevo?', _stVacioSmoke);
+truthy(typeof _rVacio === 'string' || (typeof _rVacio === 'object' && _rVacio !== null),
+  'aiAnswer con contexto vacío devuelve algo (no explota)');
+
 // ── hashPassword / verifyPassword (PBKDF2 + salt, v49) ──────────
 group('password-hash (PBKDF2 con salt)');
 (async function () {

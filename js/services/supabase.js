@@ -150,8 +150,12 @@ function supaSetSalario(uid, salario) {
 // Nueva función para upsert de perfil (usada en sync-queue)
 function supaUpsertPerfil(uid, data) {
   if (!SUPA) return Promise.resolve({ success: false, error: 'Supabase no inicializado' });
+  var payload = {};
+  payload.id = uid;
+  // Object.assign evita spread operator (...data) que viola ES5 y rompe Android <60
+  if (data && typeof data === 'object') Object.assign(payload, data);
   return SUPA.from('perfiles')
-    .upsert({ id: uid, ...data }, { onConflict: 'id' })
+    .upsert(payload, { onConflict: 'id' })
     .then(function (res) {
       return { success: !res.error, error: res.error };
     })
