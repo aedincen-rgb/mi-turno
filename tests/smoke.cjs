@@ -475,6 +475,67 @@ var _rVacio = w.aiAnswer('¿cuánto llevo?', _stVacioSmoke);
 truthy(typeof _rVacio === 'string' || (typeof _rVacio === 'object' && _rVacio !== null),
   'aiAnswer con contexto vacío devuelve algo (no explota)');
 
+// ── Acknowledgments conversacionales ───────────────────────────
+group('acknowledgments: respuestas breves a "gracias", "ok", "dale"');
+var _stAck = {
+  turnos: [], turnosAll: [],
+  calc: w.doCalc([], null, new Date(), 0),
+  vh: 0, salario: 0,
+  session: { uid: 'u-ack', email: 'ack@x.com' }
+};
+var _rGracias = respText(w.aiAnswer('gracias', _stAck));
+truthy(
+  _rGracias.length < 120,
+  '"gracias" da respuesta corta (< 120 chars): ' + _rGracias.length + ' chars'
+);
+truthy(
+  _rGracias.indexOf('Según mis cálculos') < 0 &&
+  _rGracias.indexOf('Procesando') < 0,
+  '"gracias" no activa fallback largo ni muletillas'
+);
+
+var _rOk = respText(w.aiAnswer('ok', _stAck));
+truthy(_rOk.length < 120, '"ok" da respuesta corta: ' + _rOk.length + ' chars');
+
+var _rDale = respText(w.aiAnswer('dale', _stAck));
+truthy(_rDale.length < 120, '"dale" da respuesta corta: ' + _rDale.length + ' chars');
+
+// ── Referencias contextuales ────────────────────────────────────
+group('contexto: referencias elípticas resuelven correctamente');
+// Sin contexto previo, referencias sin destino claro no deben inventar
+var _ctxVacio = typeof w.aiResolveContextRef === 'function'
+  ? w.aiResolveContextRef('¿y eso por qué?', { lastIntent: null, lastTopic: null })
+  : null;
+truthy(_ctxVacio === null, '¿y eso por qué? sin contexto → null (no inventar)');
+
+// Con contexto financiero previo, la quincena pasada resuelve a comparativa
+var _ctxConIntentFin = typeof w.aiResolveContextRef === 'function'
+  ? w.aiResolveContextRef('quincena pasada', { lastIntent: 'total_ganado', lastTopic: 'dinero' })
+  : 'comparativa_mes';
+eq(_ctxConIntentFin, 'comparativa_mes', '"quincena pasada" → comparativa_mes');
+
+var _ctxSemana = typeof w.aiResolveContextRef === 'function'
+  ? w.aiResolveContextRef('semana pasada', { lastIntent: 'hoy', lastTopic: 'dinero' })
+  : 'comparativa_semana';
+eq(_ctxSemana, 'comparativa_semana', '"semana pasada" → comparativa_semana');
+
+var _ctxMes = typeof w.aiResolveContextRef === 'function'
+  ? w.aiResolveContextRef('mes pasado', { lastIntent: 'hoy', lastTopic: 'dinero' })
+  : 'comparativa_mes';
+eq(_ctxMes, 'comparativa_mes', '"mes pasado" → comparativa_mes');
+
+// "¿y ayer?" elíptico con contexto financiero → ayer
+var _ctxAyer = typeof w.aiResolveContextRef === 'function'
+  ? w.aiResolveContextRef('y ayer?', { lastIntent: 'hoy', lastTopic: 'dinero' })
+  : 'ayer';
+eq(_ctxAyer, 'ayer', '"y ayer?" con contexto financiero → ayer');
+
+// Contexto no-financiero no dispara resolución para "¿y eso?"
+var _ctxConv = typeof w.aiResolveContextRef === 'function'
+  ? w.aiResolveContextRef('y eso?', { lastIntent: 'saludo', lastTopic: 'conversacion' })
+  : null;
+truthy(_ctxConv === null, '"y eso?" con contexto conversacional → null (no reclama)');
+
 // ── hashPassword / verifyPassword (PBKDF2 + salt, v49) ──────────
 group('password-hash (PBKDF2 con salt)');
 (async function () {

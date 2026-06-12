@@ -256,6 +256,7 @@ const projectGlobals = {
   aiDebugTokens: 'readonly',
   // services/ai-enhanced.js
   aiEnhancedRespond: 'readonly',
+  aiResolveContextRef: 'readonly',
   aiCheckFollowUp: 'readonly',
   aiClearMemory: 'readonly',
   aiGetMemorySnapshot: 'readonly',

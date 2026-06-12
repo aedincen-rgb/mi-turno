@@ -588,6 +588,46 @@ function aiRestoreHistory(recentIntents, lastIntent, lastTopic, pendingSuggestio
   }
 }
 
+// ─── RESOLUCIÓN DE REFERENCIAS CONTEXTUALES ──────────────────
+// Resuelve elipsis conversacionales como "¿y eso por qué?",
+// "¿y la quincena pasada?", "¿y el mes anterior?" apoyándose
+// en el historial de intents de la sesión.
+// Retorna el intent a despachar o null si no hay contexto.
+function aiResolveContextRef(text, convState) {
+  var t = (text || '').toLowerCase().trim();
+  var lastIntent = (convState && convState.lastIntent) || null;
+  var lastTopic = (convState && convState.lastTopic) || null;
+
+  // Patrones de referencia temporal elíptica
+  var _refPatterns = [
+    { re: /quincena pasada|quincena anterior|quincena que pas/, intent: 'comparativa_mes' },
+    { re: /semana pasada|semana anterior|semana que pas/, intent: 'comparativa_semana' },
+    { re: /mes pasado|mes anterior|mes que pas/, intent: 'comparativa_mes' },
+    { re: /y eso por qu[eé]|por qu[eé] eso|por qu[eé] as[ií]/, intent: null }, // explicación del último intent
+    { re: /^y (ayer|anteayer|antier)\??$/, intent: 'ayer' },
+    { re: /^y (hoy)\??$/, intent: 'hoy' },
+    { re: /^(y )?(la |el )?anterior\??$/, intent: null } // heredar intent anterior
+  ];
+
+  for (var i = 0; i < _refPatterns.length; i++) {
+    var pat = _refPatterns[i];
+    if (pat.re.test(t)) {
+      // intent explícito en el patrón → usarlo directamente
+      if (pat.intent) return pat.intent;
+      // null → heredar el último intent conocido si es financiero
+      if (lastIntent && _AI_FINANCIAL_INTENTS[lastIntent]) return lastIntent;
+      return null;
+    }
+  }
+
+  // "¿y eso?" / "¿y esa?" / "¿y ese?" con contexto financiero
+  if (/^(y|¿y) eso\??$|^(y|¿y) esa\??$|^(y|¿y) ese\??$/.test(t)) {
+    if (lastIntent && _AI_FINANCIAL_INTENTS[lastIntent]) return lastIntent;
+  }
+
+  return null;
+}
+
 // ─── MÓDULO DE RAZONAMIENTO ───────────────────────────────────
 // Decide QUÉ necesita el usuario antes de construir la respuesta.
 // Evita correr módulos costosos cuando el intent no lo justifica.
@@ -1121,15 +1161,18 @@ function aiEnhancedRespond(
     }
   } catch (_) {}
 
-  // psicología: siempre activa (suma en cualquier contexto)
+  // psicología: solo para intents con datos o contexto emocional real.
+  // Conversacionales puros (agradecimiento, saludo, despedida) no la necesitan.
+  var _skipPsych = _AI_CONVERSATIONAL_INTENTS[intent] || false;
   try {
-    if (typeof aiPsychRespond === 'function') {
+    if (!_skipPsych && typeof aiPsychRespond === 'function') {
       var pt = aiPsychRespond(userContext, intent);
       if (pt) text += pt;
     }
   } catch (_) {}
   try {
     if (
+      !_skipPsych &&
       typeof aiProactive === 'function' &&
       (!_thought.skipModules || !_thought.skipModules.proactive)
     ) {
@@ -1250,8 +1293,9 @@ function aiEnhancedRespond(
         _triviaOptions = _triviaResult.triviaOptions;
       }
     }
-    // Pregunta de seguimiento al final del texto (siempre — es corta)
-    if (enriched.engageQ) {
+    // Pregunta de seguimiento al final — solo para intents con datos.
+    // Los intents conversacionales (agradecimiento, saludo, despedida) no necesitan follow-up.
+    if (enriched.engageQ && !_AI_CONVERSATIONAL_INTENTS[intent]) {
       text += '\n\n' + enriched.engageQ;
     }
   } catch (_) {}
@@ -1303,4 +1347,5 @@ function aiEnhancedRespond(
 
 // ─── INICIALIZACIÓN ──────────────────────────────────────────
 window.aiThink = aiThink;
+window.aiResolveContextRef = aiResolveContextRef;
 console.log('[MT] ai-enhanced.js cargado — IA potenciada v124');

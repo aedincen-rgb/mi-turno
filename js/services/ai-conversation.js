@@ -71,17 +71,14 @@ function aiConvWrap(text, intent, c) {
     typeof _aiNombrePersonal === 'function' ? _aiNombrePersonal({ session: { uid: null } }) : '';
   var nombre = nm || '';
 
-  // Nunca abrumar en el primer contacto
+  // Primer contacto: solo agregar gancho si la respuesta es corta (< 200 chars).
+  // Respuestas largas ya tienen su propio cierre.
   if (level === 0) {
-    // Solo la respuesta base + un gancho suave
+    if (text.length >= 200) return text;
     var ganchos = [
-      '\n\n💡 ' +
-        (nombre ? nombre + ', ' : '') +
-        'cuando quieras, puedo mostrarte más detalles. Solo decime.',
-      '\n\n✨ ¿Sabías que también puedo comparar este mes con el anterior? Cuando gustes.',
-      '\n\n🌟 ' +
-        (nombre ? nombre + ', ' : '') +
-        'si te sirve, la próxima puedo ser más detallada. Vos mandás.'
+      '\n\n¿Querés profundizar en algo?',
+      '\n\nDecime si necesitás más detalle.',
+      '\n\n¿Algo más?'
     ];
     return text + ganchos[Math.floor(Math.random() * ganchos.length)];
   }

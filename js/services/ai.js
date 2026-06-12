@@ -1925,6 +1925,36 @@ function _aiAnswerCore(question, state) {
     }
   }
 
+  // ── REFERENCIAS CONTEXTUALES: "¿y la quincena pasada?", "¿y eso por qué?" ──
+  // Resuelve elipsis antes de clasificar, para que el NLP no las vea como
+  // frases sin intent suficiente (confidence baja).
+  if (!_esSlash && typeof aiResolveContextRef === 'function') {
+    var _ctxRefIntent = aiResolveContextRef(
+      q,
+      typeof aiGetConversation === 'function' ? aiGetConversation() : null
+    );
+    if (_ctxRefIntent) {
+      var _ctxResp = _aiDispatchNLP(_ctxRefIntent, c, state, q, t);
+      if (_ctxResp) {
+        if (typeof aiUpdateConversation === 'function')
+          aiUpdateConversation(_ctxRefIntent, _aiIntentTopic(_ctxRefIntent));
+        if (typeof aiEnhancedRespond === 'function') {
+          var _ctxEnriched = aiEnhancedRespond(
+            _ctxResp,
+            _ctxRefIntent,
+            _aiIntentTopic(_ctxRefIntent),
+            q,
+            c,
+            null,
+            state.turnosAll
+          );
+          if (_ctxEnriched && _ctxEnriched.text) return _ctxEnriched;
+        }
+        return _ctxResp;
+      }
+    }
+  }
+
   // ── NLP MEJORADO (v76): clasificación inteligente de intenciones ──
   // Usa el motor ai-nlp.js para entender lenguaje natural con:
   // · Tolerancia a typos y variaciones conversacionales
@@ -2453,15 +2483,27 @@ function _aiAnswerCore(question, state) {
   // ── INTERACCIÓN HUMANA ──
   if (_aiHas(t, 'hola', 'buenas', 'hey', 'que tal', 'saludos', 'que hubo', 'holi', 'ola')) {
     var saludo = (typeof _saludoHora === 'function' ? _saludoHora(c.ahora) : 'Hola') + '!';
-    return (
-      '¡' +
-      saludo +
-      ' Soy tu copiloto de turno 🤖✨ Puedo contarte cómo vas este mes, proyectar tus ingresos, calcular tu liquidación o avisarte si necesitas un descanso. También sé redactar correos para tu jefe. 🚀\n\n' +
-      _aiPickFollowUp('hola')
-    );
+    var _saludoOpts = [
+      '¡' + saludo + ' ¿En qué te ayudo hoy?',
+      '¡' + saludo + ' Tus números me esperaban. ¿Qué querés ver?',
+      '¡' + saludo + ' ¿Arrancamos?'
+    ];
+    return _saludoOpts[Math.floor(Math.random() * _saludoOpts.length)];
   }
   if (_aiHas(t, 'gracias', 'thanks', 'thx', 'genial', 'perfecto', 'excelente')) {
-    return '¡Con gusto! 🙌 Si necesitas otro dato, aquí estoy.';
+    var _gracOpts = [
+      'Con gusto 💪',
+      'Para eso estoy. ¿Algo más?',
+      'Dale. Acá estoy si necesitás algo más.'
+    ];
+    return _gracOpts[Math.floor(Math.random() * _gracOpts.length)];
+  }
+  // Acknowledgments cortos — "ok", "dale", "listo", "perfecto" solos
+  if (
+    /^(ok|dale|listo|bueno|va|vamos|sisas|claro|entendido|perfecto|genial|excelente)\.?!?$/.test(t)
+  ) {
+    var _ackOpts = ['Con gusto 💪', 'Acá estoy si necesitás algo más.', '¿En qué más te ayudo?'];
+    return _ackOpts[Math.floor(Math.random() * _ackOpts.length)];
   }
   if (_aiHas(t, 'adios', 'chao', 'hasta luego', 'nos vemos', 'bye')) {
     return '¡Hasta luego! Trabaja con pilas y descansa cuando puedas. ✦';
