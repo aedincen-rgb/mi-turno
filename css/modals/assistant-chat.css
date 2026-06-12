@@ -1757,6 +1757,387 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════
+   ASISTENTE COMO PANTALLA PRINCIPAL
+   Layout tipo ChatGPT/Claude: módulos en drawer, sugerencias arriba.
+   ═══════════════════════════════════════════════════════════════ */
+
+.scr--assistant {
+  padding: 0 max(14px, env(safe-area-inset-right, 0px)) 0 max(14px, env(safe-area-inset-left, 0px));
+  gap: 0;
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+
+.scr--assistant .ptr {
+  display: none;
+}
+
+.scr--assistant .tab-view {
+  animation: none;
+}
+
+.asistente-wrap {
+  min-height: 100dvh;
+  padding: calc(var(--sat) + 12px) 0 calc(104px + var(--sab));
+  gap: 0;
+}
+
+.asistente-sticky-top {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  padding: 0 0 12px;
+  margin: 0;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface) 88%, transparent), transparent 100%),
+    var(--bg);
+}
+
+.asistente-topbar {
+  display: grid;
+  grid-template-columns: 46px 1fr 46px;
+  align-items: center;
+  min-height: 48px;
+}
+
+.asistente-menu-btn,
+.asistente-menu-close {
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 24px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.asistente-menu-btn:active,
+.asistente-menu-close:active {
+  background: var(--surface2);
+  transform: scale(0.96);
+}
+
+.asistente-top-title {
+  min-width: 0;
+  text-align: left;
+}
+
+.asistente-greeting {
+  font-size: clamp(26px, 8vw, 42px);
+  font-weight: 750;
+  letter-spacing: -0.06em;
+  line-height: 1.04;
+}
+
+.asistente-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  overflow: visible;
+  padding: 12px 0 2px 46px;
+  margin: 0;
+}
+
+.asistente-chip {
+  min-height: 38px;
+  padding: 9px 16px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--text) 10%, transparent);
+  background: color-mix(in srgb, var(--surface) 74%, transparent);
+  color: var(--text);
+  box-shadow: none;
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.asistente-chat {
+  padding: 18px 0 16px;
+  gap: 18px;
+}
+
+.asistente-chat-empty {
+  min-height: calc(100dvh - 250px);
+  animation: none;
+}
+
+.asistente-empty-label {
+  color: var(--muted);
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  padding-left: 46px;
+}
+
+.asistente-msg-orb {
+  display: none;
+}
+
+.asistente-bubble {
+  max-width: min(86%, 680px);
+}
+
+.asistente-bubble.ai {
+  border-left: 0;
+  border-top-left-radius: 20px;
+  background: color-mix(in srgb, var(--surface) 78%, transparent);
+}
+
+.asistente-bubble.user {
+  border-top-right-radius: 20px;
+}
+
+.asistente-col {
+  align-items: flex-start;
+}
+
+.asistente-composer {
+  position: fixed;
+  left: max(14px, env(safe-area-inset-left, 0px));
+  right: max(14px, env(safe-area-inset-right, 0px));
+  bottom: calc(var(--sab) + 10px);
+  z-index: 35;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 8px;
+  border: 1px solid color-mix(in srgb, var(--text) 9%, transparent);
+  border-radius: 30px;
+  background: color-mix(in srgb, var(--surface) 86%, transparent);
+  box-shadow:
+    0 18px 52px rgba(20, 30, 80, 0.14),
+    inset 0 1px 0 var(--spec-top);
+  backdrop-filter: blur(34px) saturate(170%);
+  -webkit-backdrop-filter: blur(34px) saturate(170%);
+}
+
+.asistente-input {
+  min-height: 46px;
+  padding: 12px 18px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.asistente-input:focus {
+  box-shadow: none;
+}
+
+.asistente-smart-btn {
+  width: 46px;
+  height: 46px;
+  box-shadow: none;
+}
+
+.asistente-reset {
+  margin-bottom: 10px;
+}
+
+.asistente-scroll-btn {
+  bottom: 86px;
+}
+
+.asistente-menu-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  background: rgba(15, 23, 42, 0.18);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  animation: asistenteMenuFade 0.18s var(--ease);
+}
+
+.asistente-side-menu {
+  width: min(82vw, 330px);
+  height: 100%;
+  padding: calc(var(--sat) + 14px) 14px calc(var(--sab) + 18px);
+  background: color-mix(in srgb, var(--surface) 93%, transparent);
+  border-right: 1px solid color-mix(in srgb, var(--text) 10%, transparent);
+  box-shadow: 28px 0 70px rgba(15, 23, 42, 0.2);
+  overflow-y: auto;
+  animation: asistenteMenuIn 0.26s var(--ios-ease);
+}
+
+.asistente-menu-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px 12px;
+}
+
+.asistente-menu-title {
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+
+.asistente-menu-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.asistente-menu-group {
+  border-radius: 18px;
+}
+
+.asistente-menu-group.open {
+  background: color-mix(in srgb, var(--accent) 7%, transparent);
+}
+
+.asistente-menu-item {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 36px 1fr 24px;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 10px;
+  border: 0;
+  border-radius: 18px;
+  background: transparent;
+  color: var(--text);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.asistente-menu-item:active {
+  background: color-mix(in srgb, var(--text) 7%, transparent);
+}
+
+.asistente-menu-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface2);
+  color: var(--accent);
+  font-weight: 800;
+}
+
+.asistente-menu-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.asistente-menu-label {
+  font-size: 15px;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+}
+
+.asistente-menu-hint {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+.asistente-menu-chevron {
+  color: var(--muted);
+  font-size: 20px;
+  text-align: center;
+}
+
+.asistente-menu-prompts {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0 8px 10px 56px;
+}
+
+.asistente-menu-prompt {
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.3;
+  text-align: left;
+  padding: 9px 10px;
+}
+
+.asistente-menu-prompt:active {
+  background: color-mix(in srgb, var(--text) 7%, transparent);
+}
+
+.asistente-controls.in-drawer {
+  margin: 0 8px 10px 56px;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+}
+
+@keyframes asistenteMenuFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes asistenteMenuIn {
+  from {
+    transform: translateX(-24px);
+    opacity: 0.6;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+[data-theme='dark'] .asistente-sticky-top {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface) 84%, transparent), transparent 100%),
+    var(--bg);
+}
+
+[data-theme='dark'] .asistente-chip,
+[data-theme='dark'] .asistente-composer,
+[data-theme='dark'] .asistente-side-menu,
+[data-theme='dark'] .asistente-bubble.ai {
+  background: color-mix(in srgb, var(--surface2) 76%, transparent);
+  border-color: color-mix(in srgb, #fff 10%, transparent);
+}
+
+@media (min-width: 760px) {
+  .asistente-wrap {
+    max-width: 760px;
+    margin: 0 auto;
+  }
+
+  .asistente-chips {
+    padding-left: 0;
+  }
+
+  .asistente-empty-label {
+    padding-left: 0;
+  }
+}
+
+@media (max-width: 380px) {
+  .asistente-greeting {
+    font-size: 28px;
+  }
+
+  .asistente-chips {
+    padding-left: 0;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
    ASISTENTE IA — v181 modernización
    Quick chips, scroll-to-bottom, timestamps, burbujas mejoradas
    ═══════════════════════════════════════════════════════════════ */
@@ -1957,5 +2338,76 @@
 @keyframes asistenteCaret {
   50% {
     opacity: 0;
+  }
+}
+
+/* Final cascade lock for the assistant-first layout. */
+.scr--assistant {
+  padding: 0 max(14px, env(safe-area-inset-right, 0px)) 0 max(14px, env(safe-area-inset-left, 0px));
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+
+.scr--assistant .asistente-wrap,
+.scr--assistant .asistente-wrap.has-chat {
+  min-height: 100dvh;
+  padding: calc(var(--sat) + 12px) 0 calc(104px + var(--sab));
+  gap: 0;
+}
+
+.scr--assistant .asistente-sticky-top {
+  top: 0;
+  margin: 0;
+  padding: 0 0 12px;
+}
+
+.scr--assistant .asistente-wrap.has-chat .asistente-greeting,
+.scr--assistant .asistente-greeting {
+  font-size: clamp(26px, 8vw, 42px);
+  font-weight: 750;
+  letter-spacing: -0.06em;
+  line-height: 1.04;
+}
+
+.scr--assistant .asistente-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  overflow: visible;
+  padding: 12px 0 2px 46px;
+  margin: 0;
+}
+
+.scr--assistant .asistente-chip {
+  min-height: 38px;
+  padding: 9px 16px;
+  border-radius: 999px;
+  font-size: 14px;
+}
+
+.scr--assistant .asistente-chat {
+  padding: 18px 0 16px;
+  gap: 18px;
+}
+
+.scr--assistant .asistente-chat-empty {
+  min-height: calc(100dvh - 250px);
+}
+
+.scr--assistant .asistente-composer {
+  position: fixed;
+  left: max(14px, env(safe-area-inset-left, 0px));
+  right: max(14px, env(safe-area-inset-right, 0px));
+  bottom: calc(var(--sab) + 10px);
+  z-index: 35;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 8px;
+  border-radius: 30px;
+}
+
+@media (max-width: 380px) {
+  .scr--assistant .asistente-chips {
+    padding-left: 0;
   }
 }

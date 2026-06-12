@@ -104,9 +104,9 @@ function AsistenteTab(props) {
   var cs = useState(null);
   var openCat = cs[0],
     setOpenCat = cs[1];
-  var hi = useState(0);
-  var heroIdx = hi[0],
-    setHeroIdx = hi[1];
+  var msd = useState(false);
+  var menuOpen = msd[0],
+    setMenuOpen = msd[1];
   var endRef = useRef(null);
   var inputRef = useRef(null);
   var recognitionRef = useRef(null);
@@ -586,22 +586,6 @@ function AsistenteTab(props) {
       }
     },
     [input]
-  );
-
-  // Rotación de la frase del hero (cada 7 s, solo sin conversación)
-  useEffect(
-    function () {
-      if (tieneConversacion) return;
-      var t = setInterval(function () {
-        setHeroIdx(function (n) {
-          return n + 1;
-        });
-      }, 7000);
-      return function () {
-        clearInterval(t);
-      };
-    },
-    [tieneConversacion]
   );
 
   var clearChat = useCallback(
@@ -1097,22 +1081,176 @@ function AsistenteTab(props) {
     }
   ];
 
-  var phrases = _aiHeroPhrases(props);
-  // Prepend briefing si está disponible
-  if (typeof aiBriefing === 'function') {
-    var briefing = aiBriefing(
-      props.calc
-        ? Object.assign({}, props.calc, {
-            ahora: new Date(),
-            salario: props.salario,
-            vh: props.vh,
-            turnos: props.turnos
-          })
+  var menuItems = [
+    { id: 'ingresos', label: 'Ingresos', hint: 'Ayer, mes y proyección', icon: '$' },
+    { id: 'tiempo', label: 'Tiempo', hint: 'Horas, descansos y rachas', icon: '◷' },
+    { id: 'reportes', label: 'Reportes', hint: 'Exportar o enviar informe', icon: '▤' },
+    { id: 'voz', label: 'Configuración voz', hint: 'Lectura y manos libres', icon: '◉' },
+    { id: 'logros', label: 'Logros', hint: 'Insignias y metas', icon: '◇' },
+    { id: 'ayuda', label: 'Ayuda', hint: 'Guías rápidas de la app', icon: '?' }
+  ];
+
+  function closeMenu() {
+    setMenuOpen(false);
+    setOpenCat(null);
+  }
+
+  function runMenuItem(item) {
+    haptic();
+    if (item.id === 'reportes') {
+      closeMenu();
+      send('Enviá mi reporte e informe por correo');
+      return;
+    }
+    if (item.id === 'logros') {
+      closeMenu();
+      send('/logros');
+      return;
+    }
+    setOpenCat(openCat === item.id ? null : item.id);
+  }
+
+  function findCat(id) {
+    for (var i = 0; i < categorias.length; i++) {
+      if (categorias[i].id === id) return categorias[i];
+    }
+    return null;
+  }
+
+  function renderDrawerBody(item) {
+    if (item.id === 'voz') {
+      return renderVoiceControls('drawer');
+    }
+    var cat = findCat(item.id);
+    if (!cat && item.id === 'ayuda') cat = findCat('usarapp') || findCat('ayuda');
+    if (!cat) return null;
+    return h(
+      'div',
+      { className: 'asistente-menu-prompts' },
+      cat.preguntas.slice(0, 7).map(function (q, i) {
+        var label = typeof q === 'object' && q.label ? q.label : q;
+        var query = typeof q === 'object' && q.query ? q.query : q;
+        return h(
+          'button',
+          {
+            key: i,
+            className: 'asistente-menu-prompt',
+            onClick: function () {
+              closeMenu();
+              send(query);
+            }
+          },
+          label
+        );
+      })
+    );
+  }
+
+  function renderVoiceControls(scope) {
+    if (
+      typeof speechSynthesis === 'undefined' &&
+      typeof SpeechRecognition === 'undefined' &&
+      typeof webkitSpeechRecognition === 'undefined'
+    ) {
+      return null;
+    }
+    return h(
+      'div',
+      { className: 'asistente-controls' + (scope === 'drawer' ? ' in-drawer' : '') },
+
+      typeof speechSynthesis !== 'undefined'
+        ? h(
+            'div',
+            { className: 'asistente-ctrl-row' },
+            h(
+              'div',
+              { className: 'asistente-ctrl-info' },
+              h('span', { className: 'asistente-ctrl-icon', 'aria-hidden': 'true' }, '🔊'),
+              h(
+                'div',
+                null,
+                h('div', { className: 'asistente-ctrl-label' }, 'Leer en voz alta'),
+                h(
+                  'div',
+                  { className: 'asistente-ctrl-sub' },
+                  autoRead ? 'Respuestas habladas' : 'Respuestas en texto'
+                )
+              )
+            ),
+            h(
+              'label',
+              { className: 'ios-sw' },
+              h('input', {
+                type: 'checkbox',
+                role: 'switch',
+                'aria-checked': autoRead,
+                'aria-label':
+                  'Leer respuestas en voz alta, ' + (autoRead ? 'activado' : 'desactivado'),
+                checked: autoRead,
+                onChange: function () {
+                  haptic();
+                  var next = !autoRead;
+                  setAutoRead(next);
+                  if (!next && handsFree) setHandsFree(false);
+                }
+              }),
+              h('span', { className: 'sw-track' })
+            )
+          )
+        : null,
+
+      typeof speechSynthesis !== 'undefined' &&
+        (typeof SpeechRecognition !== 'undefined' || typeof webkitSpeechRecognition !== 'undefined')
+        ? h('div', { className: 'asistente-ctrl-divider', 'aria-hidden': 'true' })
+        : null,
+
+      typeof SpeechRecognition !== 'undefined' || typeof webkitSpeechRecognition !== 'undefined'
+        ? h(
+            'div',
+            { className: 'asistente-ctrl-row' },
+            h(
+              'div',
+              { className: 'asistente-ctrl-info' },
+              h('span', { className: 'asistente-ctrl-icon', 'aria-hidden': 'true' }, '🎙'),
+              h(
+                'div',
+                null,
+                h('div', { className: 'asistente-ctrl-label' }, 'Modo manos libres'),
+                h(
+                  'div',
+                  { className: 'asistente-ctrl-sub' + (handsFree ? ' on' : '') },
+                  handsFree ? (listening ? 'Escuchando…' : 'En pausa') : 'Conversación continua'
+                )
+              )
+            ),
+            h(
+              'label',
+              { className: 'ios-sw asistente-hf-sw' },
+              h('input', {
+                type: 'checkbox',
+                role: 'switch',
+                'aria-checked': handsFree,
+                'aria-label': 'Modo manos libres, ' + (handsFree ? 'activado' : 'desactivado'),
+                checked: handsFree,
+                onChange: function () {
+                  haptic();
+                  if (!handsFree) {
+                    setAutoRead(true);
+                    setHandsFree(true);
+                    setTimeout(function () {
+                      speakBriefing();
+                    }, 350);
+                  } else {
+                    setHandsFree(false);
+                    stopListening();
+                  }
+                }
+              }),
+              h('span', { className: 'sw-track' })
+            )
+          )
         : null
     );
-    if (briefing) {
-      phrases = [briefing].concat(phrases);
-    }
   }
 
   return h(
@@ -1122,42 +1260,34 @@ function AsistenteTab(props) {
       'aria-label': 'Asistente AI'
     },
 
-    // ═══ STICKY TOP: hero + about + chips fijos al hacer scroll (v264) ═══
+    // ═══ TOP: menú, saludo y sugerencias tipo ChatGPT/Claude ═══
     h(
       'div',
       { className: 'asistente-sticky-top' },
-
-      // ═══ HERO iOS STYLE: orb izq + texto der (siempre visible) ═══
       h(
-        'div',
-        { className: 'asistente-hero' },
+        'header',
+        { className: 'asistente-topbar' },
         h(
-          'div',
-          { className: 'asistente-hero-orb' },
-          h('div', { className: 'asistente-hero-orb-symbol' }, '✦')
+          'button',
+          {
+            className: 'asistente-menu-btn',
+            type: 'button',
+            'aria-label': menuOpen ? 'Cerrar menú' : 'Abrir menú',
+            'aria-expanded': menuOpen,
+            onClick: function () {
+              haptic();
+              setMenuOpen(true);
+            }
+          },
+          '☰'
         ),
         h(
           'div',
-          { className: 'asistente-hero-txt' },
-          h('h1', { className: 'asistente-greeting' }, saludo + '.'),
-          h(
-            'div',
-            { className: 'asistente-phrase', key: heroIdx },
-            phrases[heroIdx % phrases.length]
-          )
+          { className: 'asistente-top-title' },
+          h('h1', { className: 'asistente-greeting' }, saludo + '.')
         )
       ),
 
-      // ═══ ABOUT: puente entre el saludo y la casilla (desaparece al conversar) ═══
-      !tieneConversacion &&
-        h(
-          'p',
-          { className: 'asistente-about' },
-          'Soy tu asistente. Conozco tus turnos, recargos y movimientos del mes — ' +
-            'pregúntame en tus palabras o explorá las categorías.'
-        ),
-
-      // ═══ QUICK CHIPS (acciones rápidas, siempre visibles) ═══
       h(
         'div',
         { className: 'asistente-chips' },
@@ -1169,7 +1299,6 @@ function AsistenteTab(props) {
               send('¿Cuánto gané ayer?');
             }
           },
-          h('span', { className: 'asistente-chip-ico' }, '📅'),
           'Ayer'
         ),
         h(
@@ -1180,8 +1309,7 @@ function AsistenteTab(props) {
               send('¿Cuánto gané este mes?');
             }
           },
-          h('span', { className: 'asistente-chip-ico' }, '💰'),
-          'Este mes'
+          'Mes'
         ),
         h(
           'button',
@@ -1191,77 +1319,88 @@ function AsistenteTab(props) {
               send('Proyección al cierre');
             }
           },
-          h('span', { className: 'asistente-chip-ico' }, '🔮'),
           'Proyección'
-        ),
-        h(
-          'button',
-          {
-            className: 'asistente-chip',
-            onClick: function () {
-              send('¿VS mes pasado?');
-            }
-          },
-          h('span', { className: 'asistente-chip-ico' }, '⚖'),
-          'VS mes pasado'
-        ),
-        h(
-          'button',
-          {
-            className: 'asistente-chip',
-            onClick: function () {
-              send('¿Cuánto si trabajo 4h más?');
-            }
-          },
-          h('span', { className: 'asistente-chip-ico' }, '🧮'),
-          'Simular'
-        ),
-        h(
-          'button',
-          {
-            className: 'asistente-chip',
-            onClick: function () {
-              send('/tendencia');
-            }
-          },
-          h('span', { className: 'asistente-chip-ico' }, '📈'),
-          'Tendencia'
-        ),
-        h(
-          'button',
-          {
-            className: 'asistente-chip',
-            onClick: function () {
-              send('Dame el desglose de mis recargos de este mes');
-            }
-          },
-          h('span', { className: 'asistente-chip-ico' }, '🔍'),
-          'Desglose recargos'
-        ),
-        h(
-          'button',
-          {
-            className: 'asistente-chip',
-            onClick: function () {
-              send('Enviá mi reporte e informe por correo');
-            }
-          },
-          h('span', { className: 'asistente-chip-ico' }, '📋'),
-          'Enviar informe'
-        ),
-        h(
-          'button',
-          {
-            className: 'asistente-chip',
-            onClick: function () {
-              send('¿Qué significa el recargo dominical y cuánto vale el mío?');
-            }
-          },
-          h('span', { className: 'asistente-chip-ico' }, '📖'),
-          'Recargo dominical'
         )
       )
     ),
+
+    menuOpen
+      ? h(
+          'div',
+          {
+            className: 'asistente-menu-layer',
+            role: 'presentation',
+            onClick: function (ev) {
+              if (ev.target === ev.currentTarget) closeMenu();
+            }
+          },
+          h(
+            'aside',
+            {
+              className: 'asistente-side-menu',
+              role: 'dialog',
+              'aria-modal': 'true',
+              'aria-label': 'Menú del asistente'
+            },
+            h(
+              'div',
+              { className: 'asistente-menu-head' },
+              h('div', null, h('div', { className: 'asistente-menu-title' }, 'Mi Turno')),
+              h(
+                'button',
+                {
+                  className: 'asistente-menu-close',
+                  type: 'button',
+                  'aria-label': 'Cerrar menú',
+                  onClick: closeMenu
+                },
+                '×'
+              )
+            ),
+            h(
+              'nav',
+              { className: 'asistente-menu-list', 'aria-label': 'Módulos' },
+              menuItems.map(function (item) {
+                var open = openCat === item.id;
+                return h(
+                  'div',
+                  { key: item.id, className: 'asistente-menu-group' + (open ? ' open' : '') },
+                  h(
+                    'button',
+                    {
+                      className: 'asistente-menu-item',
+                      type: 'button',
+                      'aria-expanded': open,
+                      onClick: function () {
+                        runMenuItem(item);
+                      }
+                    },
+                    h('span', { className: 'asistente-menu-icon' }, item.icon),
+                    h(
+                      'span',
+                      { className: 'asistente-menu-copy' },
+                      h('span', { className: 'asistente-menu-label' }, item.label),
+                      h('span', { className: 'asistente-menu-hint' }, item.hint)
+                    ),
+                    h('span', { className: 'asistente-menu-chevron' }, open ? '−' : '+')
+                  ),
+                  open ? renderDrawerBody(item) : null
+                );
+              })
+            )
+          )
+        )
+      : !tieneConversacion
+        ? h(
+            'div',
+            {
+              className: 'asistente-chat asistente-chat-empty',
+              role: 'region',
+              'aria-label': 'Conversación con asistente'
+            },
+            h('div', { className: 'asistente-empty-label' }, 'Conversación')
+          )
+        : null,
 
     // ═══ CHAT (visible solo si hay conversación) ═══
     tieneConversacion
@@ -1599,7 +1738,7 @@ function AsistenteTab(props) {
           ref: inputRef,
           className: 'asistente-input' + (listening ? ' listening' : ''),
           'aria-label': 'Tu mensaje al asistente',
-          placeholder: listening ? 'Escuchando…' : 'Escribe o mantén pulsado para hablar…',
+          placeholder: listening ? 'Escuchando…' : 'Escribe aquí...',
           value: input,
           onChange: function (e) {
             setInput(e.target.value);
@@ -1726,10 +1865,8 @@ function AsistenteTab(props) {
                     'stroke-linecap': 'round',
                     'stroke-linejoin': 'round'
                   },
-                  h('line', { x1: 12, y1: 19, x2: 12, y2: 23 }),
-                  h('line', { x1: 8, y1: 23, x2: 16, y2: 23 }),
-                  h('path', { d: 'M12 1a4 4 0 0 0-4 4v7a4 4 0 0 0 8 0V5a4 4 0 0 0-4-4z' }),
-                  h('path', { d: 'M19 10v2a7 7 0 0 1-14 0v-2' })
+                  h('path', { d: 'M12 19V5' }),
+                  h('path', { d: 'M5 12l7-7 7 7' })
                 )
               : h(
                   'svg',
@@ -1751,185 +1888,12 @@ function AsistenteTab(props) {
       )
     ),
 
-    // ═══ PANEL DE CONTROLES DE VOZ (switches iOS 26) ═══
-    typeof speechSynthesis !== 'undefined' ||
-      typeof SpeechRecognition !== 'undefined' ||
-      typeof webkitSpeechRecognition !== 'undefined'
-      ? h(
-          'div',
-          { className: 'asistente-controls' },
-
-          // Fila: Leer en voz alta
-          typeof speechSynthesis !== 'undefined'
-            ? h(
-                'div',
-                { className: 'asistente-ctrl-row' },
-                h(
-                  'div',
-                  { className: 'asistente-ctrl-info' },
-                  h('span', { className: 'asistente-ctrl-icon', 'aria-hidden': 'true' }, '🔊'),
-                  h(
-                    'div',
-                    null,
-                    h('div', { className: 'asistente-ctrl-label' }, 'Leer en voz alta'),
-                    h(
-                      'div',
-                      { className: 'asistente-ctrl-sub' },
-                      autoRead ? 'Respuestas habladas' : 'Respuestas en texto'
-                    )
-                  )
-                ),
-                h(
-                  'label',
-                  { className: 'ios-sw' },
-                  h('input', {
-                    type: 'checkbox',
-                    role: 'switch',
-                    'aria-checked': autoRead,
-                    'aria-label':
-                      'Leer respuestas en voz alta, ' + (autoRead ? 'activado' : 'desactivado'),
-                    checked: autoRead,
-                    onChange: function () {
-                      haptic();
-                      var next = !autoRead;
-                      setAutoRead(next);
-                      if (!next && handsFree) setHandsFree(false);
-                    }
-                  }),
-                  h('span', { className: 'sw-track' })
-                )
-              )
-            : null,
-
-          // Divisor entre filas
-          typeof speechSynthesis !== 'undefined' &&
-            (typeof SpeechRecognition !== 'undefined' ||
-              typeof webkitSpeechRecognition !== 'undefined')
-            ? h('div', { className: 'asistente-ctrl-divider', 'aria-hidden': 'true' })
-            : null,
-
-          // Fila: Modo manos libres
-          typeof SpeechRecognition !== 'undefined' || typeof webkitSpeechRecognition !== 'undefined'
-            ? h(
-                'div',
-                { className: 'asistente-ctrl-row' },
-                h(
-                  'div',
-                  { className: 'asistente-ctrl-info' },
-                  h('span', { className: 'asistente-ctrl-icon', 'aria-hidden': 'true' }, '🎙'),
-                  h(
-                    'div',
-                    null,
-                    h('div', { className: 'asistente-ctrl-label' }, 'Modo manos libres'),
-                    h(
-                      'div',
-                      { className: 'asistente-ctrl-sub' + (handsFree ? ' on' : '') },
-                      handsFree ? (listening ? 'Escuchando…' : 'En pausa') : 'Conversación continua'
-                    )
-                  )
-                ),
-                h(
-                  'label',
-                  { className: 'ios-sw asistente-hf-sw' },
-                  h('input', {
-                    type: 'checkbox',
-                    role: 'switch',
-                    'aria-checked': handsFree,
-                    'aria-label': 'Modo manos libres, ' + (handsFree ? 'activado' : 'desactivado'),
-                    checked: handsFree,
-                    onChange: function () {
-                      haptic();
-                      if (!handsFree) {
-                        setAutoRead(true);
-                        setHandsFree(true);
-                        // Briefing hablado de bienvenida; al terminar de
-                        // leerlo, el loop arranca a escuchar solo.
-                        setTimeout(function () {
-                          speakBriefing();
-                        }, 350);
-                      } else {
-                        setHandsFree(false);
-                        stopListening();
-                      }
-                    }
-                  }),
-                  h('span', { className: 'sw-track' })
-                )
-              )
-            : null
-        )
-      : null,
-
     // ═══ Reanudar / nueva conversación ═══
     tieneConversacion &&
       h(
         'button',
         { className: 'asistente-reset', onClick: clearChat, 'aria-label': 'Nueva conversación' },
         'Nueva conversación'
-      ),
-
-    // ═══ CATEGORÍAS PRECARGADAS (siempre visibles, al final) ═══
-    h(
-      'div',
-      { className: 'asistente-cats' },
-      categorias.map(function (cat) {
-        var abierta = openCat === cat.id;
-        return h(
-          'div',
-          {
-            key: cat.id,
-            className: 'asistente-cat' + (abierta ? ' open' : '')
-          },
-          h(
-            'button',
-            {
-              className: 'asistente-cat-head',
-              'aria-label': cat.titulo + (abierta ? ' (abierto)' : ' (cerrado)'),
-              'aria-expanded': abierta,
-              onClick: function () {
-                haptic();
-                setOpenCat(abierta ? null : cat.id);
-              }
-            },
-            h('div', { className: 'asistente-cat-ico' }, cat.icono),
-            h(
-              'div',
-              { className: 'asistente-cat-txt' },
-              h('div', { className: 'asistente-cat-ttl' }, cat.titulo),
-              h('div', { className: 'asistente-cat-dsc' }, cat.desc)
-            ),
-            h('div', { className: 'asistente-cat-chev' }, abierta ? '−' : '+')
-          ),
-          abierta &&
-            h(
-              'div',
-              { className: 'asistente-cat-body' },
-              cat.preguntas.map(function (q, i) {
-                var label, query;
-                if (typeof q === 'object' && q.label && q.query) {
-                  label = q.label;
-                  query = q.query;
-                } else {
-                  label = q;
-                  query = q;
-                }
-                return h(
-                  'button',
-                  {
-                    key: i,
-                    className: 'asistente-cat-q',
-                    'aria-label': 'Preguntar: ' + label,
-                    onClick: function () {
-                      send(query);
-                    }
-                  },
-                  h('span', { className: 'asistente-cat-q-txt' }, label),
-                  h('span', { className: 'asistente-cat-q-arr' }, '→')
-                );
-              })
-            )
-        );
-      })
-    )
+      )
   );
 }

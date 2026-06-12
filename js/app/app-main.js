@@ -1056,116 +1056,118 @@ function App(props) {
         )
       : null,
 
-    h(
-      'header',
-      { className: 'hdr' + (compact ? ' hdr--compact' : ''), role: 'banner' },
-      h(
-        'div',
-        { className: 'hdr-l' },
-        (function () {
-          // LED unificado: refleja el estado REAL de Supabase (no solo internet).
-          // Misma fuente que el popover (_connState), para que dot y texto coincidan.
-          var st = _connState();
-          // 'on' = verde · 'off' = rojo · 'connecting' = ámbar pulsante
-          var ledCls = st.k;
-          return h(
-            'button',
-            {
-              className: 'hdr-led-btn',
-              type: 'button',
-              onClick: revealConn,
-              title: st.t,
-              'aria-label': st.t + '. Tocá para ver el estado de conexión.'
-            },
-            h('span', { className: 'hdr-led ' + ledCls, 'aria-hidden': 'true' })
-          );
-        })(),
-        h('img', {
-          src: 'img/logo-mark.svg',
-          width: 24,
-          height: 24,
-          alt: '',
-          draggable: false,
-          style: { borderRadius: '6px', flexShrink: 0, display: 'block' }
-        }),
-        h(
-          'div',
-          { className: 'hdr-info' },
-          h('div', { className: 'hdr-brand' }, 'Mi Turno'),
+    tab !== 'ai'
+      ? h(
+          'header',
+          { className: 'hdr' + (compact ? ' hdr--compact' : ''), role: 'banner' },
           h(
             'div',
-            { className: 'hdr-meta' },
+            { className: 'hdr-l' },
+            (function () {
+              // LED unificado: refleja el estado REAL de Supabase (no solo internet).
+              // Misma fuente que el popover (_connState), para que dot y texto coincidan.
+              var st = _connState();
+              // 'on' = verde · 'off' = rojo · 'connecting' = ámbar pulsante
+              var ledCls = st.k;
+              return h(
+                'button',
+                {
+                  className: 'hdr-led-btn',
+                  type: 'button',
+                  onClick: revealConn,
+                  title: st.t,
+                  'aria-label': st.t + '. Tocá para ver el estado de conexión.'
+                },
+                h('span', { className: 'hdr-led ' + ledCls, 'aria-hidden': 'true' })
+              );
+            })(),
+            h('img', {
+              src: 'img/logo-mark.svg',
+              width: 24,
+              height: 24,
+              alt: '',
+              draggable: false,
+              style: { borderRadius: '6px', flexShrink: 0, display: 'block' }
+            }),
             h(
-              'span',
-              { className: 'hdr-date' },
-              ahoraDate.toLocaleDateString('es-CO', {
-                weekday: 'short',
-                day: 'numeric',
-                month: 'short'
-              }) + (festHoy ? ' · Fest' : '')
-            ),
-            h('span', { className: 'hdr-clock' }, tStr)
+              'div',
+              { className: 'hdr-info' },
+              h('div', { className: 'hdr-brand' }, 'Mi Turno'),
+              h(
+                'div',
+                { className: 'hdr-meta' },
+                h(
+                  'span',
+                  { className: 'hdr-date' },
+                  ahoraDate.toLocaleDateString('es-CO', {
+                    weekday: 'short',
+                    day: 'numeric',
+                    month: 'short'
+                  }) + (festHoy ? ' · Fest' : '')
+                ),
+                h('span', { className: 'hdr-clock' }, tStr)
+              )
+            )
+          ),
+          h(
+            'div',
+            { className: 'hdr-r' },
+            h(
+              'button',
+              {
+                className: 'icon-btn',
+                'aria-label': theme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro',
+                title: theme === 'dark' ? 'Modo claro' : 'Modo oscuro',
+                onClick: function () {
+                  haptic();
+                  setTheme(theme === 'dark' ? 'light' : 'dark');
+                }
+              },
+              theme === 'dark'
+                ? h(
+                    'svg',
+                    {
+                      viewBox: '0 0 24 24',
+                      width: 18,
+                      height: 18,
+                      fill: 'none',
+                      stroke: 'currentColor',
+                      strokeWidth: 2,
+                      strokeLinecap: 'round',
+                      strokeLinejoin: 'round'
+                    },
+                    h('circle', { cx: 12, cy: 12, r: 5 }),
+                    h('line', { x1: 12, y1: 1, x2: 12, y2: 3 }),
+                    h('line', { x1: 12, y1: 21, x2: 12, y2: 23 }),
+                    h('line', { x1: 4.22, y1: 4.22, x2: 5.64, y2: 5.64 }),
+                    h('line', { x1: 18.36, y1: 18.36, x2: 19.78, y2: 19.78 }),
+                    h('line', { x1: 1, y1: 12, x2: 3, y2: 12 }),
+                    h('line', { x1: 21, y1: 12, x2: 23, y2: 12 }),
+                    h('line', { x1: 4.22, y1: 19.78, x2: 5.64, y2: 18.36 }),
+                    h('line', { x1: 18.36, y1: 5.64, x2: 19.78, y2: 4.22 })
+                  )
+                : h(
+                    'svg',
+                    {
+                      viewBox: '0 0 24 24',
+                      width: 18,
+                      height: 18,
+                      fill: 'none',
+                      stroke: 'currentColor',
+                      strokeWidth: 2,
+                      strokeLinecap: 'round',
+                      strokeLinejoin: 'round'
+                    },
+                    h('path', { d: 'M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z' })
+                  )
+            )
           )
         )
-      ),
-      h(
-        'div',
-        { className: 'hdr-r' },
-        h(
-          'button',
-          {
-            className: 'icon-btn',
-            'aria-label': theme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro',
-            title: theme === 'dark' ? 'Modo claro' : 'Modo oscuro',
-            onClick: function () {
-              haptic();
-              setTheme(theme === 'dark' ? 'light' : 'dark');
-            }
-          },
-          theme === 'dark'
-            ? h(
-                'svg',
-                {
-                  viewBox: '0 0 24 24',
-                  width: 18,
-                  height: 18,
-                  fill: 'none',
-                  stroke: 'currentColor',
-                  strokeWidth: 2,
-                  strokeLinecap: 'round',
-                  strokeLinejoin: 'round'
-                },
-                h('circle', { cx: 12, cy: 12, r: 5 }),
-                h('line', { x1: 12, y1: 1, x2: 12, y2: 3 }),
-                h('line', { x1: 12, y1: 21, x2: 12, y2: 23 }),
-                h('line', { x1: 4.22, y1: 4.22, x2: 5.64, y2: 5.64 }),
-                h('line', { x1: 18.36, y1: 18.36, x2: 19.78, y2: 19.78 }),
-                h('line', { x1: 1, y1: 12, x2: 3, y2: 12 }),
-                h('line', { x1: 21, y1: 12, x2: 23, y2: 12 }),
-                h('line', { x1: 4.22, y1: 19.78, x2: 5.64, y2: 18.36 }),
-                h('line', { x1: 18.36, y1: 5.64, x2: 19.78, y2: 4.22 })
-              )
-            : h(
-                'svg',
-                {
-                  viewBox: '0 0 24 24',
-                  width: 18,
-                  height: 18,
-                  fill: 'none',
-                  stroke: 'currentColor',
-                  strokeWidth: 2,
-                  strokeLinecap: 'round',
-                  strokeLinejoin: 'round'
-                },
-                h('path', { d: 'M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z' })
-              )
-        )
-      )
-    ),
+      : null,
 
     h(
       'div',
-      { className: 'scr', ref: scrRef },
+      { className: 'scr' + (tab === 'ai' ? ' scr--assistant' : ''), ref: scrRef },
       h(
         'div',
         {
@@ -1279,33 +1281,35 @@ function App(props) {
       )
     ),
 
-    h(
-      'nav',
-      { className: 'tabs', role: 'tablist', 'aria-label': 'Navegación principal' },
-      h('div', {
-        className: 'tab-indicator',
-        style: { transform: 'translateX(' + activeIdx * 100 + '%)' },
-        'aria-hidden': 'true'
-      }),
-      TABS.map(function (item) {
-        return h(
-          'button',
-          {
-            key: item.id,
-            className: 'tab-btn ' + (tab === item.id ? 'on' : ''),
-            role: 'tab',
-            'aria-selected': tab === item.id ? 'true' : 'false',
-            'aria-label': item.lbl,
-            onClick: function () {
-              haptic();
-              setTab(item.id);
-            }
-          },
-          tabIcon(item.icon),
-          h('div', { className: 'tab-label' }, item.lbl)
-        );
-      })
-    ),
+    tab !== 'ai'
+      ? h(
+          'nav',
+          { className: 'tabs', role: 'tablist', 'aria-label': 'Navegación principal' },
+          h('div', {
+            className: 'tab-indicator',
+            style: { transform: 'translateX(' + activeIdx * 100 + '%)' },
+            'aria-hidden': 'true'
+          }),
+          TABS.map(function (item) {
+            return h(
+              'button',
+              {
+                key: item.id,
+                className: 'tab-btn ' + (tab === item.id ? 'on' : ''),
+                role: 'tab',
+                'aria-selected': tab === item.id ? 'true' : 'false',
+                'aria-label': item.lbl,
+                onClick: function () {
+                  haptic();
+                  setTab(item.id);
+                }
+              },
+              tabIcon(item.icon),
+              h('div', { className: 'tab-label' }, item.lbl)
+            );
+          })
+        )
+      : null,
 
     // ── Modal Exportar Reporte (PDF/Excel) ──
     exportMode
