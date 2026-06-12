@@ -2400,8 +2400,15 @@
 .scr--assistant .asistente-wrap,
 .scr--assistant .asistente-wrap.has-chat {
   min-height: 100dvh;
-  padding: calc(var(--safe-top) + 126px) 0 calc(104px + var(--sab));
   gap: 0;
+}
+
+.scr--assistant .asistente-wrap {
+  padding: calc(var(--safe-top) + 154px) 0 calc(104px + var(--sab));
+}
+
+.scr--assistant .asistente-wrap.has-chat {
+  padding-top: calc(var(--safe-top) + 126px);
 }
 
 .scr--assistant .asistente-sticky-top {
@@ -2434,6 +2441,18 @@
   font-weight: 750;
   letter-spacing: -0.06em;
   line-height: 1.04;
+}
+
+.scr--assistant .asistente-personal-note {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.35;
+  margin: 5px 0 0;
+  max-width: 34rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .scr--assistant .asistente-chips {

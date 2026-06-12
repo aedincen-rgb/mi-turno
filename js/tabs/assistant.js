@@ -107,6 +107,9 @@ function AsistenteTab(props) {
   var msd = useState(false);
   var menuOpen = msd[0],
     setMenuOpen = msd[1];
+  var hi = useState(0);
+  var heroIdx = hi[0],
+    setHeroIdx = hi[1];
   var endRef = useRef(null);
   var inputRef = useRef(null);
   var recognitionRef = useRef(null);
@@ -586,6 +589,22 @@ function AsistenteTab(props) {
       }
     },
     [input]
+  );
+
+  // Rotación de microcopy contextual junto al saludo, solo en estado inicial.
+  useEffect(
+    function () {
+      if (tieneConversacion) return;
+      var t = setInterval(function () {
+        setHeroIdx(function (n) {
+          return n + 1;
+        });
+      }, 7000);
+      return function () {
+        clearInterval(t);
+      };
+    },
+    [tieneConversacion]
   );
 
   var clearChat = useCallback(
@@ -1311,6 +1330,22 @@ function AsistenteTab(props) {
     );
   }
 
+  var phrases = typeof _aiHeroPhrases === 'function' ? _aiHeroPhrases(props) : [];
+  if (typeof aiBriefing === 'function') {
+    var briefing = aiBriefing(
+      props.calc
+        ? Object.assign({}, props.calc, {
+            ahora: new Date(),
+            salario: props.salario,
+            vh: props.vh,
+            turnos: props.turnos
+          })
+        : null
+    );
+    if (briefing) phrases = [briefing].concat(phrases);
+  }
+  var personalNote = phrases && phrases.length ? phrases[heroIdx % phrases.length] : '';
+
   return h(
     'section',
     {
@@ -1342,7 +1377,10 @@ function AsistenteTab(props) {
         h(
           'div',
           { className: 'asistente-top-title' },
-          h('h1', { className: 'asistente-greeting' }, saludo + '.')
+          h('h1', { className: 'asistente-greeting' }, saludo + '.'),
+          !tieneConversacion && personalNote
+            ? h('p', { className: 'asistente-personal-note', key: heroIdx }, personalNote)
+            : null
         )
       ),
 
