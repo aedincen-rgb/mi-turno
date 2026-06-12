@@ -1082,6 +1082,7 @@ function AsistenteTab(props) {
   ];
 
   var menuItems = [
+    { id: 'volver', label: 'Volver', hint: 'Regresar a la app', icon: '←', featured: true },
     { id: 'ingresos', label: 'Ingresos', hint: 'Ayer, mes y proyección', icon: '$' },
     { id: 'tiempo', label: 'Tiempo', hint: 'Horas, descansos y rachas', icon: '◷' },
     { id: 'reportes', label: 'Reportes', hint: 'Exportar o enviar informe', icon: '▤' },
@@ -1097,6 +1098,11 @@ function AsistenteTab(props) {
 
   function runMenuItem(item) {
     haptic();
+    if (item.id === 'volver') {
+      closeMenu();
+      if (props.onNavigate) props.onNavigate('home', null);
+      return;
+    }
     if (item.id === 'reportes') {
       closeMenu();
       send('Enviá mi reporte e informe por correo');
@@ -1364,11 +1370,17 @@ function AsistenteTab(props) {
                 var open = openCat === item.id;
                 return h(
                   'div',
-                  { key: item.id, className: 'asistente-menu-group' + (open ? ' open' : '') },
+                  {
+                    key: item.id,
+                    className:
+                      'asistente-menu-group' +
+                      (open ? ' open' : '') +
+                      (item.featured ? ' featured' : '')
+                  },
                   h(
                     'button',
                     {
-                      className: 'asistente-menu-item',
+                      className: 'asistente-menu-item' + (item.featured ? ' featured' : ''),
                       type: 'button',
                       'aria-expanded': open,
                       onClick: function () {
