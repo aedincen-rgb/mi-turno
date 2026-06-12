@@ -814,7 +814,6 @@ var _AI_AGENTIC_INTENTS = {
 
 function _aiShouldRunAgent(intent, question, thought, verbose) {
   if (!intent) return false;
-  if (typeof window !== 'undefined' && window._geminiModeOn) return false;
   if (_AI_AGENTIC_INTENTS[intent]) return true;
   if (verbose && thought && thought.isFinancial) return true;
   return false;

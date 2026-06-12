@@ -201,10 +201,6 @@ var AI_APP_KB = [
     a: 'El **modo manos libres** te permite hablar con la IA sin tocar el teléfono:\n\n1. Activá el switch "Modo manos libres" debajo del chat\n2. La IA te da un briefing (cuánto llevás)\n3. Después, **te escucha** automáticamente — vos hablás, ella responde y te lee la respuesta\n4. Para pausar, desactivá el switch\n\nIdeal para cuando estás trabajando y no podés tocar la pantalla.'
   },
   {
-    q: ['que es gemini', 'modo gemini', 'ia de google', 'gemini vs normal'],
-    a: '**Gemini** es un modo experimental que usa la IA de Google para preguntas complejas:\n\n• Activado con el ícono ✦ en el chat (color blanco = Gemini, gris = IA local)\n• **Requiere internet**\n• Usa tus datos reales: Gemini entiende la pregunta, pero la app calcula\n• Para conceptos laborales usa la IA de Google\n• Para tus números usa el motor local de Mi Turno\n\nLa IA local es 100% offline y muy capaz — probala primero.'
-  },
-  {
     q: [
       'que es la ley 2101',
       'reduccion jornada',

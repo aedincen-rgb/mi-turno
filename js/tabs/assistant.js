@@ -148,16 +148,6 @@ function AsistenteTab(props) {
     setAudioLevel = al[1];
   var audioAnimRef = useRef(null);
 
-  // Sincronizar el global _geminiModeOn con el estado React al montar.
-  // Necesario porque send() lee window._geminiModeOn (closure captura el ref global,
-  // no el estado React, para evitar que la closure quede desactualizada en el setTimeout).
-  useEffect(
-    function () {
-      window._geminiModeOn = geminiMode;
-    },
-    [geminiMode]
-  );
-
   // Cleanup al desmontar el componente (evita memory leaks)
   useEffect(function () {
     return function () {
@@ -193,18 +183,6 @@ function AsistenteTab(props) {
   // Acción del agente pendiente de confirmación hablada (modo manos libres).
   // Guarda el objeto execute mientras el agente espera un "sí"/"no".
   var pendingActionRef = useRef(null);
-
-  // Modo Gemini forzado: bypass completo del NLP local.
-  // Persistido sin uid porque es preferencia del device, no del usuario.
-  var gm = useState(function () {
-    try {
-      return localStorage.getItem('mt_gemini_mode') === '1';
-    } catch (_) {
-      return false;
-    }
-  });
-  var geminiMode = gm[0],
-    setGeminiMode = gm[1];
 
   var tieneConversacion = msgs.length > 0;
 
@@ -838,82 +816,6 @@ function AsistenteTab(props) {
           };
           var resp = await Promise.resolve(aiAnswer(q, aiState));
           var newMsg;
-
-          // Modo Gemini activado: pipeline "Gemini entiende, la app calcula"
-          // Flujo: Gemini extrae {intent, params, needs_calculation}
-          //   → si needs_calculation: llamar calculadora local con los params
-          //   → si !needs_calculation (concepto/ayuda): Gemini responde en prosa
-          if (window._geminiModeOn && typeof aiGeminiExtract === 'function' && isOnline()) {
-            setMsgs(function (p) {
-              return p.concat([{ role: 'ai', content: '...', _geminiPending: true }]);
-            });
-            try {
-              var extraction = await aiGeminiExtract(q, aiState);
-              setMsgs(function (p) {
-                return p.filter(function (m) {
-                  return !m._geminiPending;
-                });
-              });
-              if (extraction && extraction.needs_calculation) {
-                // Calculadora local con los params extraídos — CERO alucinaciones
-                var calcResp = _aiDispatchCalc(extraction.intent, extraction.params, aiState);
-                if (calcResp) {
-                  resp = calcResp;
-                }
-                // Si la calculadora local no manejó el intent, mantener resp local
-              } else if (extraction && !extraction.needs_calculation) {
-                // Pregunta conceptual o ayuda: Gemini responde en prosa
-                var geminiProsa = await aiGeminiAsk(q, aiState);
-                if (geminiProsa) resp = geminiProsa;
-              }
-              // extraction null → mantener resp local (Gemini falló)
-            } catch (_ge) {
-              setMsgs(function (p) {
-                return p.filter(function (m) {
-                  return !m._geminiPending;
-                });
-              });
-            }
-          }
-
-          // Detectar respuesta de fallback del NLP local para escalar a Gemini.
-          // El fallback genérico siempre contiene esta frase distintiva.
-          var respText =
-            resp && typeof resp === 'object' ? resp.text || '' : resp ? String(resp) : '';
-          var isLocalFallback =
-            !window._geminiModeOn && respText.indexOf('No estoy seguro de qué buscas') !== -1;
-
-          if (isLocalFallback && typeof aiGeminiAsk === 'function' && isOnline()) {
-            // Indicador sutil: reemplaza el fallback por "pensando..." mientras Gemini responde
-            setMsgs(function (p) {
-              return p.concat([{ role: 'ai', content: '...', _geminiPending: true }]);
-            });
-            try {
-              var geminiReply = await aiGeminiAsk(q, aiState);
-              if (geminiReply) {
-                resp = geminiReply;
-                // Quitar el placeholder antes de poner la respuesta real
-                setMsgs(function (p) {
-                  return p.filter(function (m) {
-                    return !m._geminiPending;
-                  });
-                });
-              } else {
-                // Gemini falló → mantener la respuesta local original
-                setMsgs(function (p) {
-                  return p.filter(function (m) {
-                    return !m._geminiPending;
-                  });
-                });
-              }
-            } catch (_e) {
-              setMsgs(function (p) {
-                return p.filter(function (m) {
-                  return !m._geminiPending;
-                });
-              });
-            }
-          }
 
           if (resp && typeof resp === 'object' && resp.execute) {
             if (_needsConfirm(resp.execute)) {
@@ -1836,49 +1738,23 @@ function AsistenteTab(props) {
       'div',
       { className: 'asistente-composer' },
 
-      // Wrapper relativo para poder posicionar el toggle dentro del input
-      h(
-        'div',
-        { className: 'asistente-input-wrap' },
-        h('textarea', {
-          ref: inputRef,
-          className: 'asistente-input' + (listening ? ' listening' : ''),
-          'aria-label': 'Tu mensaje al asistente',
-          placeholder: listening ? 'Escuchando…' : 'Escribe aquí...',
-          value: input,
-          onChange: function (e) {
-            setInput(e.target.value);
-          },
-          onKeyDown: function (e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault();
-              send();
-            }
-          },
-          rows: 1
-        }),
-
-        // Toggle Gemini: posicionado absolute dentro del textarea
-        h(
-          'button',
-          {
-            className: 'gem-toggle' + (geminiMode ? ' active' : ''),
-            title: geminiMode ? 'Gemini' : 'IA local',
-            'aria-label': geminiMode ? 'Modo Gemini activo' : 'Modo IA local activo',
-            'aria-pressed': geminiMode,
-            onClick: function () {
-              haptic();
-              var next = !geminiMode;
-              setGeminiMode(next);
-              window._geminiModeOn = next;
-              try {
-                localStorage.setItem('mt_gemini_mode', next ? '1' : '0');
-              } catch (_) {}
-            }
-          },
-          '✦'
-        )
-      ),
+      h('textarea', {
+        ref: inputRef,
+        className: 'asistente-input' + (listening ? ' listening' : ''),
+        'aria-label': 'Tu mensaje al asistente',
+        placeholder: listening ? 'Escuchando…' : 'Escribe aquí...',
+        value: input,
+        onChange: function (e) {
+          setInput(e.target.value);
+        },
+        onKeyDown: function (e) {
+          if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            send();
+          }
+        },
+        rows: 1
+      }),
 
       // Botón inteligente: tap = enviar (si hay texto) / tap = alternar mic (sin texto)
       //                    mantener pulsado = grabar voz
