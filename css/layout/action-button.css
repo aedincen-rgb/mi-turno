@@ -7,185 +7,170 @@
   margin-top: 24px;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
   gap: 18px;
 }
 
-/* Contenedor del botón + anillos */
-.action-btn-wrap {
-  position: relative;
-  width: 136px;
-  height: 136px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* Anillo exterior pulsante (solo visible en estado activo) */
-.action-ring {
-  position: absolute;
-  inset: -6px;
-  border-radius: 50%;
-  border: 3px solid transparent;
-  pointer-events: none;
-  transition:
-    border-color 0.5s var(--ease),
-    box-shadow 0.5s var(--ease);
-}
-.action-ring.active {
-  border-color: rgba(91, 134, 229, 0.35);
-  box-shadow:
-    0 0 40px rgba(91, 134, 229, 0.25),
-    inset 0 0 30px rgba(91, 134, 229, 0.08);
-  animation: ringPulse 2.2s ease-in-out infinite;
-}
-
-@keyframes ringPulse {
-  0%,
-  100% {
-    transform: scale(1);
-    border-color: rgba(91, 134, 229, 0.3);
-    box-shadow: 0 0 30px rgba(91, 134, 229, 0.18);
-  }
-  50% {
-    transform: scale(1.06);
-    border-color: rgba(91, 134, 229, 0.55);
-    box-shadow: 0 0 55px rgba(91, 134, 229, 0.35);
-  }
-}
-
-/* Círculo de progreso (borde superior, tipo Apple Watch) */
-.action-progress-ring {
-  position: absolute;
-  inset: -4px;
-  border-radius: 50%;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.4s var(--ease);
-}
-.action-progress-ring.active {
-  opacity: 1;
-}
-
-.action-btn {
+/* ── Tarjeta horizontal "Toca para iniciar" ── */
+.start-card {
   will-change: transform;
-  width: 110px;
-  height: 110px;
-  border-radius: 50%;
-  border: 1.5px solid rgba(255, 255, 255, 0.25);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  color: #fff;
   position: relative;
-  z-index: 2;
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 17px 17px 17px 26px;
+  border-radius: 26px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-heavy);
+  -webkit-backdrop-filter: var(--blur-sm);
+  backdrop-filter: var(--blur-sm);
+  color: var(--text);
   cursor: pointer;
-  padding: 0;
   font-family: inherit;
   overflow: hidden;
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-tap-highlight-color: transparent;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    0 10px 30px rgba(91, 134, 229, 0.16),
+    0 2px 8px rgba(28, 31, 39, 0.05);
   transition:
-    transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
-    box-shadow 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transform 0.35s var(--spring),
+    box-shadow 0.35s var(--ease);
+  animation: startCardBreath 4s ease-in-out infinite;
 }
 
-/* Brillo superior (gloss) */
-.action-btn::before {
+.start-card:active {
+  transform: scale(0.97);
+  animation: none;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    0 4px 14px rgba(91, 134, 229, 0.14);
+}
+
+/* Texto del CTA */
+.start-card-text {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  color: var(--text);
+}
+
+/* Botón circular azul con flecha */
+.start-card-circle {
+  flex: 0 0 auto;
+  position: relative;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  overflow: hidden;
+}
+
+/* Gloss superior del círculo */
+.start-card-circle::before {
   content: '';
   position: absolute;
   inset: 0;
   border-radius: inherit;
   background: linear-gradient(
     180deg,
-    rgba(255, 255, 255, 0.45) 0%,
-    rgba(255, 255, 255, 0.1) 35%,
-    rgba(255, 255, 255, 0) 55%
+    rgba(255, 255, 255, 0.4) 0%,
+    rgba(255, 255, 255, 0.08) 45%,
+    rgba(255, 255, 255, 0) 60%
   );
   pointer-events: none;
 }
 
+.start-card-circle svg {
+  position: relative;
+  z-index: 1;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25));
+}
+
 /* ── GO · Iniciar ── */
-.action-btn-go {
-  background: linear-gradient(
-    160deg,
-    rgba(140, 180, 255, 0.92) 0%,
-    rgba(100, 155, 245, 0.9) 30%,
-    rgba(70, 120, 225, 0.92) 70%,
-    rgba(55, 100, 210, 0.95) 100%
-  );
+.start-card--go .start-card-circle {
+  background: linear-gradient(150deg, #7da8ff 0%, #5b86e5 48%, #4068d8 100%);
   box-shadow:
-    0 8px 32px rgba(91, 134, 229, 0.35),
-    0 2px 8px rgba(91, 134, 229, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3);
-  animation: btnFloat 3.8s ease-in-out infinite;
+    0 6px 18px rgba(91, 134, 229, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+.start-card--go .start-card-circle svg {
+  animation: arrowNudge 2.4s ease-in-out infinite;
 }
 
-.action-btn-go:active {
-  transform: scale(0.91);
+/* ── STOP · Detener (azul profundo iOS, NO índigo/morado) ── */
+.start-card--stop .start-card-circle {
+  background: linear-gradient(150deg, #3a8aff 0%, #2270f2 45%, #165ad8 100%);
   box-shadow:
-    0 2px 12px rgba(91, 134, 229, 0.25),
-    inset 0 2px 4px rgba(0, 0, 0, 0.12);
-  animation: none;
+    0 6px 18px rgba(34, 112, 242, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
 }
 
-/* ── STOP · Parar (azul profundo iOS, NO índigo/morado) ── */
-.action-btn-stop {
-  background: linear-gradient(
-    160deg,
-    rgba(58, 138, 255, 0.95) 0%,
-    rgba(34, 112, 242, 0.92) 32%,
-    rgba(22, 90, 216, 0.93) 70%,
-    rgba(16, 70, 184, 0.96) 100%
-  );
-  box-shadow:
-    0 8px 32px rgba(34, 112, 242, 0.35),
-    0 2px 8px rgba(34, 112, 242, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3);
-}
-
-.action-btn-stop:active {
-  transform: scale(0.91);
-  box-shadow:
-    0 2px 12px rgba(34, 112, 242, 0.25),
-    inset 0 2px 4px rgba(0, 0, 0, 0.12);
-}
-
-/* Flotación suave (GO state) */
-@keyframes btnFloat {
+/* Respiración suave del shadow (estado GO) */
+@keyframes startCardBreath {
   0%,
   100% {
-    transform: translateY(0);
     box-shadow:
-      0 8px 32px rgba(91, 134, 229, 0.35),
-      0 2px 8px rgba(91, 134, 229, 0.2),
-      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+      inset 0 1px 0 rgba(255, 255, 255, 0.5),
+      0 10px 30px rgba(91, 134, 229, 0.16),
+      0 2px 8px rgba(28, 31, 39, 0.05);
   }
   50% {
-    transform: translateY(-4px);
     box-shadow:
-      0 16px 44px rgba(91, 134, 229, 0.45),
-      0 4px 14px rgba(91, 134, 229, 0.28),
-      inset 0 1px 0 rgba(255, 255, 255, 0.35);
+      inset 0 1px 0 rgba(255, 255, 255, 0.5),
+      0 16px 42px rgba(91, 134, 229, 0.26),
+      0 2px 8px rgba(28, 31, 39, 0.05);
   }
 }
 
-/* Icono SVG */
-.action-icon {
-  line-height: 1;
-  display: block;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+/* Empujoncito de la flecha */
+@keyframes arrowNudge {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(3px);
+  }
 }
 
-/* Label debajo del ícono */
-.action-lbl {
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 2.5px;
-  text-transform: uppercase;
-  opacity: 0.9;
+/* ── Modo oscuro: glass oscuro + glow azul ── */
+[data-theme='dark'] .start-card {
+  border-color: var(--glass-border);
+  box-shadow:
+    inset 0 1px 0 var(--spec-top),
+    0 10px 32px rgba(0, 0, 0, 0.42),
+    0 0 22px rgba(125, 168, 255, 0.1);
+  animation: startCardBreathDark 4s ease-in-out infinite;
+}
+[data-theme='dark'] .start-card:active {
+  animation: none;
+  box-shadow:
+    inset 0 1px 0 var(--spec-top),
+    0 4px 14px rgba(0, 0, 0, 0.4);
+}
+
+@keyframes startCardBreathDark {
+  0%,
+  100% {
+    box-shadow:
+      inset 0 1px 0 var(--spec-top),
+      0 10px 32px rgba(0, 0, 0, 0.42),
+      0 0 22px rgba(125, 168, 255, 0.1);
+  }
+  50% {
+    box-shadow:
+      inset 0 1px 0 var(--spec-top),
+      0 14px 38px rgba(0, 0, 0, 0.46),
+      0 0 32px rgba(125, 168, 255, 0.22);
+  }
 }
 
 /* Caja de info del turno activo (debajo del botón) */
