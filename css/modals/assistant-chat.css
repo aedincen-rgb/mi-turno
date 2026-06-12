@@ -10,68 +10,38 @@
 .asistente-wrap {
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  padding: 4px 0 24px;
+  height: 100%;
+  padding: 0;
+  overflow: hidden;
 }
 
-/* ─── STICKY TOP: hero + about + chips fijos al hacer scroll (v264) ─── */
+/* ─── STICKY TOP: hero fijo sin transparencia ─── */
 .asistente-sticky-top {
   position: sticky;
   top: calc(var(--safe-top) + 56px);
   z-index: 10;
-  background: linear-gradient(180deg, var(--bg, rgba(200,223,255,0.97)) 0%, var(--bg, rgba(240,245,255,0.92)) 70%, transparent 100%);
-  backdrop-filter: var(--blur-md);
-  -webkit-backdrop-filter: var(--blur-md);
-  padding-bottom: 0;
-  margin-bottom: -8px;
+  background: var(--bg);
+  padding-bottom: 4px;
+  margin-bottom: 0;
 }
 
-/* ─── HERO · iOS Style (v80) ─── */
+/* ─── HERO · Título alineado a la izquierda ─── */
 .asistente-hero {
   display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  padding: 8px 0 4px;
-  animation: fadeUp 0.5s var(--spring);
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0 2px;
 }
 .asistente-hero-orb {
-  position: relative;
-  width: 60px;
-  height: 60px;
-  flex-shrink: 0;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--surface), var(--surface2));
-  border: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 6px 22px var(--accent-glow);
-  animation: heroOrbPulse 4s ease-in-out infinite;
-}
-@keyframes heroOrbPulse {
-  0%,
-  100% {
-    box-shadow: 0 6px 22px var(--accent-glow);
-  }
-  50% {
-    box-shadow:
-      0 6px 32px var(--accent-glow),
-      0 0 0 6px color-mix(in srgb, var(--accent) 8%, transparent);
-  }
-}
-.asistente-hero-orb-symbol {
-  font-size: 28px;
-  font-weight: 300;
-  color: var(--accent);
-  line-height: 1;
+  display: none;
 }
 .asistente-hero-txt {
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding-top: 2px;
+  gap: 2px;
+  padding-top: 0;
 }
 
 /* ─── OLD orb (usado en chat bubbles) ─── */
@@ -311,12 +281,14 @@
   transform: translateX(4px);
 }
 
-/* ─── CONVERSACIÓN (sin altura fija — fluye con scroll de página) ─── */
+/* ─── CONVERSACIÓN (scroll propio, debajo del header fijo) ─── */
 .asistente-chat {
+  flex: 1;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 20px;
-  padding: 8px 2px 4px;
+  padding: 12px 2px 16px;
   animation: fadeUp 0.4s var(--ease);
 }
 .asistente-msg {

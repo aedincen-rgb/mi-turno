@@ -161,6 +161,13 @@ function ConfigTabInner(props) {
     setShowPhotoSheet = asp[1];
   var fileInputRef = useRef(null);
 
+  // ── Género (M/F, local-only) ──
+  var gend = useState(function () {
+    return leer(dk(uid, 'gender'), null); // null | 'male' | 'female'
+  });
+  var gender = gend[0],
+    setGender = gend[1];
+
   function onPickPhoto(file) {
     if (!file) return;
     if (file.size > 8 * 1024 * 1024) {

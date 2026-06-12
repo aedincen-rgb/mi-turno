@@ -193,6 +193,37 @@
   margin-top: 1px;
 }
 
+/* ── Selector de género (segmented control sutil) ── */
+.ajustes-gender {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+.ajustes-gender-btn {
+  flex: 1;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s var(--ease);
+  -webkit-tap-highlight-color: transparent;
+  text-align: center;
+}
+.ajustes-gender-btn.active {
+  background: var(--accent-dim);
+  color: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent-dim);
+}
+.ajustes-gender-btn:active {
+  transform: scale(0.96);
+}
+
 /* Estado de sincronización */
 .ajustes-profile-status {
   display: flex;
