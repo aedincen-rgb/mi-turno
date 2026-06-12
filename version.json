@@ -1,4 +1,4 @@
 {
-  "v": "v263",
-  "label": "Efecto de tipeo en respuestas de la IA"
+  "v": "v266",
+  "label": "NLP: preservar tiempo + sinónimos + compound intents + clean prefix"
 }

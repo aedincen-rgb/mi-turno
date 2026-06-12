@@ -1122,37 +1122,41 @@ function AsistenteTab(props) {
       'aria-label': 'Asistente AI'
     },
 
-    // ═══ HERO iOS STYLE: orb izq + texto der (siempre visible) ═══
+    // ═══ STICKY TOP: hero + about + chips fijos al hacer scroll ═══
     h(
       'div',
-      { className: 'asistente-hero' },
+      { className: 'asistente-sticky-top' },
+
+      // ═══ HERO iOS STYLE: orb izq + texto der (siempre visible) ═══
       h(
         'div',
-        { className: 'asistente-hero-orb' },
-        h('div', { className: 'asistente-hero-orb-symbol' }, '✦')
+        { className: 'asistente-hero' },
+        h(
+          'div',
+          { className: 'asistente-hero-orb' },
+          h('div', { className: 'asistente-hero-orb-symbol' }, '✦')
+        ),
+        h(
+          'div',
+          { className: 'asistente-hero-txt' },
+          h('h1', { className: 'asistente-greeting' }, saludo + '.'),
+          h('div', { className: 'asistente-phrase', key: heroIdx }, phrases[heroIdx % phrases.length])
+        )
       ),
+
+      // ═══ ABOUT: puente entre el saludo y la casilla (desaparece al conversar) ═══
+      !tieneConversacion &&
+        h(
+          'p',
+          { className: 'asistente-about' },
+          'Soy tu asistente. Conozco tus turnos, recargos y movimientos del mes — ' +
+            'pregúntame en tus palabras o explorá las categorías.'
+        ),
+
+      // ═══ QUICK CHIPS (acciones rápidas, siempre visibles) ═══
       h(
         'div',
-        { className: 'asistente-hero-txt' },
-        h('h1', { className: 'asistente-greeting' }, saludo + '.'),
-        h('div', { className: 'asistente-phrase', key: heroIdx }, phrases[heroIdx % phrases.length])
-      )
-    ),
-
-    // ═══ ABOUT: puente entre el saludo y la casilla (desaparece al conversar) ═══
-    // Se inserta aquí para contextualizar la invitación a escribir en el composer.
-    !tieneConversacion &&
-      h(
-        'p',
-        { className: 'asistente-about' },
-        'Soy tu asistente. Conozco tus turnos, recargos y movimientos del mes — ' +
-          'pregúntame en tus palabras o explorá las categorías.'
-      ),
-
-    // ═══ QUICK CHIPS (acciones rápidas, siempre visibles) ═══
-    h(
-      'div',
-      { className: 'asistente-chips' },
+        { className: 'asistente-chips' },
       h(
         'button',
         {
@@ -1684,7 +1688,7 @@ function AsistenteTab(props) {
               style: { transform: 'scale(' + (1 + audioLevel * 0.5) + ')' }
             })
           : null,
-        // Icono dinámico — muestra ondas de audio cuando escucha
+        // Icono dinámico — muestra ondas de audio cuando escucha, micrófono SVG en reposo
         listening
           ? h(
               'div',
@@ -1705,8 +1709,22 @@ function AsistenteTab(props) {
           : busy
             ? h('span', { className: 'sp-in' })
             : input.trim()
-              ? '↑'
-              : '🎤'
+              ? h(
+                  'svg',
+                  { viewBox: '0 0 24 24', width: 22, height: 22, fill: 'none', stroke: 'currentColor', 'stroke-width': 2.2, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' },
+                  h('line', { x1: 12, y1: 19, x2: 12, y2: 23 }),
+                  h('line', { x1: 8, y1: 23, x2: 16, y2: 23 }),
+                  h('path', { d: 'M12 1a4 4 0 0 0-4 4v7a4 4 0 0 0 8 0V5a4 4 0 0 0-4-4z' }),
+                  h('path', { d: 'M19 10v2a7 7 0 0 1-14 0v-2' })
+                )
+              : h(
+                  'svg',
+                  { viewBox: '0 0 24 24', width: 22, height: 22, fill: 'none', stroke: 'currentColor', 'stroke-width': 2.2, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' },
+                  h('path', { d: 'M12 1a4 4 0 0 0-4 4v7a4 4 0 0 0 8 0V5a4 4 0 0 0-4-4z' }),
+                  h('path', { d: 'M19 10v2a7 7 0 0 1-14 0v-2' }),
+                  h('line', { x1: 12, y1: 19, x2: 12, y2: 23 }),
+                  h('line', { x1: 8, y1: 23, x2: 16, y2: 23 })
+                )
       )
     ),
 

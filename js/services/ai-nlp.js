@@ -1,21 +1,23 @@
 // ════════════════════════════════════════════════════════════════
 //  MI TURNO · services/ai-nlp.js
-//  Motor NLP mejorado — v169
+//  Motor NLP mejorado — v267
 //  Comprensión de lenguaje natural en español colombiano.
 //  100% offline · ES5 · sin dependencias externas.
 //
 //  Capacidades:
 //    · Clasificación de intenciones por puntaje ponderado
 //    · Stemming español simplificado
-//    · Stop words + tokenización (respeta palabras de tiempo)
+//    · Stop words + tokenización (respeta palabras de tiempo e interrogativas)
 //    · Preprocesador de frases conversacionales (quita muletillas)
 //    · Compound matching: dinero+tiempo, acción+objeto
-//    · Diccionario de sinónimos expandido (80+ entradas)
+//    · Diccionario de sinónimos expandido (200+ entradas)
 //    · Similitud de Jaccard para matching difuso
 //    · Tolerancia a typos (Levenshtein para palabras cortas)
 //    · Estado conversacional multi-turno
 //    · Detección de tono emocional (empatía contextual)
 //    · Bonus por anclaje temporal (detecta ayer/hoy/semana/mes)
+//    · v267: time-anchoring bonus redirige preguntas compuestas
+//      (ej. "cuanto dinero gane ayer" → intent ayer, no total_ganado)
 // ════════════════════════════════════════════════════════════════
 
 // ─── STOP WORDS ESPAÑOL ───────────────────────────────────────
@@ -121,6 +123,8 @@ var AI_STOP = {
   // NOTA: ahora, hoy, ayer, mañana, siempre, nunca NO son stop words.
   // Son palabras de anclaje temporal críticas para entender
   // preguntas como "cuanto dinero gane ayer" vs "cuanto gane".
+  // ⚠️  v267: también "cuanto", "cuando", "donde", "como" dejan de ser stop
+  // words — son palabras interrogativas que portan significado esencial.
   bueno: 1,
   buena: 1,
   mal: 1,
@@ -420,6 +424,10 @@ var AI_SYNONYMS = {
   devengado: 'dinero',
   remuneracion: 'dinero',
   remuneración: 'dinero',
+  liquido: 'dinero',
+  líquido: 'dinero',
+  neto: 'dinero',
+  bruto: 'dinero',
   // Salario
   sueldo: 'salario',
   nomina: 'salario',
@@ -654,7 +662,79 @@ var AI_SYNONYMS = {
   abrirse: 'irse',
   volarse: 'irse',
   pegar: 'ir',
-  pegarse: 'ir'
+  pegarse: 'ir',
+  // ═══ v267: sinónimos expandidos para preguntas compuestas ═══
+  // Verbos de consulta en todas sus conjugaciones
+  gano: 'gane',
+  ganas: 'gane',
+  gana: 'gane',
+  ganan: 'gane',
+  ganamos: 'gane',
+  cobre: 'gane',
+  cobra: 'gane',
+  cobraste: 'gane',
+  pagaste: 'gane',
+  hiciste: 'gane',
+  sacaste: 'gane',
+  llevas: 'gane',
+  llevamos: 'gane',
+  acumulas: 'gane',
+  acumule: 'gane',
+  consigues: 'gane',
+  obtienes: 'gane',
+  recibes: 'gane',
+  debengan: 'gane',
+  // Tiempo
+  manana: 'mañana',
+  madrugada: 'mañana',
+  amanecer: 'manana',
+  tarde: 'tarde',
+  anochecer: 'noche',
+  anoche: 'ayer',
+  antier: 'ayer',
+  anteayer: 'ayer',
+  ahorita: 'ahora',
+  actualmente: 'ahora',
+  'en estos dias': 'hoy',
+  'en estos días': 'hoy',
+  'al momento': 'ahora',
+  'en tiempo real': 'ahora',
+  // Expresiones compuestas frecuentes
+  'cuanto he ganado': 'total_ganado',
+  'cuanto me gane': 'total_ganado',
+  'cuanto es mi sueldo': 'total_ganado',
+  'cuanto me pagan': 'total_ganado',
+  'que gane': 'total_ganado',
+  'cuanto me dan': 'total_ganado',
+  'cuanto recibo': 'total_ganado',
+  'cuanto saco': 'total_ganado',
+  'cuanto saque': 'total_ganado',
+  'cuanto llevo ganado': 'total_ganado',
+  'cuanta ganancia': 'total_ganado',
+  'mis ganancias': 'total_ganado',
+  'lo que gane': 'total_ganado',
+  'lo que he ganado': 'total_ganado',
+  'mi sueldo': 'total_ganado',
+  'mi salario': 'total_ganado',
+  'mi paga': 'total_ganado',
+  'cuanto hare': 'proyeccion',
+  'cuanto haré': 'proyeccion',
+  'al final cuanto': 'proyeccion',
+  'cuanto ganare': 'proyeccion',
+  'cuanto ganaré': 'proyeccion',
+  'cuanto terminare': 'proyeccion',
+  'cuanto terminare ganando': 'proyeccion',
+  'proyeccion de ingresos': 'proyeccion',
+  'proyeccion de ganancias': 'proyeccion',
+  'estimacion de ingresos': 'proyeccion',
+  // Comparativa
+  'mejor que el mes': 'comparativa_mes',
+  'peor que el mes': 'comparativa_mes',
+  'comparado con el mes': 'comparativa_mes',
+  'vs el mes pasado': 'comparativa_mes',
+  'contra el mes anterior': 'comparativa_mes',
+  'diferencia mes pasado': 'comparativa_mes',
+  'comparacion mes anterior': 'comparativa_mes'
 };
 
 function aiExpandSynonym(w) {
@@ -1675,16 +1755,37 @@ function aiClassify(text, convState, userContext) {
       _raw.indexOf('mañana') >= 0 ||
       _raw.indexOf('semana') >= 0 ||
       _raw.indexOf('finde') >= 0;
+    var _hasMoneyWord =
+      _raw.indexOf('cuanto') >= 0 ||
+      _raw.indexOf('dinero') >= 0 ||
+      _raw.indexOf('plata') >= 0 ||
+      _raw.indexOf('gane') >= 0 ||
+      _raw.indexOf('gan') >= 0 ||
+      _raw.indexOf('cobre') >= 0 ||
+      _raw.indexOf('cobr') >= 0 ||
+      _raw.indexOf('pago') >= 0 ||
+      _raw.indexOf('llevo') >= 0 ||
+      _raw.indexOf('ganancia') >= 0;
+    // Si el usuario menciona tiempo + dinero juntos, la intención real
+    // es sobre ESE momento específico, no sobre el mes completo.
+    var _combinedTimeMoney = _hasTimeWord && _hasMoneyWord;
+
     var _timeIntentIds = { hoy: 1, ayer: 1, comparativa_semana: 1 };
     if (_hasTimeWord && _timeIntentIds[intent.id]) {
-      score += 4; // boost fuerte: si el usuario menciona tiempo, priorizar intents temporales
+      score += _combinedTimeMoney ? 10 : 5; // boost fuerte si hay dinero+tiempo juntos
     }
+    // Penalizar intents genéricos de dinero (total_ganado, proyeccion)
+    // cuando el usuario claramente pregunta por un momento específico.
+    if (_combinedTimeMoney && (intent.id === 'total_ganado' || intent.id === 'proyeccion')) {
+      score -= 3; // reducir para que no compitan con ayer/hoy
+    }
+
     // Si hay palabra de mes y es intent de proyección o comparativa_mes
     if (
       (_raw.indexOf('mes') >= 0 || _raw.indexOf('mensual') >= 0) &&
       (intent.id === 'proyeccion' || intent.id === 'comparativa_mes')
     ) {
-      score += 2;
+      score += 3;
     }
 
     // ── BONUS POR ANCLAJE DE CONOCIMIENTO LABORAL ──
