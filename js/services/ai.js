@@ -1982,9 +1982,10 @@ function _aiAnswerCore(question, state) {
     var _suff = typeof aiEmpatheticSuffix === 'function' ? aiEmpatheticSuffix(_mood.mood) : '';
     var _resp = _aiDispatchNLP(_nlp.intent, c, state, q, t);
     if (_resp) {
-      // _resp puede ser string o {text, action}
-      var _isAction = _resp && typeof _resp === 'object' && _resp.action;
-      var _text = _isAction ? _resp.text : _resp;
+      // _resp puede ser string o {text, action} o {text, chart}
+      var _isObj = _resp && typeof _resp === 'object';
+      var _isAction = _isObj && _resp.action;
+      var _text = _isObj ? _resp.text || '' : _resp;
       var _final = _pref + _text + _suff;
       if (typeof aiEnhancedRespond === 'function') {
         var _enriched = aiEnhancedRespond(
@@ -1998,6 +1999,7 @@ function _aiAnswerCore(question, state) {
         );
         if (_enriched && _enriched.text) {
           if (_isAction) _enriched.action = _resp.action;
+          if (_isObj && _resp.chart) _enriched.chart = _resp.chart;
           return _enriched;
         }
       }
@@ -2115,7 +2117,7 @@ function _aiAnswerCore(question, state) {
       '**.\n' +
       '• Requisito: Ganar hasta 2 SMMLV.\n' +
       (tieneDerecho
-        ? '✅ Según tus ingresos actuales, **tienes derecho** a percibirlo.'
+        ? '✅ Según tus ingresos actuales, **tenés derecho** a percibirlo.'
         : '⚠️ Tus ingresos superan los 2 SMMLV, por lo cual **no aplica** este auxilio.')
     );
   }
@@ -2467,7 +2469,7 @@ function _aiAnswerCore(question, state) {
         'h/sem) o tu racha de ' +
         c.rachaActual +
         ' días sugieren que necesitas un descanso urgente para evitar el agotamiento.'
-      : '✅ **Estado de Bienestar:** Tu carga laboral está dentro de los límites saludables. Mantienes un promedio de ' +
+      : '✅ **Estado de Bienestar:** Tu carga laboral está dentro de los límites saludables. Mantenés un promedio de ' +
         c.hrsSemanales.toFixed(1) +
         'h semanales.';
 
@@ -2551,7 +2553,7 @@ function _aiAnswerCore(question, state) {
     )
   ) {
     return (
-      'Aún no tienes turnos registrados este mes. ¡Pero no pasa nada! 💪 En la pestaña **Inicio** puedes empezar tu primer turno y yo me encargo del resto.\n\nMientras tanto ¿te explico sobre **recargos legales**, **jornada nocturna**, **horas extras** o **próximos festivos**?\n\n' +
+      'Aún no tenés turnos registrados este mes. ¡Pero no pasa nada! 💪 En la pestaña **Inicio** podés empezar tu primer turno y yo me encargo del resto.\n\nMientras tanto ¿te explico sobre **recargos legales**, **jornada nocturna**, **horas extras** o **próximos festivos**?\n\n' +
       _aiPickFollowUp('default')
     );
   }
@@ -2697,7 +2699,7 @@ function _aiAnswerCore(question, state) {
       fCOP(lf) +
       ' (' +
       (lf / c.vh).toFixed(1) +
-      'h aprox.) para igualar el mes pasado. Aún tienes ' +
+      'h aprox.) para igualar el mes pasado. Aún tenés ' +
       c.diasRestantes +
       ' días.'
     );
@@ -2878,7 +2880,7 @@ function _aiAnswerCore(question, state) {
   if (_aiHas(t, 'extra', 'sobretiempo', 'adicional', 'sobrejornad')) {
     if (c.extraMins === 0)
       return (
-        'No tienes horas extras este mes. Las extras se generan al superar las **46h semanales**. Llevas ' +
+        'No tenés horas extras este mes. Las extras se generan al superar las **44h semanales** (Ley 2101/2021). Llevás ' +
         fDur(c.totalMinsSemana) +
         ' esta semana.'
       );
@@ -3200,7 +3202,7 @@ function _aiAnswerCore(question, state) {
 
   // Turno más largo
   if (_aiHas(t, 'turno mas largo', 'jornada larga', 'turno mas extens', 'dia mas largo')) {
-    if (!c.tLargo) return 'Aún no tienes turnos cerrados este mes.';
+    if (!c.tLargo) return 'Aún no tenés turnos cerrados este mes.';
     var dt = new Date(c.tLargo.t.inicio);
     return (
       'Tu turno más largo del mes fue el **' +
@@ -3214,7 +3216,7 @@ function _aiAnswerCore(question, state) {
 
   // Turno más corto
   if (_aiHas(t, 'turno mas corto', 'turno mas breve', 'jornada corta')) {
-    if (!c.tCorto) return 'Aún no tienes turnos cerrados.';
+    if (!c.tCorto) return 'Aún no tenés turnos cerrados.';
     var dtc = new Date(c.tCorto.t.inicio);
     return (
       'Tu turno más corto fue el **' +
@@ -3245,7 +3247,7 @@ function _aiAnswerCore(question, state) {
   if (_aiHas(t, 'racha', 'dias seguidos', 'dias consecut', 'sin descansar')) {
     if (c.rachaActual <= 1)
       return (
-        'No tienes racha activa. Tu última jornada fue ' +
+        'No tenés racha activa. Tu última jornada fue ' +
         (c.rachaActual === 1 ? 'hoy.' : 'hace más de un día.')
       );
     return (
@@ -3440,7 +3442,7 @@ function _aiAnswerCore(question, state) {
     return '✦ **Cómo usar Mi Turno:**\n1. Tab **Inicio** → toca el botón **Iniciar** para arrancar un turno.\n2. El cronómetro corre en tiempo real con cálculo de recargos.\n3. Toca **Parar** al terminar — se guarda en tu historial.\n4. Tab **Análisis** ve tu desempeño · Tab **Historial** exporta a PDF/Excel.';
   }
   if (_aiHas(t, 'como export', 'exportar pdf', 'exportar excel', 'generar reporte')) {
-    return 'Tab **Historial** (icono reloj) → en la parte superior tienes **Exportar PDF** y **Exportar Excel**. Generan reportes mensuales con desglose por recargo, firmados con tu cuenta.';
+    return 'Tab **Historial** (icono reloj) → en la parte superior tenés **Exportar PDF** y **Exportar Excel**. Generan reportes mensuales con desglose por recargo, firmados con tu cuenta.';
   }
   if (_aiHas(t, 'como cambio salario', 'cambiar salario', 'editar salario', 'configur salario')) {
     return 'Tab **Ajustes** (engranaje) → toca el campo de **Salario base** y escribe el nuevo valor. Se aplica al instante a todos los cálculos.';

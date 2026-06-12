@@ -176,7 +176,7 @@ function aiAdvisorOptimizador(c, metaExtra) {
   var resp =
     '🎯 **Optimizador de Horarios**\n\nPara ganar **' +
     fCOP(metaExtra) +
-    '** extra con tu salario actual, tienes estas opciones:\n\n';
+    '** extra con tu salario actual, tenés estas opciones:\n\n';
 
   // Opción A: Turnos nocturnos (8h)
   var valorTurnoNocturno = vh * 1.35 * 8;

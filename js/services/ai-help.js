@@ -20,6 +20,9 @@ var AI_HELP_GUIDES = [
     keywords: [
       'iniciar turno',
       'como inicio',
+      'inicio turno',
+      'inicio un turno',
+      'como arranco',
       'empezar turno',
       'comenzar turno',
       'arrancar',
@@ -42,7 +45,10 @@ var AI_HELP_GUIDES = [
     keywords: [
       'finalizar turno',
       'terminar turno',
+      'cierro turno',
       'cerrar turno',
+      'termino turno',
+      'paro turno',
       'acabar',
       'salir del trabajo',
       'marcar salida'
@@ -66,6 +72,9 @@ var AI_HELP_GUIDES = [
       'cambiar salario',
       'ajustar salario',
       'cuanto gano',
+      'cambio salario',
+      'ingreso salario',
+      'pongo salario',
       'salario base',
       'sueldo'
     ],
@@ -85,11 +94,13 @@ var AI_HELP_GUIDES = [
     title: 'Ver tu historial de turnos',
     keywords: [
       'ver historial',
+      'veo historial',
       'mis turnos',
       'turnos pasados',
       'historial de turnos',
       'lista de turnos',
-      'todos mis turnos'
+      'todos mis turnos',
+      'donde veo mis turnos'
     ],
     steps: [
       'Tocá la pestaña **Historial** (ícono de reloj).',
@@ -147,7 +158,14 @@ var AI_HELP_GUIDES = [
   {
     id: 'borrar_turno',
     title: 'Borrar un turno',
-    keywords: ['borrar turno', 'eliminar turno', 'quitar turno', 'borrar historial'],
+    keywords: [
+      'borrar turno',
+      'borro turno',
+      'eliminar turno',
+      'elimino turno',
+      'quitar turno',
+      'borrar historial'
+    ],
     steps: [
       'Andá a la pestaña **Historial**.',
       'Deslizá el turno hacia la izquierda o tocá el ícono de basurero.',
@@ -254,7 +272,15 @@ var AI_HELP_GUIDES = [
   {
     id: 'recuperar_pin',
     title: 'Recuperar tu PIN',
-    keywords: ['recuperar pin', 'olvide pin', 'perdi pin', 'no recuerdo pin', 'pin olvidado'],
+    keywords: [
+      'recuperar pin',
+      'olvide pin',
+      'olvido pin',
+      'perdi pin',
+      'no recuerdo pin',
+      'pin olvidado',
+      'no se mi pin'
+    ],
     steps: [
       'En la pantalla de acceso rápido, tocá **¿Olvidaste tu PIN?**.',
       'Seguí los pasos: confirmar identidad → esperar → código → nuevo PIN.',
@@ -266,7 +292,14 @@ var AI_HELP_GUIDES = [
   {
     id: 'cerrar_sesion',
     title: 'Cerrar sesión',
-    keywords: ['cerrar sesion', 'salir', 'logout', 'desconectar', 'cambiar cuenta'],
+    keywords: [
+      'cerrar sesion',
+      'cierro sesion',
+      'salir',
+      'logout',
+      'desconectar',
+      'cambiar cuenta'
+    ],
     steps: [
       'Andá a la pestaña **Ajustes**.',
       'Bajá hasta el final y tocá **Cerrar sesión**.',

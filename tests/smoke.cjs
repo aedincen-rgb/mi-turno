@@ -42,6 +42,8 @@ var FILES = [
   'js/services/ai-episodes.js',
   'js/services/ai-synonyms.js',
   'js/services/ai-nlp.js',
+  // ai-help.js cargado antes de ai.js para que aiHelpAnswer esté disponible
+  'js/services/ai-help.js',
   'js/services/ai.js',
   'js/services/ai-enhanced.js',
   // Desde v48, _saludoHora vive en su propio archivo (junto con
@@ -535,6 +537,62 @@ var _ctxConv = typeof w.aiResolveContextRef === 'function'
   ? w.aiResolveContextRef('y eso?', { lastIntent: 'saludo', lastTopic: 'conversacion' })
   : null;
 truthy(_ctxConv === null, '"y eso?" con contexto conversacional → null (no reclama)');
+
+// ── Mejoras de comunicación v277 ────────────────────────────────
+group('v277 — voseo: ninguna respuesta contiene tuteo residual');
+var _voseoState = {
+  turnos: [], turnosAll: [],
+  calc: w.doCalc([], null, new Date(), 0),
+  vh: 0, salario: 0,
+  session: { uid: 'u-voseo', email: 'v@test.com' }
+};
+var _tuteoPhrases = ['tienes ', 'puedes ', 'debes ', 'mantienes '];
+var _checkTuteo = function(q) {
+  var r = respText(w.aiAnswer(q, _voseoState));
+  for (var _ti = 0; _ti < _tuteoPhrases.length; _ti++) {
+    if (r.toLowerCase().indexOf(_tuteoPhrases[_ti]) >= 0) return r;
+  }
+  return null;
+};
+var _noTurnos = _checkTuteo('cuántos turnos tengo');
+truthy(!_noTurnos, 'respuesta "cuántos turnos" no contiene tuteo: ' + (_noTurnos ? _noTurnos.slice(0,80) : 'OK'));
+
+group('v277 — distribucion: respuesta no contiene [object Object]');
+var _stDist = {
+  turnos: [], turnosAll: [],
+  calc: w.doCalc([], null, new Date(), 0),
+  vh: 7916, salario: 1900000,
+  session: { uid: 'u-dist', email: 'd@test.com' }
+};
+var _rDist = respText(w.aiAnswer('desglose de recargos', _stDist));
+truthy(
+  _rDist.indexOf('[object Object]') < 0,
+  'respuesta desglose no contiene "[object Object]": ' + _rDist.slice(0, 80)
+);
+truthy(
+  typeof _rDist === 'string' && _rDist.length > 0,
+  'respuesta desglose es string no vacío'
+);
+
+group('v277 — help: verbos conjugados disparan guías correctas');
+// "¿cómo inicio un turno?" debe encontrar la guía iniciar_turno (no null)
+var _helpInicio = typeof w.aiHelpSearch === 'function'
+  ? w.aiHelpSearch('como inicio un turno')
+  : null;
+truthy(_helpInicio && _helpInicio.id === 'iniciar_turno',
+  '"como inicio un turno" encuentra guía iniciar_turno (era null antes del fix)');
+
+var _helpTermino = typeof w.aiHelpSearch === 'function'
+  ? w.aiHelpSearch('termino turno')
+  : null;
+truthy(_helpTermino && _helpTermino.id === 'finalizar_turno',
+  '"termino turno" encuentra guía finalizar_turno');
+
+var _helpCambio = typeof w.aiHelpSearch === 'function'
+  ? w.aiHelpSearch('cambio salario')
+  : null;
+truthy(_helpCambio && _helpCambio.id === 'configurar_salario',
+  '"cambio salario" encuentra guía configurar_salario');
 
 // ── hashPassword / verifyPassword (PBKDF2 + salt, v49) ──────────
 group('password-hash (PBKDF2 con salt)');
