@@ -1960,6 +1960,8 @@ function aiClassify(text, convState, userContext) {
     intent: bestIntent ? bestIntent.id : null,
     secondIntent: secondIntent ? secondIntent.id : null,
     score: bestScore,
+    secondScore: secondScore,
+    margin: margin,
     confidence: confidence,
     tokens: tokens,
     topic: bestIntent ? _aiIntentTopic(bestIntent.id) : null

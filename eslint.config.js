@@ -319,6 +319,7 @@ const projectGlobals = {
   aiAlerts: 'readonly',
   aiCheckGoals: 'readonly',
   aiSetGoal: 'readonly',
+  aiGoalStatusLine: 'readonly',
   // services/ai-achievements.js
   aiListAllAchievements: 'readonly',
   aiCheckAchievements: 'readonly',

@@ -139,9 +139,67 @@ function aiSetGoal(amount) {
   if (!amount || amount <= 0) return;
   try {
     var goals = leer('mt_goals', []);
+    if (!goals || !goals.length) goals = [];
+    // Dedup: si ya existe una meta activa por el mismo monto, refrescar su
+    // fecha en vez de apilar duplicados (pedir "2 millones" dos veces creaba
+    // dos metas idénticas y el seguimiento las contaba doble).
+    for (var i = 0; i < goals.length; i++) {
+      if (!goals[i].reached && goals[i].amount === amount) {
+        goals[i].date = new Date().toISOString();
+        grabar('mt_goals', goals);
+        return;
+      }
+    }
     goals.push({ amount: amount, date: new Date().toISOString(), reached: false });
     grabar('mt_goals', goals);
   } catch (_) {}
+}
+
+/**
+ * Línea proactiva corta sobre la meta activa más reciente, para mostrar
+ * al volver a la app sin que el usuario la pida. Devuelve '' si no hay
+ * meta activa o si no hay datos suficientes.
+ * @param {object} c - contexto de buildContext
+ * @returns {string}
+ */
+function aiGoalStatusLine(c) {
+  if (!c) return '';
+  var goals;
+  try {
+    goals = leer('mt_goals', null);
+  } catch (_) {
+    return '';
+  }
+  if (!goals || !goals.length) return '';
+
+  // Tomar la meta activa más reciente (última agregada sin cumplir)
+  var g = null;
+  for (var i = goals.length - 1; i >= 0; i--) {
+    if (!goals[i].reached) {
+      g = goals[i];
+      break;
+    }
+  }
+  if (!g || !g.amount) return '';
+
+  var falta = Math.max(0, g.amount - c.totalCOP);
+  if (falta <= 0) {
+    return '🎯 ¡Llegaste a tu meta de ' + fCOP(g.amount) + '! Vas en ' + fCOP(c.totalCOP) + '. 🙌';
+  }
+  var pct = g.amount > 0 ? Math.min(100, (c.totalCOP / g.amount) * 100) : 0;
+  var linea =
+    '🎯 Tu meta de ' +
+    fCOP(g.amount) +
+    ': vas al ' +
+    pct.toFixed(0) +
+    '%, te faltan ' +
+    fCOP(falta) +
+    '.';
+  if (c.prom > 0) {
+    var diasFaltan = Math.ceil(falta / c.prom);
+    linea += ' A tu ritmo, ≈' + diasFaltan + (diasFaltan === 1 ? ' día.' : ' días.');
+  }
+  return linea;
 }
 
 /**
@@ -222,6 +280,7 @@ window.aiBriefing = aiBriefing;
 window.aiAlerts = aiAlerts;
 window.aiSetGoal = aiSetGoal;
 window.aiCheckGoals = aiCheckGoals;
+window.aiGoalStatusLine = aiGoalStatusLine;
 window.aiProactive = aiProactive;
 
 console.log('[MT] ai-proactive.js cargado — inteligencia proactiva ✓');

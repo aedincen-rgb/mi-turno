@@ -12,8 +12,56 @@ var _aiMemory = {
   userState: {},
   maxTurns: 10,
   proactiveCount: 0,
-  lastSuggestion: null // lo que la IA acaba de preguntar al usuario
+  lastSuggestion: null, // lo que la IA acaba de preguntar al usuario
+  recentCores: [], // núcleos de respuestas recientes (para no repetir textual)
+  lastLeadIn: -1 // índice del último gancho de repetición usado (rota)
 };
+
+// ─── ANTI-REPETICIÓN ──────────────────────────────────────────
+// Normaliza el núcleo de una respuesta para comparar si es idéntica a una
+// reciente. Sin esto, preguntar dos veces lo mismo devolvía un copia-pega
+// exacto y rompía la sensación de conversación.
+function _aiCoreNorm(s) {
+  return (s || '')
+    .toLowerCase()
+    .replace(/[*_`#>]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .substring(0, 220);
+}
+
+// Si la respuesta repite una reciente, devuelve un gancho humano variado
+// para anteponer. Devuelve '' si es nueva. Registra el núcleo siempre.
+function _aiRepeatLeadIn(originalResponse, intent) {
+  var core = _aiCoreNorm(originalResponse);
+  if (!core || core.length < 40) return '';
+
+  var isRepeat = false;
+  for (var i = 0; i < _aiMemory.recentCores.length; i++) {
+    if (_aiMemory.recentCores[i] === core) {
+      isRepeat = true;
+      break;
+    }
+  }
+
+  // Registrar (ring de 4) antes de decidir, para futuros turnos
+  _aiMemory.recentCores.push(core);
+  if (_aiMemory.recentCores.length > 4) _aiMemory.recentCores.shift();
+
+  if (!isRepeat) return '';
+  if (_AI_CONVERSATIONAL_INTENTS[intent]) return ''; // saludos/gracias repiten natural
+
+  var ganchos = [
+    'Te repito lo de recién 😉:',
+    'Como te comenté hace un momento:',
+    'Sigue igual que antes:',
+    'Lo mismo que te dije:'
+  ];
+  var idx = Math.floor(Math.random() * ganchos.length);
+  if (idx === _aiMemory.lastLeadIn) idx = (idx + 1) % ganchos.length;
+  _aiMemory.lastLeadIn = idx;
+  return ganchos[idx];
+}
 
 // Registrar una interacción
 function aiRemember(role, text, intent, topic, userContext) {
@@ -135,6 +183,8 @@ function aiClearMemory() {
   _aiMemory.userState = {};
   _aiMemory.proactiveCount = 0;
   _aiMemory.lastSuggestion = null;
+  _aiMemory.recentCores = [];
+  _aiMemory.lastLeadIn = -1;
   // El usuario pidió borrón y cuenta nueva: no resembrar mensajes viejos
   _aiMsgSeeded = true;
   if (typeof aiMemoryResetSession === 'function') aiMemoryResetSession();
@@ -1116,6 +1166,13 @@ function aiEnhancedRespond(
     }
   } catch (_) {}
 
+  // 1b. Anti-repetición: si esta respuesta repite una reciente, preparar un
+  // gancho humano para anteponer (se aplica al final, sobre el texto base).
+  var _repeatLead = '';
+  try {
+    _repeatLead = _aiRepeatLeadIn(originalResponse, intent) || '';
+  } catch (_) {}
+
   // 2. Análisis financiero — solo en modo verboso y para intents financieros.
   // En modo normal se omite para no sobrecargar la respuesta con bloques de análisis.
   var text = originalResponse;
@@ -1329,6 +1386,9 @@ function aiEnhancedRespond(
       }
     }
   } catch (_) {}
+
+  // Anteponer gancho de repetición si la respuesta era idéntica a una reciente
+  if (_repeatLead) text = _repeatLead + '\n\n' + text;
 
   // Anteponer bienvenida de vuelta si la hay
   if (_welcomePrefix) text = _welcomePrefix + '\n\n' + text;

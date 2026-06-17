@@ -216,6 +216,13 @@ function aiMemoryOnFirstMessage(uid, userContext) {
     }
   }
 
+  // Seguimiento proactivo de meta: si dejó una meta activa, recordarle dónde
+  // va sin que la pida. Es la memoria "activa" — retoma lo que le importaba.
+  if (typeof aiGoalStatusLine === 'function' && userContext) {
+    var _metaLinea = aiGoalStatusLine(userContext);
+    if (_metaLinea) partes.push(_metaLinea);
+  }
+
   // Racha motivadora
   if (mem.streakDays >= 5) {
     partes.push(

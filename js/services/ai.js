@@ -2344,6 +2344,33 @@ function _aiAnswerCore(question, state) {
   // Extraer entidades (dinero, números, tiempo)
   var _entities = typeof aiExtractEntities === 'function' ? aiExtractEntities(question) : null;
 
+  // ── DESAMBIGUACIÓN EN EMPATE FUERTE ──
+  // Si el clasificador no puede decidir entre dos intents con señal real
+  // (mismo puntaje, ≥4), preguntar en vez de adivinar. Antes esto caía a la
+  // cascada clásica y algún _aiHas goloso elegía mal. Un tap del usuario
+  // resuelve la ambigüedad y la respuesta sale correcta. Solo dispara con
+  // dos lecturas distintas y "respondibles" (ambas en _aiIntentSuggestion).
+  if (
+    _nlp &&
+    _nlp.score >= 4 &&
+    _nlp.margin === 0 &&
+    _nlp.secondIntent &&
+    _nlp.secondIntent !== _nlp.intent
+  ) {
+    var _tieA = _aiIntentSuggestion(_nlp.intent);
+    var _tieB = _aiIntentSuggestion(_nlp.secondIntent);
+    if (_tieA && _tieB) {
+      return {
+        text: 'Lo puedo leer de dos formas. ¿Cuál buscás?',
+        actions: [
+          { label: _tieA.label, query: _tieA.query },
+          { label: _tieB.label, query: _tieB.query },
+          { label: 'Otra cosa', query: '/ayuda' }
+        ]
+      };
+    }
+  }
+
   if (_nlp && _nlp.confidence >= 0.5) {
     aiUpdateConversation(_nlp.intent, _nlp.topic);
     var _mood =
