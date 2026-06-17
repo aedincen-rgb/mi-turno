@@ -897,14 +897,24 @@ function aiAuditarPago(c, montoPagado, periodoLabel) {
   var recargosTotal = owed - (minsTot / 60) * vh;
 
   function lineasRecargos() {
-    var l = '';
-    if (noctPrem > 1)
-      l += '\n• 🌙 Recargo nocturno +35% (CST Art. 168): ' + fCOP(Math.round(noctPrem));
-    if (festPrem > 1)
-      l +=
-        '\n• ⛪ Recargo dominical/festivo +75% (CST Art. 179-180): ' + fCOP(Math.round(festPrem));
-    if (extraPrem > 1) l += '\n• ⏱ Horas extra (CST Art. 159): ' + fCOP(Math.round(extraPrem));
-    return l;
+    var filas = [];
+    if (noctPrem > 1) {
+      filas.push(
+        '| 🌙 Recargo nocturno +35% | CST Art. 168 | ' + fCOP(Math.round(noctPrem)) + ' |'
+      );
+    }
+    if (festPrem > 1) {
+      filas.push(
+        '| ⛪ Recargo dominical/festivo +75% | CST Art. 179-180 | ' +
+          fCOP(Math.round(festPrem)) +
+          ' |'
+      );
+    }
+    if (extraPrem > 1) {
+      filas.push('| ⏱ Horas extra | CST Art. 159 | ' + fCOP(Math.round(extraPrem)) + ' |');
+    }
+    if (!filas.length) return '';
+    return '\n\n| Recargo | Base legal | Valor |\n|---|---|---|\n' + filas.join('\n');
   }
 
   // Sin monto declarado: explicar y mostrar lo que le corresponde.

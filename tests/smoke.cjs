@@ -1210,6 +1210,8 @@ group('ai: verificador de pago justo (v294)');
   truthy(rUnder.card && rUnder.card.status === 'under', 'subpago → estado under');
   truthy(rUnder.text.indexOf('de menos') >= 0 && rUnder.text.indexOf('Art. 179') >= 0,
          'subpago: alerta + cita la norma del recargo dominical');
+  truthy(rUnder.text.indexOf('| Recargo | Base legal | Valor |') >= 0,
+         'subpago: desglosa los recargos en una tabla');
   truthy(rUnder.text.indexOf('3 años') >= 0 || rUnder.text.indexOf('3 a') >= 0,
          'subpago: menciona la prescripción de 3 años');
 
