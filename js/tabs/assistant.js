@@ -28,6 +28,19 @@ function _aiCerrarMd(parcial) {
   return s;
 }
 
+// Quita los botones de Confirmar/Cancelar de cualquier burbuja previa una
+// vez resuelta la acción, para que no queden tocables "muertos".
+function _aiStripConfirmActions(msgs) {
+  return msgs.map(function (m) {
+    if (m.actions && m.actions.length && m.actions[0] && m.actions[0].kind === 'confirm') {
+      var copy = Object.assign({}, m);
+      delete copy.actions;
+      return copy;
+    }
+    return m;
+  });
+}
+
 function TypingBubble(props) {
   var st = useState(0);
   var shown = st[0],
@@ -776,7 +789,7 @@ function AsistenteTab(props) {
         if (verdict === 'yes') {
           pendingActionRef.current = null;
           setMsgs(function (p) {
-            return p.concat([{ role: 'user', content: q }]);
+            return _aiStripConfirmActions(p).concat([{ role: 'user', content: q }]);
           });
           var okText = executeAgentAction(pending) || 'Hecho.';
           var okMsg = { role: 'ai', content: okText };
@@ -793,7 +806,7 @@ function AsistenteTab(props) {
         if (verdict === 'no') {
           pendingActionRef.current = null;
           setMsgs(function (p) {
-            return p.concat([{ role: 'user', content: q }]);
+            return _aiStripConfirmActions(p).concat([{ role: 'user', content: q }]);
           });
           var cancelText = 'Listo, lo dejo así. No hice ningún cambio.';
           setMsgs(function (p) {
@@ -808,6 +821,9 @@ function AsistenteTab(props) {
         }
         // Ni sí ni no: descartamos la acción pendiente y seguimos normal.
         pendingActionRef.current = null;
+        setMsgs(function (p) {
+          return _aiStripConfirmActions(p);
+        });
       }
 
       // ── Quick-reply de descarte / cierre suave ──
@@ -852,7 +868,16 @@ function AsistenteTab(props) {
               // antes de ejecutarla. Guardamos la acción y respondemos
               // con la pregunta. El siguiente "sí"/"no" la resuelve.
               pendingActionRef.current = resp.execute;
-              newMsg = { role: 'ai', content: _confirmPrompt(resp.execute) };
+              // Botones tocables: enviar "sí"/"no" reusa el resolutor de
+              // confirmación pendiente (arriba), sin pasar por el NLP.
+              newMsg = {
+                role: 'ai',
+                content: _confirmPrompt(resp.execute),
+                actions: [
+                  { label: '✓ Confirmar', query: 'sí', kind: 'confirm' },
+                  { label: '✕ Cancelar', query: 'no', kind: 'cancel' }
+                ]
+              };
             } else {
               // Acción sin riesgo (navegar): se ejecuta de una.
               executeAgentAction(resp.execute);
@@ -1597,7 +1622,9 @@ function AsistenteTab(props) {
                             'button',
                             {
                               key: j,
-                              className: 'asistente-action-btn',
+                              className:
+                                'asistente-action-btn' +
+                                (a.kind ? ' asistente-action-btn--' + a.kind : ''),
                               onClick: function () {
                                 // a.intent === null → descarte (cierre suave).
                                 // string → intent real. undefined → acción de ai.js.

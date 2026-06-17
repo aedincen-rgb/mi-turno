@@ -1057,6 +1057,38 @@
     inset 0 1px 0 var(--spec-top);
 }
 
+/* ── Confirmación de acciones (registrar/borrar/corregir turno) ── */
+/* Confirmar = CTA primario (accent lleno). Cancelar = discreto. Sin rojo
+   ni verde duro: respeta la paleta de marca (lección v108). */
+.asistente-action-btn--confirm {
+  padding: 8px 18px;
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  box-shadow:
+    0 4px 14px var(--accent-dim),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+.asistente-action-btn--confirm:active {
+  background: var(--accent-deep, var(--accent));
+  border-color: var(--accent-deep, var(--accent));
+  color: #fff;
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+.asistente-action-btn--cancel {
+  padding: 8px 18px;
+  background: transparent;
+  border-color: var(--border);
+  color: var(--muted);
+  box-shadow: none;
+}
+.asistente-action-btn--cancel:active {
+  background: color-mix(in srgb, var(--muted) 12%, transparent);
+  border-color: var(--muted);
+  color: var(--text);
+  box-shadow: none;
+}
+
 /* ── Trivia interactiva (ai-engage.js) ── */
 .asistente-trivia {
   margin-top: 10px;
