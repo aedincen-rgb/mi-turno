@@ -41,6 +41,93 @@ function _aiStripConfirmActions(msgs) {
   });
 }
 
+// Tarjeta visual para respuestas de datos: destaca el número (la estrella)
+// con métricas secundarias. aria-hidden porque el texto de la burbuja ya
+// comunica lo mismo a lectores de pantalla (evita doble lectura).
+function _aiDataCard(card) {
+  if (!card) return null;
+  var fcop =
+    typeof fCOP === 'function'
+      ? fCOP
+      : function (n) {
+          return '$' + n;
+        };
+  var fdur =
+    typeof fDur === 'function'
+      ? fDur
+      : function (n) {
+          return n + 'm';
+        };
+
+  if (card.kind === 'data') {
+    var main;
+    if (card.metric === 'horas') main = fdur(card.mins);
+    else if (card.metric === 'turnos') main = String(card.turnos);
+    else main = fcop(card.monto);
+
+    var stats = [];
+    if (card.metric !== 'turnos') {
+      stats.push(
+        h(
+          'span',
+          { key: 't', className: 'asistente-card-stat' },
+          '🗓 ' + card.turnos + (card.turnos === 1 ? ' turno' : ' turnos')
+        )
+      );
+    }
+    if (card.metric !== 'horas') {
+      stats.push(h('span', { key: 'h', className: 'asistente-card-stat' }, '⏱ ' + fdur(card.mins)));
+    }
+    if (!card.sinSalario && card.metric === 'plata' && card.turnos > 0) {
+      stats.push(
+        h(
+          'span',
+          { key: 'p', className: 'asistente-card-stat' },
+          '↗ ' + fcop(Math.round(card.monto / card.turnos)) + '/turno'
+        )
+      );
+    }
+    return h(
+      'div',
+      { className: 'asistente-card', 'aria-hidden': 'true' },
+      h('div', { className: 'asistente-card-label' }, card.label),
+      h('div', { className: 'asistente-card-main' }, main),
+      stats.length ? h('div', { className: 'asistente-card-stats' }, stats) : null
+    );
+  }
+
+  if (card.kind === 'compare') {
+    var aWins = card.aCop >= card.bCop;
+    var dif = Math.abs(card.aCop - card.bCop);
+    var base = aWins ? card.bCop : card.aCop;
+    var pct = base > 0 ? Math.round((dif / base) * 100) : 0;
+    function cmpRow(key, label, cop, win) {
+      return h(
+        'div',
+        { key: key, className: 'asistente-card-cmp-row' + (win ? ' win' : '') },
+        h(
+          'span',
+          { className: 'asistente-card-cmp-label' },
+          label.charAt(0).toUpperCase() + label.slice(1)
+        ),
+        h('span', { className: 'asistente-card-cmp-val' }, fcop(cop))
+      );
+    }
+    return h(
+      'div',
+      { className: 'asistente-card asistente-card--cmp', 'aria-hidden': 'true' },
+      cmpRow('a', card.aLabel, card.aCop, aWins && dif !== 0),
+      cmpRow('b', card.bLabel, card.bCop, !aWins && dif !== 0),
+      h(
+        'div',
+        { className: 'asistente-card-cmp-diff' },
+        dif === 0 ? 'Empate' : 'Δ ' + fcop(dif) + (pct ? ' · ' + pct + '%' : '')
+      )
+    );
+  }
+  return null;
+}
+
 function TypingBubble(props) {
   var st = useState(0);
   var shown = st[0],
@@ -903,6 +990,7 @@ function AsistenteTab(props) {
               content: resp.text,
               actions: resp.actions,
               chart: resp.chart,
+              card: resp.card || null,
               triviaOptions: resp.triviaOptions || null
             };
           } else if (resp && typeof resp === 'object') {
@@ -910,6 +998,7 @@ function AsistenteTab(props) {
               role: 'ai',
               content: resp.text || String(resp),
               chart: resp.chart,
+              card: resp.card || null,
               triviaOptions: resp.triviaOptions || null
             };
           } else {
@@ -1486,6 +1575,9 @@ function AsistenteTab(props) {
                 h(
                   'div',
                   { className: 'asistente-col' },
+                  // Tarjeta visual de datos (dinero / comparación): el número
+                  // como estrella, arriba de la explicación en texto.
+                  m.card ? _aiDataCard(m.card) : null,
                   m.anim
                     ? h(TypingBubble, {
                         text: m.content,

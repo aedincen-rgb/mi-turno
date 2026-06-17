@@ -2632,6 +2632,7 @@ function _aiAnswerCore(question, state) {
   if (!_esSlash && typeof aiQueryCompare === 'function') {
     var _cmp = aiQueryCompare(q, state.turnosAll || state.turnos || [], c);
     if (_cmp) {
+      var _cmpCard = typeof aiQueryLastCard === 'function' ? aiQueryLastCard() : null;
       if (typeof aiUpdateConversation === 'function') {
         aiUpdateConversation('comparativa_mes', 'comparativa');
       }
@@ -2645,9 +2646,12 @@ function _aiAnswerCore(question, state) {
           null,
           state.turnosAll
         );
-        if (_cmpEnriched && _cmpEnriched.text) return _cmpEnriched;
+        if (_cmpEnriched && _cmpEnriched.text) {
+          if (_cmpCard) _cmpEnriched.card = _cmpCard;
+          return _cmpEnriched;
+        }
       }
-      return _cmp;
+      return _cmpCard ? { text: _cmp, card: _cmpCard } : _cmp;
     }
   }
 
@@ -2664,6 +2668,7 @@ function _aiAnswerCore(question, state) {
     if (_dq) {
       var _dqText = aiQueryRun(_dq, state.turnosAll || state.turnos || [], c);
       if (_dqText) {
+        var _dqCard = typeof aiQueryLastCard === 'function' ? aiQueryLastCard() : null;
         if (typeof aiUpdateConversation === 'function') {
           // 'dinero' es el vocabulario de topics del NLP (_aiIntentTopic):
           // así el tema queda disponible para topic bonus y follow-ups.
@@ -2679,9 +2684,12 @@ function _aiAnswerCore(question, state) {
             null,
             state.turnosAll
           );
-          if (_dqEnriched && _dqEnriched.text) return _dqEnriched;
+          if (_dqEnriched && _dqEnriched.text) {
+            if (_dqCard) _dqEnriched.card = _dqCard;
+            return _dqEnriched;
+          }
         }
-        return _dqText;
+        return _dqCard ? { text: _dqText, card: _dqCard } : _dqText;
       }
     }
   }

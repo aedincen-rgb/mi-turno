@@ -430,6 +430,98 @@
   max-width: 280px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
 }
+
+/* ── Tarjeta visual de datos (dinero / comparación) ── */
+.asistente-card {
+  align-self: flex-start;
+  margin-bottom: 8px;
+  min-width: 200px;
+  max-width: 300px;
+  padding: 16px 18px;
+  border-radius: 20px;
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--accent) 14%, var(--surface)) 0%,
+    var(--surface) 75%
+  );
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border));
+  box-shadow:
+    0 10px 30px rgba(20, 30, 80, 0.1),
+    inset 0 1px 0 var(--spec-top);
+  animation: fadeUp 0.4s var(--spring);
+}
+.asistente-card-label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: -0.01em;
+  text-transform: capitalize;
+}
+.asistente-card-main {
+  margin-top: 2px;
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.08;
+  color: var(--accent-deep, var(--accent));
+  font-variant-numeric: tabular-nums;
+}
+.asistente-card-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  margin-top: 10px;
+}
+.asistente-card-stat {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  opacity: 0.78;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Comparación: dos filas + diferencia */
+.asistente-card--cmp {
+  min-width: 230px;
+}
+.asistente-card-cmp-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 6px 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--text) 7%, transparent);
+}
+.asistente-card-cmp-row:last-of-type {
+  border-bottom: none;
+}
+.asistente-card-cmp-label {
+  font-size: 13.5px;
+  font-weight: 650;
+  color: var(--text);
+}
+.asistente-card-cmp-val {
+  font-size: 17px;
+  font-weight: 750;
+  letter-spacing: -0.03em;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.asistente-card-cmp-row.win .asistente-card-cmp-label,
+.asistente-card-cmp-row.win .asistente-card-cmp-val {
+  color: var(--accent-deep, var(--accent));
+}
+.asistente-card-cmp-diff {
+  margin-top: 10px;
+  text-align: center;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--accent-deep, var(--accent));
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border-radius: 12px;
+  padding: 6px 10px;
+  font-variant-numeric: tabular-nums;
+}
 .asistente-chart-title {
   font-size: 13px;
   font-weight: 700;

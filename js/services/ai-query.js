@@ -66,6 +66,15 @@ function _aiqNorm(s) {
 // ("¿y los sábados?") la heredan para mantener el hilo del tema.
 var _aiqLastMetric = null;
 
+// Datos estructurados de la última consulta/comparación, para que el chat
+// pinte una tarjeta visual sin reparsear el texto. Se consume una vez.
+var _aiqLastCard = null;
+function aiQueryLastCard() {
+  var c = _aiqLastCard;
+  _aiqLastCard = null;
+  return c;
+}
+
 // ─── RANGO DE FECHAS ─────────────────────────────────────────
 // Detecta un rango: "del 10 al 15 de junio", "entre el 1 y el 15",
 // "del 28 de diciembre al 5 de enero", "primera/segunda quincena [de mes]".
@@ -476,6 +485,7 @@ function aiQueryRun(query, turnosAll, ctx) {
   }
 
   if (rows.length === 0) {
+    _aiqLastCard = null;
     return (
       '🔎 Consulté tus ' +
       consultados +
@@ -561,6 +571,17 @@ function aiQueryRun(query, turnosAll, ctx) {
   var syncLabel = typeof aiSyncStateLabel === 'function' && ctx ? aiSyncStateLabel(ctx.uid) : '';
   if (syncLabel) evidencia += ' · ' + syncLabel;
   evidencia += '_';
+
+  _aiqLastCard = {
+    kind: 'data',
+    metric: query.metric,
+    monto: calc.totalCOP,
+    mins: calc.totalMins,
+    turnos: rows.length,
+    dias: nDias,
+    label: query.label,
+    sinSalario: vh <= 0
+  };
 
   return '🔎 ' + lead + detalle + evidencia;
 }
@@ -687,6 +708,20 @@ function aiQueryCompare(question, turnosAll, ctx) {
   if (vh <= 0) {
     out += '\n\n⚠️ Configurá tu salario base en **Ajustes** para ver los valores en pesos.';
   }
+
+  _aiqLastCard = {
+    kind: 'compare',
+    aLabel: A.label,
+    aCop: ta.cop,
+    aMins: ta.mins,
+    aTurnos: ta.turnos,
+    bLabel: B.label,
+    bCop: tb.cop,
+    bMins: tb.mins,
+    bTurnos: tb.turnos,
+    sinSalario: vh <= 0
+  };
+
   return out;
 }
 
@@ -694,6 +729,7 @@ function aiQueryCompare(question, turnosAll, ctx) {
 window.aiQueryParse = aiQueryParse;
 window.aiQueryRun = aiQueryRun;
 window.aiQueryCompare = aiQueryCompare;
+window.aiQueryLastCard = aiQueryLastCard;
 // Reutilizado por el editor de turnos (ai.js) para resolver "14 de junio".
 window.aiParseSpecificDate = _aiqParseSpecificDate;
 window.AI_QUERY_DICT = AI_QUERY_DICT;

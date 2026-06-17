@@ -380,6 +380,32 @@ eq(w.aiQueryCompare('cuánto gané en ' + _nombreAnt, dsCmp, _ctx), null,
 eq(w.aiQueryCompare('compará mi mes', dsCmp, _ctx), null,
    '"compará" con un solo período no alcanza');
 
+group('ai-query: datos de tarjeta visual (v293)');
+(function () {
+  if (typeof w.aiQueryLastCard !== 'function') {
+    truthy(false, 'aiQueryLastCard existe');
+    return;
+  }
+  var dsCard = [mkTurno(_mesPas, 8)];
+  var qC = w.aiQueryParse('cuánto gané el 14 de ' + _nombreMes);
+  w.aiQueryRun(qC, dsCard, _ctx);
+  var card = w.aiQueryLastCard();
+  truthy(card && card.kind === 'data', 'consulta de datos expone card kind=data');
+  truthy(card && card.turnos === 1, 'card.turnos refleja 1 turno');
+  truthy(card && card.monto > 0, 'card.monto > 0 con salario configurado');
+  eq(w.aiQueryLastCard(), null, 'la card se consume una sola vez');
+
+  // Sin coincidencias → sin card
+  w.aiQueryRun(w.aiQueryParse('cuánto gané el 3 de ' + _nombreMes), dsCard, _ctx);
+  eq(w.aiQueryLastCard(), null, 'sin coincidencias no se expone card');
+
+  // Comparación → card kind=compare con ambos lados
+  w.aiQueryCompare('compará ' + _nombreAnt + ' con ' + _nombreAnt2, dsCmp, _ctx);
+  var cc = w.aiQueryLastCard();
+  truthy(cc && cc.kind === 'compare', 'comparación expone card kind=compare');
+  truthy(cc && cc.aLabel && cc.bLabel, 'card de comparación trae ambas etiquetas');
+}());
+
 group('ai-query: estados límite');
 truthy(w.aiQueryRun(qDom, [], _ctx).indexOf('no encontré') >= 0,
        'historial vacío responde honesto, sin inventar');
