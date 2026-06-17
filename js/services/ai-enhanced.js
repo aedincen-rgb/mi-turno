@@ -7,10 +7,14 @@
 
 // ─── MEMORIA CONVERSACIONAL ────────────────────────────────────
 // Almacena las últimas N interacciones para dar contexto.
+// Ventana de memoria: 7 preguntas con sus respuestas ≈ 14 mensajes.
+var AI_MEM_PREGUNTAS = 7;
+var AI_MEM_MSGS = AI_MEM_PREGUNTAS * 2;
+
 var _aiMemory = {
   history: [],
   userState: {},
-  maxTurns: 10,
+  maxTurns: AI_MEM_MSGS,
   proactiveCount: 0,
   lastSuggestion: null, // lo que la IA acaba de preguntar al usuario
   recentCores: [], // núcleos de respuestas recientes (para no repetir textual)
@@ -1286,7 +1290,7 @@ function aiEnhancedRespond(
           analyzeEfficiency: !!userContext.eficiencia
         }
       };
-      var _rResult = aiReason(_rBag, userContext, aiGetRecentMessages(3));
+      var _rResult = aiReason(_rBag, userContext, aiGetRecentMessages(AI_MEM_MSGS));
       if (_rResult && _rResult.findings && _rResult.findings.length > 0) {
         var _topFindings = [];
         for (var _fi = 0; _fi < _rResult.findings.length && _topFindings.length < 2; _fi++) {

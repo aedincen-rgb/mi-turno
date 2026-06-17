@@ -380,6 +380,26 @@ eq(w.aiQueryCompare('cuánto gané en ' + _nombreAnt, dsCmp, _ctx), null,
 eq(w.aiQueryCompare('compará mi mes', dsCmp, _ctx), null,
    '"compará" con un solo período no alcanza');
 
+group('ai: memoria conversacional de 7 preguntas (v305)');
+(function () {
+  if (typeof w.AI_MEM_MSGS !== 'number') {
+    truthy(false, 'AI_MEM_MSGS existe');
+    return;
+  }
+  eq(w.AI_MEM_MSGS, 14, 'la ventana = 7 preguntas con sus respuestas (14 mensajes)');
+  if (typeof w.aiRemember === 'function' && typeof w.aiGetRecentMessages === 'function' &&
+      typeof w.aiClearMemory === 'function') {
+    w.aiClearMemory();
+    for (var i = 0; i < 20; i++) {
+      w.aiRemember(i % 2 ? 'ai' : 'user', 'msg ' + i, 'x', 'y', null);
+    }
+    var rec = w.aiGetRecentMessages(99);
+    eq(rec.length, 14, 'el buffer retiene hasta 14 mensajes (7 intercambios)');
+    truthy(rec[rec.length - 1].text.indexOf('msg 19') >= 0, 'conserva el mensaje más reciente');
+    w.aiClearMemory();
+  }
+}());
+
 group('ai: humanizador léxico (v296)');
 (function () {
   if (typeof w.aiHumanizar !== 'function') {

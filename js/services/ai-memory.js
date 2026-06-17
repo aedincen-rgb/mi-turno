@@ -43,7 +43,9 @@ function aiMemorySave(uid) {
 
     var structured = aiMemoryBuildStructured(uid, snapshot, convState);
 
-    var recentMessages = typeof aiGetRecentMessages === 'function' ? aiGetRecentMessages(3) : [];
+    var _memN = typeof AI_MEM_MSGS === 'number' ? AI_MEM_MSGS : 14;
+    var recentMessages =
+      typeof aiGetRecentMessages === 'function' ? aiGetRecentMessages(_memN) : [];
 
     var mem = {
       v: 1,
@@ -80,7 +82,10 @@ function aiMemoryBuildStructured(uid, snapshot, convState) {
   } catch (_) {}
   return {
     conversation: {
-      recentMessages: typeof aiGetRecentMessages === 'function' ? aiGetRecentMessages(3) : [],
+      recentMessages:
+        typeof aiGetRecentMessages === 'function'
+          ? aiGetRecentMessages(typeof AI_MEM_MSGS === 'number' ? AI_MEM_MSGS : 14)
+          : [],
       recentIntents: snapshot.recentIntents || [],
       lastIntent: snapshot.lastIntent || convState.lastIntent || null,
       lastTopic: snapshot.lastTopic || null,

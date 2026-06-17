@@ -263,6 +263,8 @@ const projectGlobals = {
   aiGetMemorySnapshot: 'readonly',
   aiRestoreHistory: 'readonly',
   aiGetRecentMessages: 'readonly',
+  AI_MEM_MSGS: 'readonly',
+  AI_MEM_PREGUNTAS: 'readonly',
   aiSeedMessages: 'readonly',
   aiSyncStateLabel: 'readonly',
   aiThink: 'readonly',
