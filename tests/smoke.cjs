@@ -408,6 +408,24 @@ group('ai: humanizador léxico (v296)');
   }
   truthy(hit, '"genial" rota a un sinónimo (nunca queda igual)');
 
+  // Vocabulario colombiano ampliado: "bacano" y "dale" también rotan
+  var synBacano = ['chévere', 'genial', 'brutal', 'una nota'];
+  var hitB = false;
+  for (var b = 0; b < 8 && !hitB; b++) {
+    if (synBacano.indexOf(w.aiHumanizar('bacano')) >= 0) hitB = true;
+  }
+  truthy(hitB, '"bacano" rota a otra expresión colombiana');
+  var synDale = ['listo', 'de una', 'hágale', 'va'];
+  var hitD = false;
+  for (var d2 = 0; d2 < 8 && !hitD; d2++) {
+    if (synDale.indexOf(w.aiHumanizar('dale')) >= 0) hitD = true;
+  }
+  truthy(hitD, '"dale" rota (afirmación variada)');
+  // Preserva mayúscula inicial al sustituir
+  var capR = w.aiHumanizar('Genial');
+  truthy(capR.charAt(0) === capR.charAt(0).toUpperCase(),
+         'respeta la mayúscula inicial al variar');
+
   // No rompe texto sin nada que variar
   eq(w.aiHumanizar('Trabajaste 8h el lunes.'), 'Trabajaste 8h el lunes.',
      'texto neutro queda intacto');

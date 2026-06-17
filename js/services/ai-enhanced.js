@@ -1413,16 +1413,45 @@ function aiEnhancedRespond(
 // dígitos y negritas (**...**): NUNCA toca datos ni términos legales.
 var _aiHumLast = {}; // base → último índice usado (rotación sin repetir)
 
+// Diccionario de variación léxica (voz colombiana, cálida y precisa).
+// Cada base normalizada (sin tildes) → sinónimos drop-in seguros. Solo
+// palabras EXPRESIVAS (ánimo, calidad, afirmación): se rotan sin cambiar
+// el sentido ni alargar el mensaje. Se evitan palabras polisémicas muy
+// comunes (bien, bueno, mal) y conectores ambiguos para no romper frases.
 var _AI_HUM_SYN = {
-  genial: ['buenísimo', 'de una', 'bien ahí', 'joya'],
-  perfecto: ['listo', 'de una', 'hecho', 'vamos bien'],
-  excelente: ['muy bien', 'buen trabajo', 'de lujo'],
-  increible: ['tremendo', 'buenísimo', 'impresionante'],
-  buenisimo: ['genial', 'tremendo', 'de lujo'],
-  obvio: ['claro', 'por supuesto', 'dale'],
+  // ── Calidad / entusiasmo ──
+  genial: ['buenísimo', 'bacano', 'chévere', 'una nota', 'de una', 'joya'],
+  perfecto: ['listo', 'de una', 'hecho', 'de once', 'clavado'],
+  excelente: ['buenísimo', 'buen trabajo', 'de lujo', 'bacanísimo'],
+  increible: ['tremendo', 'impresionante', 'de no creer', 'una locura'],
+  buenisimo: ['genial', 'tremendo', 'de lujo', 'bacano'],
+  espectacular: ['tremendo', 'brutal', 'impresionante', 'una nota'],
+  tremendo: ['brutal', 'impresionante', 'buenísimo', 'bestial'],
+  chevere: ['bacano', 'genial', 'una nota', 'de una'],
+  bacano: ['chévere', 'genial', 'brutal', 'una nota'],
+  brutal: ['tremendo', 'buenísimo', 'impresionante', 'bestial'],
+  maravilloso: ['buenísimo', 'tremendo', 'de lujo'],
+  asombroso: ['tremendo', 'buenísimo', 'impresionante'],
+  impresionante: ['tremendo', 'brutal', 'buenísimo'],
+  // ── Felicitación / reconocimiento ──
+  felicidades: ['bien hecho', 'qué bueno', 'te luciste', 'eso es'],
+  felicitaciones: ['bien hecho', 'te luciste', 'eso es', 'qué nivel'],
+  // ── Afirmación / aprobación ──
+  obvio: ['claro', 'por supuesto', 'de una', 'dale'],
+  claro: ['obvio', 'por supuesto', 'de una'],
+  dale: ['listo', 'de una', 'hágale', 'va'],
+  listo: ['dale', 'hecho', 'de una', 'va'],
+  hecho: ['listo', 'dale', 'va'],
+  // ── Ánimo / aliento ──
+  animo: ['con toda', 'vos podés', 'dale', 'arriba esos ánimos'],
+  tranquilo: ['con calma', 'sin afán', 'tranqui'],
+  tranquila: ['con calma', 'sin afán', 'tranqui'],
+  // ── Conectores suaves (intercambiables) ──
   ademas: ['también', 'y de paso', 'sumado a eso'],
-  igualmente: ['lo mismo', 'también'],
-  asombroso: ['tremendo', 'buenísimo']
+  igualmente: ['lo mismo', 'igual'],
+  // ── Cantidad / rapidez (jerga) ──
+  rapidisimo: ['volando', 'en un dos por tres', 'al toque'],
+  facilisimo: ['sencillísimo', 'pan comido', 'sin enredo']
 };
 
 function _aiHumNorm(w) {
