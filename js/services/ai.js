@@ -2549,6 +2549,33 @@ function _aiAuditIntent(q, t, c, state) {
   return out;
 }
 
+// ════════════════════════════════════════════════════════════════
+//  OPTIMIZADOR DE INGRESOS · "¿qué turno me conviene tomar?"
+//  Recomendación predictiva: qué turno rinde más y cuál es la próxima
+//  oportunidad concreta (festivo). Delega en aiOptimizarProximo.
+// ════════════════════════════════════════════════════════════════
+function _aiOptimizarIntent(q, t, c) {
+  // Hipotéticos y consultas de monto no son pedidos de optimización.
+  if (/(si trabajo|si hago|si trabajara|cuanto gano si)/.test(t)) return null;
+
+  var trig =
+    /(que turno me conviene|que turno tomar|que turno (agarro|agarrar|coger|cojo)|cuando me conviene trabajar|que dia me conviene|como gano mas|como ganar mas|ganar mas plata|que me rinde mas|que rinde mas|maximizar|optimizar.*(ingreso|turno|horario)|sacarle mas|me conviene trabajar|que me deja mas|donde gano mas)/.test(
+      t
+    );
+  if (!trig) return null;
+  if (typeof aiOptimizarProximo !== 'function') return null;
+
+  if (typeof aiUpdateConversation === 'function') {
+    aiUpdateConversation('optimizador', 'dinero');
+  }
+  var txt = aiOptimizarProximo(c);
+  if (!txt) return null;
+  return {
+    text: txt,
+    actions: [{ label: '🎉 Próximos festivos', query: 'próximos festivos' }]
+  };
+}
+
 function _aiAnswerCore(question, state) {
   var q = question.toLowerCase().trim();
   var t = _aiNorm(question);
@@ -2569,6 +2596,10 @@ function _aiAnswerCore(question, state) {
   // Alta prioridad: es el caso más sensible (alguien a quien le pagan mal).
   var _audit = _aiAuditIntent(q, t, c, state);
   if (_audit) return _audit;
+
+  // ═══ OPTIMIZADOR DE INGRESOS ("¿qué turno me conviene?") ═══
+  var _optim = _aiOptimizarIntent(q, t, c);
+  if (_optim) return _optim;
 
   // ═══ INTENTS FINANCIEROS/LABORALES DE ALTA SEÑAL ═══
   // Antes del atajo de ayuda: "cómo reparto mi sueldo" debe dar el

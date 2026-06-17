@@ -1064,6 +1064,45 @@ group('ai: edición de turnos por chat (v289)');
          'corregir sin decir qué cambia no propone acción');
 }());
 
+group('ai: optimizador de ingresos predictivo (v299)');
+(function () {
+  if (typeof w.aiOptimizarProximo !== 'function') {
+    truthy(false, 'aiOptimizarProximo existe');
+    return;
+  }
+  var prox = primerDomingo(_hoy.getFullYear(), _hoy.getMonth()); // festivo garantizado
+  var cOpt = {
+    vh: 10000,
+    proxFests: [prox],
+    bestDowInfo: { dia: 6, cop: 200000, count: 3 }
+  };
+  var r = w.aiOptimizarProximo(cOpt);
+  truthy(r.indexOf('rinde más') >= 0, 'lidera con qué turno rinde más');
+  // 8h a 2.1x con vh 10000 = 168.000 (top del ranking)
+  truthy(r.indexOf(w.fCOP(Math.round(10000 * 2.1 * 8))) >= 0,
+         'muestra el valor del turno dominical/festivo nocturno (2.1x)');
+  truthy(r.indexOf('Próximo festivo') >= 0, 'señala la próxima oportunidad concreta (festivo)');
+  truthy(r.indexOf('sábado') >= 0, 'personaliza con el mejor día del historial');
+
+  // Sin salario → pide configurarlo, no inventa
+  truthy(w.aiOptimizarProximo({ vh: 0 }).indexOf('salario') >= 0,
+         'sin salario pide configurarlo');
+
+  // E2E: "¿qué turno me conviene?" enruta al optimizador
+  var stO = {
+    turnos: [], turnosAll: [], activo: null,
+    calc: w.doCalc([], null, new Date(), 10000),
+    vh: 10000, salario: 2400000, session: { uid: 'u-test', email: 'e@x.com' }
+  };
+  var rE = w.aiAnswer('¿qué turno me conviene tomar?', stO);
+  truthy(rE && (rE.text || '').indexOf('rinde más') >= 0,
+         '"qué turno me conviene" enruta al optimizador');
+  // No se confunde con un hipotético
+  var rSim = w.aiAnswer('cuánto gano si trabajo el domingo', stO);
+  truthy(!(rSim && (rSim.text || '').indexOf('Qué turno te rinde más') >= 0),
+         'un hipotético NO dispara el optimizador');
+}());
+
 group('ai: verificador de pago justo (v294)');
 (function () {
   if (typeof w.aiAuditarPago !== 'function') {

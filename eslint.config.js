@@ -343,6 +343,7 @@ const projectGlobals = {
   aiAdvisorRespond: 'readonly',
   aiAdvisorSimular: 'readonly',
   aiAuditarPago: 'readonly',
+  aiOptimizarProximo: 'readonly',
   aiAdvisorLiquidacion: 'readonly',
   aiAdvisorIndemnizacion: 'readonly',
   aiAdvisorEmergencia: 'readonly',

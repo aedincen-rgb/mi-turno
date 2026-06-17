@@ -982,7 +982,57 @@ function aiAuditarPago(c, montoPagado, periodoLabel) {
   return { text: out, card: card };
 }
 
+// ─── OPTIMIZADOR DE INGRESOS PREDICTIVO ───────────────────────
+// "¿Qué turno me conviene?" Mira hacia adelante: cruza los multiplicadores
+// legales (un domingo/festivo de noche paga 2.1x) con el PRÓXIMO festivo
+// real y con el mejor día del propio historial. Conciso y accionable —
+// nada de muros de texto. Inspirado en la palanca de ingresos de las apps
+// de optimización para trabajadores por turnos (+10-20%/hora).
+function aiOptimizarProximo(c) {
+  if (!c || !c.vh) {
+    return 'Configurá tu salario base en **Ajustes** y te digo qué turnos te rinden más.';
+  }
+  var vh = c.vh;
+  function t8(factor) {
+    return Math.round(vh * factor * 8);
+  }
+  var dias = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+
+  var lineas = ['💰 **Qué turno te rinde más** (8h, tu hora vale ' + fCOP(vh) + '):'];
+  lineas.push('🥇 Domingo/festivo de noche → **' + fCOP(t8(2.1)) + '** (2.1x)');
+  lineas.push('🥈 Domingo/festivo de día → **' + fCOP(t8(1.75)) + '** (1.75x)');
+  lineas.push('🥉 Noche entre semana → **' + fCOP(t8(1.35)) + '** (1.35x)');
+
+  var extra = [];
+
+  // Oportunidad concreta más próxima: el siguiente festivo del calendario.
+  if (c.proxFests && c.proxFests.length) {
+    var f = c.proxFests[0];
+    var fLbl = f.toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' });
+    extra.push(
+      '📅 Próximo festivo: **' +
+        fLbl +
+        '** — un turno ahí te deja ≈' +
+        fCOP(t8(1.75)) +
+        ' (≈' +
+        fCOP(t8(1.75) - t8(1)) +
+        ' más que un día normal).'
+    );
+  }
+
+  // Personalización: el mejor día del propio historial.
+  if (c.bestDowInfo && c.bestDowInfo.count > 0 && c.bestDowInfo.cop > 0) {
+    extra.push('🏆 Tu mejor día hasta ahora ha sido el **' + dias[c.bestDowInfo.dia] + '**.');
+  }
+
+  var out = lineas.join('\n');
+  if (extra.length) out += '\n\n' + extra.join('\n');
+  out += '\n\n👉 Si podés elegir, apuntá a noches y festivos: las mismas horas te pagan mucho más.';
+  return out;
+}
+
 // ─── EXPORT ──────────────────────────────────────────────────
+window.aiOptimizarProximo = aiOptimizarProximo;
 window.aiAuditarPago = aiAuditarPago;
 window.aiAdvisorLiquidacion = aiAdvisorLiquidacion;
 window.aiAdvisorSimular = aiAdvisorSimular;
