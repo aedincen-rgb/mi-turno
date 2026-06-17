@@ -1031,7 +1031,69 @@ function aiOptimizarProximo(c) {
   return out;
 }
 
+// ─── DESPRENDIBLE DE NÓMINA (datos) ───────────────────────────
+// Arma los datos de un comprobante de pago formal a partir de los turnos
+// del mes: devengado por recargo (CST), deducciones (salud/pensión 4%),
+// auxilio de transporte prorrateado y neto. Devuelve un objeto plano
+// (el render a PDF vive en export-files.js). Sirve como soporte personal
+// de ingresos (créditos, arriendos, trámites) — gratis, para el trabajador.
+function buildDesprendibleData(c, nombre) {
+  if (!c) return null;
+  var bruto = c.totalCOP || 0;
+  var bd = c.bd || {};
+  var ahora = new Date();
+
+  var orden = [
+    'diurnaOrd',
+    'noctOrd',
+    'diurnaFest',
+    'noctFest',
+    'extraDiurna',
+    'extraNoct',
+    'extraFestDiur',
+    'extraFestNoct'
+  ];
+  var devengado = [];
+  for (var i = 0; i < orden.length; i++) {
+    var k = orden[i];
+    var x = bd[k];
+    if (x && x.mins > 0 && typeof RC !== 'undefined' && RC[k]) {
+      devengado.push({
+        label: RC[k].label,
+        mins: x.mins,
+        factor: RC[k].factor,
+        cop: Math.round(x.cop)
+      });
+    }
+  }
+
+  var salud = Math.round(bruto * 0.04);
+  var pension = Math.round(bruto * 0.04);
+  var aux = 0;
+  var sal = c.salario || 0;
+  if (sal > 0 && sal <= SMIN * 2) {
+    var diasMes = new Date(ahora.getFullYear(), ahora.getMonth() + 1, 0).getDate();
+    var diasTrab = Math.min(c.diasTrab || 0, diasMes);
+    aux = Math.round((AUX_TRANSPORTE_2026 / 30) * diasTrab);
+  }
+  var neto = bruto - salud - pension + aux;
+
+  return {
+    nombre: nombre || 'Trabajador',
+    periodo: ahora.toLocaleDateString('es-CO', { month: 'long', year: 'numeric' }),
+    emitido: ahora.toLocaleString('es-CO'),
+    diasTrab: c.diasTrab || 0,
+    devengado: devengado,
+    bruto: bruto,
+    salud: salud,
+    pension: pension,
+    aux: aux,
+    neto: neto
+  };
+}
+
 // ─── EXPORT ──────────────────────────────────────────────────
+window.buildDesprendibleData = buildDesprendibleData;
 window.aiOptimizarProximo = aiOptimizarProximo;
 window.aiAuditarPago = aiAuditarPago;
 window.aiAdvisorLiquidacion = aiAdvisorLiquidacion;

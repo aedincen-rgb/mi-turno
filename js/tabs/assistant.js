@@ -789,6 +789,12 @@ function AsistenteTab(props) {
             );
           }
           return null;
+        case 'GENERATE_PAYSLIP':
+          if (typeof exportDesprendiblePDF === 'function' && execute.payload) {
+            exportDesprendiblePDF(execute.payload);
+            return 'Listo, descargué tu desprendible. 📄';
+          }
+          return null;
         case 'EDIT_SHIFT':
           if (
             typeof props.onEditarTurno === 'function' &&

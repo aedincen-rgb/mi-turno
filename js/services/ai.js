@@ -2576,6 +2576,47 @@ function _aiOptimizarIntent(q, t, c) {
   };
 }
 
+// ════════════════════════════════════════════════════════════════
+//  DESPRENDIBLE DE NÓMINA · comprobante de pago descargable (PDF)
+//  Arma los datos con buildDesprendibleData y los entrega como acción
+//  GENERATE_PAYSLIP para que el asistente renderice el PDF.
+// ════════════════════════════════════════════════════════════════
+function _aiDesprendibleIntent(q, t, c, state) {
+  var trig =
+    /(desprendible|colilla|comprobante de (pago|nomina|nómina)|comprobante de ingresos|constancia de ingresos|recibo de (pago|nomina|nómina)|volante de pago|soporte de ingresos)/.test(
+      t
+    );
+  if (!trig) return null;
+  if (typeof buildDesprendibleData !== 'function') return null;
+
+  var nombre = '';
+  try {
+    if (typeof _aiNombrePersonal === 'function') {
+      nombre = _aiNombrePersonal({ session: (state && state.session) || {} }) || '';
+    }
+  } catch (_) {}
+
+  var data = buildDesprendibleData(c, nombre);
+  if (!data || data.bruto <= 0) {
+    return {
+      text:
+        'Para armar tu desprendible necesito turnos registrados este mes y tu salario base. ' +
+        'Registrá tus turnos (o decime "registrá un turno...") y te lo genero al toque.'
+    };
+  }
+
+  if (typeof aiUpdateConversation === 'function') {
+    aiUpdateConversation('liquidacion', 'dinero');
+  }
+  return {
+    text:
+      '📄 Te armé tu desprendible de **' +
+      data.periodo +
+      '** con el desglose de recargos y el neto. Ya se está descargando — te sirve como soporte de ingresos.',
+    execute: { type: 'GENERATE_PAYSLIP', payload: data }
+  };
+}
+
 function _aiAnswerCore(question, state) {
   var q = question.toLowerCase().trim();
   var t = _aiNorm(question);
@@ -2600,6 +2641,10 @@ function _aiAnswerCore(question, state) {
   // ═══ OPTIMIZADOR DE INGRESOS ("¿qué turno me conviene?") ═══
   var _optim = _aiOptimizarIntent(q, t, c);
   if (_optim) return _optim;
+
+  // ═══ DESPRENDIBLE DE NÓMINA (comprobante PDF) ═══
+  var _desp = _aiDesprendibleIntent(q, t, c, state);
+  if (_desp) return _desp;
 
   // ═══ INTENTS FINANCIEROS/LABORALES DE ALTA SEÑAL ═══
   // Antes del atajo de ayuda: "cómo reparto mi sueldo" debe dar el

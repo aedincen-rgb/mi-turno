@@ -1064,6 +1064,58 @@ group('ai: edición de turnos por chat (v289)');
          'corregir sin decir qué cambia no propone acción');
 }());
 
+group('ai: desprendible de nómina (v300)');
+(function () {
+  if (typeof w.buildDesprendibleData !== 'function') {
+    truthy(false, 'buildDesprendibleData existe');
+    return;
+  }
+  var dsD = [mkTurno(primerDomingo(_hoy.getFullYear(), _hoy.getMonth()), 8)]; // dominical
+  var calcD = w.doCalc(dsD, null, new Date(), 10000);
+  var cD = {
+    totalCOP: calcD.totalCOP, bd: calcD.bd, salario: w.SMIN, diasTrab: 1, vh: 10000
+  };
+  var data = w.buildDesprendibleData(cD, 'Pipe');
+  truthy(data && data.nombre === 'Pipe', 'incluye el nombre del trabajador');
+  eq(data.bruto, calcD.totalCOP, 'el bruto coincide con el total legal del mes');
+  truthy(data.devengado.length >= 1, 'desglosa el devengado por recargo');
+  eq(data.salud, Math.round(calcD.totalCOP * 0.04), 'descuenta salud 4%');
+  eq(data.pension, Math.round(calcD.totalCOP * 0.04), 'descuenta pensión 4%');
+  truthy(data.aux > 0, 'aplica auxilio de transporte (salario ≤ 2 SMMLV)');
+  eq(data.neto, data.bruto - data.salud - data.pension + data.aux,
+     'el neto = bruto - salud - pensión + auxilio');
+
+  // Salario alto → sin auxilio de transporte
+  var dataAlto = w.buildDesprendibleData(
+    { totalCOP: calcD.totalCOP, bd: calcD.bd, salario: w.SMIN * 3, diasTrab: 1 }, 'X');
+  eq(dataAlto.aux, 0, 'salario > 2 SMMLV no recibe auxilio de transporte');
+
+  // Sin turnos → bruto 0 (el detector lo bloquea aguas arriba)
+  var dataVacio = w.buildDesprendibleData({ totalCOP: 0, bd: {}, salario: w.SMIN, diasTrab: 0 }, 'X');
+  eq(dataVacio.bruto, 0, 'sin turnos el bruto es 0');
+  eq(dataVacio.devengado.length, 0, 'sin turnos no hay devengado');
+
+  // E2E: "genera mi desprendible" → acción GENERATE_PAYSLIP con datos
+  var stD = {
+    turnos: dsD, turnosAll: dsD, activo: null, calc: calcD,
+    vh: 10000, salario: w.SMIN, session: { uid: 'u-test', email: 'e@x.com' }
+  };
+  var rD = w.aiAnswer('generá mi desprendible de pago', stD);
+  truthy(rD && rD.execute && rD.execute.type === 'GENERATE_PAYSLIP',
+         '"generá mi desprendible" produce GENERATE_PAYSLIP');
+  truthy(rD && rD.execute && rD.execute.payload && rD.execute.payload.neto > 0,
+         'la acción lleva los datos del desprendible (neto)');
+
+  // Sin turnos → pide registrar, sin acción
+  var stVacio = {
+    turnos: [], turnosAll: [], activo: null, calc: w.doCalc([], null, new Date(), 10000),
+    vh: 10000, salario: w.SMIN, session: { uid: 'u', email: 'e@x.com' }
+  };
+  var rDv = w.aiAnswer('quiero mi colilla de pago', stVacio);
+  truthy(rDv && (rDv.text || '').indexOf('turnos') >= 0 && !rDv.execute,
+         'sin turnos pide registrarlos, sin generar nada');
+}());
+
 group('ai: optimizador de ingresos predictivo (v299)');
 (function () {
   if (typeof w.aiOptimizarProximo !== 'function') {
