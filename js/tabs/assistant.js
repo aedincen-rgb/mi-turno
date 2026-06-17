@@ -165,17 +165,6 @@ function AsistenteTab(props) {
     };
   }, []);
 
-  // Modo manos libres: conversación continua escuchar→responder→leer→repetir
-  var hf = useState(false);
-  var handsFree = hf[0],
-    setHandsFree = hf[1];
-
-  // Nivel de audio (para visualización mientras graba)
-  var al = useState(0);
-  var audioLevel = al[0],
-    setAudioLevel = al[1];
-  var audioAnimRef = useRef(null);
-
   // Refs para el botón inteligente (tap = enviar, hold = grabar)
   var pressTimerRef = useRef(null);
   var isLongPressRef = useRef(false);

@@ -321,6 +321,7 @@ const projectGlobals = {
   aiCheckGoals: 'readonly',
   aiSetGoal: 'readonly',
   aiGoalStatusLine: 'readonly',
+  aiDataHygiene: 'readonly',
   // services/ai-achievements.js
   aiListAllAchievements: 'readonly',
   aiCheckAchievements: 'readonly',

@@ -247,6 +247,92 @@ function aiCheckGoals(c) {
   return activeGoals > 0 ? resp : null;
 }
 
+// ─── HIGIENE DE DATOS ─────────────────────────────────────────
+// Detecta datos sospechosos que ensucian el cálculo de nómina: turno
+// activo olvidado abierto, turnos exageradamente largos, solapamientos.
+// Devuelve texto para anteponer/anexar, o '' si todo está sano.
+var _AI_HYG_MES = [
+  'ene',
+  'feb',
+  'mar',
+  'abr',
+  'may',
+  'jun',
+  'jul',
+  'ago',
+  'sep',
+  'oct',
+  'nov',
+  'dic'
+];
+
+function _aiHygFecha(ms) {
+  var d = new Date(ms);
+  return d.getDate() + ' ' + _AI_HYG_MES[d.getMonth()];
+}
+
+function aiDataHygiene(c) {
+  if (!c) return '';
+  var avisos = [];
+
+  // 1. Turno activo abierto demasiado tiempo (>16h) → probable olvido
+  if (c.tieneActivo && c.minutosEnTurnoActual > 16 * 60) {
+    avisos.push(
+      '⏱️ Tu turno lleva **' +
+        fDur(c.minutosEnTurnoActual) +
+        '** abierto. ¿Te olvidaste de cerrarlo? Podés finalizarlo en **Inicio** ' +
+        'o decirme la hora real de salida.'
+    );
+  }
+
+  // Normalizar turnos cerrados a intervalos válidos, ordenados por inicio
+  var ivs = [];
+  var todos = c.turnosAll || [];
+  for (var i = 0; i < todos.length; i++) {
+    var tn = todos[i];
+    if (!tn || !tn.fin) continue;
+    var ini = new Date(tn.inicio).getTime();
+    var fin = new Date(tn.fin).getTime();
+    if (isNaN(ini) || isNaN(fin) || fin <= ini) continue;
+    ivs.push({ ini: ini, fin: fin });
+  }
+  ivs.sort(function (a, b) {
+    return a.ini - b.ini;
+  });
+
+  // 2. Turno sospechosamente largo (>16h) — solo el primero, sin abrumar
+  for (var j = 0; j < ivs.length; j++) {
+    var dur = (ivs[j].fin - ivs[j].ini) / 60000;
+    if (dur > 16 * 60) {
+      avisos.push(
+        '🔎 El turno del **' +
+          _aiHygFecha(ivs[j].ini) +
+          '** duró **' +
+          fDur(Math.round(dur)) +
+          '** — ¿seguro? Si fue un error de registro, corregilo en **Historial**.'
+      );
+      break;
+    }
+  }
+
+  // 3. Solapamientos (dos turnos que se pisan en el tiempo) — inflan horas
+  for (var k = 1; k < ivs.length; k++) {
+    if (ivs[k].ini < ivs[k - 1].fin) {
+      avisos.push(
+        '⚠️ Hay turnos que se solapan (' +
+          _aiHygFecha(ivs[k - 1].ini) +
+          ' y ' +
+          _aiHygFecha(ivs[k].ini) +
+          '). Eso puede inflar tus horas y tu pago. Revisalos en **Historial**.'
+      );
+      break;
+    }
+  }
+
+  if (!avisos.length) return '';
+  return '\n\n🩺 **Revisión de datos**\n' + avisos.slice(0, 2).join('\n\n');
+}
+
 // ─── INTEGRACIÓN ──────────────────────────────────────────────
 
 /**
@@ -272,6 +358,18 @@ function aiProactive(c, intent) {
     if (goals) parts.push(goals);
   }
 
+  // Higiene de datos: en resúmenes y al consultar ingresos/horas, donde un
+  // dato sucio distorsiona lo que el usuario está viendo.
+  if (
+    intent === 'total_ganado' ||
+    intent === 'stats' ||
+    intent === 'horas_trabajadas' ||
+    intent === 'consulta_datos'
+  ) {
+    var hyg = aiDataHygiene(c);
+    if (hyg) parts.push(hyg);
+  }
+
   return parts.join('');
 }
 
@@ -281,6 +379,7 @@ window.aiAlerts = aiAlerts;
 window.aiSetGoal = aiSetGoal;
 window.aiCheckGoals = aiCheckGoals;
 window.aiGoalStatusLine = aiGoalStatusLine;
+window.aiDataHygiene = aiDataHygiene;
 window.aiProactive = aiProactive;
 
 console.log('[MT] ai-proactive.js cargado — inteligencia proactiva ✓');

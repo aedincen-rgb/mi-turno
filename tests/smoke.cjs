@@ -815,6 +815,46 @@ group('aiBriefing: porcentaje vs salario clampeado');
   }
 })();
 
+group('ai-proactive: higiene de datos (v288)');
+(function () {
+  if (typeof w.aiDataHygiene !== 'function') {
+    truthy(false, 'aiDataHygiene existe');
+    return;
+  }
+  // Sano: turnos normales, sin solapes → string vacío
+  var sano = {
+    turnosAll: [mkTurno(new Date(_hoy.getFullYear(), _hoy.getMonth() - 1, 5), 8)]
+  };
+  eq(w.aiDataHygiene(sano), '', 'datos sanos → sin aviso');
+
+  // Turno larguísimo (20h)
+  var largo = {
+    turnosAll: [mkTurno(new Date(_hoy.getFullYear(), _hoy.getMonth() - 1, 6), 20)]
+  };
+  truthy(w.aiDataHygiene(largo).indexOf('duró') >= 0, 'turno de 20h dispara aviso');
+
+  // Solapamiento: dos turnos el mismo día que se pisan
+  var baseDia = new Date(_hoy.getFullYear(), _hoy.getMonth() - 1, 7, 8, 0, 0);
+  var t1 = { id: 'a', inicio: baseDia.toISOString(),
+             fin: new Date(baseDia.getTime() + 6 * 3600000).toISOString() };
+  var t2 = { id: 'b', inicio: new Date(baseDia.getTime() + 3 * 3600000).toISOString(),
+             fin: new Date(baseDia.getTime() + 9 * 3600000).toISOString() };
+  truthy(w.aiDataHygiene({ turnosAll: [t1, t2] }).indexOf('solapan') >= 0,
+         'turnos solapados disparan aviso');
+
+  // Turno activo abierto >16h
+  var activoViejo = {
+    tieneActivo: true, minutosEnTurnoActual: 18 * 60, turnosAll: []
+  };
+  truthy(w.aiDataHygiene(activoViejo).indexOf('abierto') >= 0,
+         'turno activo de 18h sugiere que se olvidó cerrar');
+
+  // Turno corrupto (fin <= inicio) no rompe ni cuenta como solape
+  var corrupto = { turnosAll: [{ id: 'x', inicio: 'ROTO', fin: null },
+                               { id: 'y', inicio: baseDia.toISOString(), fin: baseDia.toISOString() }] };
+  eq(w.aiDataHygiene(corrupto), '', 'turnos corruptos se ignoran sin romper');
+}());
+
 // ════════════════════════════════════════════════════════════════
 //  ai-advisor: calculadoras financieras/laborales (v279)
 //  Funciones puras del asesor. Antes de v279 el módulo no tenía
