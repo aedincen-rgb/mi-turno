@@ -637,6 +637,26 @@ function AsistenteTab(props) {
             );
           }
           return null;
+        case 'ADD_SHIFT':
+          if (typeof props.onAddTurno === 'function' && execute.payload && execute.payload.turno) {
+            props.onAddTurno(execute.payload.turno);
+            return (
+              'Listo, registré el turno del ' +
+              (execute.payload.label || 'día indicado') +
+              '. Ya lo sumé a tus cuentas.'
+            );
+          }
+          return null;
+        case 'DELETE_SHIFT':
+          if (typeof props.onBorrarUno === 'function' && execute.payload && execute.payload.id) {
+            props.onBorrarUno(execute.payload.id);
+            return (
+              'Borré el turno del ' +
+              (execute.payload.label || 'día indicado') +
+              '. Recalculé todo.'
+            );
+          }
+          return null;
         case 'NAVIGATE':
           var tabId = execute.payload === 'ajustes' ? 'config' : execute.payload;
           if (props.onNavigate) {
@@ -660,12 +680,17 @@ function AsistenteTab(props) {
     return (
       execute.type === 'START_SHIFT' ||
       execute.type === 'END_SHIFT' ||
-      execute.type === 'SET_SALARY'
+      execute.type === 'SET_SALARY' ||
+      execute.type === 'ADD_SHIFT' ||
+      execute.type === 'DELETE_SHIFT'
     );
   }
 
   // Frase corta que describe la acción para pedir confirmación.
   function _confirmPrompt(execute) {
+    // Las acciones de edición de turno traen su propio texto contextual
+    // (con fecha, horario y duración ya resueltos por ai.js).
+    if (execute.confirmText) return execute.confirmText;
     if (execute.type === 'START_SHIFT') return 'Voy a iniciar tu turno ahora. ¿Confirmás?';
     if (execute.type === 'END_SHIFT') return 'Voy a cerrar tu turno actual. ¿Confirmás?';
     if (execute.type === 'SET_SALARY')

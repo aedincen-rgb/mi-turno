@@ -694,6 +694,8 @@ function aiQueryCompare(question, turnosAll, ctx) {
 window.aiQueryParse = aiQueryParse;
 window.aiQueryRun = aiQueryRun;
 window.aiQueryCompare = aiQueryCompare;
+// Reutilizado por el editor de turnos (ai.js) para resolver "14 de junio".
+window.aiParseSpecificDate = _aiqParseSpecificDate;
 window.AI_QUERY_DICT = AI_QUERY_DICT;
 
 console.log('[MT] ai-query.js cargado — motor de consultas a datos ✓');

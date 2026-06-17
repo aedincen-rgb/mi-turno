@@ -2092,6 +2092,221 @@ function _aiFinancieroIntent(q, t, c) {
   return null;
 }
 
+// ════════════════════════════════════════════════════════════════
+//  EDICIÓN DE TURNOS POR CHAT · agregar / borrar / corregir
+//  Devuelve { text, execute: { type, payload } } o null. El asistente
+//  (assistant.js) pide confirmación hablada antes de ejecutar, porque
+//  toca datos reales. NUNCA modifica nada acá — solo arma la propuesta.
+// ════════════════════════════════════════════════════════════════
+
+// Resuelve la fecha de una frase de edición: hoy/ayer/antier, día de
+// semana "pasado", o fecha puntual ("14 de junio"). Devuelve Date (a
+// medianoche) o null.
+function _aiShiftDate(t) {
+  var ahora = new Date();
+  var hoy = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate());
+  if (/\bhoy\b/.test(t)) return hoy;
+  if (/\bantier\b|\banteayer\b/.test(t)) {
+    var ant = new Date(hoy);
+    ant.setDate(hoy.getDate() - 2);
+    return ant;
+  }
+  if (/\bayer\b|\banoche\b/.test(t)) {
+    var ay = new Date(hoy);
+    ay.setDate(hoy.getDate() - 1);
+    return ay;
+  }
+  // Día de semana ("el lunes [pasado]") → ocurrencia más reciente
+  var dias = {
+    domingo: 0,
+    lunes: 1,
+    martes: 2,
+    miercoles: 3,
+    jueves: 4,
+    viernes: 5,
+    sabado: 6
+  };
+  for (var d in dias) {
+    if (Object.prototype.hasOwnProperty.call(dias, d) && new RegExp('\\b' + d + '\\b').test(t)) {
+      var ref = new Date(hoy);
+      do {
+        ref.setDate(ref.getDate() - 1);
+      } while (ref.getDay() !== dias[d]);
+      return ref;
+    }
+  }
+  // Fecha puntual ("14 de junio", "14/06", "el 14")
+  if (typeof aiParseSpecificDate === 'function') {
+    var sd = aiParseSpecificDate(t, ahora);
+    if (sd) return sd;
+  }
+  return null;
+}
+
+// Parsea un rango horario: "de 8 a 4", "de 8am a 4pm", "de 22 a 6",
+// "de 8:30 a 16:00". Devuelve { h1, m1, h2, m2, overnight } o null.
+// Heurística: sin am/pm y fin<inicio con ambos <=12 → la salida es de
+// tarde (8 a 4 = 08:00–16:00, el turno diurno típico). Si aun así
+// fin<=inicio, se asume que cruza la medianoche (turno nocturno).
+function _aiShiftTimeRange(t) {
+  var re =
+    /(?:de(?:sde)?\s+)?(?:las\s+)?(\d{1,2})(?::(\d{2}))?\s*(am|pm|a\.?m\.?|p\.?m\.?)?\s*(?:a|hasta|al?)\s+(?:las\s+)?(\d{1,2})(?::(\d{2}))?\s*(am|pm|a\.?m\.?|p\.?m\.?)?/;
+  var m = t.match(re);
+  if (!m) return null;
+  var h1 = parseInt(m[1], 10);
+  var m1 = m[2] ? parseInt(m[2], 10) : 0;
+  var ap1 = m[3] ? m[3].charAt(0) : '';
+  var h2 = parseInt(m[4], 10);
+  var m2 = m[5] ? parseInt(m[5], 10) : 0;
+  var ap2 = m[6] ? m[6].charAt(0) : '';
+  if (h1 > 23 || h2 > 23 || m1 > 59 || m2 > 59) return null;
+
+  function aplicaAP(h, ap) {
+    if (ap === 'p' && h < 12) return h + 12;
+    if (ap === 'a' && h === 12) return 0;
+    return h;
+  }
+  h1 = aplicaAP(h1, ap1);
+  h2 = aplicaAP(h2, ap2);
+
+  // Sin am/pm explícito y fin antes que inicio con ambos en rango 1–12:
+  // interpretamos la salida como PM (8 a 4 → 8:00–16:00).
+  if (!ap1 && !ap2 && h2 <= 12 && h1 <= 12 && h2 < h1) h2 += 12;
+
+  var overnight = false;
+  if (h2 * 60 + m2 <= h1 * 60 + m1) overnight = true; // cruza medianoche
+
+  return { h1: h1, m1: m1, h2: h2, m2: m2, overnight: overnight };
+}
+
+function _aiFmtHora(h, m) {
+  return (h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m;
+}
+
+function _aiShiftEditIntent(q, t, c, state) {
+  // Verbos de edición. Sin un verbo claro + "turno", no reclamamos nada.
+  // Evitamos "mete"/"carg" (ambiguos: "si metés un turno más" es hipotético,
+  // no un comando) — exigimos verbos de registro inequívocos.
+  var esAgregar = /\b(registr|anot|agreg|añad|anad|apunt)\w*/.test(t);
+  var esBorrar = /\b(borr|elimin|quit|saca|remov)\w*/.test(t);
+  var mencionaTurno = /\bturno|jornada|trabaj\w*\b/.test(t);
+  if (!mencionaTurno) return null;
+  if (!esAgregar && !esBorrar) return null;
+  // Hipotéticos no son comandos de alta ("si trabajara un turno de 8 a 4").
+  if (/\b(si\s+trabaj|trabajara|ganaria|simul|cuanto\s+gano|cuanto\s+ganaria)\b/.test(t)) {
+    return null;
+  }
+
+  var turnosAll = (state && (state.turnosAll || state.turnos)) || [];
+  var fecha = _aiShiftDate(t);
+
+  // ── BORRAR ──
+  if (esBorrar) {
+    if (!fecha) {
+      return {
+        text:
+          'Decime de qué día querés borrar el turno (por ejemplo "borrá el turno del 14 de junio" ' +
+          'o "borrá el turno de ayer") y lo busco.'
+      };
+    }
+    var fKey = fecha.toDateString();
+    var encontrados = [];
+    for (var i = 0; i < turnosAll.length; i++) {
+      var tn = turnosAll[i];
+      if (!tn || !tn.fin) continue;
+      var di = new Date(tn.inicio);
+      if (!isNaN(di.getTime()) && di.toDateString() === fKey) encontrados.push(tn);
+    }
+    var fechaLbl = fecha.getDate() + ' de ' + AI_QUERY_DICT.monthLabels[fecha.getMonth()];
+    if (encontrados.length === 0) {
+      return {
+        text:
+          'No encontré ningún turno el ' + fechaLbl + '. Revisá la fecha o miralo en **Historial**.'
+      };
+    }
+    if (encontrados.length > 1) {
+      return {
+        text:
+          'Ese día (' +
+          fechaLbl +
+          ') tenés ' +
+          encontrados.length +
+          ' turnos registrados. Para no borrar el equivocado, mejor eliminalo desde **Historial**, ' +
+          'donde los ves uno por uno con su horario.'
+      };
+    }
+    var victima = encontrados[0];
+    var vi = new Date(victima.inicio);
+    var vf = new Date(victima.fin);
+    var delPrompt =
+      'Voy a borrar el turno del ' +
+      fechaLbl +
+      ' (' +
+      _aiFmtHora(vi.getHours(), vi.getMinutes()) +
+      '–' +
+      _aiFmtHora(vf.getHours(), vf.getMinutes()) +
+      '). ¿Confirmás?';
+    return {
+      text: delPrompt,
+      execute: {
+        type: 'DELETE_SHIFT',
+        confirmText: delPrompt,
+        payload: { id: victima.id, label: fechaLbl }
+      }
+    };
+  }
+
+  // ── AGREGAR ──
+  var horas = _aiShiftTimeRange(t);
+  if (!fecha || !horas) {
+    return {
+      text:
+        'Para registrar un turno necesito el día y el horario. Probá algo como ' +
+        '"registrá un turno ayer de 8 a 4" o "anotá el turno del 14 de junio de 22 a 6".'
+    };
+  }
+  var inicio = new Date(
+    fecha.getFullYear(),
+    fecha.getMonth(),
+    fecha.getDate(),
+    horas.h1,
+    horas.m1,
+    0
+  );
+  var fin = new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate(), horas.h2, horas.m2, 0);
+  if (horas.overnight) fin.setDate(fin.getDate() + 1);
+  var durMin = Math.round((fin - inicio) / 60000);
+  if (durMin <= 0 || durMin > 24 * 60) {
+    return {
+      text: 'Ese horario no me cuadra (la salida tiene que ser después de la entrada). ¿Lo repetís?'
+    };
+  }
+  var fechaLbl2 = fecha.getDate() + ' de ' + AI_QUERY_DICT.monthLabels[fecha.getMonth()];
+  var nuevoId = typeof generateUUID === 'function' ? generateUUID() : inicio.toISOString();
+  var addPrompt =
+    'Voy a registrar un turno el ' +
+    fechaLbl2 +
+    ' de ' +
+    _aiFmtHora(horas.h1, horas.m1) +
+    ' a ' +
+    _aiFmtHora(horas.h2, horas.m2) +
+    (horas.overnight ? ' (del día siguiente)' : '') +
+    ' — ' +
+    (typeof fDur === 'function' ? fDur(durMin) : durMin + ' min') +
+    '. ¿Confirmás?';
+  return {
+    text: addPrompt,
+    execute: {
+      type: 'ADD_SHIFT',
+      confirmText: addPrompt,
+      payload: {
+        turno: { id: nuevoId, inicio: inicio.toISOString(), fin: fin.toISOString() },
+        label: fechaLbl2
+      }
+    }
+  };
+}
+
 function _aiAnswerCore(question, state) {
   var q = question.toLowerCase().trim();
   var t = _aiNorm(question);
@@ -2101,6 +2316,12 @@ function _aiAnswerCore(question, state) {
 
   // Construcción del contexto garantizada
   var c = buildContext(state);
+
+  // ═══ EDICIÓN DE TURNOS POR CHAT (acción real, con confirmación) ═══
+  // "registrá un turno ayer de 8 a 4", "borrá el turno del 14". Devuelve
+  // un objeto {text, execute} que el asistente confirma antes de tocar datos.
+  var _shiftEdit = _aiShiftEditIntent(q, t, c, state);
+  if (_shiftEdit) return _shiftEdit;
 
   // ═══ INTENTS FINANCIEROS/LABORALES DE ALTA SEÑAL ═══
   // Antes del atajo de ayuda: "cómo reparto mi sueldo" debe dar el

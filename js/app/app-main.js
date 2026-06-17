@@ -986,6 +986,21 @@ function App(props) {
     showToast('Turno eliminado', 'warning');
     queueAction(uid, 'deleteTurno', { id: id });
   }
+  // Alta manual de un turno cerrado (desde el asistente por chat/voz).
+  // Mismo contrato de sync que onFin: estado local + insertTurno en cola.
+  function onAddTurno(turno) {
+    if (!turno || !turno.inicio || !turno.fin) return;
+    haptic();
+    var nuevo = { id: turno.id, inicio: turno.inicio, fin: turno.fin, userId: uid };
+    setTurnos(function (p) {
+      for (var i = 0; i < p.length; i++) {
+        if (p[i].id === nuevo.id) return p; // ya existe, no duplicar
+      }
+      return [nuevo].concat(p);
+    });
+    showToast('Turno registrado', 'success');
+    queueAction(uid, 'insertTurno', nuevo);
+  }
   // Estado para modal de exportar (PDF o Excel)
   var ex = useState(null);
   var exportMode = ex[0],
@@ -1252,6 +1267,8 @@ function App(props) {
             onIniTurno: onIni,
             onFinTurno: onFin,
             onSetSalario: onSalario,
+            onAddTurno: onAddTurno,
+            onBorrarUno: onBorrarUno,
             onNavigate: function (tabId, subAction) {
               haptic();
               setTab(tabId);

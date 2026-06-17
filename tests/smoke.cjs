@@ -855,6 +855,63 @@ group('ai-proactive: higiene de datos (v288)');
   eq(w.aiDataHygiene(corrupto), '', 'turnos corruptos se ignoran sin romper');
 }());
 
+group('ai: edición de turnos por chat (v289)');
+(function () {
+  function stEdit(turnosAll) {
+    return {
+      turnos: turnosAll, turnosAll: turnosAll, activo: null,
+      calc: w.doCalc(turnosAll, null, new Date(), 10000),
+      vh: 10000, salario: 2400000,
+      session: { uid: 'u-test', email: 'test@x.com' }
+    };
+  }
+
+  // ADD: "registrá un turno ayer de 8 a 4" → ADD_SHIFT, 8h, 08:00–16:00
+  var rAdd = w.aiAnswer('registrá un turno ayer de 8 a 4', stEdit([]));
+  truthy(rAdd && rAdd.execute && rAdd.execute.type === 'ADD_SHIFT',
+         '"registrá un turno ayer de 8 a 4" produce ADD_SHIFT');
+  if (rAdd && rAdd.execute) {
+    var tt = rAdd.execute.payload.turno;
+    var durMin = (new Date(tt.fin) - new Date(tt.inicio)) / 60000;
+    eq(durMin, 480, '"de 8 a 4" se interpreta como 08:00–16:00 (8h, turno diurno)');
+  }
+
+  // ADD nocturno: "de 22 a 6" cruza medianoche → 8h
+  var rNoc = w.aiAnswer('anotá un turno ayer de 22 a 6', stEdit([]));
+  truthy(rNoc && rNoc.execute && rNoc.execute.type === 'ADD_SHIFT',
+         'turno nocturno "de 22 a 6" produce ADD_SHIFT');
+  if (rNoc && rNoc.execute) {
+    var tn = rNoc.execute.payload.turno;
+    eq((new Date(tn.fin) - new Date(tn.inicio)) / 60000, 480,
+       '"de 22 a 6" cruza medianoche → 8h');
+  }
+
+  // ADD sin horario → pide datos, sin execute
+  var rIncompleto = w.aiAnswer('registrá un turno ayer', stEdit([]));
+  truthy(rIncompleto && (rIncompleto.text || rIncompleto).toString().indexOf('horario') >= 0
+         && !rIncompleto.execute,
+         'sin horario pide el dato y no propone acción');
+
+  // DELETE: turno existente el 14 del mes pasado
+  var turnoBorrar = mkTurno(_mesPas, 8); // _mesPas = día 14 del mes pasado
+  var rDel = w.aiAnswer('borrá el turno del 14 de ' + _nombreMes, stEdit([turnoBorrar]));
+  truthy(rDel && rDel.execute && rDel.execute.type === 'DELETE_SHIFT',
+         '"borrá el turno del 14 de ' + _nombreMes + '" produce DELETE_SHIFT');
+  truthy(rDel && rDel.execute && rDel.execute.payload.id === turnoBorrar.id,
+         'DELETE_SHIFT apunta al id correcto');
+
+  // DELETE sin coincidencia → mensaje honesto, sin execute
+  var rDelNo = w.aiAnswer('borrá el turno del 3 de ' + _nombreMes, stEdit([turnoBorrar]));
+  truthy(rDelNo && (rDelNo.text || '').indexOf('No encontré') >= 0 && !rDelNo.execute,
+         'borrar un día sin turno responde honesto, sin acción');
+
+  // GUARD: una consulta normal no dispara edición
+  var rConsulta = w.aiAnswer('cuánto gané ayer', stEdit([turnoBorrar]));
+  truthy(!(rConsulta && rConsulta.execute &&
+           (rConsulta.execute.type === 'ADD_SHIFT' || rConsulta.execute.type === 'DELETE_SHIFT')),
+         '"cuánto gané ayer" NO se confunde con edición de turno');
+}());
+
 // ════════════════════════════════════════════════════════════════
 //  ai-advisor: calculadoras financieras/laborales (v279)
 //  Funciones puras del asesor. Antes de v279 el módulo no tenía
