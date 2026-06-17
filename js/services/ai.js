@@ -1417,7 +1417,7 @@ function _aiDispatchNLP(intent, c, state, q, t) {
 
     // Si el usuario pregunta por el valor de una hora específica y tenemos su salario
     if (c.vh > 0) {
-      if (_aiHas(t, 'domingo', 'dominical', 'festivo')) {
+      if (_aiHas(t, 'domingo', 'dominical', 'festiv')) {
         if (_aiHas(t, 'extra', 'extras')) {
           if (_aiHas(t, 'noche', 'nocturno', 'nocturna')) {
             return (
