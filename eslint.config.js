@@ -266,6 +266,7 @@ const projectGlobals = {
   aiSeedMessages: 'readonly',
   aiSyncStateLabel: 'readonly',
   aiThink: 'readonly',
+  aiHumanizar: 'readonly',
   // services/ai-query.js
   aiQueryParse: 'readonly',
   aiQueryRun: 'readonly',

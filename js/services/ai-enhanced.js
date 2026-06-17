@@ -1405,7 +1405,87 @@ function aiEnhancedRespond(
   return _aiRunAgentPass(enriched, intent, question, userContext, _verboso, _thought);
 }
 
+// ─── HUMANIZADOR LÉXICO (pulido final de la voz) ──────────────
+// Dos objetivos: (a) calibrar el tono para que sea cálido pero no
+// empalagoso (colapsa signos repetidos e intensificadores apilados) y
+// (b) rotar palabras de ánimo sobreusadas por sinónimos, evitando
+// repetir la misma elección dos veces seguidas. Protege montos ($),
+// dígitos y negritas (**...**): NUNCA toca datos ni términos legales.
+var _aiHumLast = {}; // base → último índice usado (rotación sin repetir)
+
+var _AI_HUM_SYN = {
+  genial: ['buenísimo', 'de una', 'bien ahí', 'joya'],
+  perfecto: ['listo', 'de una', 'hecho', 'vamos bien'],
+  excelente: ['muy bien', 'buen trabajo', 'de lujo'],
+  increible: ['tremendo', 'buenísimo', 'impresionante'],
+  buenisimo: ['genial', 'tremendo', 'de lujo'],
+  obvio: ['claro', 'por supuesto', 'dale'],
+  ademas: ['también', 'y de paso', 'sumado a eso'],
+  igualmente: ['lo mismo', 'también'],
+  asombroso: ['tremendo', 'buenísimo']
+};
+
+function _aiHumNorm(w) {
+  var s = w.toLowerCase();
+  try {
+    s = s.normalize('NFD').replace(/[̀-ͯ]/g, '');
+  } catch (_) {}
+  return s;
+}
+
+function _aiHumPick(base) {
+  var opts = _AI_HUM_SYN[base];
+  if (!opts || !opts.length) return null;
+  var last = typeof _aiHumLast[base] === 'number' ? _aiHumLast[base] : -1;
+  var idx = Math.floor(Math.random() * opts.length);
+  if (idx === last && opts.length > 1) idx = (idx + 1) % opts.length;
+  _aiHumLast[base] = idx;
+  return opts[idx];
+}
+
+function aiHumanizar(text) {
+  if (!text || typeof text !== 'string') return text;
+
+  // (a) Calibrar tono: nada de "!!!", "¡¡¡", "muy muy", "super super".
+  var out = text
+    .replace(/!{2,}/g, '!')
+    .replace(/¡{2,}/g, '¡')
+    .replace(/\?{2,}/g, '?')
+    .replace(/\b(muy)\s+\1\b/gi, '$1')
+    .replace(/\b(super)\s+\1\b/gi, '$1');
+
+  // (b) Rotación de sinónimos protegiendo datos. Enmascaramos en UNA
+  // sola pasada negritas, montos y números para no re-enmascarar los
+  // dígitos del propio placeholder.
+  var masks = [];
+  out = out.replace(/(\*\*[^*]+\*\*|\$[\d.,]+|\b\d[\d.,:%hms]*\b)/g, function (m) {
+    masks.push(m);
+    return '' + (masks.length - 1) + '';
+  });
+
+  var usadas = {};
+  out = out.replace(/[A-Za-zÁÉÍÓÚáéíóúÑñ]+/g, function (w) {
+    var base = _aiHumNorm(w);
+    if (!_AI_HUM_SYN[base] || usadas[base]) return w;
+    var rep = _aiHumPick(base);
+    if (!rep) return w;
+    usadas[base] = true;
+    if (w.charAt(0) === w.charAt(0).toUpperCase()) {
+      rep = rep.charAt(0).toUpperCase() + rep.slice(1);
+    }
+    return rep;
+  });
+
+  // Restaurar lo enmascarado
+  out = out.replace(/(\d+)/g, function (_m, i) {
+    return masks[parseInt(i, 10)];
+  });
+
+  return out;
+}
+
 // ─── INICIALIZACIÓN ──────────────────────────────────────────
+window.aiHumanizar = aiHumanizar;
 window.aiThink = aiThink;
 window.aiResolveContextRef = aiResolveContextRef;
 console.log('[MT] ai-enhanced.js cargado — IA potenciada v124');

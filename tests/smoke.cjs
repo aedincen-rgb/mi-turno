@@ -380,6 +380,42 @@ eq(w.aiQueryCompare('cuánto gané en ' + _nombreAnt, dsCmp, _ctx), null,
 eq(w.aiQueryCompare('compará mi mes', dsCmp, _ctx), null,
    '"compará" con un solo período no alcanza');
 
+group('ai: humanizador léxico (v296)');
+(function () {
+  if (typeof w.aiHumanizar !== 'function') {
+    truthy(false, 'aiHumanizar existe');
+    return;
+  }
+  // Calibración de tono: no empalagoso
+  var r1 = w.aiHumanizar('¡¡¡Genial!!! muy muy bien');
+  truthy(r1.indexOf('!!!') < 0 && r1.indexOf('¡¡¡') < 0, 'colapsa signos repetidos');
+  truthy(r1.indexOf('muy muy') < 0, 'colapsa intensificadores apilados');
+
+  // Protege datos: montos, negritas y términos legales intactos
+  var r2 = w.aiHumanizar('Ganaste **$140.000** hoy, genial!!!');
+  truthy(r2.indexOf('**$140.000**') >= 0, 'no toca el monto en negrita');
+  truthy(r2.indexOf('!!!') < 0, 'igual calibra el tono alrededor');
+  var r3 = w.aiHumanizar('Te ampara el **CST Art. 168** perfecto');
+  truthy(r3.indexOf('**CST Art. 168**') >= 0, 'no toca términos legales en negrita');
+
+  // Rotación de sinónimos: "genial" se reemplaza por una alternativa válida
+  var syn = ['buenísimo', 'de una', 'bien ahí', 'joya'];
+  var hit = false;
+  for (var i = 0; i < 8 && !hit; i++) {
+    var out = w.aiHumanizar('genial');
+    if (syn.indexOf(out) >= 0) hit = true;
+    if (out === 'genial') hit = false;
+  }
+  truthy(hit, '"genial" rota a un sinónimo (nunca queda igual)');
+
+  // No rompe texto sin nada que variar
+  eq(w.aiHumanizar('Trabajaste 8h el lunes.'), 'Trabajaste 8h el lunes.',
+     'texto neutro queda intacto');
+  // Idempotente con datos y sin palabras de la whitelist
+  var r4 = w.aiHumanizar('Vas al 75% de tu meta.');
+  truthy(r4.indexOf('75%') >= 0, 'preserva porcentajes');
+}());
+
 group('ai-query: datos de tarjeta visual (v293)');
 (function () {
   if (typeof w.aiQueryLastCard !== 'function') {

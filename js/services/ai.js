@@ -4519,6 +4519,15 @@ function aiAnswer(question, state) {
     }
   } catch (_) {}
 
+  // Pulido final de la voz: varía léxico y calibra el tono (no empalagoso).
+  // Se aplica una sola vez, acá, para cubrir todas las rutas de respuesta.
+  try {
+    if (typeof aiHumanizar === 'function' && resp) {
+      if (typeof resp === 'string') resp = aiHumanizar(resp);
+      else if (resp.text) resp.text = aiHumanizar(resp.text);
+    }
+  } catch (_) {}
+
   return resp;
 }
 
