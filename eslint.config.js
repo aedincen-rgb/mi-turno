@@ -268,6 +268,7 @@ const projectGlobals = {
   // services/ai-query.js
   aiQueryParse: 'readonly',
   aiQueryRun: 'readonly',
+  aiQueryCompare: 'readonly',
   AI_QUERY_DICT: 'readonly',
   // services/ai-episodes.js
   aiEpisodesLoad: 'readonly',

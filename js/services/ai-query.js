@@ -66,6 +66,99 @@ function _aiqNorm(s) {
 // ("¿y los sábados?") la heredan para mantener el hilo del tema.
 var _aiqLastMetric = null;
 
+// ─── RANGO DE FECHAS ─────────────────────────────────────────
+// Detecta un rango: "del 10 al 15 de junio", "entre el 1 y el 15",
+// "del 28 de diciembre al 5 de enero", "primera/segunda quincena [de mes]".
+// Devuelve { from, to, label } (to a fin del día) o null. Mismo criterio
+// de año que la fecha puntual: un mes nombrado en el futuro se asume del
+// año pasado, y los pares cruzados (dic→ene) resuelven el salto de año solos.
+function _aiqParseDateRange(t, ahora) {
+  var meses = AI_QUERY_DICT.monthLabels;
+  var monthAlt = meses.join('|');
+  var hoy0 = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate());
+
+  function mkDate(day, mo) {
+    var y = ahora.getFullYear();
+    if (new Date(y, mo, day) > hoy0) y = y - 1;
+    return new Date(y, mo, day);
+  }
+  function finDelDia(d) {
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
+  }
+
+  // Quincenas: "primera quincena de junio", "segunda quincena"
+  var mq = t.match(
+    new RegExp('(primera|segunda|1ra|2da|1a|2a)\\s+quincena(?:\\s+de\\s+(' + monthAlt + '))?')
+  );
+  if (mq) {
+    var moQ = mq[2] != null ? AI_QUERY_DICT.months[mq[2]] : ahora.getMonth();
+    var yQ = ahora.getFullYear();
+    if (new Date(yQ, moQ, 1) > hoy0) yQ = yQ - 1;
+    var primera = /^(primera|1ra|1a)/.test(mq[1]);
+    var ultDia = new Date(yQ, moQ + 1, 0).getDate();
+    var lblQ =
+      'la ' +
+      (primera ? 'primera' : 'segunda') +
+      ' quincena de ' +
+      meses[moQ] +
+      (yQ !== ahora.getFullYear() ? ' de ' + yQ : '');
+    return {
+      from: new Date(yQ, moQ, primera ? 1 : 16),
+      to: finDelDia(new Date(yQ, moQ, primera ? 15 : ultDia)),
+      label: lblQ
+    };
+  }
+
+  // Cruzado: "del 28 de diciembre al 5 de enero"
+  var mCross = t.match(
+    new RegExp(
+      '(?:del?|desde)\\s+(\\d{1,2})\\s+de\\s+(' +
+        monthAlt +
+        ')\\s+(?:al?|hasta|a)\\s+(\\d{1,2})\\s+de\\s+(' +
+        monthAlt +
+        ')'
+    )
+  );
+  if (mCross) {
+    var d1c = parseInt(mCross[1], 10);
+    var mo1c = AI_QUERY_DICT.months[mCross[2]];
+    var d2c = parseInt(mCross[3], 10);
+    var mo2c = AI_QUERY_DICT.months[mCross[4]];
+    if (d1c >= 1 && d1c <= 31 && d2c >= 1 && d2c <= 31) {
+      return {
+        from: mkDate(d1c, mo1c),
+        to: finDelDia(mkDate(d2c, mo2c)),
+        label: 'del ' + d1c + ' de ' + meses[mo1c] + ' al ' + d2c + ' de ' + meses[mo2c]
+      };
+    }
+  }
+
+  // Mismo mes: "del 10 al 15 de junio", "entre el 1 y el 15"
+  var mSame = t.match(
+    new RegExp(
+      '(?:del?|desde|entre)\\s+(?:el\\s+)?(\\d{1,2})\\s+(?:al?|hasta|y|a)\\s+(?:el\\s+)?(\\d{1,2})(?:\\s+de\\s+(' +
+        monthAlt +
+        '))?'
+    )
+  );
+  if (mSame) {
+    var d1s = parseInt(mSame[1], 10);
+    var d2s = parseInt(mSame[2], 10);
+    if (d1s >= 1 && d1s <= 31 && d2s >= 1 && d2s <= 31) {
+      var moS = mSame[3] != null ? AI_QUERY_DICT.months[mSame[3]] : ahora.getMonth();
+      var lo = Math.min(d1s, d2s);
+      var hi = Math.max(d1s, d2s);
+      return {
+        from: mkDate(lo, moS),
+        to: finDelDia(mkDate(hi, moS)),
+        label: 'del ' + lo + ' al ' + hi + ' de ' + meses[moS]
+      };
+    }
+  }
+
+  return null;
+}
+
 // ─── FECHA DE CALENDARIO ESPECÍFICA ──────────────────────────
 // Detecta una fecha puntual escrita de varias formas: "14 de junio",
 // "el 14 de junio de 2025", "14/06", "14-06-2025", "el 14" (día del mes).
@@ -207,11 +300,16 @@ function aiQueryParse(question, opts) {
 
   var ahora = new Date();
 
+  // Rango de fechas ("del 10 al 15 de junio", "primera quincena"). Se
+  // detecta ANTES que la fecha puntual: "del 10 al 15 de junio" contiene
+  // "15 de junio" y si no, el parser puntual se quedaría con ese día suelto.
+  var dateRange = _aiqParseDateRange(t, ahora);
+
   // Fecha de calendario puntual ("14 de junio", "14/06", "el 14"). Es
   // exclusiva: si la hay, manda sobre los demás filtros (la palabra del mes
   // ya no debe filtrar el mes entero, ni el día de semana, etc.).
-  var specificDate = _aiqParseSpecificDate(t, ahora);
-  if (specificDate) {
+  var specificDate = dateRange ? null : _aiqParseSpecificDate(t, ahora);
+  if (dateRange || specificDate) {
     weekday = null;
     weekdayWord = null;
     finde = false;
@@ -219,9 +317,18 @@ function aiQueryParse(question, opts) {
     month = null;
   }
 
-  if (weekday === null && !finde && !festivo && month === null && !specificDate) return null;
+  if (weekday === null && !finde && !festivo && month === null && !specificDate && !dateRange) {
+    return null;
+  }
 
-  if (specificDate) {
+  if (dateRange) {
+    var rgFrom = dateRange.from;
+    var rgTo = dateRange.to;
+    filters.push(function (d) {
+      return d >= rgFrom && d <= rgTo;
+    });
+    labelParts.push(dateRange.label);
+  } else if (specificDate) {
     var sdKey = specificDate.toDateString();
     filters.push(function (d) {
       return d.toDateString() === sdKey;
@@ -297,7 +404,7 @@ function aiQueryParse(question, opts) {
   // Filtro: período relativo explícito ("este mes", "mes pasado", "esta
   // semana", "semana pasada"). Acota los filtros primarios — sin esto,
   // "¿cuántos festivos trabajé este mes?" contaba todo el historial.
-  if (month === null && !specificDate) {
+  if (month === null && !specificDate && !dateRange) {
     var lunes = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate());
     lunes.setDate(lunes.getDate() - ((lunes.getDay() + 6) % 7));
     if (/este mes|del mes|en el mes/.test(t)) {
@@ -458,9 +565,135 @@ function aiQueryRun(query, turnosAll, ctx) {
   return '🔎 ' + lead + detalle + evidencia;
 }
 
+// ─── COMPARADOR DE PERÍODOS ──────────────────────────────────
+// "compará junio con mayo", "junio vs mayo", "este mes contra marzo".
+// Detecta dos períodos (mes por nombre o "este mes"/"mes pasado") y los
+// confronta con el calculador legal real. Devuelve string o null.
+function aiQueryCompare(question, turnosAll, ctx) {
+  var t = _aiqNorm(question);
+  if (!t) return null;
+  // Disparador explícito de comparación
+  if (!/\bvs\b|versus|compar|contra/.test(t)) return null;
+
+  var ahora = new Date();
+
+  function resolverMes(mo) {
+    var y = ahora.getFullYear();
+    if (mo > ahora.getMonth()) y = y - 1; // mes nombrado futuro → año pasado
+    return { mo: mo, yr: y, label: AI_QUERY_DICT.monthLabels[mo] };
+  }
+
+  // Recolectar candidatos de período con su posición en el texto
+  var cands = [];
+  for (var name in AI_QUERY_DICT.months) {
+    if (!Object.prototype.hasOwnProperty.call(AI_QUERY_DICT.months, name)) continue;
+    var idx = t.search(new RegExp('\\b' + name + '\\b'));
+    if (idx >= 0) {
+      var r = resolverMes(AI_QUERY_DICT.months[name]);
+      cands.push({ pos: idx, mo: r.mo, yr: r.yr, label: r.label });
+    }
+  }
+  var iEste = t.search(/este mes|mes actual/);
+  if (iEste >= 0) {
+    cands.push({ pos: iEste, mo: ahora.getMonth(), yr: ahora.getFullYear(), label: 'este mes' });
+  }
+  var iPas = t.search(/mes pasado|mes anterior/);
+  if (iPas >= 0) {
+    var mp = new Date(ahora.getFullYear(), ahora.getMonth() - 1, 1);
+    cands.push({ pos: iPas, mo: mp.getMonth(), yr: mp.getFullYear(), label: 'el mes pasado' });
+  }
+
+  if (cands.length < 2) return null;
+  cands.sort(function (a, b) {
+    return a.pos - b.pos;
+  });
+  var A = cands[0];
+  var B = cands[1];
+  // Evitar comparar un período consigo mismo
+  if (A.mo === B.mo && A.yr === B.yr) return null;
+
+  var todos = turnosAll || [];
+  var vh = (ctx && ctx.vh) || 0;
+
+  function totalesDe(p) {
+    var rows = [];
+    for (var i = 0; i < todos.length; i++) {
+      var tn = todos[i];
+      if (!tn || !tn.fin) continue;
+      var d = new Date(tn.inicio);
+      if (isNaN(d.getTime())) continue;
+      if (d.getMonth() === p.mo && d.getFullYear() === p.yr) rows.push(tn);
+    }
+    var calc =
+      typeof doCalc === 'function'
+        ? doCalc(rows, null, new Date(), vh)
+        : { totalMins: 0, totalCOP: 0 };
+    return { cop: calc.totalCOP, mins: calc.totalMins, turnos: rows.length };
+  }
+
+  var ta = totalesDe(A);
+  var tb = totalesDe(B);
+
+  function periodoLinea(p, tot) {
+    return (
+      '• **' +
+      p.label.charAt(0).toUpperCase() +
+      p.label.slice(1) +
+      '**: ' +
+      fCOP(tot.cop) +
+      ' · ' +
+      fDur(tot.mins) +
+      ' · ' +
+      tot.turnos +
+      ' turno' +
+      (tot.turnos === 1 ? '' : 's')
+    );
+  }
+
+  var dif = ta.cop - tb.cop;
+  var resumen;
+  if (ta.cop === 0 && tb.cop === 0) {
+    resumen = 'No tengo turnos registrados en ninguno de los dos períodos.';
+  } else if (dif === 0) {
+    resumen = 'Quedaron iguales: mismo total en ambos períodos.';
+  } else {
+    var mayor = dif > 0 ? A : B;
+    var menorCop = dif > 0 ? tb.cop : ta.cop;
+    var absD = Math.abs(dif);
+    var pct = menorCop > 0 ? (absD / menorCop) * 100 : 0;
+    resumen =
+      'Ganaste **' +
+      fCOP(absD) +
+      '** más en **' +
+      mayor.label +
+      '**' +
+      (pct > 0 ? ' (▲ ' + pct.toFixed(0) + '%)' : '') +
+      '.';
+  }
+
+  var out =
+    '🔎 **' +
+    A.label.charAt(0).toUpperCase() +
+    A.label.slice(1) +
+    ' vs ' +
+    B.label +
+    '**\n\n' +
+    periodoLinea(A, ta) +
+    '\n' +
+    periodoLinea(B, tb) +
+    '\n\n' +
+    resumen;
+
+  if (vh <= 0) {
+    out += '\n\n⚠️ Configurá tu salario base en **Ajustes** para ver los valores en pesos.';
+  }
+  return out;
+}
+
 // ─── EXPORT ──────────────────────────────────────────────────
 window.aiQueryParse = aiQueryParse;
 window.aiQueryRun = aiQueryRun;
+window.aiQueryCompare = aiQueryCompare;
 window.AI_QUERY_DICT = AI_QUERY_DICT;
 
 console.log('[MT] ai-query.js cargado — motor de consultas a datos ✓');

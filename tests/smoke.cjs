@@ -320,6 +320,66 @@ truthy((function () {
   return q === null || q.label.indexOf('el ') < 0;
 }()), '"cuánto gané" sin fecha no inventa un día');
 
+group('ai-query: rangos de fecha (v287)');
+// Rango "del 10 al 15 de <mes pasado>" — determinista
+var qRango = w.aiQueryParse('cuánto gané del 10 al 15 de ' + _nombreMes);
+truthy(qRango && qRango.label === 'del 10 al 15 de ' + _nombreMes,
+       'reclama rango "del 10 al 15 de ' + _nombreMes + '"');
+var dsRango = [
+  mkTurno(new Date(_hoy.getFullYear(), _hoy.getMonth() - 1, 9), 8),   // 9 (fuera)
+  mkTurno(new Date(_hoy.getFullYear(), _hoy.getMonth() - 1, 12), 8),  // 12 (dentro)
+  mkTurno(new Date(_hoy.getFullYear(), _hoy.getMonth() - 1, 15), 8),  // 15 (dentro, borde)
+  mkTurno(new Date(_hoy.getFullYear(), _hoy.getMonth() - 1, 16), 8)   // 16 (fuera)
+];
+truthy(w.aiQueryRun(qRango, dsRango, _ctx).indexOf('• Turnos: 2') >= 0,
+       'rango incluye bordes (12 y 15), excluye 9 y 16');
+
+// "entre el 1 y el 15" sin mes → mes en curso (solo parsea, sin assert de datos)
+truthy(w.aiQueryParse('cuánto hice entre el 1 y el 15'),
+       '"entre el 1 y el 15" se reclama como rango');
+
+// Quincenas
+var qQuin = w.aiQueryParse('cuánto gané la primera quincena de ' + _nombreMes);
+truthy(qQuin && qQuin.label.indexOf('primera quincena de ' + _nombreMes) >= 0,
+       'primera quincena reclamada');
+var qQuin2 = w.aiQueryParse('cuánto gané la segunda quincena de ' + _nombreMes);
+truthy(qQuin2 && qQuin2.label.indexOf('segunda quincena de ' + _nombreMes) >= 0,
+       'segunda quincena reclamada');
+
+// El rango gana sobre la fecha puntual ("15 de junio" dentro del rango)
+truthy(qRango && qRango.label.indexOf(' al ') >= 0,
+       'el rango no se degrada a fecha puntual "15 de ' + _nombreMes + '"');
+
+group('ai-query: comparación de períodos (v287)');
+// Dos meses con datos distintos: mes pasado (2 turnos) vs antepasado (1 turno)
+var _mesAnt = new Date(_hoy.getFullYear(), _hoy.getMonth() - 1, 10);
+var _mesAnt2 = new Date(_hoy.getFullYear(), _hoy.getMonth() - 2, 10);
+var _nombreAnt = ['enero','febrero','marzo','abril','mayo','junio','julio',
+                  'agosto','septiembre','octubre','noviembre','diciembre'][_mesAnt.getMonth()];
+var _nombreAnt2 = ['enero','febrero','marzo','abril','mayo','junio','julio',
+                   'agosto','septiembre','octubre','noviembre','diciembre'][_mesAnt2.getMonth()];
+var dsCmp = [
+  mkTurno(_mesAnt, 8),
+  mkTurno(new Date(_hoy.getFullYear(), _hoy.getMonth() - 1, 11), 8),
+  mkTurno(_mesAnt2, 8)
+];
+var rCmp = w.aiQueryCompare(
+  'compará ' + _nombreAnt + ' con ' + _nombreAnt2, dsCmp, _ctx);
+truthy(rCmp && rCmp.indexOf(' vs ') >= 0, 'comparación produce encabezado "X vs Y"');
+truthy(rCmp && rCmp.indexOf('más en') >= 0,
+       'comparación señala el período con más ingresos: ' + (rCmp || '').split('\n').pop());
+
+// "vs" también dispara
+truthy(w.aiQueryCompare(_nombreAnt + ' vs ' + _nombreAnt2, dsCmp, _ctx),
+       '"junio vs mayo" (atajo vs) se reclama');
+
+// Sin disparador de comparación → no se reclama (lo maneja el flujo normal)
+eq(w.aiQueryCompare('cuánto gané en ' + _nombreAnt, dsCmp, _ctx), null,
+   'un solo mes sin "vs/compará" no es comparación');
+// Un solo período mencionado → null aunque diga "compará"
+eq(w.aiQueryCompare('compará mi mes', dsCmp, _ctx), null,
+   '"compará" con un solo período no alcanza');
+
 group('ai-query: estados límite');
 truthy(w.aiQueryRun(qDom, [], _ctx).indexOf('no encontré') >= 0,
        'historial vacío responde honesto, sin inventar');

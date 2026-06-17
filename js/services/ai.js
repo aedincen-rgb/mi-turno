@@ -2259,11 +2259,38 @@ function _aiAnswerCore(question, state) {
     if (_epResp) return _epResp;
   }
 
+  var _esSlash = q.charAt(0) === '/';
+
+  // ── COMPARACIÓN DE PERÍODOS ARBITRARIOS ──
+  // "compará junio con mayo", "junio vs mayo". Va ANTES de aiQueryParse:
+  // si no, el parser de consulta agarraría solo el primer mes y respondería
+  // por uno solo en vez de confrontar los dos.
+  if (!_esSlash && typeof aiQueryCompare === 'function') {
+    var _cmp = aiQueryCompare(q, state.turnosAll || state.turnos || [], c);
+    if (_cmp) {
+      if (typeof aiUpdateConversation === 'function') {
+        aiUpdateConversation('comparativa_mes', 'comparativa');
+      }
+      if (typeof aiEnhancedRespond === 'function') {
+        var _cmpEnriched = aiEnhancedRespond(
+          _cmp,
+          'comparativa_mes',
+          'comparativa',
+          q,
+          c,
+          null,
+          state.turnosAll
+        );
+        if (_cmpEnriched && _cmpEnriched.text) return _cmpEnriched;
+      }
+      return _cmp;
+    }
+  }
+
   // ── CONSULTA ESTRUCTURADA A TUS DATOS ──
   // Filtros que los intents clásicos no cubren (día de semana, festivos,
   // mes puntual por nombre). Va directo a la tabla de turnos con doCalc.
   // Los comandos slash nunca pasan por acá ni por el NLP: son explícitos.
-  var _esSlash = q.charAt(0) === '/';
   if (!_esSlash && typeof aiQueryParse === 'function' && typeof aiQueryRun === 'function') {
     var _temaActual = null;
     try {
