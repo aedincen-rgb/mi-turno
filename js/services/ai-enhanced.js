@@ -1462,14 +1462,83 @@ function _aiHumNorm(w) {
   return s;
 }
 
-function _aiHumPick(base) {
-  var opts = _AI_HUM_SYN[base];
+// Rotación genérica sin repetir la última elección (estado por clave).
+function _aiHumRotate(key, opts) {
   if (!opts || !opts.length) return null;
-  var last = typeof _aiHumLast[base] === 'number' ? _aiHumLast[base] : -1;
+  var last = typeof _aiHumLast[key] === 'number' ? _aiHumLast[key] : -1;
   var idx = Math.floor(Math.random() * opts.length);
   if (idx === last && opts.length > 1) idx = (idx + 1) % opts.length;
-  _aiHumLast[base] = idx;
+  _aiHumLast[key] = idx;
   return opts[idx];
+}
+
+function _aiHumPick(base) {
+  return _aiHumRotate(base, _AI_HUM_SYN[base]);
+}
+
+// Ajusta la mayúscula inicial del reemplazo a la del texto original.
+function _aiMatchCase(rep, original) {
+  var fm = original.match(/[A-Za-zÁÉÍÓÚáéíóúÑñ]/);
+  var fr = rep.match(/[A-Za-zÁÉÍÓÚáéíóúÑñ]/);
+  if (!fm || !fr) return rep;
+  var upper = fm[0] === fm[0].toUpperCase() && fm[0] !== fm[0].toLowerCase();
+  var pos = rep.indexOf(fr[0]);
+  var ch = upper ? fr[0].toUpperCase() : fr[0].toLowerCase();
+  return rep.slice(0, pos) + ch + rep.slice(pos + 1);
+}
+
+// Muletillas de apertura/cierre: se rotan como FRASE completa (variante de
+// largo similar), sin agregar texto. Solo la primera aparición de cada una.
+// Las más específicas (con "hoy") van antes para ganar al match corto.
+var _AI_HUM_FRASES = [
+  {
+    re: /¿en qué te ayudo hoy\?/gi,
+    alts: ['¿Qué necesitás hoy?', '¿Con qué arrancamos?', '¿En qué te doy una mano hoy?']
+  },
+  {
+    re: /¿en qué más te ayudo\?/gi,
+    alts: ['¿Qué más necesitás?', '¿Te ayudo con otra cosa?', '¿Vamos por más?']
+  },
+  {
+    re: /¿en qué te ayudo\?/gi,
+    alts: ['¿Qué necesitás?', '¿En qué te doy una mano?', '¿Por dónde seguimos?']
+  },
+  {
+    re: /¿algo más en que te (?:colabore|ayude)\?/gi,
+    alts: ['¿Te ayudo con algo más?', '¿Qué más necesitás?', '¿Seguimos con algo más?']
+  },
+  { re: /¿algo más\?/gi, alts: ['¿Te ayudo con algo más?', '¿Seguimos?', '¿Qué más?'] },
+  { re: /¿seguimos\?/gi, alts: ['¿Vamos con más?', '¿Le damos?', '¿Continuamos?'] },
+  {
+    re: /para eso estoy\.?/gi,
+    alts: ['Para eso estoy acá.', 'Es un gusto.', 'Cuando quieras.']
+  },
+  { re: /buena pregunta/gi, alts: ['Buena esa', 'Qué buena pregunta', 'Me gusta la pregunta'] },
+  { re: /con gusto/gi, alts: ['con mucho gusto', 'es un placer', 'de una'] },
+  { re: /acá estoy/gi, alts: ['acá ando', 'por acá estoy', 'acá estoy'] }
+];
+
+function _aiHumFrase(out) {
+  // Enmascaramos cada reemplazo para que patrones posteriores NO lo
+  // re-roten (un alt como "¿Seguimos?" es a su vez una muletilla con su
+  // propio patrón — sin esto, encadenaba ¿Algo más?→¿Seguimos?→¿Le damos?).
+  var SENT = String.fromCharCode(0xe001);
+  var masks = [];
+  for (var i = 0; i < _AI_HUM_FRASES.length; i++) {
+    var f = _AI_HUM_FRASES[i];
+    var flag = { v: false, i: i };
+    out = out.replace(f.re, function (m) {
+      if (flag.v) return m; // solo la primera ocurrencia
+      flag.v = true;
+      var rep = _aiHumRotate('f' + flag.i, f.alts);
+      rep = rep ? _aiMatchCase(rep, m) : m;
+      masks.push(rep);
+      return SENT + (masks.length - 1) + SENT;
+    });
+  }
+  return out.replace(new RegExp(SENT + '(\\d+)' + SENT, 'g'), function (_m, j) {
+    return masks[parseInt(j, 10)];
+  });
 }
 
 function aiHumanizar(text) {
@@ -1483,7 +1552,10 @@ function aiHumanizar(text) {
     .replace(/\b(muy)\s+\1\b/gi, '$1')
     .replace(/\b(super)\s+\1\b/gi, '$1');
 
-  // (b) Rotación de sinónimos protegiendo datos. Enmascaramos en UNA
+  // (b) Rotar muletillas de apertura/cierre (frases de prosa, sin datos).
+  out = _aiHumFrase(out);
+
+  // (c) Rotación de sinónimos protegiendo datos. Enmascaramos en UNA
   // sola pasada negritas, montos y números para no re-enmascarar los
   // dígitos del propio placeholder.
   var masks = [];

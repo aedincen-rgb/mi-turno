@@ -426,6 +426,25 @@ group('ai: humanizador léxico (v296)');
   truthy(capR.charAt(0) === capR.charAt(0).toUpperCase(),
          'respeta la mayúscula inicial al variar');
 
+  // Muletillas de cierre rotan a una variante (nunca quedan iguales)
+  var cierres = ['¿Te ayudo con algo más?', '¿Seguimos?', '¿Qué más?'];
+  var rc = w.aiHumanizar('¿Algo más?');
+  truthy(cierres.indexOf(rc) >= 0 && rc !== '¿Algo más?',
+         '"¿Algo más?" rota a otra muletilla de cierre');
+  var paraEso = ['Para eso estoy acá.', 'Es un gusto.', 'Cuando quieras.'];
+  truthy(paraEso.indexOf(w.aiHumanizar('Para eso estoy.')) >= 0,
+         '"Para eso estoy." rota a una variante');
+
+  // Rotar muletilla NO toca los datos de la misma respuesta
+  var rmix = w.aiHumanizar('Ganaste **$140.000**. ¿Algo más?');
+  truthy(rmix.indexOf('**$140.000**') >= 0 && rmix.indexOf('¿Algo más?') < 0,
+         'rota el cierre sin tocar el monto');
+
+  // "con gusto" a mitad de frase conserva minúscula
+  var rcg = w.aiHumanizar('Te ayudo con gusto');
+  truthy(rcg.indexOf('con gusto') < 0 && rcg.indexOf('Te ayudo ') === 0,
+         '"con gusto" rota y conserva minúscula a mitad de frase');
+
   // No rompe texto sin nada que variar
   eq(w.aiHumanizar('Trabajaste 8h el lunes.'), 'Trabajaste 8h el lunes.',
      'texto neutro queda intacto');
