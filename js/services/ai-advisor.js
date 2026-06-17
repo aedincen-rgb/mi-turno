@@ -842,7 +842,141 @@ function aiAdvisorRespond(intent, c, state) {
   }
 }
 
+// ─── VERIFICADOR DE PAGO JUSTO (auditoría de nómina) ──────────
+// "¿Me están pagando bien?" Compara lo que te pagaron contra lo que la
+// ley manda por TUS turnos reales del mes (doCalc ya aplica todos los
+// recargos), señala qué recargo se está quedando sin pagar y cita la
+// norma (CST). Inspirado en apps de detección de wage theft (OverPay,
+// WageWatch), adaptado al marco colombiano. Devuelve { text, card }.
+function aiAuditarPago(c, montoPagado) {
+  if (!c) return { text: 'No tengo datos para verificar tu pago.', card: null };
+  var vh = c.vh || 0;
+  var owed = c.totalCOP || 0;
+  var bd = c.bd || {};
+
+  if (vh <= 0) {
+    return {
+      text:
+        'Para revisar si te pagan bien necesito tu **salario base** configurado (Ajustes). ' +
+        'Con eso calculo lo que te corresponde por tus turnos y lo comparo con lo que te pagaron.',
+      card: null
+    };
+  }
+  if (owed <= 0 || !c.diasTrab) {
+    return {
+      text:
+        'Todavía no tengo turnos tuyos este mes para verificar. Registrá tus turnos ' +
+        '(o decime "registrá un turno ayer de 8 a 4") y te digo si te están pagando lo justo.',
+      card: null
+    };
+  }
+
+  // Premium (recargo sobre el básico) por grupo: cop - base
+  function premio(cats) {
+    var cop = 0;
+    var mins = 0;
+    for (var i = 0; i < cats.length; i++) {
+      var x = bd[cats[i]];
+      if (x) {
+        cop += x.cop || 0;
+        mins += x.mins || 0;
+      }
+    }
+    return cop - (mins / 60) * vh;
+  }
+  var noctPrem = premio(['noctOrd']);
+  var festPrem = premio(['diurnaFest', 'noctFest']);
+  var extraPrem = premio(['extraDiurna', 'extraNoct', 'extraFestDiur', 'extraFestNoct']);
+  var minsTot = 0;
+  for (var k in bd) {
+    if (Object.prototype.hasOwnProperty.call(bd, k) && bd[k]) minsTot += bd[k].mins || 0;
+  }
+  var recargosTotal = owed - (minsTot / 60) * vh;
+
+  function lineasRecargos() {
+    var l = '';
+    if (noctPrem > 1)
+      l += '\n• 🌙 Recargo nocturno +35% (CST Art. 168): ' + fCOP(Math.round(noctPrem));
+    if (festPrem > 1)
+      l +=
+        '\n• ⛪ Recargo dominical/festivo +75% (CST Art. 179-180): ' + fCOP(Math.round(festPrem));
+    if (extraPrem > 1) l += '\n• ⏱ Horas extra (CST Art. 159): ' + fCOP(Math.round(extraPrem));
+    return l;
+  }
+
+  // Sin monto declarado: explicar y mostrar lo que le corresponde.
+  if (!montoPagado || montoPagado < 10000) {
+    var msg =
+      '🔍 **Verificador de pago justo**\n\n' +
+      'Por tus turnos de este mes, la ley dice que te corresponden **' +
+      fCOP(owed) +
+      '**. De eso, **' +
+      fCOP(Math.round(recargosTotal)) +
+      '** son recargos que tu empleador debe pagarte aparte del básico:' +
+      lineasRecargos() +
+      '\n\nDecime cuánto te pagaron y lo comparo (ej. *"me pagaron 900 mil este mes"*).';
+    return { text: msg, card: null };
+  }
+
+  var gap = owed - montoPagado;
+  var tol = Math.max(3000, owed * 0.01);
+  var card = {
+    kind: 'audit',
+    owed: owed,
+    paid: montoPagado,
+    gap: gap
+  };
+
+  if (gap <= tol) {
+    card.status = montoPagado > owed + tol ? 'over' : 'ok';
+    if (card.status === 'over') {
+      return {
+        text:
+          '✅ Te pagaron **' +
+          fCOP(montoPagado) +
+          '** y por tus turnos te correspondían **' +
+          fCOP(owed) +
+          '**. Te pagaron ' +
+          fCOP(montoPagado - owed) +
+          ' de más — seguramente auxilio de transporte u otros conceptos. Todo en orden. 👍',
+        card: card
+      };
+    }
+    return {
+      text:
+        '✅ **Te están pagando bien.** Te pagaron ' +
+        fCOP(montoPagado) +
+        ' y por tus turnos te correspondían ' +
+        fCOP(owed) +
+        '. La diferencia es por redondeo, nada que reclamar. 🙌',
+      card: card
+    };
+  }
+
+  // Subpago detectado
+  card.status = 'under';
+  var pct = owed > 0 ? Math.round((gap / owed) * 100) : 0;
+  var out =
+    '⚠️ **Parece que te están pagando de menos.**\n\n' +
+    'Por tus turnos de este mes te corresponden **' +
+    fCOP(owed) +
+    '** (con recargos de ley). Te pagaron **' +
+    fCOP(montoPagado) +
+    '**.\n\n' +
+    '👉 Te faltarían **' +
+    fCOP(gap) +
+    '** (' +
+    pct +
+    '% por debajo).\n\n' +
+    'Esto es lo que la ley te garantiza y conviene verificar que te lo paguen:' +
+    lineasRecargos() +
+    '\n\n📅 Tenés hasta **3 años** para reclamar lo que te deben (prescripción laboral, ' +
+    'CST Art. 488-489). Guardá tus comprobantes de pago como soporte.';
+  return { text: out, card: card };
+}
+
 // ─── EXPORT ──────────────────────────────────────────────────
+window.aiAuditarPago = aiAuditarPago;
 window.aiAdvisorLiquidacion = aiAdvisorLiquidacion;
 window.aiAdvisorSimular = aiAdvisorSimular;
 window.aiAdvisorAhorro = aiAdvisorAhorro;

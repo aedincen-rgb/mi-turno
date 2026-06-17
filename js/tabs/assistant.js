@@ -125,6 +125,38 @@ function _aiDataCard(card) {
       )
     );
   }
+
+  if (card.kind === 'audit') {
+    var under = card.status === 'under';
+    var over = card.status === 'over';
+    var badge;
+    if (under) badge = '⚠️ Te faltan ' + fcop(card.gap);
+    else if (over) badge = 'Te pagaron ' + fcop(Math.abs(card.gap)) + ' de más';
+    else badge = '✓ Pago correcto';
+    return h(
+      'div',
+      { className: 'asistente-card asistente-card--cmp', 'aria-hidden': 'true' },
+      h(
+        'div',
+        { className: 'asistente-card-cmp-row' + (under ? ' win' : '') },
+        h('span', { className: 'asistente-card-cmp-label' }, 'Te corresponde'),
+        h('span', { className: 'asistente-card-cmp-val' }, fcop(card.owed))
+      ),
+      h(
+        'div',
+        { className: 'asistente-card-cmp-row' },
+        h('span', { className: 'asistente-card-cmp-label' }, 'Te pagaron'),
+        h('span', { className: 'asistente-card-cmp-val' }, fcop(card.paid))
+      ),
+      h(
+        'div',
+        {
+          className: 'asistente-card-cmp-diff' + (under ? ' asistente-card-cmp-diff--warn' : '')
+        },
+        badge
+      )
+    );
+  }
   return null;
 }
 

@@ -991,6 +991,62 @@ group('ai: edición de turnos por chat (v289)');
          'corregir sin decir qué cambia no propone acción');
 }());
 
+group('ai: verificador de pago justo (v294)');
+(function () {
+  if (typeof w.aiAuditarPago !== 'function') {
+    truthy(false, 'aiAuditarPago existe');
+    return;
+  }
+  // Un domingo de 8h → dominical (+75%). vh 10000 → debido 140.000.
+  var dsP = [mkTurno(primerDomingo(_hoy.getFullYear(), _hoy.getMonth()), 8)];
+  var calcP = w.doCalc(dsP, null, new Date(), 10000);
+  var cP = { vh: 10000, totalCOP: calcP.totalCOP, bd: calcP.bd, diasTrab: 1 };
+
+  // Sin monto → explicación + lo que corresponde, sin card
+  var rExpl = w.aiAuditarPago(cP, 0);
+  truthy(rExpl.text.indexOf('Verificador') >= 0 && !rExpl.card,
+         'sin monto: muestra el verificador y lo que corresponde');
+  truthy(rExpl.text.indexOf('Recargo') >= 0, 'desglosa los recargos que la ley garantiza');
+
+  // Pago justo
+  var rOk = w.aiAuditarPago(cP, calcP.totalCOP);
+  truthy(rOk.card && rOk.card.status === 'ok' && rOk.text.indexOf('bien') >= 0,
+         'pago exacto → estado ok');
+
+  // Subpago (le pagaron la mitad)
+  var rUnder = w.aiAuditarPago(cP, Math.round(calcP.totalCOP * 0.5));
+  truthy(rUnder.card && rUnder.card.status === 'under', 'subpago → estado under');
+  truthy(rUnder.text.indexOf('de menos') >= 0 && rUnder.text.indexOf('Art. 179') >= 0,
+         'subpago: alerta + cita la norma del recargo dominical');
+  truthy(rUnder.text.indexOf('3 años') >= 0 || rUnder.text.indexOf('3 a') >= 0,
+         'subpago: menciona la prescripción de 3 años');
+
+  // Sobrepago
+  var rOver = w.aiAuditarPago(cP, calcP.totalCOP * 2);
+  truthy(rOver.card && rOver.card.status === 'over', 'pago de más → estado over');
+
+  // Sin salario configurado
+  truthy(w.aiAuditarPago({ vh: 0, totalCOP: 0 }, 500000).text.indexOf('salario') >= 0,
+         'sin salario base pide configurarlo');
+
+  // Sin turnos este mes
+  truthy(w.aiAuditarPago({ vh: 10000, totalCOP: 0, diasTrab: 0 }, 500000).text.indexOf('turnos') >= 0,
+         'sin turnos no inventa una auditoría');
+
+  // End-to-end vía aiAnswer: "me pagan mal" + monto enruta al verificador
+  var stP = {
+    turnos: dsP, turnosAll: dsP, activo: null, calc: calcP,
+    vh: 10000, salario: 2400000, session: { uid: 'u-test', email: 'e@x.com' }
+  };
+  var rE2E = w.aiAnswer('me pagaron 70 mil este mes y creo que me pagan mal', stP);
+  truthy(rE2E && (rE2E.text || '').indexOf('de menos') >= 0,
+         'aiAnswer enruta "me pagan mal + monto" al verificador');
+  truthy(rE2E && rE2E.card && rE2E.card.kind === 'audit',
+         'la respuesta del verificador trae card de auditoría');
+  truthy(rE2E && rE2E.actions && rE2E.actions.length,
+         'ofrece acción para armar el reclamo');
+}());
+
 // ════════════════════════════════════════════════════════════════
 //  ai-advisor: calculadoras financieras/laborales (v279)
 //  Funciones puras del asesor. Antes de v279 el módulo no tenía
