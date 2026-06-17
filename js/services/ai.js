@@ -2450,12 +2450,55 @@ function _aiShiftEditIntent(q, t, c, state) {
   };
 }
 
+// Si la pregunta menciona una quincena, devuelve un contexto "scopeado"
+// con los totales (debido + desglose) solo de esa quincena, usando los
+// rangos oficiales de quincena.js (respeta los días q1/q2 configurados).
+// Devuelve { c, label } o null si no aplica.
+function _aiScopeQuincena(c, state, t) {
+  if (!/quincena|quincenal/.test(t)) return null;
+  if (typeof getQuincenaRange !== 'function' || typeof doCalc !== 'function') return null;
+
+  var turnos = (state && (state.turnosAll || state.turnos)) || [];
+  var ahora = new Date();
+  var prefs = {};
+  try {
+    var uid = state && state.session && state.session.uid;
+    if (uid && typeof leer === 'function' && typeof dk === 'function') {
+      prefs = leer(dk(uid, 'prefs'), {}) || {};
+    }
+  } catch (_) {}
+
+  var rango, label;
+  if (/primera quincena|1ra quincena|1a quincena|quincena 1|primera|1ra/.test(t)) {
+    rango = getQuincenasMes(ahora, prefs).q1;
+    label = 'la primera quincena';
+  } else if (/segunda quincena|2da quincena|2a quincena|quincena 2|segunda|2da/.test(t)) {
+    rango = getQuincenasMes(ahora, prefs).q2;
+    label = 'la segunda quincena';
+  } else {
+    rango = getQuincenaRange(ahora, prefs);
+    label = 'esta quincena';
+  }
+
+  var enRango = typeof filterTurnosRango === 'function' ? filterTurnosRango(turnos, rango) : [];
+  var calc = doCalc(enRango, null, ahora, c.vh || 0);
+  var cQ = {};
+  for (var k in c) {
+    if (Object.prototype.hasOwnProperty.call(c, k)) cQ[k] = c[k];
+  }
+  cQ.totalCOP = calc.totalCOP;
+  cQ.bd = calc.bd;
+  cQ.diasTrab = enRango.length;
+  return { c: cQ, label: label };
+}
+
 // ════════════════════════════════════════════════════════════════
 //  VERIFICADOR DE PAGO JUSTO · "¿me pagan bien?"
 //  Detecta la intención de auditar el pago y delega en aiAuditarPago,
 //  que compara lo pagado contra lo que la ley manda por los turnos.
+//  Soporta período mes (default) o quincena ("esta/primera/segunda").
 // ════════════════════════════════════════════════════════════════
-function _aiAuditIntent(q, t, c) {
+function _aiAuditIntent(q, t, c, state) {
   var trig =
     /(pagan mal|pagaron mal|pagan poco|pagan menos|pagaron de menos|pago incomplet|pago incorrect|sueldo incomplet|me estan pagando mal|me estan robando|me roban|pago justo|me pagan lo justo|verificar.*pago|revisar.*pago|auditar.*pago|me deben)/.test(
       t
@@ -2481,7 +2524,11 @@ function _aiAuditIntent(q, t, c) {
   }
 
   if (typeof aiAuditarPago !== 'function') return null;
-  var res = aiAuditarPago(c, monto && monto >= 10000 ? monto : 0);
+  // Escopear a una quincena si la pregunta lo pide; si no, el mes completo.
+  var scoped = _aiScopeQuincena(c, state, t);
+  var cUse = scoped ? scoped.c : c;
+  var perLabel = scoped ? scoped.label : 'este mes';
+  var res = aiAuditarPago(cUse, monto && monto >= 10000 ? monto : 0, perLabel);
   if (!res || !res.text) return null;
 
   if (typeof aiUpdateConversation === 'function') {
@@ -2520,7 +2567,7 @@ function _aiAnswerCore(question, state) {
 
   // ═══ VERIFICADOR DE PAGO JUSTO ("¿me pagan bien?") ═══
   // Alta prioridad: es el caso más sensible (alguien a quien le pagan mal).
-  var _audit = _aiAuditIntent(q, t, c);
+  var _audit = _aiAuditIntent(q, t, c, state);
   if (_audit) return _audit;
 
   // ═══ INTENTS FINANCIEROS/LABORALES DE ALTA SEÑAL ═══

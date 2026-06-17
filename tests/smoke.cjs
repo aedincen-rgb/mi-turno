@@ -1045,6 +1045,28 @@ group('ai: verificador de pago justo (v294)');
          'la respuesta del verificador trae card de auditoría');
   truthy(rE2E && rE2E.actions && rE2E.actions.length,
          'ofrece acción para armar el reclamo');
+
+  // Período parametrizable: el label aparece en el texto
+  var rLbl = w.aiAuditarPago({ vh: 10000, totalCOP: 100000, bd: {}, diasTrab: 1 }, 0, 'esta quincena');
+  truthy(rLbl.text.indexOf('esta quincena') >= 0, 'el período (quincena) se refleja en el texto');
+
+  // E2E quincena: scope excluye los turnos de la otra mitad del mes
+  var turnoHoy = mkTurno(_hoy, 8);
+  var otroDia = _hoy.getDate() >= 16 ? 5 : 20;
+  var turnoOtra = mkTurno(new Date(_hoy.getFullYear(), _hoy.getMonth(), otroDia), 8);
+  var ambos = [turnoHoy, turnoOtra];
+  var stQ = {
+    turnos: ambos, turnosAll: ambos, activo: null,
+    calc: w.doCalc(ambos, null, new Date(), 10000),
+    vh: 10000, salario: 2400000, session: { uid: 'u-test', email: 'e@x.com' }
+  };
+  var rQ = w.aiAnswer('me pagaron 50 mil esta quincena', stQ);
+  truthy(rQ && (rQ.text || '').indexOf('quincena') >= 0,
+         '"esta quincena" audita por quincena, no por mes');
+  truthy(rQ && rQ.card && rQ.card.kind === 'audit', 'auditoría de quincena trae card');
+  var mesOwed = w.doCalc(ambos, null, new Date(), 10000).totalCOP;
+  truthy(rQ && rQ.card && rQ.card.owed < mesOwed,
+         'la quincena cubre menos que el mes completo (excluye la otra mitad)');
 }());
 
 // ════════════════════════════════════════════════════════════════

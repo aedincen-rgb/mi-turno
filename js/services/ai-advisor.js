@@ -848,8 +848,9 @@ function aiAdvisorRespond(intent, c, state) {
 // recargos), señala qué recargo se está quedando sin pagar y cita la
 // norma (CST). Inspirado en apps de detección de wage theft (OverPay,
 // WageWatch), adaptado al marco colombiano. Devuelve { text, card }.
-function aiAuditarPago(c, montoPagado) {
+function aiAuditarPago(c, montoPagado, periodoLabel) {
   if (!c) return { text: 'No tengo datos para verificar tu pago.', card: null };
+  var per = periodoLabel || 'este mes';
   var vh = c.vh || 0;
   var owed = c.totalCOP || 0;
   var bd = c.bd || {};
@@ -865,7 +866,9 @@ function aiAuditarPago(c, montoPagado) {
   if (owed <= 0 || !c.diasTrab) {
     return {
       text:
-        'Todavía no tengo turnos tuyos este mes para verificar. Registrá tus turnos ' +
+        'Todavía no tengo turnos tuyos en ' +
+        per +
+        ' para verificar. Registrá tus turnos ' +
         '(o decime "registrá un turno ayer de 8 a 4") y te digo si te están pagando lo justo.',
       card: null
     };
@@ -908,7 +911,9 @@ function aiAuditarPago(c, montoPagado) {
   if (!montoPagado || montoPagado < 10000) {
     var msg =
       '🔍 **Verificador de pago justo**\n\n' +
-      'Por tus turnos de este mes, la ley dice que te corresponden **' +
+      'Por tus turnos de ' +
+      per +
+      ', la ley dice que te corresponden **' +
       fCOP(owed) +
       '**. De eso, **' +
       fCOP(Math.round(recargosTotal)) +
@@ -958,7 +963,9 @@ function aiAuditarPago(c, montoPagado) {
   var pct = owed > 0 ? Math.round((gap / owed) * 100) : 0;
   var out =
     '⚠️ **Parece que te están pagando de menos.**\n\n' +
-    'Por tus turnos de este mes te corresponden **' +
+    'Por tus turnos de ' +
+    per +
+    ' te corresponden **' +
     fCOP(owed) +
     '** (con recargos de ley). Te pagaron **' +
     fCOP(montoPagado) +
