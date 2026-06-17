@@ -470,22 +470,37 @@ function App(props) {
       if (!uid) return;
       function resync() {
         // Si CLOUD_MODE está apagado pero hay red y SUPA existe, intentamos
-        // reconectar: un __cloudReady falló antes por timeout de red, pero
-        // ahora la conexión volvió. Revalidamos sin bloquear la UI.
+        // reconectar. Usamos __cloudRecheck (re-ejecutable) en vez del viejo
+        // __cloudReady (Promise de una sola vez que devolvía siempre el
+        // resultado fallido) — así una caída transitoria de red se recupera
+        // sola sin recargar la app.
         if (
           !CLOUD_MODE &&
           isOnline() &&
           typeof SUPA !== 'undefined' &&
           SUPA &&
-          window.__cloudReady
+          typeof window.__cloudRecheck === 'function'
         ) {
-          window.__cloudReady.then(function (ok) {
+          window.__cloudRecheck().then(function (ok) {
             if (ok) {
               try {
                 processQueue(uid);
               } catch (_) {}
+              // La nube volvió → resucitar el canal realtime de inmediato.
+              try {
+                if (typeof window.__mtResubscribe === 'function') window.__mtResubscribe();
+              } catch (_) {}
             }
           });
+        } else if (CLOUD_MODE && isOnline()) {
+          // La nube está OK pero el canal pudo haberse caído en background.
+          // Forzar resuscripción si no está SUBSCRIBED (recupera el LED).
+          try {
+            var _rt = typeof getRealtimeStatus === 'function' ? getRealtimeStatus() : null;
+            if (_rt !== 'SUBSCRIBED' && typeof window.__mtResubscribe === 'function') {
+              window.__mtResubscribe();
+            }
+          } catch (_) {}
         }
         var pending = 0;
         try {

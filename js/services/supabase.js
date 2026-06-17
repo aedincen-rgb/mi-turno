@@ -169,66 +169,129 @@ function supaUpsertPerfil(uid, data) {
 // dispara onChange(table, payload) por cada evento (INSERT/UPDATE/
 // DELETE). Devuelve una función de limpieza. Tolera entornos donde
 // SUPA no expone channel() (fallback silencioso).
+// Resuscribir manualmente el canal activo (lo exponemos en window para
+// que app-main lo dispare al volver del background / recuperar red).
+var _mtForceResubscribe = null;
+
 function supaSubscribeUser(uid, onChange) {
   if (!SUPA || !uid || typeof SUPA.channel !== 'function') return function () {};
-  var ch;
-  _mtRealtimeStatus = 'CONNECTING';
-  try {
-    ch = SUPA.channel('mt-user-' + uid)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'turno_activo',
-          filter: 'user_id=eq.' + uid
-        },
-        function (payload) {
-          try {
-            onChange('turno_activo', payload);
-          } catch (_) {}
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'turnos',
-          filter: 'user_id=eq.' + uid
-        },
-        function (payload) {
-          try {
-            onChange('turnos', payload);
-          } catch (_) {}
-        }
-      )
-      .subscribe(function (status) {
-        _mtRealtimeStatus = status;
-        if (status === 'SUBSCRIBED') {
-          console.log('[MT] Realtime suscrito para', uid);
-          // Realtime NUNCA reenvía los eventos perdidos mientras estuvo
-          // desconectado. Por eso, en CADA (re)suscripción forzamos un
-          // re-fetch completo para reconciliar (best practice Supabase).
-          try {
-            if (typeof window.__mtResync === 'function') setTimeout(window.__mtResync, 250);
-          } catch (_) {}
-        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-          console.warn('[MT] Realtime status:', status);
-        }
-      });
-  } catch (e) {
-    _mtRealtimeStatus = 'CHANNEL_ERROR';
-    console.warn('[MT] No se pudo iniciar realtime:', e);
-    return function () {};
+
+  var ch = null;
+  var disposed = false;
+  var attempts = 0;
+  var reconnectT = null;
+
+  function clearReconnect() {
+    if (reconnectT) {
+      clearTimeout(reconnectT);
+      reconnectT = null;
+    }
   }
-  return function () {
-    _mtRealtimeStatus = null;
+
+  function teardown() {
     try {
-      if (ch && SUPA.removeChannel) SUPA.removeChannel(ch);
+      if (ch && SUPA && SUPA.removeChannel) SUPA.removeChannel(ch);
     } catch (_) {}
+    ch = null;
+  }
+
+  // Backoff exponencial con jitter y tope: 2s, 4s, 8s, 16s … máx 30s.
+  // Sin esto, un CHANNEL_ERROR/TIMED_OUT/CLOSED dejaba el canal muerto
+  // y el LED en rojo hasta recargar la app (causa del bug recurrente).
+  function scheduleReconnect() {
+    if (disposed) return;
+    clearReconnect();
+    attempts++;
+    var base = Math.min(30000, 1000 * Math.pow(2, Math.min(attempts, 5)));
+    var delay = base + Math.floor(Math.random() * 1000);
+    reconnectT = setTimeout(function () {
+      if (disposed) return;
+      teardown();
+      connect();
+    }, delay);
+  }
+
+  function connect() {
+    if (disposed || !SUPA || typeof SUPA.channel !== 'function') return;
+    // Sin red no tiene sentido intentar: marcamos CLOSED y reprogramamos
+    // (el evento 'online' / la vuelta al foreground forzarán antes).
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+      _mtRealtimeStatus = 'CLOSED';
+      scheduleReconnect();
+      return;
+    }
+    _mtRealtimeStatus = 'CONNECTING';
+    try {
+      ch = SUPA.channel('mt-user-' + uid)
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'turno_activo', filter: 'user_id=eq.' + uid },
+          function (payload) {
+            try {
+              onChange('turno_activo', payload);
+            } catch (_) {}
+          }
+        )
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'turnos', filter: 'user_id=eq.' + uid },
+          function (payload) {
+            try {
+              onChange('turnos', payload);
+            } catch (_) {}
+          }
+        )
+        .subscribe(function (status) {
+          _mtRealtimeStatus = status;
+          if (status === 'SUBSCRIBED') {
+            attempts = 0;
+            clearReconnect();
+            console.log('[MT] Realtime suscrito para', uid);
+            // Realtime NUNCA reenvía los eventos perdidos mientras estuvo
+            // desconectado. Por eso, en CADA (re)suscripción forzamos un
+            // re-fetch completo para reconciliar (best practice Supabase).
+            try {
+              if (typeof window.__mtResync === 'function') setTimeout(window.__mtResync, 250);
+            } catch (_) {}
+          } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+            console.warn('[MT] Realtime status:', status, '→ reintento con backoff');
+            scheduleReconnect();
+          }
+        });
+    } catch (e) {
+      _mtRealtimeStatus = 'CHANNEL_ERROR';
+      console.warn('[MT] No se pudo iniciar realtime:', e);
+      scheduleReconnect();
+    }
+  }
+
+  // Resuscripción inmediata bajo demanda (al volver al foreground / online).
+  // Si ya está SUBSCRIBED no hace nada; si está caído, reinicia el backoff.
+  _mtForceResubscribe = function () {
+    if (disposed) return;
+    if (_mtRealtimeStatus === 'SUBSCRIBED') return;
+    clearReconnect();
+    attempts = 0;
+    teardown();
+    connect();
+  };
+
+  connect();
+
+  return function () {
+    disposed = true;
+    clearReconnect();
+    _mtForceResubscribe = null;
+    _mtRealtimeStatus = null;
+    teardown();
   };
 }
+
+// Expuesto para app-main: fuerza resuscripción si el canal se cayó.
+function supaResubscribe() {
+  if (typeof _mtForceResubscribe === 'function') _mtForceResubscribe();
+}
+if (typeof window !== 'undefined') window.__mtResubscribe = supaResubscribe;
 // Upsert en pin_lookup con onConflict en user_id (UNIQUE), así
 // permite cambiar el PIN (PK) sin crear filas duplicadas. Si el
 // nuevo PIN ya está tomado por otro usuario, Postgres devuelve

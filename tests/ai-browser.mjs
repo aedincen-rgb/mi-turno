@@ -181,6 +181,25 @@ try {
       ')'
   );
 
+  // Robustez de reconexión: los hooks de recuperación deben existir y
+  // __cloudRecheck debe ser re-ejecutable (devuelve boolean), no un
+  // Promise cacheado de una sola vez.
+  var recheck = await page.evaluate(function () {
+    return {
+      hasRecheck: typeof window.__cloudRecheck === 'function',
+      hasResub: typeof window.__mtResubscribe === 'function'
+    };
+  });
+  ok(recheck.hasRecheck, '__cloudRecheck disponible (re-valida la nube sin recargar)');
+  ok(recheck.hasResub, '__mtResubscribe disponible (resucita el canal realtime)');
+  var recheckResult = await page.evaluate(function () {
+    return window.__cloudRecheck();
+  });
+  ok(
+    typeof recheckResult === 'boolean',
+    '__cloudRecheck() es re-ejecutable y devuelve boolean (vino: ' + recheckResult + ')'
+  );
+
   // ── 3. UI REAL DEL ASISTENTE ─────────────────────────────────
   console.log('\n→ UI del asistente (camino real: textarea → burbuja)');
   await page.locator('.tab-btn', { hasText: 'Asistente' }).first().click();

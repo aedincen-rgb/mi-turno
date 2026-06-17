@@ -47,8 +47,7 @@
   }
 })();
 
-window.__cloudReady = (function () {
-  if (!CLOUD_MODE || !SUPA) return Promise.resolve(false);
+(function () {
   var timeout = IS_IOS_SAFARI ? 15000 : 6000;
   var maxRetries = IS_IOS_SAFARI ? 2 : 1;
 
@@ -96,11 +95,20 @@ window.__cloudReady = (function () {
 
   function intentar(retries) {
     return withTimeout(
-      _probarConexionReal().then(function () { return true; }),
+      _probarConexionReal().then(function () {
+        return true;
+      }),
       timeout,
       'Conexión Supabase'
     )
-      .then(function () { return true; })
+      .then(function () {
+        // Éxito: (re)habilitar la nube. Clave para la recuperación —
+        // un __cloudRecheck tras una caída transitoria vuelve a poner
+        // CLOUD_MODE en true sin recargar la app.
+        CLOUD_MODE = true;
+        CLOUD_ERROR = null;
+        return true;
+      })
       .catch(function (e) {
         if (retries > 0) {
           return new Promise(function (resolve) {
@@ -130,5 +138,26 @@ window.__cloudReady = (function () {
         return false;
       });
   }
-  return intentar(maxRetries);
+
+  // Validación inicial (one-shot): gating del primer render.
+  window.__cloudReady = !CLOUD_MODE || !SUPA ? Promise.resolve(false) : intentar(maxRetries);
+
+  // Re-chequeo BAJO DEMANDA: lo llaman el login, el resync y los eventos
+  // online/visibilidad. Es la pieza que faltaba — antes __cloudReady era
+  // un Promise de una sola vez, así que tras una caída transitoria de red
+  // CLOUD_MODE quedaba en false para siempre y el login se bloqueaba aunque
+  // el servidor estuviera sano. Si SUPA fue anulado por un error de auth,
+  // no hay nada que reintentar sin re-login.
+  window.__cloudRecheck = function () {
+    if (!SUPA) return Promise.resolve(false);
+    return intentar(1);
+  };
+
+  // Cuando vuelve la red, re-chequear la nube automáticamente. Esto
+  // recupera el LED y desbloquea el login sin que el usuario recargue.
+  if (typeof window !== 'undefined' && window.addEventListener) {
+    window.addEventListener('online', function () {
+      if (window.__cloudRecheck) window.__cloudRecheck();
+    });
+  }
 })();

@@ -111,18 +111,47 @@ function AuthScreen(props) {
   useEffect(function () {
     var alive = true;
     var delay = IS_IOS_SAFARI ? 2000 : 0;
+
+    function aplicar(ok) {
+      if (!alive) return;
+      setCloudOk(!!ok);
+      setCloudErr(CLOUD_ERROR);
+    }
+
+    // Re-chequeo de conectividad (re-ejecutable). Si la nube no está lista
+    // pero hay red, reintenta — así el login no queda bloqueado por una
+    // sonda fallida en el arranque frío.
+    function rechequear() {
+      if (!alive || !isOnline()) return;
+      if (typeof window.__cloudRecheck === 'function') {
+        window.__cloudRecheck().then(aplicar);
+      }
+    }
+
     setTimeout(function () {
       if (!alive) return;
       if (window.__cloudReady) {
         window.__cloudReady.then(function (ok) {
-          if (!alive) return;
-          setCloudOk(!!ok);
-          setCloudErr(CLOUD_ERROR);
+          aplicar(ok);
+          // Si la validación inicial falló pero hay red, reintentar una vez:
+          // el servidor puede estar sano y solo falló la sonda del arranque.
+          if (!ok) rechequear();
         });
       }
     }, delay);
+
+    // Auto-recuperación: cuando vuelve la red o la app al foreground,
+    // re-chequear y desbloquear el login si la nube respondió.
+    function onVis() {
+      if (document.visibilityState === 'visible') rechequear();
+    }
+    window.addEventListener('online', rechequear);
+    document.addEventListener('visibilitychange', onVis, { passive: true });
+
     return function () {
       alive = false;
+      window.removeEventListener('online', rechequear);
+      document.removeEventListener('visibilitychange', onVis);
     };
   }, []);
 

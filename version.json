@@ -1,4 +1,4 @@
 {
-  "v": "v283",
-  "label": "IA asesora: interconexión de módulos — los ganchos encadenan (dale/la cuota/ambos)"
+  "v": "v284",
+  "label": "Supabase robusto: reconexión realtime con backoff + cloud recheck re-ejecutable (desbloquea login)"
 }
