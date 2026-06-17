@@ -1506,15 +1506,17 @@ function _aiDispatchNLP(intent, c, state, q, t) {
     var hsemActual = typeof getHSEM === 'function' ? getHSEM(c.ahora) : 44;
     return (
       '⚖️ **Normativa laboral colombiana:**\n\n' +
-      '• Jornada máxima actual: **' +
+      '| Concepto | Recargo |\n' +
+      '|---|---|\n' +
+      '| 🌙 Nocturno (9pm–6am) | +35% |\n' +
+      '| ⛪ Dominical/festivo | +75% |\n' +
+      '| ⏱ Extra diurna | +25% |\n' +
+      '| 🌙 Extra nocturna | +75% |\n' +
+      '| ⛪ Extra festiva diurna | +100% |\n' +
+      '| 🌙 Extra festiva nocturna | +150% |\n\n' +
+      '• Jornada máxima: **' +
       hsemActual +
       'h/semana** (Ley 2101/2021)\n' +
-      '• Recargo nocturno (9pm-6am): **+35%**\n' +
-      '• Recargo dominical/festivo: **+75%**\n' +
-      '• Hora extra diurna: **+25%**\n' +
-      '• Hora extra nocturna: **+75%**\n' +
-      '• Extra festiva diurna: **+100%**\n' +
-      '• Extra festiva nocturna: **+150%**\n\n' +
       '• Máximo 2h extra/día y 12h/semana\n' +
       '• Descanso obligatorio tras 6 días de trabajo'
     );

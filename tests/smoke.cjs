@@ -1116,6 +1116,40 @@ group('ai: desprendible de nómina (v300)');
          'sin turnos pide registrarlos, sin generar nada');
 }());
 
+group('ai: calculadoras usan tablas (v303)');
+(function () {
+  var cCalc = {
+    vh: 10000, totalCOP: 1500000, salario: w.SMIN, diasTrab: 15,
+    bd: w.doCalc([mkTurno(primerDomingo(_hoy.getFullYear(), _hoy.getMonth()), 8)], null, new Date(), 10000).bd
+  };
+  // 1) Liquidación
+  if (typeof w.aiAdvisorLiquidacion === 'function') {
+    var rL = w.aiAdvisorLiquidacion(cCalc);
+    truthy(rL.indexOf('| Concepto | Valor |') >= 0, 'liquidación: devengado/prestaciones en tabla');
+    truthy(rL.indexOf('Neto a recibir') >= 0, 'liquidación: conserva el neto');
+  }
+  // 2) Simulador
+  if (typeof w.aiAdvisorSimular === 'function') {
+    var rS = w.aiAdvisorSimular(cCalc, 8, 'completo');
+    truthy(rS.indexOf('| Escenario | Factor | Pago |') >= 0, 'simulador: escenarios en tabla');
+    truthy(rS.indexOf('| Tipo | Al mes |') >= 0, 'simulador: proyección mensual en tabla');
+  }
+  // 3) Comparación de períodos
+  var rC = w.aiQueryCompare('compará ' + _nombreAnt + ' con ' + _nombreAnt2, dsCmp, _ctx);
+  truthy(rC && rC.indexOf('| Período | Ganado | Horas | Turnos |') >= 0,
+         'comparación: períodos en tabla');
+  truthy(rC && rC.indexOf(' vs ') >= 0 && rC.indexOf('más en') >= 0,
+         'comparación: conserva encabezado y resumen');
+  // 4) Normativa de recargos (e2e vía aiAnswer, intent ley)
+  var stL = {
+    turnos: [], turnosAll: [], activo: null, calc: w.doCalc([], null, new Date(), 10000),
+    vh: 10000, salario: w.SMIN, session: { uid: 'u', email: 'e@x.com' }
+  };
+  var rN = w.aiAnswer('¿cuál es la tabla de recargos?', stL);
+  truthy(rN && (rN.text || rN).toString().indexOf('| Concepto | Recargo |') >= 0,
+         'normativa: recargos legales en tabla');
+}());
+
 group('ai: tablas markdown en respuestas (v301)');
 (function () {
   if (typeof w._aiFormat !== 'function') {

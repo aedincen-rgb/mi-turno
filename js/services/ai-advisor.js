@@ -61,24 +61,21 @@ function aiAdvisorLiquidacion(c) {
 
   var resp = '💰 **Liquidación y prestaciones**\n\n';
 
-  resp += '**Devengado:**\n';
-  resp += '• Total bruto: ' + fCOP(c.totalCOP) + '\n';
-  resp += '• Salud (4%): -' + fCOP(salud) + '\n';
-  resp += '• Pensión (4%): -' + fCOP(pension) + '\n';
-  if (auxTransporte > 0) resp += '• Auxilio transporte: +' + fCOP(auxTransporte) + '\n';
-  resp += '• **Neto a recibir: ' + fCOP(netoPagar) + '**\n\n';
+  resp += '**Devengado del mes**\n\n';
+  resp += '| Concepto | Valor |\n|---|---|\n';
+  resp += '| Total bruto | ' + fCOP(c.totalCOP) + ' |\n';
+  resp += '| Salud (4%) | -' + fCOP(salud) + ' |\n';
+  resp += '| Pensión (4%) | -' + fCOP(pension) + ' |\n';
+  if (auxTransporte > 0) resp += '| Auxilio transporte | +' + fCOP(auxTransporte) + ' |\n';
+  resp += '| **Neto a recibir** | **' + fCOP(netoPagar) + '** |\n\n';
 
-  resp += '**Prestaciones acumuladas:**\n';
-  resp +=
-    '• Cesantías: ' +
-    fCOP(cesantiasProporcional) +
-    ' (' +
-    (sal <= SMIN * 2 ? 'consignadas al fondo' : 'pagadas directamente') +
-    ')\n';
-  resp += '• Intereses cesantías: ' + fCOP(intCesantias) + ' (12% anual)\n';
-  resp += '• Prima de servicios: ' + fCOP(primaProporcional) + ' (pagadero en junio y diciembre)\n';
-  resp += '• Vacaciones: ' + fCOP(vacacionesProporcional) + ' (15 días por año trabajado)\n';
-  resp += '• **Total prestaciones: ' + fCOP(totalPrestaciones) + '**\n\n';
+  resp += '**Prestaciones acumuladas**\n\n';
+  resp += '| Concepto | Valor |\n|---|---|\n';
+  resp += '| Cesantías | ' + fCOP(cesantiasProporcional) + ' |\n';
+  resp += '| Intereses cesantías (12%) | ' + fCOP(intCesantias) + ' |\n';
+  resp += '| Prima de servicios | ' + fCOP(primaProporcional) + ' |\n';
+  resp += '| Vacaciones | ' + fCOP(vacacionesProporcional) + ' |\n';
+  resp += '| **Total prestaciones** | **' + fCOP(totalPrestaciones) + '** |\n\n';
 
   resp +=
     '💡 Las cesantías se consignan antes del 15 de febrero del año siguiente. La prima se paga la mitad en junio y la otra en diciembre. Las vacaciones se disfrutan, no se compensan en dinero (salvo terminación del contrato).';
@@ -141,10 +138,11 @@ function aiAdvisorSimular(c, horas, tipo) {
     resp +=
       '💡 Elegir bien el horario puede duplicar tus ingresos por las mismas horas trabajadas.';
   } else {
-    // Mostrar todos
+    // Mostrar todos en tabla
+    resp += '| Escenario | Factor | Pago |\n|---|---|---|\n';
     for (var i = 0; i < escenarios.length; i++) {
       var s = escenarios[i];
-      resp += '• ' + s.label + ': ' + fCOP(s.cop) + '\n';
+      resp += '| ' + s.label + ' | ' + s.factor.toFixed(2) + 'x | ' + fCOP(s.cop) + ' |\n';
     }
     resp +=
       '\n💡 El mismo número de horas puede pagar hasta ' +
@@ -152,12 +150,12 @@ function aiAdvisorSimular(c, horas, tipo) {
       ' si las hacés en festivo nocturno.';
   }
 
-  // Agregar proyección mensual
-  resp += '\n\n📅 **Proyección mensual** (si hicieras ' + horas + 'h/semana de cada tipo):\n';
+  // Proyección mensual en tabla
+  resp += '\n\n📅 **Proyección mensual** (si hicieras ' + horas + 'h/semana de cada tipo):\n\n';
+  resp += '| Tipo | Al mes |\n|---|---|\n';
   for (var j = 0; j < 3; j++) {
-    var s = escenarios[j * 2]; // solo algunos
-    var mensual = s.cop * 4;
-    resp += '• ' + s.label + ': ' + fCOP(mensual) + '/mes\n';
+    var sm = escenarios[j * 2]; // solo algunos
+    resp += '| ' + sm.label + ' | ' + fCOP(sm.cop * 4) + ' |\n';
   }
 
   return resp;

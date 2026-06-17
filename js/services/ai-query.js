@@ -655,19 +655,18 @@ function aiQueryCompare(question, turnosAll, ctx) {
   var ta = totalesDe(A);
   var tb = totalesDe(B);
 
-  function periodoLinea(p, tot) {
+  function periodoFila(p, tot) {
     return (
-      '• **' +
+      '| **' +
       p.label.charAt(0).toUpperCase() +
       p.label.slice(1) +
-      '**: ' +
+      '** | ' +
       fCOP(tot.cop) +
-      ' · ' +
+      ' | ' +
       fDur(tot.mins) +
-      ' · ' +
+      ' | ' +
       tot.turnos +
-      ' turno' +
-      (tot.turnos === 1 ? '' : 's')
+      ' |'
     );
   }
 
@@ -699,9 +698,11 @@ function aiQueryCompare(question, turnosAll, ctx) {
     ' vs ' +
     B.label +
     '**\n\n' +
-    periodoLinea(A, ta) +
+    '| Período | Ganado | Horas | Turnos |\n' +
+    '|---|---|---|---|\n' +
+    periodoFila(A, ta) +
     '\n' +
-    periodoLinea(B, tb) +
+    periodoFila(B, tb) +
     '\n\n' +
     resumen;
 
