@@ -522,8 +522,19 @@ function buildContext(state) {
   var alertaTurnoLargo = tieneActivo && minutosEnTurnoActual > 600; // >10h
   var alertaNocturnaActivo = tieneActivo && (horaDelDia >= 22 || horaDelDia < 6);
 
-  // Indicadores de setup y historial
-  var salarioConfigurado = salario > SMIN;
+  // Indicadores de setup y historial.
+  // El flag real de "salario configurado" es mt_sc_<uid> (lo marca el
+  // usuario al guardar su salario). Usar `salario > SMIN` como proxy
+  // trataba a quien gana EXACTAMENTE el mínimo (el grueso del público)
+  // como si no lo hubiera configurado. Leemos el flag y dejamos el
+  // proxy solo como respaldo para quien ya subió su salario.
+  var _scFlag = false;
+  try {
+    if (state.session && state.session.uid && typeof leer === 'function') {
+      _scFlag = leer(dk(state.session.uid, 'sc'), false) === true;
+    }
+  } catch (_e) {}
+  var salarioConfigurado = _scFlag || salario > SMIN;
   var tieneHistorial = turnosAll.length > 0;
 
   // Bienestar compuesto
@@ -1729,14 +1740,373 @@ function _aiIntentSuggestion(intent) {
 // aiAnswer para registrar el tema aunque responda la cascada clásica.
 var _aiLastNlp = null;
 
+// ════════════════════════════════════════════════════════════════
+//  DETECCIÓN DE INTENTS FINANCIEROS/LABORALES (alta señal)
+//  Calculadoras del asesor que el clasificador NLP no conoce.
+//  Devuelve string con la respuesta o null si ninguna aplica.
+//  q = query crudo en minúsculas · t = texto normalizado · c = contexto
+//
+//  Memoria de turno: si la respuesta anterior fue una de estas
+//  calculadoras y el usuario contesta con un dato suelto (años, una
+//  cifra), se re-ejecuta la misma calculadora con ese parámetro.
+//  Sin esto, "llevo 4 años" tras una pregunta de despido caía al
+//  fallback genérico (la IA pedía el dato y luego no lo entendía).
+// ════════════════════════════════════════════════════════════════
+
+// Contador de turnos y último intent financiero respondido. Permiten
+// detectar un follow-up SOLO si llega en el turno inmediatamente
+// siguiente (evita arrastrar contexto viejo).
+var _aiTurnCounter = 0;
+var _aiLastFin = null; // { intent: string, turn: number }
+var _aiFinOffer = null; // { options: [intent...], turn } — próximos pasos ofrecidos
+
+// ── INTERCONEXIÓN: qué próximos pasos ofrece cada cálculo ──────────
+// Cuando una calculadora termina, deja "ofertas" encadenables. Si el
+// usuario responde "sí/dale", nombra una ("la cuota") o pide "ambos",
+// se enruta al módulo correcto. Antes esos ganchos no iban a ningún
+// lado: el texto invitaba pero un "dale" caía al fallback.
+var _AI_FIN_OFFERS = {
+  presupuesto: ['emergencia', 'endeudamiento'],
+  emergencia: ['presupuesto', 'endeudamiento'],
+  endeudamiento: ['presupuesto', 'emergencia'],
+  indemnizacion: ['liquidacion'],
+  comparar_oferta: ['presupuesto']
+};
+
+// Palabras con que el usuario puede nombrar cada opción ofrecida.
+var _AI_FIN_KW = {
+  emergencia: ['emergencia', 'colchon', 'fondo'],
+  endeudamiento: ['cuota', 'credito', 'deuda', 'endeuda', 'prestamo'],
+  presupuesto: ['presupuesto', 'reparto', 'reparti', 'distribu'],
+  liquidacion: ['liquidacion', 'prestacion', 'cesantia', 'prima']
+};
+
+// Routea un intent financiero a su calculadora (param opcional).
+function _aiFinDispatch(intent, c, num) {
+  num = num || 0;
+  if (intent === 'presupuesto' && typeof aiAdvisorPresupuesto === 'function')
+    return aiAdvisorPresupuesto(c, num > 100000 ? num : 0);
+  if (intent === 'emergencia' && typeof aiAdvisorEmergencia === 'function')
+    return aiAdvisorEmergencia(c);
+  if (intent === 'endeudamiento' && typeof aiAdvisorEndeudamiento === 'function')
+    return aiAdvisorEndeudamiento(c, num > 1000 ? num : 0);
+  if (intent === 'indemnizacion' && typeof aiAdvisorIndemnizacion === 'function')
+    return aiAdvisorIndemnizacion(c, num > 0 && num <= 50 ? num : 1);
+  if (intent === 'liquidacion' && typeof aiAdvisorLiquidacion === 'function')
+    return aiAdvisorLiquidacion(c);
+  if (intent === 'comparar_oferta' && typeof aiAdvisorCompararOfertas === 'function')
+    return num > 100000 ? aiAdvisorCompararOfertas(c, num, 0) : null;
+  return null;
+}
+
+function _aiFinOfferActive() {
+  return !!(
+    _aiFinOffer &&
+    _aiTurnCounter === _aiFinOffer.turn + 1 &&
+    _aiFinOffer.options &&
+    _aiFinOffer.options.length
+  );
+}
+
+// Selección EXPLÍCITA de una opción ("la cuota", "el segundo"). null si no.
+function _aiFinOfferPick(t) {
+  if (!_aiFinOfferActive()) return null;
+  var opts = _aiFinOffer.options;
+  if (opts.length > 1 && /segund/.test(t)) return opts[1];
+  if (/primer/.test(t)) return opts[0];
+  for (var i = 0; i < opts.length; i++) {
+    var ks = _AI_FIN_KW[opts[i]] || [];
+    for (var j = 0; j < ks.length; j++) {
+      if (t.indexOf(ks[j]) >= 0) return opts[i];
+    }
+  }
+  return null;
+}
+
+// Afirmación corta y EXACTA (evita que "simular..." matchee por "si").
+function _aiIsAffirmative(t) {
+  if (!t || t.length > 18) return false;
+  var aff = [
+    'si',
+    'sí',
+    'dale',
+    'bueno',
+    'ok',
+    'oka',
+    'okey',
+    'okay',
+    'vale',
+    'de una',
+    'hagale',
+    'hágale',
+    'listo',
+    'de once',
+    'sip',
+    'sisas',
+    'va',
+    'vamos',
+    'claro',
+    'obvio',
+    'porfa',
+    'porfi',
+    'quiero',
+    'si porfa',
+    'si dale',
+    'dale si',
+    'calcula',
+    'calculemos',
+    'calculalo',
+    'muestrame',
+    'mostrame',
+    'muestra',
+    'el primero',
+    'la primera',
+    'el primer'
+  ];
+  for (var i = 0; i < aff.length; i++) {
+    if (t === aff[i]) return true;
+  }
+  return false;
+}
+
+// Afirmación a una oferta → primera opción; "ambos/los dos" → todas.
+function _aiFinOfferAffirm(t, c) {
+  if (!_aiFinOfferActive()) return null;
+  var opts = _aiFinOffer.options;
+  if (/^(ambos|los dos|las dos|todo|todas)\b/.test(t)) {
+    var parts = [];
+    for (var k = 0; k < opts.length; k++) {
+      var tx = _aiFinDispatch(opts[k], c, 0);
+      if (tx) parts.push(tx);
+    }
+    if (parts.length) return { intent: opts[0], text: parts.join('\n\n──────────\n\n') };
+  }
+  if (_aiIsAffirmative(t)) {
+    var txt = _aiFinDispatch(opts[0], c, 0);
+    if (txt) return { intent: opts[0], text: txt };
+  }
+  return null;
+}
+
+function _aiFinFollowUp(t, c) {
+  if (!_aiLastFin || _aiTurnCounter !== _aiLastFin.turn + 1) return null;
+  var n = _aiNum(t);
+  if (n === null || n === undefined) return null;
+
+  if (_aiLastFin.intent === 'indemnizacion') {
+    // Respuesta a "¿cuántos años llevás?": número plausible de años.
+    var pareceAnios =
+      n > 0 &&
+      n <= 50 &&
+      (_aiHas(t, 'ano', 'anos', 'llevo', 'tengo', 'cumplo', 'anti') || /^\D*\d+\D*$/.test(t));
+    if (pareceAnios && typeof aiAdvisorIndemnizacion === 'function') {
+      return { intent: 'indemnizacion', text: aiAdvisorIndemnizacion(c, n) };
+    }
+  } else if (_aiLastFin.intent === 'endeudamiento') {
+    if (n > 1000 && typeof aiAdvisorEndeudamiento === 'function') {
+      return { intent: 'endeudamiento', text: aiAdvisorEndeudamiento(c, n) };
+    }
+  } else if (_aiLastFin.intent === 'comparar_oferta') {
+    if (n > 100000 && typeof aiAdvisorCompararOfertas === 'function') {
+      return { intent: 'comparar_oferta', text: aiAdvisorCompararOfertas(c, n, 0) };
+    }
+  } else if (_aiLastFin.intent === 'presupuesto') {
+    // "¿y si gano 2 millones?": recalcular el reparto con ese ingreso.
+    if (n > 100000 && typeof aiAdvisorPresupuesto === 'function') {
+      return { intent: 'presupuesto', text: aiAdvisorPresupuesto(c, n) };
+    }
+  }
+  return null;
+}
+
+function _aiFinancieroIntent(q, t, c) {
+  if (!c) return null;
+
+  var _intent = null;
+  var _resp = null;
+
+  // ── Indemnización por despido sin justa causa ──
+  if (
+    q.indexOf('/indemnizacion') === 0 ||
+    q.indexOf('/indemnizar') === 0 ||
+    _aiHas(
+      t,
+      'indemnizacion',
+      'despido',
+      'me despiden',
+      'me echan',
+      'me echaron',
+      'si me sacan',
+      'sin justa causa'
+    )
+  ) {
+    if (typeof aiAdvisorIndemnizacion === 'function') {
+      var _antNum = _aiNum(t);
+      var _anios = _antNum && _antNum > 0 && _antNum <= 50 ? _antNum : 1;
+      _intent = 'indemnizacion';
+      _resp = aiAdvisorIndemnizacion(c, _anios);
+    }
+  }
+
+  // ── Fondo de emergencia (colchón) ──
+  if (
+    !_resp &&
+    (q === '/emergencia' ||
+      q === '/fondo' ||
+      _aiHas(
+        t,
+        'fondo de emergencia',
+        'fondo emergencia',
+        'colchon',
+        'colchón',
+        'plata para imprevistos',
+        'red de seguridad'
+      ))
+  ) {
+    if (typeof aiAdvisorEmergencia === 'function') {
+      _intent = 'emergencia';
+      _resp = aiAdvisorEmergencia(c);
+    }
+  }
+
+  // ── Capacidad de endeudamiento / cuota ──
+  if (
+    !_resp &&
+    (q.indexOf('/cuota') === 0 ||
+      q.indexOf('/endeudamiento') === 0 ||
+      _aiHas(
+        t,
+        'cuanto puedo pagar',
+        'capacidad de pago',
+        'capacidad de endeudamiento',
+        'puedo endeudarme',
+        'sacar un credito',
+        'pedir un prestamo',
+        'cuota mensual',
+        'cuanto de cuota'
+      ))
+  ) {
+    if (typeof aiAdvisorEndeudamiento === 'function') {
+      var _cuotaNum = _aiNum(t);
+      var _cuota = _cuotaNum && _cuotaNum > 1000 ? _cuotaNum : 0;
+      _intent = 'endeudamiento';
+      _resp = aiAdvisorEndeudamiento(c, _cuota);
+    }
+  }
+
+  // ── Comparar oferta laboral ──
+  // Requiere "oferta/empleo nuevo" para no chocar con "comparar mes".
+  if (
+    !_resp &&
+    (q.indexOf('/comparar') === 0 ||
+      _aiHas(
+        t,
+        'oferta',
+        'me ofrecen',
+        'me ofrecieron',
+        'nuevo trabajo',
+        'otro empleo',
+        'cambiar de trabajo',
+        'me proponen'
+      ))
+  ) {
+    var _ofNum = _aiNum(t);
+    if (typeof aiAdvisorCompararOfertas === 'function' && _ofNum && _ofNum > 100000) {
+      _intent = 'comparar_oferta';
+      _resp = aiAdvisorCompararOfertas(c, _ofNum, 0);
+    } else if (q.indexOf('/comparar') === 0) {
+      _intent = 'comparar_oferta';
+      _resp =
+        'Para comparar una oferta, decime el salario que te ofrecen. Por ejemplo: "tengo una oferta de 2 millones" o "/comparar 2500000".';
+    }
+  }
+
+  // ── Presupuesto / reparto del sueldo (regla 50/30/20) ──
+  if (
+    !_resp &&
+    (q === '/presupuesto' ||
+      q === '/reparto' ||
+      _aiHas(
+        t,
+        'presupuesto',
+        'como reparto',
+        'como divido',
+        'como distribuyo',
+        'como administro',
+        'en que deberia gastar',
+        'reparto mi sueldo',
+        'reparto mi plata',
+        'organizar mi plata',
+        'regla 50',
+        '50 30 20'
+      ))
+  ) {
+    if (typeof aiAdvisorPresupuesto === 'function') {
+      var _presNum = _aiNum(t);
+      var _presIng = _presNum && _presNum > 100000 ? _presNum : 0;
+      _intent = 'presupuesto';
+      _resp = aiAdvisorPresupuesto(c, _presIng);
+    }
+  }
+
+  // Un intent fresco (con sus propias keywords) gana siempre. Solo si
+  // NINGUNO matcheó probamos las respuestas encadenadas.
+
+  // 1) Selección explícita de una opción ofrecida ("la cuota", "el segundo").
+  if (!_resp) {
+    var _pick = _aiFinOfferPick(t);
+    if (_pick) {
+      _intent = _pick;
+      _resp = _aiFinDispatch(_pick, c, _aiNum(t) || 0);
+    }
+  }
+
+  // 2) Follow-up numérico sobre el MISMO cálculo previo (años, cuota, ingreso).
+  //    Así "tengo una oferta de 3 millones" tras una pregunta de cuota se
+  //    lee como oferta nueva, no como cuota de 3M.
+  if (!_resp) {
+    var _fu = _aiFinFollowUp(t, c);
+    if (_fu) {
+      _intent = _fu.intent;
+      _resp = _fu.text;
+    }
+  }
+
+  // 3) Afirmación simple a la oferta ("dale", "ambos") → primera/todas.
+  if (!_resp) {
+    var _aff = _aiFinOfferAffirm(t, c);
+    if (_aff) {
+      _intent = _aff.intent;
+      _resp = _aff.text;
+    }
+  }
+
+  if (_resp) {
+    _aiLastFin = { intent: _intent, turn: _aiTurnCounter };
+    // Dejar ofertas encadenables para el próximo turno (interconexión).
+    _aiFinOffer = _AI_FIN_OFFERS[_intent]
+      ? { options: _AI_FIN_OFFERS[_intent], turn: _aiTurnCounter }
+      : null;
+    return _resp;
+  }
+  return null;
+}
+
 function _aiAnswerCore(question, state) {
   var q = question.toLowerCase().trim();
   var t = _aiNorm(question);
   _aiLastNlp = null;
+  _aiTurnCounter++;
   if (!q) return 'Pregúntame algo sobre tu mes.';
 
   // Construcción del contexto garantizada
   var c = buildContext(state);
+
+  // ═══ INTENTS FINANCIEROS/LABORALES DE ALTA SEÑAL ═══
+  // Antes del atajo de ayuda: "cómo reparto mi sueldo" debe dar el
+  // presupuesto, no la guía de configurar salario (que matchea "sueldo").
+  var _finResp = _aiFinancieroIntent(q, t, c);
+  if (_finResp) return _finResp;
 
   // ═══ ATAJO AYUDA: preguntas con "cómo" → aiHelpAnswer directo ═══
   // Quitar "¿" inicial antes de comparar para que "¿Cómo..." también dispare
@@ -2051,7 +2421,7 @@ function _aiAnswerCore(question, state) {
     );
   }
   if (q === '/capacidades' || q === '/skills') {
-    return '**Capacidades Potenciadas:**\n\n💰 **Finanzas**\n• Sueldo Neto (menos salud/pensión)\n• Liquidación Proporcional\n\n⚖️ **Legal**\n• Ley 2101 (Reducción de jornada)\n• Auxilio de Transporte y Recargos\n\n🧠 **Salud**\n• Análisis de burnout y descanso';
+    return '**Capacidades Potenciadas:**\n\n💰 **Finanzas**\n• Presupuesto 50/30/20 (cómo repartir tu sueldo)\n• Sueldo Neto (menos salud/pensión)\n• Liquidación y prestaciones\n• Indemnización por despido (Art. 64)\n• Fondo de emergencia y plan de ahorro\n• Capacidad de cuota / endeudamiento\n• Comparador de ofertas laborales\n\n⚖️ **Legal**\n• Ley 2101 (Reducción de jornada)\n• Auxilio de Transporte y Recargos\n\n🧠 **Salud**\n• Análisis de burnout y descanso';
   }
 
   // ── INTENT: LIQUIDACIÓN ──
@@ -3396,7 +3766,9 @@ function _aiAnswerCore(question, state) {
     return 'Esta semana ya superaste las 46h, así que cada hora extra se está pagando con recargo (+25% mín). Cuídate del cansancio igual.';
   }
 
-  // Descanso
+  // Descanso / fatiga. Validar SIEMPRE lo que siente la persona antes
+  // de dar el dato — decir "vas bien" a alguien que dice "estoy agotado"
+  // es tono-sordo. Usar racha, horas semanales y estado de bienestar.
   if (
     _aiHas(
       t,
@@ -3409,19 +3781,44 @@ function _aiAnswerCore(question, state) {
       'agotad'
     )
   ) {
-    if (c.rachaActual >= 6)
+    var _hrsSem = Math.round(c.hrsSemanales || 0);
+    if (c.rachaActual >= 6) {
       return (
-        '⚠️ Llevas **' +
+        '🤝 Te entiendo, y los números te dan la razón: llevás **' +
         c.rachaActual +
-        ' días consecutivos** trabajando. El cuerpo lo nota. Considera **un día completo de descanso** esta semana.'
+        ' días seguidos** trabajando. La ley te respalda — tenés derecho a un día de descanso cada 6 días. Tomate **un día completo** esta semana; no es un lujo, es tu derecho.'
       );
-    if (c.tLargo && c.tLargo.dur >= 720)
+    }
+    if (c.estadoBienestar === 'critico') {
       return (
-        'Tu jornada más larga del mes fue de ' +
-        fDur(c.tLargo.dur) +
-        '. Si vas a hacer un turno largo, asegura un buen descanso después.'
+        '🤝 Paremos un segundo. Venís fuerte (' +
+        _hrsSem +
+        'h esta semana' +
+        (c.alertaTurnoLargo ? ' y un turno largo en curso' : '') +
+        ') y eso pasa factura. Asegurá un descanso real antes de seguir — rendís más descansado que al límite.'
       );
-    return 'Vas bien. Te recomiendo siempre un descanso mínimo de 8h entre turnos y al menos 1 día libre semanal.';
+    }
+    if (c.estadoBienestar === 'cansado') {
+      return (
+        '🤝 Te escucho. Vas en **' +
+        _hrsSem +
+        'h esta semana**, por encima del ritmo cómodo. Un día libre o un par de turnos más cortos te van a caer bien.'
+      );
+    }
+    if (c.tLargo && c.tLargo.dur >= 720) {
+      return (
+        '🤝 Te entiendo. Tu jornada más larga del mes fue de ' +
+        fDur(c.tLargo.dur) +
+        '. Después de un turno así, el descanso no se negocia. Asegurá al menos 8h antes del próximo.'
+      );
+    }
+    return (
+      '🤝 Te escucho — el cansancio es real aunque los números muestren margen (' +
+      (c.rachaActual || 0) +
+      ' días de racha, ' +
+      _hrsSem +
+      'h esta semana). Cuidate: mínimo 8h entre turnos y al menos 1 día libre por semana. Si querés, miramos tu carga.'
+    );
   }
 
   // ════════════════════════════════════════════════════════════

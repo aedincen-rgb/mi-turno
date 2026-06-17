@@ -355,13 +355,18 @@ function aiAdvisorCompararOfertas(c, ofertaSalario, ofertaHoras) {
   var actualVH = c.vh;
   var nuevaVH = ofertaSalario / 240;
   var actualMensual = c.salario || 0;
-  var horasActuales = c.totalMins / 60 || c.diasTrab * 8 || 176;
+  // Proyectar las horas a MES COMPLETO. Antes usaba c.totalMins (mes a la
+  // fecha) → el día 13 mostraba "≈75h", subestimando la carga real.
+  var horasMTD = c.totalMins > 0 ? c.totalMins / 60 : 0;
+  var ratioProy = c.totalCOP > 0 && c.proy > 0 ? c.proy / c.totalCOP : 1;
+  var horasMes =
+    horasMTD > 0 ? Math.round(horasMTD * ratioProy) : c.diasTrab > 0 ? c.diasTrab * 8 : 240;
 
   var resp = '⚖ **Comparador de ofertas**\n\n';
 
   resp += '**Tu situación actual:**\n';
   resp += '• Salario: ' + fCOP(actualMensual) + ' → ' + fCOP(actualVH) + '/h\n';
-  resp += '• Horas/mes: ≈' + horasActuales.toFixed(0) + 'h\n\n';
+  resp += '• Horas/mes (estimadas): ≈' + horasMes + 'h\n\n';
 
   resp += '**Nueva oferta:**\n';
   resp += '• Salario: ' + fCOP(ofertaSalario) + ' → ' + fCOP(nuevaVH) + '/h\n';
@@ -380,7 +385,7 @@ function aiAdvisorCompararOfertas(c, ofertaSalario, ofertaHoras) {
       '✅ La nueva oferta paga ' +
       fCOP(Math.abs(difHora)) +
       '/h más. ' +
-      'En un mes de 240h, son ' +
+      'Sobre la base legal de 240h/mes, son ' +
       fCOP(difHora * 240) +
       ' extra.\n';
   } else {
@@ -607,6 +612,174 @@ function aiAdvisorAnual(c, turnosAll, vh) {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// 11. INDEMNIZACIÓN POR DESPIDO SIN JUSTA CAUSA (Art. 64 CST)
+// ═══════════════════════════════════════════════════════════════
+// Contrato a término indefinido. Para salarios < 10 SMMLV:
+//   · 30 días de salario por el primer año (proporcional la fracción)
+//   · 20 días por cada año adicional (y proporcional)
+// Para salarios >= 10 SMMLV: 20 días primer año + 15 por año adicional.
+// La base es el salario ordinario mensual (no el devengado con recargos).
+
+function aiAdvisorIndemnizacion(c, anios) {
+  if (!c || !c.salario) {
+    return 'Para estimar tu indemnización por despido sin justa causa necesito tu salario base. Configuralo en **Ajustes > Preferencias de pago** o decime "mi salario es de X".';
+  }
+  var sal = c.salario || SMIN;
+  var ant = typeof anios === 'number' && anios > 0 ? anios : 1;
+  var salDiario = sal / 30;
+
+  // Tabla del Art. 64 según rango salarial
+  var esAlto = sal >= SMIN * 10;
+  var diasPrimerAnio = esAlto ? 20 : 30;
+  var diasAnioAdic = esAlto ? 15 : 20;
+
+  var dias;
+  if (ant <= 1) {
+    dias = diasPrimerAnio * ant; // proporcional la fracción del primer año
+  } else {
+    dias = diasPrimerAnio + diasAnioAdic * (ant - 1);
+  }
+  var indemn = salDiario * dias;
+
+  var resp = '🛡️ **Indemnización por despido sin justa causa**\n\n';
+  resp += '*(Contrato a término indefinido · Art. 64 CST)*\n\n';
+  resp += '• Salario base: ' + fCOP(sal) + '\n';
+  resp += '• Antigüedad estimada: ' + (ant === 1 ? '1 año' : ant + ' años') + '\n';
+  resp += '• Días reconocidos: ' + dias.toFixed(0) + ' días de salario\n';
+  resp += '• **Indemnización estimada: ' + fCOP(indemn) + '**\n\n';
+  resp +=
+    '💡 Esto es *adicional* a tu liquidación (cesantías, prima y vacaciones, que se pagan siempre). ' +
+    'Si te despiden sin justa causa también te deben la indemnización. ' +
+    'Decime cuántos años llevás (ej. "/indemnizacion 3") para afinar el cálculo, ' +
+    'o pedime la **liquidación** completa.';
+
+  return resp;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 12. FONDO DE EMERGENCIA (colchón financiero)
+// ═══════════════════════════════════════════════════════════════
+// Regla práctica: 3 a 6 meses de gastos. Sin datos de gasto, se usa
+// el ingreso mensual como proxy conservador del costo de vida.
+
+function aiAdvisorEmergencia(c) {
+  if (!c || (!c.proy && !c.totalCOP && !c.salario)) {
+    return 'Para armar tu fondo de emergencia necesito una idea de tu ingreso mensual. Registrá algunos turnos o configurá tu salario base.';
+  }
+  var ingreso = c.proy || c.totalCOP || c.salario || SMIN;
+  var minimo = ingreso * 3;
+  var ideal = ingreso * 6;
+  // Plan realista: el colchón mínimo (3 meses) en 1 año = 25% del
+  // ingreso. Liderar con esto evita la trampa de pedir el 50% que exige
+  // armar 6 meses de colchón en 12 (matemáticamente siempre la mitad).
+  var ahorroReal = minimo / 12;
+  var pctReal = ingreso > 0 ? (ahorroReal / ingreso) * 100 : 0;
+
+  var resp = '🧯 **Fondo de emergencia**\n\n';
+  resp += '• Ingreso mensual de referencia: ' + fCOP(ingreso) + '\n';
+  resp += '• Colchón mínimo (3 meses): ' + fCOP(minimo) + '\n';
+  resp += '• Colchón ideal (6 meses): ' + fCOP(ideal) + '\n\n';
+  resp +=
+    '🎯 Plan realista: apartá **' +
+    fCOP(ahorroReal) +
+    '/mes** (' +
+    pctReal.toFixed(1) +
+    '% de tu ingreso) y en 1 año cubrís el colchón mínimo. ' +
+    'Manteniendo ese ritmo ~24 meses llegás al colchón ideal.\n\n';
+  resp +=
+    '⚠️ Armar los 6 meses en un solo año exigiría apartar el 50% del ingreso — poco realista. ' +
+    'Mejor un ritmo sostenible que no abandones a los 2 meses.\n\n';
+
+  resp +=
+    '💡 El fondo de emergencia va en una cuenta aparte y líquida — no lo mezclés con el ahorro de metas. ' +
+    'Es tu red para un mes sin turnos, una enfermedad o un imprevisto.\n\n' +
+    '¿Te armo el **presupuesto 50/30/20** o miramos tu **capacidad de cuota**?';
+
+  return resp;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 13. CAPACIDAD DE ENDEUDAMIENTO (cuota sana)
+// ═══════════════════════════════════════════════════════════════
+// Regla del 30%: la suma de cuotas no debería superar el 30% del
+// ingreso neto mensual. Opcionalmente evalúa una cuota deseada.
+
+function aiAdvisorEndeudamiento(c, cuotaDeseada) {
+  if (!c || (!c.proy && !c.totalCOP && !c.salario)) {
+    return 'Para calcular tu capacidad de cuota necesito una idea de tu ingreso mensual. Registrá turnos o configurá tu salario.';
+  }
+  var bruto = c.proy || c.totalCOP || c.salario || SMIN;
+  var neto = bruto * 0.92; // tras salud y pensión (8%)
+  var cuotaMax = neto * 0.3;
+
+  var resp = '🏦 **Capacidad de endeudamiento**\n\n';
+  resp += '• Ingreso mensual estimado: ' + fCOP(bruto) + '\n';
+  resp += '• Ingreso neto (tras 8% de ley): ' + fCOP(neto) + '\n';
+  resp += '• **Cuota mensual sana (máx 30%): ' + fCOP(cuotaMax) + '**\n\n';
+
+  if (typeof cuotaDeseada === 'number' && cuotaDeseada > 0) {
+    var pct = neto > 0 ? (cuotaDeseada / neto) * 100 : 0;
+    resp += 'Para una cuota de ' + fCOP(cuotaDeseada) + ':\n';
+    resp += '• Representa el ' + pct.toFixed(1) + '% de tu ingreso neto.\n';
+    if (pct > 40) {
+      resp +=
+        '🔴 Riesgo alto de sobreendeudamiento. Esa cuota compromete demasiado tu ingreso.\n\n';
+    } else if (pct > 30) {
+      resp += '🟡 Justo en el límite. Manejable, pero deja poco margen para imprevistos.\n\n';
+    } else {
+      resp += '🟢 Saludable. Cabe dentro de tu capacidad sin ahogar tu presupuesto.\n\n';
+    }
+  }
+
+  resp +=
+    '💡 La cuota máxima es la suma de **todas** tus deudas (tarjetas, créditos, electrodomésticos). ' +
+    'Pasar del 30% te deja sin aire ante un mes flojo de turnos.\n\n' +
+    '¿Querés que reparta tu sueldo con la regla **50/30/20** o que armemos tu **fondo de emergencia**?';
+
+  return resp;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 14. PRESUPUESTO PERSONALIZADO (regla 50/30/20)
+// ═══════════════════════════════════════════════════════════════
+// La pieza base de cualquier asesor: cómo repartir el sueldo. Se
+// calcula sobre el ingreso NETO (lo que realmente llega al bolsillo)
+// y conecta con el resto de herramientas (fondo de emergencia, cuota).
+// ingresoOverride permite el diálogo: "¿y si gano 2 millones?".
+
+function aiAdvisorPresupuesto(c, ingresoOverride) {
+  var bruto =
+    typeof ingresoOverride === 'number' && ingresoOverride > 0
+      ? ingresoOverride
+      : c
+        ? c.proy || c.totalCOP || c.salario || 0
+        : 0;
+  if (!bruto) {
+    return 'Para armar tu presupuesto necesito una idea de tu ingreso mensual. Registrá algunos turnos, configurá tu salario o decime cuánto ganás (ej. "mi sueldo es de 2 millones").';
+  }
+
+  var neto = Math.round(bruto * 0.92); // tras salud y pensión (8%)
+  var nec = Math.round(neto * 0.5);
+  var gustos = Math.round(neto * 0.3);
+  var ahorro = Math.round(neto * 0.2);
+
+  var resp = '📒 **Tu presupuesto — regla 50/30/20**\n\n';
+  resp += 'Sobre tu ingreso neto de ' + fCOP(neto) + ' (ya restado el 8% de ley):\n\n';
+  resp += '• 🏠 **50% Necesidades: ' + fCOP(nec) + '**\n';
+  resp += '   arriendo, comida, servicios, transporte, salud\n';
+  resp += '• 🎉 **30% Gustos: ' + fCOP(gustos) + '**\n';
+  resp += '   salidas, ropa, antojos, lo que disfrutás\n';
+  resp += '• 💰 **20% Ahorro y deudas: ' + fCOP(ahorro) + '**\n';
+  resp += '   fondo de emergencia, metas, cuotas de crédito\n\n';
+
+  resp +=
+    '💡 Si estás arrancando, de ese 20% mandá primero al **fondo de emergencia** hasta juntar 3 meses de colchón; ' +
+    'después repartilo entre metas y abono a deudas. ¿Calculamos tu fondo de emergencia o tu capacidad de cuota?';
+
+  return resp;
+}
+
+// ═══════════════════════════════════════════════════════════════
 // 8. RESPONDEDOR PRINCIPAL
 // ═══════════════════════════════════════════════════════════════
 
@@ -639,6 +812,27 @@ function aiAdvisorRespond(intent, c, state) {
     case 'optimizador':
       return aiAdvisorOptimizar(c) + aiAdvisorDescansoOptimo(c);
 
+    case 'indemnizacion':
+      return aiAdvisorIndemnizacion(c, (state && state.anios) || 1);
+
+    case 'emergencia':
+      return aiAdvisorEmergencia(c);
+
+    case 'endeudamiento':
+      return aiAdvisorEndeudamiento(c, (state && state.cuota) || 0);
+
+    case 'comparar_oferta':
+      if (state && state.ofertaSalario) {
+        return aiAdvisorCompararOfertas(c, state.ofertaSalario, state.ofertaHoras || 0);
+      }
+      return null;
+
+    case 'fiscal':
+      return aiAdvisorFiscal(c);
+
+    case 'presupuesto':
+      return aiAdvisorPresupuesto(c, (state && state.ingreso) || 0);
+
     case 'total_ganado':
     case 'stats':
       return aiAdvisorInforme(c) + aiAdvisorDescansoOptimo(c);
@@ -661,5 +855,9 @@ window.aiAdvisorHistorico = aiAdvisorHistorico;
 window.aiAdvisorDescansoOptimo = aiAdvisorDescansoOptimo;
 window.aiAdvisorAnual = aiAdvisorAnual;
 window.aiAdvisorOptimizador = aiAdvisorOptimizador;
+window.aiAdvisorIndemnizacion = aiAdvisorIndemnizacion;
+window.aiAdvisorEmergencia = aiAdvisorEmergencia;
+window.aiAdvisorEndeudamiento = aiAdvisorEndeudamiento;
+window.aiAdvisorPresupuesto = aiAdvisorPresupuesto;
 
 console.log('[MT] ai-advisor.js cargado — asesor financiero offline completo ✓');

@@ -45,6 +45,7 @@ var FILES = [
   // ai-help.js cargado antes de ai.js para que aiHelpAnswer esté disponible
   'js/services/ai-help.js',
   'js/services/ai.js',
+  'js/services/ai-advisor.js',
   'js/services/ai-enhanced.js',
   // Desde v48, _saludoHora vive en su propio archivo (junto con
   // _aiNombrePersonal y _aiHeroPhrases). ai-greeting.js no toca
@@ -709,6 +710,299 @@ group('aiBriefing: porcentaje vs salario clampeado');
     truthy(_bBajo.indexOf('20375') < 0,
       'briefing con salario < 500000 no muestra +20375%');
   }
+})();
+
+// ════════════════════════════════════════════════════════════════
+//  ai-advisor: calculadoras financieras/laborales (v279)
+//  Funciones puras del asesor. Antes de v279 el módulo no tenía
+//  NINGUNA cobertura en smoke. Estas pruebas afirman la matemática
+//  legal (CST) y los casos borde (sin salario, sin ingreso).
+// ════════════════════════════════════════════════════════════════
+
+group('ai-advisor: indemnización por despido (Art. 64 CST)');
+(function () {
+  var SAL = w.SMIN; // salario mínimo 2026
+  var r1 = w.aiAdvisorIndemnizacion({ salario: SAL }, 1);
+  truthy(r1.indexOf('30 días') >= 0, '1 año (< 10 SMMLV) → 30 días de salario');
+  // 1 año a 30 días = exactamente 1 salario mensual (sal/30*30)
+  truthy(r1.indexOf(w.fCOP(SAL)) >= 0, '1 año ≈ 1 salario de indemnización');
+
+  var r3 = w.aiAdvisorIndemnizacion({ salario: SAL }, 3);
+  truthy(r3.indexOf('70 días') >= 0, '3 años → 30 + 20×2 = 70 días');
+
+  var rAlto = w.aiAdvisorIndemnizacion({ salario: w.SMIN * 10 }, 1);
+  truthy(rAlto.indexOf('20 días') >= 0, 'salario ≥ 10 SMMLV: primer año = 20 días (no 30)');
+
+  var rNoSal = w.aiAdvisorIndemnizacion({}, 1);
+  truthy(rNoSal.indexOf('salario base') >= 0,
+    'sin salario configurado: pide el dato, NO calcula sobre basura');
+})();
+
+group('ai-advisor: fondo de emergencia (#3 plan realista)');
+(function () {
+  var r = w.aiAdvisorEmergencia({ proy: 2000000 });
+  truthy(r.indexOf(w.fCOP(6000000)) >= 0, 'colchón mínimo = 3 meses de ingreso');
+  truthy(r.indexOf(w.fCOP(12000000)) >= 0, 'colchón ideal = 6 meses de ingreso');
+  // Plan realista = mínimo/12 = 6M/12 = 500k (25%), NO el 50% (ideal/12)
+  truthy(r.indexOf(w.fCOP(500000)) >= 0, 'plan realista = colchón mínimo / 12 (25%)');
+  truthy(r.indexOf('25.0%') >= 0, 'el plan se comunica como 25% del ingreso, no 50%');
+  truthy(r.indexOf('50%') >= 0 && r.indexOf('poco realista') >= 0,
+    'advierte explícitamente que armar 6 meses en 1 año (50%) es poco realista');
+
+  var r0 = w.aiAdvisorEmergencia({});
+  truthy(r0.indexOf('ingreso mensual') >= 0,
+    'sin ningún ingreso conocido: no inventa cifras');
+})();
+
+group('ai-advisor: capacidad de endeudamiento (regla 30%)');
+(function () {
+  var r = w.aiAdvisorEndeudamiento({ proy: 1000000 }, 0);
+  // neto = 1.000.000 * 0.92 = 920.000 → 30% = 276.000
+  truthy(r.indexOf(w.fCOP(276000)) >= 0, 'cuota sana = 30% del ingreso neto');
+
+  var rRiesgo = w.aiAdvisorEndeudamiento({ proy: 1000000 }, 500000);
+  truthy(rRiesgo.indexOf('🔴') >= 0, 'cuota > 40% del neto → riesgo alto');
+
+  var rOk = w.aiAdvisorEndeudamiento({ proy: 1000000 }, 100000);
+  truthy(rOk.indexOf('🟢') >= 0, 'cuota baja → saludable');
+
+  var r0 = w.aiAdvisorEndeudamiento({});
+  truthy(r0.indexOf('ingreso mensual') >= 0, 'sin ingreso: no calcula');
+})();
+
+group('ai-advisor: comparador de ofertas (rescatado de función muerta)');
+(function () {
+  var c = { vh: 7295, salario: w.SMIN, totalMins: 0, diasTrab: 22 };
+  var r = w.aiAdvisorCompararOfertas(c, 2500000, 0);
+  truthy(r.indexOf('Comparador') >= 0, 'el comparador ahora es alcanzable');
+  truthy(r.indexOf('✅') >= 0, 'oferta mayor al salario actual se marca como mejora');
+})();
+
+group('ai-advisor: dispatch de intents (aiAdvisorRespond)');
+(function () {
+  var c = { salario: w.SMIN, proy: 2000000, vh: 7295, totalMins: 0, diasTrab: 22 };
+  truthy((w.aiAdvisorRespond('indemnizacion', c, { anios: 2 }) || '').indexOf('50 días') >= 0,
+    'respond(indemnizacion, anios:2) → 30 + 20 = 50 días');
+  truthy(w.aiAdvisorRespond('emergencia', c, null), 'respond(emergencia) responde');
+  truthy(w.aiAdvisorRespond('endeudamiento', c, { cuota: 300000 }),
+    'respond(endeudamiento) responde');
+  truthy(w.aiAdvisorRespond('comparar_oferta', c, { ofertaSalario: 2500000 }),
+    'respond(comparar_oferta) con salario responde');
+  eq(w.aiAdvisorRespond('comparar_oferta', c, {}), null,
+    'respond(comparar_oferta) SIN salario → null (no inventa una comparación)');
+})();
+
+group('ai-agente: rutas conversacionales nuevas (lenguaje natural + slash)');
+(function () {
+  w.aiResetConv();
+  var rD = respText(w.aiAnswer('¿cuánto me dan si me despiden?', _stMeta));
+  truthy(rD.indexOf('Indemnización') >= 0,
+    'frase natural de despido → indemnización (no liquidación)');
+
+  var rD3 = respText(w.aiAnswer('/indemnizacion 3', _stMeta));
+  truthy(rD3.indexOf('70 días') >= 0, '/indemnizacion 3 → 70 días');
+
+  var rFE = respText(w.aiAnswer('quiero armar un fondo de emergencia', _stMeta));
+  truthy(rFE.indexOf('emergencia') >= 0, 'natural → fondo de emergencia');
+
+  var rCu = respText(w.aiAnswer('cuánto puedo pagar de cuota', _stMeta));
+  truthy(rCu.indexOf('endeudamiento') >= 0 || rCu.indexOf('Cuota') >= 0,
+    'natural → capacidad de cuota');
+
+  var rOf = respText(w.aiAnswer('tengo una oferta de 3 millones', _stMeta));
+  truthy(rOf.indexOf('Comparador') >= 0, 'natural con oferta + cifra → comparador');
+
+  // Regresión: "comparar con el mes pasado" NO debe ir al comparador de
+  // ofertas (no tiene oferta ni cifra de salario nuevo).
+  var rCmpMes = respText(w.aiAnswer('comparar con el mes pasado', _stMeta));
+  truthy(rCmpMes.indexOf('Comparador de ofertas') < 0 && rCmpMes.indexOf('oferta') < 0,
+    'regresión: "comparar mes" NO se desvía al comparador de ofertas');
+})();
+
+group('ai-agente #1: follow-up contextual de calculadoras');
+(function () {
+  // Despido → "llevo 4 años": debe recalcular (30 + 20×3 = 90 días).
+  // Antes caía al fallback genérico pese a que la IA pidió el dato.
+  w.aiResetConv();
+  respText(w.aiAnswer('¿cuánto me dan si me despiden?', _stMeta));
+  var rA = respText(w.aiAnswer('llevo 4 años en la empresa', _stMeta));
+  truthy(rA.indexOf('90 días') >= 0,
+    'follow-up: tras despido, "llevo 4 años" recalcula a 90 días');
+
+  // Capacidad de cuota → "y si la cuota es de 600 mil": evalúa esa cuota.
+  w.aiResetConv();
+  respText(w.aiAnswer('cuánto puedo pagar de cuota', _stMeta));
+  var rB = respText(w.aiAnswer('y si la cuota es de 600 mil?', _stMeta));
+  truthy(rB.indexOf('600.000') >= 0,
+    'follow-up: tras capacidad de cuota, "600 mil" evalúa esa cuota concreta');
+  truthy(rB.indexOf('🔴') >= 0 || rB.indexOf('🟡') >= 0 || rB.indexOf('🟢') >= 0,
+    'follow-up de cuota incluye el semáforo de riesgo');
+
+  // Adyacencia: un número suelto NO debe interpretarse como follow-up si
+  // hubo un turno intermedio no financiero.
+  w.aiResetConv();
+  respText(w.aiAnswer('¿cuánto me dan si me despiden?', _stMeta));
+  respText(w.aiAnswer('cuánto llevo este mes', _stMeta));
+  var rC = respText(w.aiAnswer('5', _stMeta));
+  truthy(rC.indexOf('días de salario') < 0,
+    'adyacencia: "5" dos turnos después NO se lee como años de antigüedad');
+})();
+
+group('ai-agente #2: salario configurado por flag sc, no por monto');
+(function () {
+  var uid = 'u-sc-test';
+  var ds = [mkTurno(primerDiaNoFestivo(_hoy.getFullYear(), _hoy.getMonth()), 8)];
+  var vhMin = Math.round(w.SMIN / 240);
+  var stMin = {
+    turnos: ds, turnosAll: ds,
+    calc: w.doCalc(ds, null, new Date(), vhMin),
+    vh: vhMin, salario: w.SMIN,
+    session: { uid: uid, email: 't@x.com' }
+  };
+  w.localStorage.removeItem(w.dk(uid, 'sc'));
+  truthy(w.buildContext(stMin).salarioConfigurado === false,
+    'salario == SMIN sin flag → NO configurado (estado neutro)');
+  w.localStorage.setItem(w.dk(uid, 'sc'), 'true');
+  truthy(w.buildContext(stMin).salarioConfigurado === true,
+    'salario == SMIN con flag sc=true → configurado (bug del mínimo resuelto)');
+})();
+
+group('ai-advisor #4: comparador proyecta horas a mes completo');
+(function () {
+  // 75h a la fecha (mes parcial) con proy ≈ 1.875× → mes completo ≈ 141h
+  var c = { vh: 7295, salario: w.SMIN, totalMins: 4500, totalCOP: 760869, proy: 1426628, diasTrab: 9 };
+  var r = w.aiAdvisorCompararOfertas(c, 2300000, 0);
+  truthy(r.indexOf('estimadas') >= 0, 'rotula las horas como estimadas (mes completo)');
+  truthy(r.indexOf('≈141h') >= 0, 'proyecta 75h MTD × (proy/totalCOP) ≈ 141h');
+  truthy(r.indexOf('≈75h') < 0, 'ya NO muestra las horas de mes parcial');
+  truthy(r.indexOf('base legal de 240h') >= 0, 'el cálculo de /h se ancla a la base legal de 240h');
+})();
+
+group('ai-agente #5: fatiga responde con empatía, no "vas bien"');
+(function () {
+  w.aiResetConv();
+  var r = respText(w.aiAnswer('estoy agotado, llevo varios turnos seguidos', _stMeta));
+  truthy(r.indexOf('Vas bien') < 0,
+    'NO responde "Vas bien" a quien dice estar agotado (tono-sordo)');
+  truthy(r.indexOf('🤝') >= 0 || r.indexOf('escucho') >= 0 || r.indexOf('entiendo') >= 0,
+    'valida el sentimiento antes de dar el dato');
+})();
+
+group('ai-advisor: presupuesto 50/30/20 (asesor base)');
+(function () {
+  // bruto 2.000.000 → neto 1.840.000 → 50/30/20 = 920k / 552k / 368k
+  var r = w.aiAdvisorPresupuesto({ proy: 2000000 });
+  truthy(r.indexOf('50/30/20') >= 0, 'enuncia la regla 50/30/20');
+  truthy(r.indexOf(w.fCOP(1840000)) >= 0, 'presupuesta sobre el NETO (×0.92), no el bruto');
+  truthy(r.indexOf(w.fCOP(920000)) >= 0, '50% necesidades = 920.000');
+  truthy(r.indexOf(w.fCOP(552000)) >= 0, '30% gustos = 552.000');
+  truthy(r.indexOf(w.fCOP(368000)) >= 0, '20% ahorro y deudas = 368.000');
+  truthy(r.indexOf('emergencia') >= 0, 'cross-sell conversacional al fondo de emergencia');
+
+  // override de ingreso
+  var rOv = w.aiAdvisorPresupuesto({ proy: 2000000 }, 4000000);
+  truthy(rOv.indexOf(w.fCOP(3680000)) >= 0, 'override de ingreso recalcula sobre 4M (neto 3.68M)');
+
+  // borde: sin ingreso conocido → guía, no inventa
+  var r0 = w.aiAdvisorPresupuesto({});
+  truthy(r0.indexOf('ingreso mensual') >= 0, 'sin ingreso: pide el dato, no inventa números');
+
+  // dispatch
+  truthy(w.aiAdvisorRespond('presupuesto', { proy: 2000000 }, null),
+    'aiAdvisorRespond(presupuesto) responde');
+})();
+
+group('ai-agente: presupuesto conversacional (natural + slash + follow-up)');
+(function () {
+  w.aiResetConv();
+  var rNat = respText(w.aiAnswer('cómo reparto mi sueldo?', _stMeta));
+  truthy(rNat.indexOf('50/30/20') >= 0, 'natural "cómo reparto mi sueldo" → presupuesto');
+
+  var rSlash = respText(w.aiAnswer('/presupuesto', _stMeta));
+  truthy(rSlash.indexOf('50/30/20') >= 0, '/presupuesto → presupuesto');
+
+  // follow-up: tras el presupuesto, un ingreso suelto recalcula
+  w.aiResetConv();
+  respText(w.aiAnswer('cómo reparto mi sueldo?', _stMeta));
+  var rFu = respText(w.aiAnswer('y si gano 4 millones?', _stMeta));
+  truthy(rFu.indexOf(w.fCOP(3680000)) >= 0,
+    'follow-up: "y si gano 4 millones" recalcula el reparto (neto 3.68M)');
+
+  // regresión: "en qué gasté más este mes" NO debe ir a presupuesto
+  w.aiResetConv();
+  var rReg = respText(w.aiAnswer('comparar con el mes pasado', _stMeta));
+  truthy(rReg.indexOf('50/30/20') < 0, 'regresión: "comparar mes" no se desvía a presupuesto');
+})();
+
+group('ai-agente: interconexión — los ganchos encadenan a módulos');
+(function () {
+  // presupuesto ofrece [emergencia, cuota]; "dale" toma la primera
+  w.aiResetConv();
+  respText(w.aiAnswer('cómo reparto mi sueldo?', _stMeta));
+  var rDale = respText(w.aiAnswer('dale', _stMeta));
+  truthy(rDale.indexOf('Fondo de emergencia') >= 0,
+    '"dale" tras presupuesto encadena a la 1ª opción (fondo de emergencia)');
+
+  // nombrar la segunda opción explícitamente
+  w.aiResetConv();
+  respText(w.aiAnswer('/presupuesto', _stMeta));
+  var rCuota = respText(w.aiAnswer('mejor la cuota', _stMeta));
+  truthy(rCuota.indexOf('Capacidad de endeudamiento') >= 0,
+    '"la cuota" tras presupuesto encadena a capacidad de endeudamiento');
+
+  // ordinal
+  w.aiResetConv();
+  respText(w.aiAnswer('/presupuesto', _stMeta));
+  var rSeg = respText(w.aiAnswer('el segundo', _stMeta));
+  truthy(rSeg.indexOf('Capacidad de endeudamiento') >= 0,
+    '"el segundo" toma la 2ª opción ofrecida');
+
+  // "ambos" muestra las dos
+  w.aiResetConv();
+  respText(w.aiAnswer('/presupuesto', _stMeta));
+  var rAmbos = respText(w.aiAnswer('ambos', _stMeta));
+  truthy(rAmbos.indexOf('Fondo de emergencia') >= 0 && rAmbos.indexOf('Capacidad de endeudamiento') >= 0,
+    '"ambos" encadena las dos opciones');
+
+  // el encadenamiento continúa varios pasos
+  w.aiResetConv();
+  respText(w.aiAnswer('/presupuesto', _stMeta)); // ofrece emergencia/cuota
+  respText(w.aiAnswer('dale', _stMeta));          // → emergencia (ofrece presupuesto/cuota)
+  var rChain = respText(w.aiAnswer('dale', _stMeta)); // → presupuesto
+  truthy(rChain.indexOf('50/30/20') >= 0,
+    'el encadenamiento sigue varios pasos (emergencia → presupuesto)');
+
+  // indemnización → pedir liquidación encadena a esa calculadora
+  w.aiResetConv();
+  respText(w.aiAnswer('cuánto me dan si me despiden?', _stMeta));
+  var rLiq = respText(w.aiAnswer('dale, la liquidación', _stMeta));
+  truthy(rLiq.indexOf('Liquidación') >= 0 || rLiq.indexOf('prestaciones') >= 0,
+    'tras indemnización, pedir liquidación encadena a esa calculadora');
+})();
+
+group('ai-agente: interconexión — guards (sin falsos positivos)');
+(function () {
+  // afirmación NO adyacente no dispara (oferta expirada)
+  w.aiResetConv();
+  respText(w.aiAnswer('/presupuesto', _stMeta));
+  respText(w.aiAnswer('cuánto llevo este mes', _stMeta));
+  var rTarde = respText(w.aiAnswer('dale', _stMeta));
+  truthy(rTarde.indexOf('Fondo de emergencia') < 0,
+    'un "dale" 2 turnos después NO encadena (oferta expirada)');
+
+  // "simular 4 horas" NO se confunde con afirmación pese a empezar con "si"
+  w.aiResetConv();
+  respText(w.aiAnswer('/presupuesto', _stMeta));
+  var rSim = respText(w.aiAnswer('simular 4 horas nocturnas', _stMeta));
+  truthy(rSim.indexOf('Fondo de emergencia') < 0,
+    'frase larga con "si..." (simular) NO se lee como afirmación a la oferta');
+
+  // el follow-up numérico de ingreso gana sobre la oferta
+  w.aiResetConv();
+  respText(w.aiAnswer('/presupuesto', _stMeta));
+  var rIng = respText(w.aiAnswer('y si gano 4 millones?', _stMeta));
+  truthy(rIng.indexOf(w.fCOP(3680000)) >= 0,
+    'override de ingreso recalcula presupuesto, no encadena a otra opción');
 })();
 
 // ── hashPassword / verifyPassword (PBKDF2 + salt, v49) ──────────

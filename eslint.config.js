@@ -336,6 +336,11 @@ const projectGlobals = {
   aiAdvisorRespond: 'readonly',
   aiAdvisorSimular: 'readonly',
   aiAdvisorLiquidacion: 'readonly',
+  aiAdvisorIndemnizacion: 'readonly',
+  aiAdvisorEmergencia: 'readonly',
+  aiAdvisorEndeudamiento: 'readonly',
+  aiAdvisorCompararOfertas: 'readonly',
+  aiAdvisorPresupuesto: 'readonly',
   // services/ai-calendar.js
   syncWithCalendar: 'readonly',
   processCalendarEvents: 'readonly',
