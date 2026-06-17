@@ -160,6 +160,7 @@ const projectGlobals = {
   supaDeleteTurno: 'readonly',
   supaDeleteAllTurnos: 'readonly',
   supaInsertTurno: 'readonly',
+  supaUpdateTurno: 'readonly',
   supaSetActivo: 'readonly',
   supaSetSalario: 'readonly',
   supaSyncDown: 'readonly',

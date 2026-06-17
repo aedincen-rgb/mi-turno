@@ -910,6 +910,59 @@ group('ai: edición de turnos por chat (v289)');
   truthy(!(rConsulta && rConsulta.execute &&
            (rConsulta.execute.type === 'ADD_SHIFT' || rConsulta.execute.type === 'DELETE_SHIFT')),
          '"cuánto gané ayer" NO se confunde con edición de turno');
+
+  // EDIT: corregir la hora de salida de un turno existente
+  // turnoBorrar = mkTurno(_mesPas, 8) → inicio 08:00, fin 16:00 el día 14.
+  var rEditFin = w.aiAnswer(
+    'corregí el turno del 14 de ' + _nombreMes + ', salí a las 6 no a las 5',
+    stEdit([turnoBorrar]));
+  truthy(rEditFin && rEditFin.execute && rEditFin.execute.type === 'EDIT_SHIFT',
+         '"corregí ... salí a las 6" produce EDIT_SHIFT');
+  if (rEditFin && rEditFin.execute) {
+    var te = rEditFin.execute.payload.turno;
+    eq(te.id, turnoBorrar.id, 'EDIT_SHIFT preserva el id del turno original');
+    var finH = new Date(te.fin).getHours();
+    eq(finH, 18, 'salida "a las 6" hereda PM del fin original (16:00) → 18:00');
+    // inicio intacto
+    eq(new Date(te.inicio).getHours(), 8, 'la entrada queda igual (08:00)');
+  }
+
+  // EDIT: cambiar entrada
+  var rEditIni = w.aiAnswer(
+    'cambiá el turno del 14 de ' + _nombreMes + ', entré a las 7',
+    stEdit([turnoBorrar]));
+  truthy(rEditIni && rEditIni.execute && rEditIni.execute.type === 'EDIT_SHIFT',
+         '"cambiá ... entré a las 7" produce EDIT_SHIFT');
+  if (rEditIni && rEditIni.execute) {
+    eq(new Date(rEditIni.execute.payload.turno.inicio).getHours(), 7,
+       'entrada corregida a 07:00');
+    eq(new Date(rEditIni.execute.payload.turno.fin).getHours(), 16,
+       'la salida queda igual (16:00)');
+  }
+
+  // EDIT: rango completo "fue de 8 a 5"
+  var rEditRango = w.aiAnswer(
+    'modificá el turno del 14 de ' + _nombreMes + ', fue de 8 a 5',
+    stEdit([turnoBorrar]));
+  truthy(rEditRango && rEditRango.execute && rEditRango.execute.type === 'EDIT_SHIFT',
+         'rango completo en edición produce EDIT_SHIFT');
+  if (rEditRango && rEditRango.execute) {
+    var tr = rEditRango.execute.payload.turno;
+    eq(new Date(tr.inicio).getHours(), 8, 'rango: entrada 08:00');
+    eq(new Date(tr.fin).getHours(), 17, 'rango "de 8 a 5" → salida 17:00 (PM)');
+  }
+
+  // EDIT sin turno ese día → honesto, sin execute
+  var rEditNo = w.aiAnswer(
+    'corregí el turno del 2 de ' + _nombreMes + ', salí a las 6', stEdit([turnoBorrar]));
+  truthy(rEditNo && (rEditNo.text || '').indexOf('No encontré') >= 0 && !rEditNo.execute,
+         'corregir un día sin turno responde honesto, sin acción');
+
+  // EDIT sin especificar qué cambia → pide aclaración, sin execute
+  var rEditAmb = w.aiAnswer(
+    'corregí el turno del 14 de ' + _nombreMes, stEdit([turnoBorrar]));
+  truthy(rEditAmb && !rEditAmb.execute,
+         'corregir sin decir qué cambia no propone acción');
 }());
 
 // ════════════════════════════════════════════════════════════════

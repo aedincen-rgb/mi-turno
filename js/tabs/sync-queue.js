@@ -142,6 +142,9 @@ async function processQueue(uid) {
         case 'insertTurno':
           result = await supaInsertTurno(uid, action.payload);
           break;
+        case 'updateTurno':
+          result = await supaUpdateTurno(uid, action.payload);
+          break;
         case 'setActivo':
           result = await supaSetActivo(uid, action.payload);
           break;
@@ -206,7 +209,7 @@ async function processQueue(uid) {
               'No se pudo sincronizar «' +
               (action.actionType === 'setSalario'
                 ? 'Salario'
-                : action.actionType === 'insertTurno'
+                : action.actionType === 'insertTurno' || action.actionType === 'updateTurno'
                   ? 'Turno'
                   : action.actionType === 'setActivo'
                     ? 'Turno activo'
@@ -234,7 +237,12 @@ async function processQueue(uid) {
       action.retries = (action.retries || 0) + 1;
       if (action.retries >= MAX_SYNC_RETRIES) {
         successfulActions.push(action.id);
-        console.warn('[SyncQueue] Acción DESCARTADA por excepción tras', MAX_SYNC_RETRIES, 'reintentos:', action.actionType);
+        console.warn(
+          '[SyncQueue] Acción DESCARTADA por excepción tras',
+          MAX_SYNC_RETRIES,
+          'reintentos:',
+          action.actionType
+        );
       }
     }
   }

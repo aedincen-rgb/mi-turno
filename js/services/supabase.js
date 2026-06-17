@@ -102,6 +102,23 @@ function supaInsertTurno(uid, turno) {
     });
 }
 
+function supaUpdateTurno(uid, turno) {
+  if (!SUPA) return Promise.resolve({ success: false, error: 'Supabase no inicializado' });
+  // Edición de un turno existente: cambia inicio/fin, preserva id (PK).
+  // .update() (no upsert): si la fila no existe es no-op silencioso, pero
+  // eso solo pasaría si el insertTurno previo aún no sincronizó (FIFO lo evita).
+  return SUPA.from('turnos')
+    .update({ inicio: turno.inicio, fin: turno.fin })
+    .eq('user_id', uid)
+    .eq('id', turno.id)
+    .then(function (res) {
+      return { success: !res.error, error: res.error };
+    })
+    .catch(function (e) {
+      return { success: false, error: e };
+    });
+}
+
 function supaDeleteTurno(uid, id) {
   if (!SUPA) return Promise.resolve({ success: false, error: 'Supabase no inicializado' });
   return SUPA.from('turnos')

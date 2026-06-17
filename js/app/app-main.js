@@ -1001,6 +1001,38 @@ function App(props) {
     showToast('Turno registrado', 'success');
     queueAction(uid, 'insertTurno', nuevo);
   }
+  // Edición de un turno existente (desde el asistente). Preserva el id;
+  // reemplaza inicio/fin local y sincroniza con updateTurno. ai.js solo
+  // propone editar cuando encontró un turno, así que existirá; chequeamos
+  // contra `turnos` de forma síncrona (no dentro del updater, que es async).
+  function onEditarTurno(turno) {
+    if (!turno || !turno.id || !turno.inicio || !turno.fin) return;
+    haptic();
+    var existe = false;
+    for (var i = 0; i < turnos.length; i++) {
+      if (turnos[i].id === turno.id) {
+        existe = true;
+        break;
+      }
+    }
+    var editado = { id: turno.id, inicio: turno.inicio, fin: turno.fin, userId: uid };
+    if (existe) {
+      setTurnos(function (p) {
+        return p.map(function (t) {
+          return t.id === turno.id ? editado : t;
+        });
+      });
+      showToast('Turno corregido', 'success');
+      queueAction(uid, 'updateTurno', { id: turno.id, inicio: turno.inicio, fin: turno.fin });
+    } else {
+      // Defensa: si no estaba, lo damos de alta en vez de perder el dato.
+      setTurnos(function (p) {
+        return [editado].concat(p);
+      });
+      showToast('Turno registrado', 'success');
+      queueAction(uid, 'insertTurno', { id: turno.id, inicio: turno.inicio, fin: turno.fin });
+    }
+  }
   // Estado para modal de exportar (PDF o Excel)
   var ex = useState(null);
   var exportMode = ex[0],
@@ -1269,6 +1301,7 @@ function App(props) {
             onSetSalario: onSalario,
             onAddTurno: onAddTurno,
             onBorrarUno: onBorrarUno,
+            onEditarTurno: onEditarTurno,
             onNavigate: function (tabId, subAction) {
               haptic();
               setTab(tabId);

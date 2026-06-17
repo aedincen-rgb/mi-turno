@@ -657,6 +657,20 @@ function AsistenteTab(props) {
             );
           }
           return null;
+        case 'EDIT_SHIFT':
+          if (
+            typeof props.onEditarTurno === 'function' &&
+            execute.payload &&
+            execute.payload.turno
+          ) {
+            props.onEditarTurno(execute.payload.turno);
+            return (
+              'Listo, corregí el turno del ' +
+              (execute.payload.label || 'día indicado') +
+              '. Ya recalculé tus cuentas.'
+            );
+          }
+          return null;
         case 'NAVIGATE':
           var tabId = execute.payload === 'ajustes' ? 'config' : execute.payload;
           if (props.onNavigate) {
@@ -682,7 +696,8 @@ function AsistenteTab(props) {
       execute.type === 'END_SHIFT' ||
       execute.type === 'SET_SALARY' ||
       execute.type === 'ADD_SHIFT' ||
-      execute.type === 'DELETE_SHIFT'
+      execute.type === 'DELETE_SHIFT' ||
+      execute.type === 'EDIT_SHIFT'
     );
   }
 
