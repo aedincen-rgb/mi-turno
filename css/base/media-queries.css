@@ -115,16 +115,8 @@ textarea {
   animation: none !important;
   transform: translateY(0) !important;
 }
-.low-power 
 
 /* Background shapes */
-
-
-
-
-[data-theme="dark"] 
-[data-theme="dark"] 
-[data-theme="dark"] 
 @keyframes float {
   0% {
     transform: translate(0, 0) scale(1);

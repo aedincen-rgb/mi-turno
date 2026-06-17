@@ -1828,7 +1828,7 @@
   right: max(14px, env(safe-area-inset-right, 0px));
   bottom: calc(var(--sab) + 10px);
   z-index: 35;
-  max-width: 760px;
+  max-width: 480px;
   margin: 0 auto;
   padding: 8px;
   border: 1px solid color-mix(in srgb, var(--text) 9%, transparent);
@@ -2086,7 +2086,7 @@
 
 @media (min-width: 760px) {
   .asistente-wrap {
-    max-width: 760px;
+    max-width: 480px;
     margin: 0 auto;
   }
 
@@ -2340,7 +2340,7 @@
   left: max(14px, env(safe-area-inset-left, 0px));
   right: max(14px, env(safe-area-inset-right, 0px));
   z-index: 36;
-  max-width: 760px;
+  max-width: 480px;
   margin: 0 auto;
   padding: 8px;
   box-sizing: border-box;
@@ -2414,7 +2414,7 @@
   right: max(14px, env(safe-area-inset-right, 0px));
   bottom: calc(var(--sab) + 10px);
   z-index: 35;
-  max-width: 760px;
+  max-width: 480px;
   margin: 0 auto;
   padding: 8px;
   border-radius: 30px;
