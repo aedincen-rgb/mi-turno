@@ -16,7 +16,8 @@
     "test:e2e:ui": "playwright test --ui",
     "test:a11y": "node tests/a11y.mjs",
     "test": "npm run test:smoke && npm run test:e2e",
-    "prepare": "husky"
+    "prepare": "husky",
+    "test:ai-browser": "node tests/ai-browser.mjs"
   },
   "lint-staged": {
     "js/**/*.js": [
