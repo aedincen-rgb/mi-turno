@@ -277,6 +277,49 @@ var rVie = w.aiQueryRun(qVie, [mkTurno(viePas, 5), mkTurno(vieAnt, 5)], _ctx);
 truthy(rVie.indexOf('1 coincide (') >= 0,
        'solo coincide el viernes más reciente, no el de hace 2 semanas');
 
+group('ai-query: fecha de calendario específica (v286)');
+// Construir una fecha pasada determinista: el día 14 del mes pasado.
+var _mesPas = new Date(_hoy.getFullYear(), _hoy.getMonth() - 1, 14);
+var _nombreMes = ['enero','febrero','marzo','abril','mayo','junio','julio',
+                  'agosto','septiembre','octubre','noviembre','diciembre'][_mesPas.getMonth()];
+
+// "14 de <mes pasado>" — varias formas de escribir lo mismo
+['¿cuánto gané el 14 de ' + _nombreMes + '?',
+ 'cuanto hice el 14 de ' + _nombreMes,
+ 'qué saqué el 14 de ' + _nombreMes,
+ 'mis ganancias del 14 de ' + _nombreMes
+].forEach(function (frase) {
+  var qd = w.aiQueryParse(frase);
+  truthy(qd && qd.label.indexOf('el 14 de ' + _nombreMes) >= 0,
+         'reclama fecha puntual: "' + frase + '"');
+});
+
+var qFecha = w.aiQueryParse('¿cuánto gané el 14 de ' + _nombreMes + '?');
+var dsFecha = [
+  mkTurno(_mesPas, 8),                                              // el 14 (match)
+  mkTurno(new Date(_hoy.getFullYear(), _hoy.getMonth() - 1, 15), 8) // el 15 (no match)
+];
+var rFecha = w.aiQueryRun(qFecha, dsFecha, _ctx);
+truthy(rFecha.indexOf('1 coincide') >= 0,
+       'solo cuenta el turno del 14, no el del 15: ' + rFecha.split('\n').pop());
+
+// Formato numérico dd/mm
+var qNum = w.aiQueryParse('cuánto gané el 14/' + (_mesPas.getMonth() + 1));
+truthy(qNum && qNum.label.indexOf('el 14 de ' + _nombreMes) >= 0,
+       'formato numérico dd/mm: "14/' + (_mesPas.getMonth() + 1) + '"');
+
+// "el 14 de junio" NO debe filtrar el mes entero (era el riesgo de la palabra mes)
+truthy(qFecha && qFecha.label === 'el 14 de ' + _nombreMes,
+       'fecha puntual es exclusiva: no arrastra "de ' + _nombreMes + '" como mes entero');
+
+// Guardas: no confundir cifras/porcentajes con fechas
+eq(w.aiQueryParse('reparte mi sueldo 50/30/20'), null,
+   '50/30/20 (presupuesto) no se lee como fecha');
+truthy((function () {
+  var q = w.aiQueryParse('cuánto gané');
+  return q === null || q.label.indexOf('el ') < 0;
+}()), '"cuánto gané" sin fecha no inventa un día');
+
 group('ai-query: estados límite');
 truthy(w.aiQueryRun(qDom, [], _ctx).indexOf('no encontré') >= 0,
        'historial vacío responde honesto, sin inventar');

@@ -66,6 +66,71 @@ function _aiqNorm(s) {
 // ("¿y los sábados?") la heredan para mantener el hilo del tema.
 var _aiqLastMetric = null;
 
+// ─── FECHA DE CALENDARIO ESPECÍFICA ──────────────────────────
+// Detecta una fecha puntual escrita de varias formas: "14 de junio",
+// "el 14 de junio de 2025", "14/06", "14-06-2025", "el 14" (día del mes).
+// Devuelve un Date (a medianoche) o null. Sin año explícito, si la fecha
+// cae en el futuro respecto a hoy se asume el año/mes anterior — la gente
+// pregunta por días que ya trabajó, no por los que vienen.
+function _aiqParseSpecificDate(t, ahora) {
+  var hoy0 = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate());
+
+  function resolverAno(mo, day, yr) {
+    var y = yr;
+    if (!y) {
+      y = ahora.getFullYear();
+      if (new Date(y, mo, day) > hoy0) y = y - 1;
+    }
+    return new Date(y, mo, day);
+  }
+
+  // 1) Día + mes por nombre: "14 de junio", "14 junio", "3 de mayo de 2025"
+  var reName = new RegExp(
+    '\\b(\\d{1,2})\\s+(?:de\\s+)?(' +
+      AI_QUERY_DICT.monthLabels.join('|') +
+      ')\\b(?:\\s+(?:de\\s+|del\\s+)?(\\d{4}))?'
+  );
+  var mName = t.match(reName);
+  if (mName) {
+    var dN = parseInt(mName[1], 10);
+    var moN = AI_QUERY_DICT.months[mName[2]];
+    if (dN >= 1 && dN <= 31 && moN != null) {
+      return resolverAno(moN, dN, mName[3] ? parseInt(mName[3], 10) : null);
+    }
+  }
+
+  // 2) Formato numérico: "14/06", "14-06-2025", "14/6/25"
+  var mNum = t.match(/\b(\d{1,2})[/-](\d{1,2})(?:[/-](\d{2,4}))?\b/);
+  if (mNum) {
+    var dD = parseInt(mNum[1], 10);
+    var moD = parseInt(mNum[2], 10) - 1;
+    if (dD >= 1 && dD <= 31 && moD >= 0 && moD <= 11) {
+      var yrD = mNum[3] ? parseInt(mNum[3], 10) : null;
+      if (yrD && yrD < 100) yrD += 2000;
+      return resolverAno(moD, dD, yrD);
+    }
+  }
+
+  // 3) Solo el día: "el 14", "el día 14" → mes actual, o el pasado si aún
+  //    no llegó ese día este mes. Con guarda para no comerse "el 14%",
+  //    "el 14 de mis turnos", "el 14 dias".
+  var mDay = t.match(/\bel\s+(?:dia\s+)?(\d{1,2})\b/);
+  if (mDay) {
+    var after = t.slice(mDay.index + mDay[0].length);
+    if (/^\s*(%|por ciento|dias?|horas?|turnos?|semanas?|meses|mil|millon)/.test(after)) {
+      return null;
+    }
+    var dDay = parseInt(mDay[1], 10);
+    if (dDay >= 1 && dDay <= 31) {
+      var cand = new Date(ahora.getFullYear(), ahora.getMonth(), dDay);
+      if (cand > hoy0) return new Date(ahora.getFullYear(), ahora.getMonth() - 1, dDay);
+      return cand;
+    }
+  }
+
+  return null;
+}
+
 // ─── PARSER ──────────────────────────────────────────────────
 // Devuelve null si la pregunta no es una consulta de datos con un
 // filtro que los intents clásicos no cubren. Solo reclama preguntas
@@ -103,7 +168,7 @@ function aiQueryParse(question, opts) {
   // Excepción: pregunta elíptica corta ("¿y los sábados?") cuando el
   // tema actual de la conversación ya es de datos — hereda el hilo.
   var hasDataWord =
-    /\b(gane|ganado|ganancia|trabaje|trabajado|hice|tuve|llevo|sume|acumule|plata|dinero|horas|turnos|cuanto|cuantos|cuantas)\b/.test(
+    /\b(gane|ganado|ganancia|ganancias|trabaje|trabajado|hice|tuve|llevo|sume|acumule|cobre|cobrado|saque|recibi|recogi|junte|plata|dinero|horas|turnos|cuanto|cuantos|cuantas)\b/.test(
       t
     );
   var TEMAS_DATOS = { dinero: 1, tiempo: 1, comparativa: 1, patrones: 1, finanzas: 1 };
@@ -140,9 +205,34 @@ function aiQueryParse(question, opts) {
     }
   }
 
-  if (weekday === null && !finde && !festivo && month === null) return null;
-
   var ahora = new Date();
+
+  // Fecha de calendario puntual ("14 de junio", "14/06", "el 14"). Es
+  // exclusiva: si la hay, manda sobre los demás filtros (la palabra del mes
+  // ya no debe filtrar el mes entero, ni el día de semana, etc.).
+  var specificDate = _aiqParseSpecificDate(t, ahora);
+  if (specificDate) {
+    weekday = null;
+    weekdayWord = null;
+    finde = false;
+    festivo = false;
+    month = null;
+  }
+
+  if (weekday === null && !finde && !festivo && month === null && !specificDate) return null;
+
+  if (specificDate) {
+    var sdKey = specificDate.toDateString();
+    filters.push(function (d) {
+      return d.toDateString() === sdKey;
+    });
+    var sdLabel =
+      'el ' + specificDate.getDate() + ' de ' + AI_QUERY_DICT.monthLabels[specificDate.getMonth()];
+    if (specificDate.getFullYear() !== ahora.getFullYear()) {
+      sdLabel += ' de ' + specificDate.getFullYear();
+    }
+    labelParts.push(sdLabel);
+  }
 
   if (weekday !== null) {
     // Singular + "pasado/último": solo la ocurrencia más reciente.
@@ -207,7 +297,7 @@ function aiQueryParse(question, opts) {
   // Filtro: período relativo explícito ("este mes", "mes pasado", "esta
   // semana", "semana pasada"). Acota los filtros primarios — sin esto,
   // "¿cuántos festivos trabajé este mes?" contaba todo el historial.
-  if (month === null) {
+  if (month === null && !specificDate) {
     var lunes = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate());
     lunes.setDate(lunes.getDate() - ((lunes.getDay() + 6) % 7));
     if (/este mes|del mes|en el mes/.test(t)) {
