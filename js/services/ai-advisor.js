@@ -998,10 +998,15 @@ function aiOptimizarProximo(c) {
   }
   var dias = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
 
-  var lineas = ['💰 **Qué turno te rinde más** (8h, tu hora vale ' + fCOP(vh) + '):'];
-  lineas.push('🥇 Domingo/festivo de noche → **' + fCOP(t8(2.1)) + '** (2.1x)');
-  lineas.push('🥈 Domingo/festivo de día → **' + fCOP(t8(1.75)) + '** (1.75x)');
-  lineas.push('🥉 Noche entre semana → **' + fCOP(t8(1.35)) + '** (1.35x)');
+  var lineas = [
+    '💰 **Qué turno te rinde más** (8h, tu hora vale ' + fCOP(vh) + '):',
+    '',
+    '| Turno | Pago | Factor |',
+    '|---|---|---|',
+    '| 🌙⛪ Domingo/festivo noche | **' + fCOP(t8(2.1)) + '** | 2.1x |',
+    '| ⛪ Domingo/festivo día | **' + fCOP(t8(1.75)) + '** | 1.75x |',
+    '| 🌙 Noche entre semana | **' + fCOP(t8(1.35)) + '** | 1.35x |'
+  ];
 
   var extra = [];
 

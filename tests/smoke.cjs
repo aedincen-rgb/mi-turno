@@ -1116,6 +1116,34 @@ group('ai: desprendible de nómina (v300)');
          'sin turnos pide registrarlos, sin generar nada');
 }());
 
+group('ai: tablas markdown en respuestas (v301)');
+(function () {
+  if (typeof w._aiFormat !== 'function') {
+    truthy(false, '_aiFormat existe');
+    return;
+  }
+  var tabla = 'Acá va:\n\n| Turno | Pago |\n|---|---|\n| Noche | $108.000 |\n| Día | $80.000 |';
+  var html = w._aiFormat(tabla);
+  truthy(html.indexOf('<table') >= 0, 'una tabla markdown se renderiza como <table>');
+  truthy(html.indexOf('<th scope="col">Turno</th>') >= 0, 'el encabezado va en <th> con scope');
+  truthy(html.indexOf('<td>Noche</td>') >= 0, 'las celdas van en <td>');
+  truthy(html.indexOf('$108.000') >= 0, 'preserva los montos dentro de la celda');
+
+  // El texto normal sigue funcionando (negrita, saltos)
+  var plano = w._aiFormat('Hola **mundo**\nsegunda línea');
+  truthy(plano.indexOf('<strong>mundo</strong>') >= 0, 'negrita sigue funcionando');
+  truthy(plano.indexOf('<br>') >= 0, 'los saltos de línea se mantienen');
+
+  // Sin separador NO es tabla (no romper texto con pipes sueltos)
+  var noTabla = w._aiFormat('opción a | opción b');
+  truthy(noTabla.indexOf('<table') < 0, 'un pipe suelto sin separador no crea tabla');
+
+  // El optimizador ahora entrega su ranking como tabla
+  var rOpt = w.aiOptimizarProximo({ vh: 10000, proxFests: [], bestDowInfo: { count: 0 } });
+  truthy(rOpt.indexOf('| Turno | Pago | Factor |') >= 0,
+         'el optimizador usa una tabla markdown para el ranking');
+}());
+
 group('ai: optimizador de ingresos predictivo (v299)');
 (function () {
   if (typeof w.aiOptimizarProximo !== 'function') {
