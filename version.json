@@ -1,4 +1,4 @@
 {
-  "v": "v303",
-  "label": "Tablas en liquidacion, simulador, normativa y comparacion"
+  "v": "v304",
+  "label": "Tablas: entran sin scroll en movil (wrap 1ra columna + compacto)"
 }

@@ -544,13 +544,25 @@
 .asistente-tabla {
   border-collapse: collapse;
   width: 100%;
-  font-size: 12.5px;
+  font-size: 12px;
   font-variant-numeric: tabular-nums;
 }
 .asistente-tabla th,
 .asistente-tabla td {
-  padding: 7px 11px;
+  padding: 6px 8px;
   text-align: left;
+  vertical-align: top;
+}
+/* La 1ra columna (etiquetas de texto) puede partirse en varias líneas para
+   que la tabla entre en el ancho del móvil; las numéricas no se parten. */
+.asistente-tabla td:first-child,
+.asistente-tabla th:first-child {
+  white-space: normal;
+  word-break: break-word;
+  hyphens: auto;
+}
+.asistente-tabla td:not(:first-child),
+.asistente-tabla th:not(:first-child) {
   white-space: nowrap;
 }
 .asistente-tabla thead th {
