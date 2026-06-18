@@ -351,3 +351,65 @@
 .bar-legend-dot.ld-reg {
   background: #5b86e5;
 }
+
+/* ── Medidor de ritmo circular (CSS-only ring) ── */
+.ritmo-ring {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  flex-shrink: 0;
+}
+
+.ritmo-ring-canvas {
+  width: 72px;
+  height: 72px;
+  transform: rotate(-90deg);
+}
+
+.ritmo-ring-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.4px;
+  color: var(--accent);
+  line-height: 1;
+}
+
+.ritmo-ring-center .ritmo-ring-sub {
+  font-size: 8px;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 0.05em;
+  margin-top: 1px;
+}
+
+/* ── Tarjeta "Tu ritmo" ── */
+.ritmo-card-inner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.ritmo-card-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.ritmo-card-text strong {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.ritmo-card-text .ritmo-card-meta {
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 2px;
+  font-weight: 500;
+}

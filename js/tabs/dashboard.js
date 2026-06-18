@@ -76,6 +76,27 @@ function DashboardTab(props) {
         ((calc.bd.extraFestDiur || {}).mins || 0) +
         ((calc.bd.extraFestNoct || {}).mins || 0);
       var pctExtras = totalMins > 0 ? (extrasMins / totalMins) * 100 : 0;
+      // Desglose COP por grupo (sin solapamiento)
+      var copDiurno = (calc.bd.diurnaOrd || {}).cop || 0;
+      var copNocturno = (calc.bd.noctOrd || {}).cop || 0;
+      var copFestivo =
+        ((calc.bd.diurnaFest || {}).cop || 0) +
+        ((calc.bd.noctFest || {}).cop || 0) +
+        ((calc.bd.extraFestDiur || {}).cop || 0) +
+        ((calc.bd.extraFestNoct || {}).cop || 0);
+      var copExtras =
+        ((calc.bd.extraDiurna || {}).cop || 0) +
+        ((calc.bd.extraNoct || {}).cop || 0) +
+        ((calc.bd.extraFestDiur || {}).cop || 0) +
+        ((calc.bd.extraFestNoct || {}).cop || 0);
+      var pctDiurno = totalCOP > 0 ? (copDiurno / totalCOP) * 100 : 0;
+      var pctNocturno = totalCOP > 0 ? (copNocturno / totalCOP) * 100 : 0;
+      var pctFestivo = totalCOP > 0 ? (copFestivo / totalCOP) * 100 : 0;
+      var pctExtrasCop = totalCOP > 0 ? (copExtras / totalCOP) * 100 : 0;
+      // Días festivos trabajados
+      var festDiasCount = dias.filter(function (d) {
+        return d.fest;
+      }).length;
       return {
         dias: dias,
         diasTrab: diasTrab,
@@ -97,7 +118,16 @@ function DashboardTab(props) {
         diasHabilesRest: diasHabilesRest,
         eficiencia: eficiencia,
         extrasMins: extrasMins,
-        pctExtras: pctExtras
+        pctExtras: pctExtras,
+        copDiurno: copDiurno,
+        copNocturno: copNocturno,
+        copFestivo: copFestivo,
+        copExtras: copExtras,
+        pctDiurno: pctDiurno,
+        pctNocturno: pctNocturno,
+        pctFestivo: pctFestivo,
+        pctExtrasCop: pctExtrasCop,
+        festDiasCount: festDiasCount
       };
     },
     [calc, turnos, salario, vh, ahora.getMonth(), ahora.getDate()]
@@ -309,6 +339,95 @@ function DashboardTab(props) {
         h('div', { className: 'empty-sub' }, 'Registra tu primer turno para ver el análisis')
       )
     );
+  }
+
+  // ─── Helper para construir mensaje WhatsApp completo ────────
+  function _buildShareText(completo) {
+    var base =
+      '📊 *Mi Turno* · Resumen financiero\n\n' +
+      '💰 *Total ganado:* ' +
+      fCOP(ctx.totalCOP) +
+      '\n' +
+      '📅 ' +
+      ctx.diasTrab +
+      ' turnos en ' +
+      ctx.diasMes +
+      ' días · ' +
+      fDur(ctx.totalMins) +
+      ' trabajadas\n' +
+      '🎯 ' +
+      ctx.pctSalario.toFixed(0) +
+      '% del salario base (' +
+      fCOP(salario) +
+      ')\n' +
+      '🔮 *Proyección:* ' +
+      fCOP(ctx.proy) +
+      '\n' +
+      '💵 *Valor hora:* ' +
+      fCOP(ctx.eficiencia) +
+      '/h promedio\n' +
+      '📈 *Promedio:* ' +
+      fCOP(ctx.prom) +
+      '/turno\n';
+
+    if (completo) {
+      // Desglose por categoría de recargo
+      base +=
+        '\n📋 *Desglose de recargos:*\n' +
+        '  ☀️ Diurno: ' +
+        fCOP(ctx.copDiurno || 0) +
+        ' (' +
+        (ctx.pctDiurno || 0).toFixed(0) +
+        '%)\n' +
+        '  🌙 Nocturno: ' +
+        fCOP(ctx.copNocturno || 0) +
+        ' (' +
+        (ctx.pctNocturno || 0).toFixed(0) +
+        '%)\n' +
+        '  ⛪ Festivo: ' +
+        fCOP(ctx.copFestivo || 0) +
+        ' (' +
+        (ctx.pctFestivo || 0).toFixed(0) +
+        '%)\n' +
+        '  ➕ Extras: ' +
+        fCOP(ctx.copExtras || 0) +
+        ' (' +
+        (ctx.pctExtras || 0).toFixed(0) +
+        '%)\n';
+
+      // Horas
+      base +=
+        '\n⏱ *Horas:*\n' +
+        '  🌙 Nocturnas: ' +
+        fDur(ctx.noctMins || 0) +
+        '\n' +
+        '  ⛪ Festivas: ' +
+        fDur(ctx.festMins || 0) +
+        '\n' +
+        '  ➕ Extras: ' +
+        fDur(ctx.extrasMins || 0) +
+        '\n';
+
+      // Meta y días restantes
+      base +=
+        '\n🎯 *Meta salarial:*\n' +
+        '  Alcanzado: ' +
+        ctx.pctSalario.toFixed(0) +
+        '% de ' +
+        fCOP(salario) +
+        '\n' +
+        '  Faltante: ' +
+        fCOP(Math.max(0, salario - ctx.totalCOP)) +
+        '\n' +
+        '  Días restantes: ' +
+        ctx.diasRestantes +
+        ' (' +
+        ctx.diasHabilesRest +
+        ' hábiles)\n';
+    }
+
+    base += '\n🚀 Calculado con Mi Turno · miturno.one';
+    return base;
   }
 
   var ritmoBadge = '';
@@ -717,58 +836,7 @@ function DashboardTab(props) {
               className: 'dash-share-btn',
               onClick: function () {
                 haptic();
-                var shareText =
-                  '📊 *Mi Turno* · Resumen financiero\n\n' +
-                  '💰 *Total ganado:* ' +
-                  fCOP(ctx.totalCOP) +
-                  '\n' +
-                  '📅 ' +
-                  ctx.diasTrab +
-                  ' turnos en ' +
-                  ctx.diasMes +
-                  ' días · ' +
-                  fDur(ctx.totalMins) +
-                  ' trabajadas\n' +
-                  '🎯 ' +
-                  ctx.pctSalario.toFixed(0) +
-                  '% del salario base (' +
-                  fCOP(salario) +
-                  ')\n' +
-                  '🔮 *Proyección:* ' +
-                  fCOP(ctx.proy) +
-                  '\n\n' +
-                  '📋 *Desglose de recargos:*\n' +
-                  '  ☀️ Diurno: ' +
-                  fCOP(ctx.copDiurno || 0) +
-                  ' (' +
-                  (ctx.pctDiurno || 0).toFixed(0) +
-                  '%)\n' +
-                  '  🌙 Nocturno: ' +
-                  fCOP(ctx.copNocturno || 0) +
-                  ' (' +
-                  (ctx.pctNocturno || 0).toFixed(0) +
-                  '%)\n' +
-                  '  ⛪ Festivo: ' +
-                  fCOP(ctx.copFestivo || 0) +
-                  ' (' +
-                  (ctx.pctFestivo || 0).toFixed(0) +
-                  '%)\n' +
-                  '  ➕ Extras: ' +
-                  fCOP(ctx.copExtras || 0) +
-                  ' (' +
-                  (ctx.pctExtras || 0).toFixed(0) +
-                  '%)\n\n' +
-                  '💵 *Valor hora:* ' +
-                  fCOP(ctx.eficiencia) +
-                  '/h promedio\n' +
-                  '🌙 ' +
-                  fDur(ctx.noctMins || 0) +
-                  ' nocturnas · ⛪ ' +
-                  fDur(ctx.festMins || 0) +
-                  ' festivas · ➕ ' +
-                  fDur(ctx.extrasMins || 0) +
-                  ' extra\n\n' +
-                  '🚀 Calculado con Mi Turno · miturno.one';
+                var shareText = _buildShareText(true);
                 navigator
                   .share({
                     title: 'Mi Turno · Mis números del mes',
@@ -777,7 +845,7 @@ function DashboardTab(props) {
                   })
                   .catch(function () {});
               },
-              'aria-label': 'Compartir mis números'
+              'aria-label': 'Compartir mis números completos'
             },
             '📤 Compartir'
           )
@@ -786,67 +854,13 @@ function DashboardTab(props) {
         'a',
         {
           className: 'dash-share-btn dash-share-wa',
-          href:
-            'https://api.whatsapp.com/send?text=' +
-            encodeURIComponent(
-              '📊 *Mi Turno* · Resumen financiero\n\n' +
-                '💰 *Total ganado:* ' +
-                fCOP(ctx.totalCOP) +
-                '\n' +
-                '📅 ' +
-                ctx.diasTrab +
-                ' turnos en ' +
-                ctx.diasMes +
-                ' días · ' +
-                fDur(ctx.totalMins) +
-                ' trabajadas\n' +
-                '🎯 ' +
-                ctx.pctSalario.toFixed(0) +
-                '% del salario base (' +
-                fCOP(salario) +
-                ')\n' +
-                '🔮 *Proyección:* ' +
-                fCOP(ctx.proy) +
-                '\n\n' +
-                '📋 *Desglose de recargos:*\n' +
-                '  ☀️ Diurno: ' +
-                fCOP(ctx.copDiurno || 0) +
-                ' (' +
-                (ctx.pctDiurno || 0).toFixed(0) +
-                '%)\n' +
-                '  🌙 Nocturno: ' +
-                fCOP(ctx.copNocturno || 0) +
-                ' (' +
-                (ctx.pctNocturno || 0).toFixed(0) +
-                '%)\n' +
-                '  ⛪ Festivo: ' +
-                fCOP(ctx.copFestivo || 0) +
-                ' (' +
-                (ctx.pctFestivo || 0).toFixed(0) +
-                '%)\n' +
-                '  ➕ Extras: ' +
-                fCOP(ctx.copExtras || 0) +
-                ' (' +
-                (ctx.pctExtras || 0).toFixed(0) +
-                '%)\n\n' +
-                '💵 *Valor hora:* ' +
-                fCOP(ctx.eficiencia) +
-                '/h promedio\n' +
-                '🌙 ' +
-                fDur(ctx.noctMins || 0) +
-                ' nocturnas · ⛪ ' +
-                fDur(ctx.festMins || 0) +
-                ' festivas · ➕ ' +
-                fDur(ctx.extrasMins || 0) +
-                ' extra\n\n' +
-                '🚀 Calculado con Mi Turno · miturno.one'
-            ),
+          href: 'https://api.whatsapp.com/send?text=' + encodeURIComponent(_buildShareText(true)),
           target: '_blank',
           rel: 'noopener',
           onClick: function () {
             haptic();
           },
-          'aria-label': 'Enviar por WhatsApp'
+          'aria-label': 'Enviar por WhatsApp informe completo'
         },
         '💬 WhatsApp'
       )
@@ -856,35 +870,7 @@ function DashboardTab(props) {
     h(
       'div',
       { className: 'dash-share-preview', 'aria-label': 'Vista previa del mensaje a compartir' },
-      '📊 *Mi Turno* · Mis números del mes\n\n' +
-        '💰 Total ganado: ' +
-        fCOP(ctx.totalCOP) +
-        '\n' +
-        '📅 ' +
-        ctx.diasTrab +
-        ' turnos en ' +
-        ctx.diasMes +
-        ' días\n' +
-        '⏰ ' +
-        fDur(ctx.totalMins) +
-        ' trabajadas\n' +
-        '🎯 ' +
-        ctx.pctSalario.toFixed(0) +
-        '% del salario base (' +
-        fCOP(salario) +
-        ')\n' +
-        '🔮 Proyección: ' +
-        fCOP(ctx.proy) +
-        '\n' +
-        '💵 Promedio: ' +
-        fCOP(ctx.prom) +
-        '/turno · ' +
-        fCOP(ctx.eficiencia) +
-        '/h\n' +
-        (ctx.festMins > 0 ? '⛪ Festivos: ' + fDur(ctx.festMins) + '\n' : '') +
-        (ctx.noctMins > 0 ? '🌙 Nocturnas: ' + fDur(ctx.noctMins) + '\n' : '') +
-        (ctx.extrasMins > 0 ? '➕ Extras: ' + fDur(ctx.extrasMins) + '\n' : '') +
-        '\n🚀 Calculado con Mi Turno · miturno.one'
+      _buildShareText(false)
     )
   );
 }
