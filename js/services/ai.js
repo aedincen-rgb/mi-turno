@@ -2242,6 +2242,9 @@ function _aiShiftHourLabeled(t) {
   return { kind: esFin ? 'fin' : 'inicio', h: h, m: mm, hadAP: !!ap };
 }
 
+// Edición de turno en curso (cuando pedimos la hora y esperamos la respuesta).
+var _aiPendingShiftEdit = null;
+
 function _aiShiftEditIntent(q, t, c, state) {
   // Verbos de edición. Sin un verbo claro + "turno", no reclamamos nada.
   // Evitamos "mete"/"carg" (ambiguos: "si metés un turno más" es hipotético,
@@ -2250,6 +2253,26 @@ function _aiShiftEditIntent(q, t, c, state) {
   var esBorrar = /\b(borr|elimin|quit|saca|remov)\w*/.test(t);
   var esEditar = /\b(correg|corrig|cambi|modific|ajust|actualiz|edit|arregl)\w*/.test(t);
   var mencionaTurno = /\bturno|jornada|trabaj\w*\b/.test(t);
+
+  // ── RESUME de edición pendiente ──
+  // Si recién pedimos la hora ("Decime qué cambia…") y el usuario responde solo
+  // con un horario ("fue de 8 a 5", "salí a las 6"), retomamos esa edición. Sin
+  // esto el mensaje no tenía verbo ni "turno" → caía al fallback.
+  var _resumeFecha = null;
+  if (_aiPendingShiftEdit && _aiPendingShiftEdit.fecha) {
+    var _pendAge = Date.now() - (_aiPendingShiftEdit.ts || 0);
+    var _soloHora = !esAgregar && !esBorrar && !esEditar;
+    var _tieneHora = !!(_aiShiftTimeRange(t) || _aiShiftHourLabeled(t));
+    if (_pendAge < 5 * 60 * 1000 && _soloHora && _tieneHora) {
+      _resumeFecha = _aiPendingShiftEdit.fecha;
+      esEditar = true;
+      mencionaTurno = true;
+      _aiPendingShiftEdit = null; // consumido
+    } else if (_pendAge >= 5 * 60 * 1000) {
+      _aiPendingShiftEdit = null; // expiró
+    }
+  }
+
   if (!mencionaTurno) return null;
   if (!esAgregar && !esBorrar && !esEditar) return null;
   // Hipotéticos no son comandos de alta ("si trabajara un turno de 8 a 4").
@@ -2258,7 +2281,7 @@ function _aiShiftEditIntent(q, t, c, state) {
   }
 
   var turnosAll = (state && (state.turnosAll || state.turnos)) || [];
-  var fecha = _aiShiftDate(t);
+  var fecha = _resumeFecha || _aiShiftDate(t);
 
   // ── BORRAR ──
   if (esBorrar) {
@@ -2393,6 +2416,9 @@ function _aiShiftEditIntent(q, t, c, state) {
         nIni = new Date(oIni.getFullYear(), oIni.getMonth(), oIni.getDate(), hi, eSingle.m, 0);
       }
     } else {
+      // Guardar la edición en curso para retomarla cuando el usuario responda
+      // solo con el horario (sin repetir verbo ni "turno").
+      _aiPendingShiftEdit = { fecha: fecha, ts: Date.now() };
       return {
         text:
           'Decime qué cambia: la hora de entrada o la de salida. Por ejemplo ' +

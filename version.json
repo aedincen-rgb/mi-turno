@@ -1,4 +1,4 @@
 {
-  "v": "v311",
-  "label": "Sube cobertura del NLP: match sin acentos ni puntuacion, quita sinonimo dia-turno, segunda oportunidad con guard de margen. 73 a 93 por ciento al pipeline moderno"
+  "v": "v312",
+  "label": "Edicion de turno multi-paso: recuerda la edicion en curso y retoma con la hora suelta (fue de 8 a 5)"
 }
