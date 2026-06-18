@@ -2984,6 +2984,16 @@ function _aiAnswerCore(question, state) {
       var _isObj = _resp && typeof _resp === 'object';
       var _isAction = _isObj && _resp.action;
       var _text = _isObj ? _resp.text || '' : _resp;
+      // Aplica la empatía sobre el enriquecido y preserva acción/gráfico.
+      var _finishEnriched = function (en) {
+        if (en && en.text) {
+          en.text = _pref + en.text + _suff;
+          if (_isAction) en.action = _resp.action;
+          if (_isObj && _resp.chart) en.chart = _resp.chart;
+          return en;
+        }
+        return null;
+      };
       if (typeof aiEnhancedRespond === 'function') {
         // Se pasa el texto BASE (sin empatía) al enriquecedor para que el
         // anti-repetición compare núcleos estables; la empatía se aplica después.
@@ -2996,12 +3006,18 @@ function _aiAnswerCore(question, state) {
           _entities,
           state.turnosAll
         );
-        if (_enriched && _enriched.text) {
-          _enriched.text = _pref + _enriched.text + _suff;
-          if (_isAction) _enriched.action = _resp.action;
-          if (_isObj && _resp.chart) _enriched.chart = _resp.chart;
-          return _enriched;
+        // aiEnhancedRespond devuelve un objeto (síncrono) o una Promise (cuando
+        // corre el pipeline del agente, para intents financieros). Antes el caso
+        // Promise se ignoraba y se perdía TODA la capa conversacional —pregunta
+        // de seguimiento y botones de tema relacionado—, dejando la respuesta
+        // seca. Ahora se resuelven ambos casos.
+        if (_enriched && typeof _enriched.then === 'function') {
+          return _enriched.then(function (en) {
+            return _finishEnriched(en) || _pref + _text + _suff;
+          });
         }
+        var _fin = _finishEnriched(_enriched);
+        if (_fin) return _fin;
       }
       if (_isAction) {
         _resp.text = _pref + (_resp.text || '') + _suff;
@@ -3027,6 +3043,13 @@ function _aiAnswerCore(question, state) {
             null,
             state.turnosAll
           );
+          // Igual que arriba: resolver tanto el objeto síncrono como la Promise
+          // del agente para no perder la capa conversacional en el follow-up.
+          if (_fuEnriched && typeof _fuEnriched.then === 'function') {
+            return _fuEnriched.then(function (en) {
+              return en && en.text ? en : _fuResp;
+            });
+          }
           if (_fuEnriched && _fuEnriched.text) return _fuEnriched;
         }
         return _fuResp;
@@ -4624,14 +4647,22 @@ function aiAnswer(question, state) {
 
   // Pulido final de la voz: varía léxico y calibra el tono (no empalagoso).
   // Se aplica una sola vez, acá, para cubrir todas las rutas de respuesta.
-  try {
-    if (typeof aiHumanizar === 'function' && resp) {
-      if (typeof resp === 'string') resp = aiHumanizar(resp);
-      else if (resp.text) resp.text = aiHumanizar(resp.text);
-    }
-  } catch (_) {}
+  // _aiAnswerCore puede devolver una Promise (pipeline del agente): en ese caso
+  // se resuelve antes de pulir para no aplicar aiHumanizar sobre el objeto Promise.
+  var _polish = function (r) {
+    try {
+      if (typeof aiHumanizar === 'function' && r) {
+        if (typeof r === 'string') r = aiHumanizar(r);
+        else if (r.text) r.text = aiHumanizar(r.text);
+      }
+    } catch (_) {}
+    return r;
+  };
 
-  return resp;
+  if (resp && typeof resp.then === 'function') {
+    return resp.then(_polish);
+  }
+  return _polish(resp);
 }
 
 // ════════════════════════════════════════════════════════════════

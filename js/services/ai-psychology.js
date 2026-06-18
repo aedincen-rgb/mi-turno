@@ -223,6 +223,8 @@ function aiPsychPostShift(c) {
  * @param {string} intent - intent NLP
  * @returns {string}
  */
+var _aiPsychLastFraming = '';
+
 function aiPsychRespond(c, intent) {
   if (!c) return '';
   var parts = [];
@@ -232,7 +234,10 @@ function aiPsychRespond(c, intent) {
   var horaMsg = aiPsychMensajePorHora(ahora, c);
   if (horaMsg) parts.push('\n\n🕐 ' + horaMsg);
 
-  // 2. Framing positivo de números (en respuestas de dinero o tiempo trabajado)
+  // 2. Framing positivo de números (en respuestas de dinero o tiempo trabajado).
+  // Ocasional y sin repetir el anterior: si aparece en cada respuesta cansa
+  // (empalagoso). Así la mayoría de turnos quedan limpios —dato + pregunta de
+  // seguimiento— y el toque motivador llega de vez en cuando, no siempre.
   if (
     intent === 'total_ganado' ||
     intent === 'stats' ||
@@ -242,8 +247,13 @@ function aiPsychRespond(c, intent) {
     intent === 'comparativa_mes' ||
     intent === 'horas_trabajadas'
   ) {
-    var framing = aiPsychFinancialFraming(c);
-    if (framing) parts.push(framing);
+    if (Math.random() < 0.34) {
+      var framing = aiPsychFinancialFraming(c);
+      if (framing && framing !== _aiPsychLastFraming) {
+        _aiPsychLastFraming = framing;
+        parts.push(framing);
+      }
+    }
   }
 
   // 3. Apoyo en consulta crítica

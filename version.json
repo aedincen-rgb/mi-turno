@@ -1,4 +1,4 @@
 {
-  "v": "v308",
-  "label": "IA mas humana: empatia contextual, anti-repeticion, ruteo horas/promedio, follow-up si y auditor de turnos largos"
+  "v": "v309",
+  "label": "Recupera la capa conversacional: pregunta de seguimiento y botones (el pipeline del agente devolvia Promise y se descartaba); framing motivador ocasional, evidencia solo en modo detallado"
 }

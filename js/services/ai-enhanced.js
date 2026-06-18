@@ -1012,7 +1012,10 @@ function _aiRunAgentPass(enriched, intent, question, userContext, verbose, thoug
       finalText = agentResp.text;
     } else if (verbose && agentResp && agentResp.hasFindings) {
       finalText += '\n\n' + agentResp.text;
-    } else {
+    } else if (verbose) {
+      // La traza de evidencia ("_Evidencia: cache._") es ruido para el usuario
+      // final; se reserva al modo detallado. En modo normal la respuesta queda
+      // limpia: dato + pregunta de seguimiento + botones.
       var evidence = _aiCompactAgentEvidence(agentResp, reasoning, bag, currentText);
       if (evidence) finalText += '\n\n' + evidence;
     }
