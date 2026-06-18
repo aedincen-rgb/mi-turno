@@ -48,9 +48,10 @@ function _aiRepeatLeadIn(originalResponse, intent) {
     }
   }
 
-  // Registrar (ring de 4) antes de decidir, para futuros turnos
+  // Registrar (ring de 6) antes de decidir, para futuros turnos. Ventana amplia
+  // para detectar repeticiones aunque haya varias preguntas distintas en medio.
   _aiMemory.recentCores.push(core);
-  if (_aiMemory.recentCores.length > 4) _aiMemory.recentCores.shift();
+  if (_aiMemory.recentCores.length > 6) _aiMemory.recentCores.shift();
 
   if (!isRepeat) return '';
   if (_AI_CONVERSATIONAL_INTENTS[intent]) return ''; // saludos/gracias repiten natural
@@ -172,6 +173,14 @@ function aiCheckFollowUp(text) {
   for (var i = 0; i < affirm.length; i++) {
     if (t === affirm[i] || t.indexOf(affirm[i]) === 0) {
       var intent = sug.intent;
+      // Si la sugerencia guardó su query original, reclasificarla da el intent
+      // más preciso — cubre acciones legacy que no traen intent explícito.
+      if (sug.query && typeof aiClassifyIntent === 'function') {
+        try {
+          var _r = aiClassifyIntent(sug.query, null, null);
+          if (_r && _r.intent && _r.confidence >= 0.5) intent = _r.intent;
+        } catch (_) {}
+      }
       _aiMemory.lastSuggestion = null; // consumido
       return intent;
     }
@@ -274,8 +283,10 @@ function aiEnrichResponse(originalText, intent, userContext, entities, turnosAll
   var execute = null;
 
   // 0. Auditoría Inteligente (Anomaly Detection)
-  // Si hay una anomalía grave, la inyectamos al principio de la respuesta
-  if (typeof aiAuditShifts === 'function' && turnosAll) {
+  // Solo se inyecta en respuestas que muestran DATOS del usuario — no en
+  // preguntas de conocimiento ("¿qué es el recargo nocturno?") ni en charla,
+  // donde un aviso legal pegado encima no viene al caso (v307 lo hacía siempre).
+  if (typeof aiAuditShifts === 'function' && turnosAll && _AI_FINANCIAL_INTENTS[intent]) {
     var anomaly = aiAuditShifts(userContext, turnosAll);
     if (anomaly && _aiMemory.proactiveCount % 2 === 0) {
       // No spamear siempre
@@ -407,9 +418,16 @@ function aiEnrichResponse(originalText, intent, userContext, entities, turnosAll
     }
   }
 
-  // Guardar la primera acción como sugerencia activa
+  // Guardar la primera acción como sugerencia activa. El intent debe ser el de
+  // la ACCIÓN ofrecida (actions[0].intent), no el de la respuesta actual — si no,
+  // un "sí" re-ejecuta la misma pregunta en vez de la sugerencia. Se guarda la
+  // query para poder reclasificar cuando la acción no trae intent explícito.
   if (actions && actions.length > 0 && !_aiMemory.lastSuggestion) {
-    _aiMemory.lastSuggestion = { intent: intent, text: actions[0].label };
+    _aiMemory.lastSuggestion = {
+      intent: actions[0].intent || intent,
+      query: actions[0].query || null,
+      text: actions[0].label
+    };
   }
 
   return {

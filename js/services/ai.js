@@ -332,6 +332,18 @@ function buildContext(state) {
   var totalMinsSemana = diasSemana.reduce(function (a, d) {
     return a + d.mins;
   }, 0);
+  // Desglose de la semana: necesario para el aviso de límite legal de horas
+  // extra (12h/semana). Antes el auditor usaba extraMins del MES y lo llamaba
+  // "esta semana" → cifras absurdas (206h) cuando un turno largo contaminaba.
+  var calcSemana = turnosSemana.length > 0 ? doCalc(turnosSemana, null, ahora, vh) : { bd: {} };
+  var _getSem = function (k, p) {
+    return ((calcSemana.bd || {})[k] || {})[p] || 0;
+  };
+  var extraMinsSemana =
+    _getSem('extraDiurna', 'mins') +
+    _getSem('extraNoct', 'mins') +
+    _getSem('extraFestDiur', 'mins') +
+    _getSem('extraFestNoct', 'mins');
 
   // ── Semana pasada ──
   var iniSemPas = new Date(iniSemana);
@@ -678,6 +690,7 @@ function buildContext(state) {
     // Semana actual
     totalCOPSemana: totalCOPSemana,
     totalMinsSemana: totalMinsSemana,
+    extraMinsSemana: extraMinsSemana,
     diasSemanaCount: diasSemana.length,
     // Semana pasada
     totalCOPSemPas: totalCOPSemPas,
@@ -2956,18 +2969,26 @@ function _aiAnswerCore(question, state) {
     aiUpdateConversation(_nlp.intent, _nlp.topic);
     var _mood =
       typeof aiAnalyzeMood === 'function' ? aiAnalyzeMood(question, c) : { mood: 'neutral' };
-    var _pref = typeof aiEmpatheticPrefix === 'function' ? aiEmpatheticPrefix(_mood.mood) : '';
-    var _suff = typeof aiEmpatheticSuffix === 'function' ? aiEmpatheticSuffix(_mood.mood) : '';
+    // La empatía verbal (prefijo/sufijo) solo se aplica si el usuario expresó una
+    // emoción en SU texto. Para preguntas factuales ("¿cuánto gané?", "¿cuántas
+    // horas?") se responde limpio — anteponer consuelo donde no hay dolor suena a
+    // robot. El mood inferido por contexto (racha/burnout) ya no fuerza empatía.
+    var _useEmp = !!(_mood && _mood.fromText);
+    var _pref =
+      _useEmp && typeof aiEmpatheticPrefix === 'function' ? aiEmpatheticPrefix(_mood.mood) : '';
+    var _suff =
+      _useEmp && typeof aiEmpatheticSuffix === 'function' ? aiEmpatheticSuffix(_mood.mood) : '';
     var _resp = _aiDispatchNLP(_nlp.intent, c, state, q, t);
     if (_resp) {
       // _resp puede ser string o {text, action} o {text, chart}
       var _isObj = _resp && typeof _resp === 'object';
       var _isAction = _isObj && _resp.action;
       var _text = _isObj ? _resp.text || '' : _resp;
-      var _final = _pref + _text + _suff;
       if (typeof aiEnhancedRespond === 'function') {
+        // Se pasa el texto BASE (sin empatía) al enriquecedor para que el
+        // anti-repetición compare núcleos estables; la empatía se aplica después.
         var _enriched = aiEnhancedRespond(
-          _final,
+          _text,
           _nlp.intent,
           _nlp.topic,
           q,
@@ -2976,13 +2997,17 @@ function _aiAnswerCore(question, state) {
           state.turnosAll
         );
         if (_enriched && _enriched.text) {
+          _enriched.text = _pref + _enriched.text + _suff;
           if (_isAction) _enriched.action = _resp.action;
           if (_isObj && _resp.chart) _enriched.chart = _resp.chart;
           return _enriched;
         }
       }
-      if (_isAction) return _resp;
-      return _final;
+      if (_isAction) {
+        _resp.text = _pref + (_resp.text || '') + _suff;
+        return _resp;
+      }
+      return _pref + _text + _suff;
     }
   }
 

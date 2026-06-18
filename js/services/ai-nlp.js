@@ -1893,15 +1893,36 @@ function aiClassify(text, convState, userContext) {
       score += 3;
     }
 
+    // ── BONUS POR ANCLAJE DE MÉTRICA (horas / promedio) ──
+    // "¿cuántas horas este mes?" y "promedio diario este mes" caían a
+    // total_ganado porque 'llevo'/'mes' lo inflaban y respondían con dinero.
+    // Si el usuario pide explícitamente HORAS o PROMEDIO, ese es el intent real.
+    // Se excluyen las consultas de CONOCIMIENTO sobre el valor de una hora
+    // (dominical/nocturna/recargo/"cuánto vale") — esas son intent `ley`.
+    var _pideHoras =
+      (_raw.indexOf('hora') >= 0 || _raw.indexOf('tiempo') >= 0) &&
+      _raw.indexOf('dominical') < 0 &&
+      _raw.indexOf('nocturn') < 0 &&
+      _raw.indexOf('festiv') < 0 &&
+      _raw.indexOf('recargo') < 0 &&
+      _raw.indexOf('vale') < 0 &&
+      _raw.indexOf('cuesta') < 0;
+    var _pidePromedio = _raw.indexOf('promedio') >= 0;
+    if (intent.id === 'horas_trabajadas' && _pideHoras) score += 8;
+    if (intent.id === 'promedio' && _pidePromedio) score += 8;
+
     // ── BONUS TOTAL_GANADO CON "ESTE MES" ──
     // "cuánto llevo este mes" y "mi sueldo de este mes" caían a comparativa_mes
     // porque 'mes' le daba +3 y los tokens parciales de 'total_ganado' no competían.
     // "este mes" sin "pasado" ni "vs" indica la consulta del mes ACTUAL, no comparativa.
+    // No aplica si el usuario pidió horas o promedio: ahí no es consulta de total.
     if (
       intent.id === 'total_ganado' &&
       _raw.indexOf('este mes') >= 0 &&
       _raw.indexOf('mes pasado') < 0 &&
-      _raw.indexOf('vs') < 0
+      _raw.indexOf('vs') < 0 &&
+      !_pideHoras &&
+      !_pidePromedio
     ) {
       score += 8;
     }
@@ -2052,6 +2073,10 @@ function aiDetectMood(text, userContext) {
   var mood = 'neutral';
   var intensity = 0;
   var hints = [];
+  // fromText = el mood proviene de palabras del propio usuario (no de inferencias
+  // de contexto como racha/burnout). Solo en ese caso aplica empatía verbal:
+  // anteponer consuelo a una pregunta factual ("¿cuánto gané?") suena a robot.
+  var fromText = false;
 
   // Señales de frustración / cansancio
   var frustKW = [
@@ -2115,6 +2140,7 @@ function aiDetectMood(text, userContext) {
       mood = 'frustrado';
       intensity += 2;
       hints.push('fatiga');
+      fromText = true;
       break;
     }
   }
@@ -2123,6 +2149,7 @@ function aiDetectMood(text, userContext) {
       if (mood === 'neutral') mood = 'preocupado';
       intensity += 1;
       hints.push('inseguridad');
+      fromText = true;
       break;
     }
   }
@@ -2131,6 +2158,7 @@ function aiDetectMood(text, userContext) {
       if (mood === 'neutral' || mood === 'preocupado') mood = 'positivo';
       intensity += 1;
       hints.push('motivacion');
+      fromText = true;
       break;
     }
   }
@@ -2156,7 +2184,7 @@ function aiDetectMood(text, userContext) {
     if (mood === 'neutral') mood = 'frustrado';
   }
 
-  return { mood: mood, intensity: Math.min(intensity, 5), hints: hints };
+  return { mood: mood, intensity: Math.min(intensity, 5), hints: hints, fromText: fromText };
 }
 
 // ─── VARIANTES DE RESPUESTA EMPÁTICA ─────────────────────────
