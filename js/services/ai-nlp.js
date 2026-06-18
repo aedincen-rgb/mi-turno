@@ -1908,8 +1908,18 @@ function aiClassify(text, convState, userContext) {
       _raw.indexOf('vale') < 0 &&
       _raw.indexOf('cuesta') < 0;
     var _pidePromedio = _raw.indexOf('promedio') >= 0;
+    // Racha: "¿cuánto llevo de racha?" caía a total_ganado porque 'cuanto'+'llevo'
+    // pesan como dinero. Si menciona racha/días seguidos, ese es el intent.
+    // Se usan palabras sin acento ('seguidos', 'consecutiv') porque _raw conserva
+    // las tildes y "días seguidos" no matchearía contra 'dias seguidos'.
+    var _pideRacha =
+      _raw.indexOf('racha') >= 0 ||
+      _raw.indexOf('seguidos') >= 0 ||
+      _raw.indexOf('consecutiv') >= 0 ||
+      _raw.indexOf('sin parar') >= 0;
     if (intent.id === 'horas_trabajadas' && _pideHoras) score += 8;
     if (intent.id === 'promedio' && _pidePromedio) score += 8;
+    if (intent.id === 'racha' && _pideRacha) score += 8;
 
     // ── BONUS TOTAL_GANADO CON "ESTE MES" ──
     // "cuánto llevo este mes" y "mi sueldo de este mes" caían a comparativa_mes
@@ -1922,7 +1932,8 @@ function aiClassify(text, convState, userContext) {
       _raw.indexOf('mes pasado') < 0 &&
       _raw.indexOf('vs') < 0 &&
       !_pideHoras &&
-      !_pidePromedio
+      !_pidePromedio &&
+      !_pideRacha
     ) {
       score += 8;
     }

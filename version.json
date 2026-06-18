@@ -1,4 +1,4 @@
 {
-  "v": "v309",
-  "label": "Recupera la capa conversacional: pregunta de seguimiento y botones (el pipeline del agente devolvia Promise y se descartaba); framing motivador ocasional, evidencia solo en modo detallado"
+  "v": "v310",
+  "label": "Ruteo de racha (no mas misroute a total_ganado) y follow-ups del chain clasico dejan de ser callejon sin salida: el si los ejecuta"
 }

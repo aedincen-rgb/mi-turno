@@ -216,9 +216,28 @@ var _aiFollowUps = {
   ]
 };
 
+// Cada categoría de follow-up del chain clásico apunta a un intent real (y una
+// query para reclasificar). Antes estas preguntas eran callejones sin salida:
+// se ofrecían pero no quedaban registradas, así que un "sí" caía al fallback.
+var _aiFollowUpTarget = {
+  salario: { intent: 'ahorro', query: '¿cuánto me falta para la meta?' },
+  extra: { intent: 'distribucion', query: 'detalle de horas extra por tipo' },
+  nocturn: { intent: 'simulacion', query: '¿cuánto ganaría si hago solo nocturnas?' },
+  festiv: { intent: 'festivos', query: '¿cuáles son los próximos festivos?' },
+  proyecc: { intent: 'proyeccion', query: 'proyección al cierre del mes' },
+  resumen: { intent: 'stats', query: 'mis estadísticas' },
+  descanso: { intent: 'bienestar', query: '¿cuándo fue mi último descanso?' }
+};
+
 function _aiPickFollowUp(intent) {
   var opts = _aiFollowUps[intent] || _aiFollowUps['default'];
-  return opts[Math.floor(Math.random() * opts.length)];
+  var phrase = opts[Math.floor(Math.random() * opts.length)];
+  // Registrar la sugerencia para que aiCheckFollowUp resuelva un "sí" posterior.
+  var tgt = _aiFollowUpTarget[intent];
+  if (tgt && typeof _aiMemory !== 'undefined' && _aiMemory) {
+    _aiMemory.lastSuggestion = { intent: tgt.intent, query: tgt.query, text: phrase };
+  }
+  return phrase;
 }
 
 // ─── CONSTRUCCIÓN DE CONTEXTO ──────────────────────────────────
