@@ -41,6 +41,120 @@ function _aiStripConfirmActions(msgs) {
   });
 }
 
+function _aiConfirmVerdict(text) {
+  var t = (text || '').toLowerCase().trim();
+  try {
+    t = t.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  } catch (_) {
+    t = t
+      .replace(/[áàäâ]/g, 'a')
+      .replace(/[éèëê]/g, 'e')
+      .replace(/[íìïî]/g, 'i')
+      .replace(/[óòöô]/g, 'o')
+      .replace(/[úùüû]/g, 'u')
+      .replace(/ñ/g, 'n');
+  }
+  t = t.replace(/\s+/g, ' ');
+
+  function hasPhrase(phrase) {
+    var safe = phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return new RegExp('(^|[^a-z0-9_])' + safe + '(?=$|[^a-z0-9_])').test(t);
+  }
+
+  var noPhrases = [
+    'no',
+    'negativo',
+    'mejor no',
+    'olvidalo',
+    'olvidemos',
+    'para',
+    'detente',
+    'abortar',
+    'nada'
+  ];
+  for (var n = 0; n < noPhrases.length; n++) {
+    if (hasPhrase(noPhrases[n])) return 'no';
+  }
+  if (/(^|[^a-z0-9_])cancel\w*(?=$|[^a-z0-9_])/.test(t)) return 'no';
+
+  var yesPhrases = [
+    'si',
+    'dale',
+    'confirmo',
+    'confirmado',
+    'hazlo',
+    'hacelo',
+    'correcto',
+    'claro',
+    'obvio',
+    'de una',
+    'ok',
+    'okay',
+    'vale',
+    'ya',
+    'adelante',
+    'por supuesto',
+    'exacto'
+  ];
+  for (var y = 0; y < yesPhrases.length; y++) {
+    if (hasPhrase(yesPhrases[y])) return 'yes';
+  }
+  return null;
+}
+
+function _aiPad2(n) {
+  return (n < 10 ? '0' : '') + n;
+}
+
+function _aiDateInputValue(date) {
+  if (!date || isNaN(date.getTime())) return '';
+  return date.getFullYear() + '-' + _aiPad2(date.getMonth() + 1) + '-' + _aiPad2(date.getDate());
+}
+
+function _aiTimeInputValue(date) {
+  if (!date || isNaN(date.getTime())) return '';
+  return _aiPad2(date.getHours()) + ':' + _aiPad2(date.getMinutes());
+}
+
+function _aiTurnosForDate(turnos, dateValue) {
+  var out = [];
+  if (!dateValue || !turnos || !turnos.length) return out;
+  for (var i = 0; i < turnos.length; i++) {
+    var t = turnos[i];
+    if (!t || !t.fin) continue;
+    var ini = new Date(t.inicio);
+    if (!isNaN(ini.getTime()) && _aiDateInputValue(ini) === dateValue) out.push(t);
+  }
+  out.sort(function (a, b) {
+    return new Date(a.inicio) - new Date(b.inicio);
+  });
+  return out;
+}
+
+function _aiDateTimeFromInputs(dateValue, timeValue) {
+  if (!dateValue || !timeValue) return null;
+  var d = dateValue.split('-');
+  var tm = timeValue.split(':');
+  if (d.length !== 3 || tm.length < 2) return null;
+  var y = parseInt(d[0], 10);
+  var m = parseInt(d[1], 10) - 1;
+  var day = parseInt(d[2], 10);
+  var h = parseInt(tm[0], 10);
+  var min = parseInt(tm[1], 10);
+  if (isNaN(y) || isNaN(m) || isNaN(day) || isNaN(h) || isNaN(min)) return null;
+  if (h < 0 || h > 23 || min < 0 || min > 59) return null;
+  var out = new Date(y, m, day, h, min, 0, 0);
+  return isNaN(out.getTime()) ? null : out;
+}
+
+function _aiShiftLabel(turno) {
+  if (!turno) return '';
+  var ini = new Date(turno.inicio);
+  var fin = new Date(turno.fin);
+  if (isNaN(ini.getTime()) || isNaN(fin.getTime())) return 'Turno';
+  return _aiTimeInputValue(ini) + ' - ' + _aiTimeInputValue(fin);
+}
+
 // Tarjeta visual para respuestas de datos: destaca el número (la estrella)
 // con métricas secundarias. aria-hidden porque el texto de la burbuja ya
 // comunica lo mismo a lectores de pantalla (evita doble lectura).
@@ -304,6 +418,10 @@ function AsistenteTab(props) {
   // Acción del agente pendiente de confirmación hablada (modo manos libres).
   // Guarda el objeto execute mientras el agente espera un "sí"/"no".
   var pendingActionRef = useRef(null);
+
+  var sef = useState(null);
+  var shiftEditForm = sef[0],
+    setShiftEditForm = sef[1];
 
   var tieneConversacion = msgs.length > 0;
 
@@ -736,6 +854,293 @@ function AsistenteTab(props) {
     });
   }, []);
 
+  function _turnosEditables() {
+    return props.turnosAll || props.turnos || [];
+  }
+
+  function _buildShiftEditForm(seed, selectedId, inicioManual, finManual) {
+    seed = seed || {};
+    var dateValue = seed.date || '';
+    var turnosDia = _aiTurnosForDate(_turnosEditables(), dateValue);
+    var selected = null;
+    var i;
+
+    if (selectedId) {
+      for (i = 0; i < turnosDia.length; i++) {
+        if (turnosDia[i].id === selectedId) selected = turnosDia[i];
+      }
+    } else if (turnosDia.length === 1) {
+      selected = turnosDia[0];
+      selectedId = selected.id;
+    }
+
+    var entrada = inicioManual || '';
+    var salida = finManual || '';
+
+    if (selected) {
+      var ini = new Date(selected.inicio);
+      var fin = new Date(selected.fin);
+      if (!entrada) entrada = _aiTimeInputValue(ini);
+      if (!salida) salida = _aiTimeInputValue(fin);
+
+      if (seed.range) {
+        entrada = seed.range.inicioTime || entrada;
+        salida = seed.range.finTime || salida;
+      } else if (seed.single) {
+        var hh = seed.single.h;
+        if (seed.single.kind === 'fin') {
+          if (!seed.single.hadAP && fin.getHours() >= 12 && hh < 12) hh += 12;
+          salida = _aiPad2(hh) + ':' + _aiPad2(seed.single.m || 0);
+        } else if (seed.single.kind === 'inicio') {
+          if (!seed.single.hadAP && ini.getHours() >= 12 && hh < 12) hh += 12;
+          entrada = _aiPad2(hh) + ':' + _aiPad2(seed.single.m || 0);
+        }
+      }
+    }
+
+    return {
+      date: dateValue,
+      selectedId: selectedId || '',
+      entrada: entrada,
+      salida: salida,
+      error: '',
+      turnosDia: turnosDia
+    };
+  }
+
+  function openShiftEditForm(seed) {
+    setShiftEditForm(_buildShiftEditForm(seed || {}, '', '', ''));
+  }
+
+  function setShiftFormDate(dateValue) {
+    setShiftEditForm(_buildShiftEditForm({ date: dateValue }, '', '', ''));
+  }
+
+  function setShiftFormSelected(id) {
+    setShiftEditForm(function (prev) {
+      return _buildShiftEditForm({ date: prev ? prev.date : '' }, id, '', '');
+    });
+  }
+
+  function saveShiftEditForm() {
+    var form = shiftEditForm;
+    if (!form) return;
+    var turnosDia = _aiTurnosForDate(_turnosEditables(), form.date);
+    var target = null;
+    for (var i = 0; i < turnosDia.length; i++) {
+      if (turnosDia[i].id === form.selectedId) target = turnosDia[i];
+    }
+    if (!form.date) {
+      setShiftEditForm(Object.assign({}, form, { error: 'Ingresá la fecha del turno.' }));
+      return;
+    }
+    if (!target) {
+      setShiftEditForm(
+        Object.assign({}, form, {
+          error:
+            turnosDia.length > 1
+              ? 'Elegí cuál turno de ese día querés modificar.'
+              : 'No encontré un turno registrado en esa fecha.'
+        })
+      );
+      return;
+    }
+    if (!form.entrada || !form.salida) {
+      setShiftEditForm(Object.assign({}, form, { error: 'Ingresá hora de entrada y salida.' }));
+      return;
+    }
+    var inicio = _aiDateTimeFromInputs(form.date, form.entrada);
+    var fin = _aiDateTimeFromInputs(form.date, form.salida);
+    if (!inicio || !fin) {
+      setShiftEditForm(Object.assign({}, form, { error: 'Revisá el formato de fecha y horas.' }));
+      return;
+    }
+    if (fin <= inicio) fin.setDate(fin.getDate() + 1);
+    var dur = Math.round((fin - inicio) / 60000);
+    if (dur <= 0 || dur > 24 * 60) {
+      setShiftEditForm(
+        Object.assign({}, form, {
+          error: 'Ese horario no me cuadra: la salida debe quedar después de la entrada.'
+        })
+      );
+      return;
+    }
+
+    var ok = true;
+    if (typeof props.onEditarTurno === 'function') {
+      ok = props.onEditarTurno({
+        id: target.id,
+        inicio: inicio.toISOString(),
+        fin: fin.toISOString()
+      });
+    }
+    if (ok === false) {
+      setShiftEditForm(
+        Object.assign({}, form, { error: 'No pude encontrar ese turno para guardarlo.' })
+      );
+      return;
+    }
+
+    setShiftEditForm(null);
+    setMsgs(function (p) {
+      var label = inicio.toLocaleDateString('es-CO', { day: 'numeric', month: 'long' });
+      return p.concat([
+        {
+          role: 'ai',
+          content:
+            'Listo, corregí el turno del ' +
+            label +
+            ' de ' +
+            form.entrada +
+            ' a ' +
+            form.salida +
+            '. Ya quedó en tu historial y se sincroniza con Supabase.'
+        }
+      ]);
+    });
+  }
+
+  function renderShiftEditForm() {
+    if (!shiftEditForm) return null;
+    var turnosDia = _aiTurnosForDate(_turnosEditables(), shiftEditForm.date);
+    var selected = null;
+    for (var i = 0; i < turnosDia.length; i++) {
+      if (turnosDia[i].id === shiftEditForm.selectedId) selected = turnosDia[i];
+    }
+    var status = '';
+    if (!shiftEditForm.date) {
+      status = 'Ingresá una fecha para verificar si existe un turno guardado.';
+    } else if (turnosDia.length === 0) {
+      status = 'No encontré turnos registrados para esa fecha.';
+    } else if (turnosDia.length === 1) {
+      status = 'Turno encontrado: ' + _aiShiftLabel(turnosDia[0]) + '.';
+    } else {
+      status = 'Encontré ' + turnosDia.length + ' turnos. Elegí cuál querés modificar.';
+    }
+
+    return h(
+      'div',
+      {
+        className: 'mol-ov shift-edit-ov',
+        onClick: function (ev) {
+          if (ev.target === ev.currentTarget) setShiftEditForm(null);
+        }
+      },
+      h(
+        'div',
+        {
+          className: 'mol-sh shift-edit-sheet',
+          role: 'dialog',
+          'aria-modal': 'true',
+          'aria-label': 'Editar turno'
+        },
+        h('div', { className: 'mol-hdl' }),
+        h('div', { className: 'shift-edit-head' }, h('div', null, 'Corregir turno')),
+        h(
+          'div',
+          { className: 'shift-edit-grid' },
+          h(
+            'label',
+            { className: 'shift-edit-field' },
+            h('span', null, 'Fecha'),
+            h('input', {
+              className: 'inp',
+              type: 'date',
+              value: shiftEditForm.date,
+              'aria-label': 'Fecha del turno',
+              onChange: function (ev) {
+                setShiftFormDate(ev.target.value);
+              }
+            })
+          ),
+          h(
+            'label',
+            { className: 'shift-edit-field' },
+            h('span', null, 'Hora ingreso'),
+            h('input', {
+              className: 'inp',
+              type: 'time',
+              value: shiftEditForm.entrada,
+              'aria-label': 'Hora de ingreso',
+              onChange: function (ev) {
+                setShiftEditForm(Object.assign({}, shiftEditForm, { entrada: ev.target.value }));
+              }
+            })
+          ),
+          h(
+            'label',
+            { className: 'shift-edit-field' },
+            h('span', null, 'Hora salida'),
+            h('input', {
+              className: 'inp',
+              type: 'time',
+              value: shiftEditForm.salida,
+              'aria-label': 'Hora de salida',
+              onChange: function (ev) {
+                setShiftEditForm(Object.assign({}, shiftEditForm, { salida: ev.target.value }));
+              }
+            })
+          )
+        ),
+        turnosDia.length > 1
+          ? h(
+              'div',
+              { className: 'shift-edit-picks', role: 'group', 'aria-label': 'Turnos encontrados' },
+              turnosDia.map(function (t) {
+                var active = t.id === shiftEditForm.selectedId;
+                return h(
+                  'button',
+                  {
+                    key: t.id,
+                    type: 'button',
+                    className: 'shift-edit-pick' + (active ? ' active' : ''),
+                    onClick: function () {
+                      haptic();
+                      setShiftFormSelected(t.id);
+                    }
+                  },
+                  _aiShiftLabel(t)
+                );
+              })
+            )
+          : null,
+        h('div', { className: 'shift-edit-status' + (turnosDia.length ? ' ok' : '') }, status),
+        shiftEditForm.error
+          ? h('div', { className: 'shift-edit-error' }, shiftEditForm.error)
+          : null,
+        h(
+          'div',
+          { className: 'confirm-row shift-edit-actions' },
+          h(
+            'button',
+            {
+              type: 'button',
+              className: 'btn btn-ghost btn-block',
+              onClick: function () {
+                haptic();
+                setShiftEditForm(null);
+              }
+            },
+            'Cancelar'
+          ),
+          h(
+            'button',
+            {
+              type: 'button',
+              className: 'btn btn-primary btn-block',
+              disabled: !selected,
+              onClick: function () {
+                haptic();
+                saveShiftEditForm();
+              }
+            },
+            'Guardar'
+          )
+        )
+      )
+    );
+  }
+
   // ── Ejecuta una acción del agente IN-PLACE (sin reload) ──
   // Devuelve un texto de confirmación hablable, o null si no aplica.
   var executeAgentAction = useCallback(
@@ -795,13 +1200,17 @@ function AsistenteTab(props) {
             return 'Listo, descargué tu desprendible. 📄';
           }
           return null;
+        case 'OPEN_SHIFT_EDIT_FORM':
+          openShiftEditForm(execute.payload || {});
+          return null;
         case 'EDIT_SHIFT':
           if (
             typeof props.onEditarTurno === 'function' &&
             execute.payload &&
             execute.payload.turno
           ) {
-            props.onEditarTurno(execute.payload.turno);
+            var editOk = props.onEditarTurno(execute.payload.turno);
+            if (editOk === false) return 'No encontré ese turno para corregirlo.';
             return (
               'Listo, corregí el turno del ' +
               (execute.payload.label || 'día indicado') +
@@ -857,14 +1266,7 @@ function AsistenteTab(props) {
 
   // Clasifica una frase como afirmación, negación o ninguna.
   function _yesNo(text) {
-    var t = (text || '').toLowerCase().trim();
-    var yes =
-      /\b(s[ií]|dale|confirmo|confirmado|hazlo|hacelo|correcto|claro|obvio|de una|ok|okay|vale|ya|adelante|por supuesto|exacto)\b/;
-    var no =
-      /\b(no|cancel[aá]|cancelar|negativo|mejor no|olvidalo|olvídalo|para|detente|abortar|nada)\b/;
-    if (no.test(t)) return 'no';
-    if (yes.test(t)) return 'yes';
-    return null;
+    return _aiConfirmVerdict(text);
   }
 
   // Detecta frases de descarte/cierre ("no hace falta", "no gracias"...).
@@ -1437,6 +1839,8 @@ function AsistenteTab(props) {
       className: 'asistente-wrap' + (tieneConversacion ? ' has-chat' : ''),
       'aria-label': 'Asistente AI'
     },
+
+    renderShiftEditForm(),
 
     // ═══ TOP: menú, saludo y sugerencias tipo ChatGPT/Claude ═══
     h(

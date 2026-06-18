@@ -51,6 +51,7 @@ var FILES = [
   // _aiNombrePersonal y _aiHeroPhrases). ai-greeting.js no toca
   // DOM ni React, es seguro cargarlo entero en node.
   'js/services/ai-history.js',
+  'js/tabs/assistant.js',
   'js/services/ai-greeting.js',
   'js/services/ai-proactive.js'
 ];
@@ -188,6 +189,13 @@ eq(w.validarTurnoActivo(null, 'u'), null, 'null → null');
 truthy(w.validarTurnoActivo({ inicio: '2026-05-01T08:00:00Z', userId: 'u' }, 'u'),
        'activo válido pasa');
 eq(w.validarTurnoActivo({ inicio: 'NO_ES_FECHA', userId: 'u' }, 'u'), null, 'fecha inválida → null');
+
+group('asistente: confirmación sí/no');
+eq(w._aiConfirmVerdict('sí'), 'yes', '"sí" con tilde confirma');
+eq(w._aiConfirmVerdict('si'), 'yes', '"si" sin tilde confirma');
+eq(w._aiConfirmVerdict('✓ Confirmar'), null, 'label visual no confirma por accidente');
+eq(w._aiConfirmVerdict('no'), 'no', '"no" cancela');
+eq(w._aiConfirmVerdict('cancelá'), 'no', '"cancelá" cancela');
 
 group('normalizePrefs');
 var pBase = w.normalizePrefs(null);
@@ -1030,58 +1038,50 @@ group('ai: edición de turnos por chat (v289)');
            (rConsulta.execute.type === 'ADD_SHIFT' || rConsulta.execute.type === 'DELETE_SHIFT')),
          '"cuánto gané ayer" NO se confunde con edición de turno');
 
-  // EDIT: corregir la hora de salida de un turno existente
-  // turnoBorrar = mkTurno(_mesPas, 8) → inicio 08:00, fin 16:00 el día 14.
+  // EDIT: ahora abre el formulario guiado; la verificación/guardado ocurre en la UI.
   var rEditFin = w.aiAnswer(
     'corregí el turno del 14 de ' + _nombreMes + ', salí a las 6 no a las 5',
     stEdit([turnoBorrar]));
-  truthy(rEditFin && rEditFin.execute && rEditFin.execute.type === 'EDIT_SHIFT',
-         '"corregí ... salí a las 6" produce EDIT_SHIFT');
+  truthy(rEditFin && rEditFin.execute && rEditFin.execute.type === 'OPEN_SHIFT_EDIT_FORM',
+         '"corregí ... salí a las 6" abre el formulario de edición');
   if (rEditFin && rEditFin.execute) {
-    var te = rEditFin.execute.payload.turno;
-    eq(te.id, turnoBorrar.id, 'EDIT_SHIFT preserva el id del turno original');
-    var finH = new Date(te.fin).getHours();
-    eq(finH, 18, 'salida "a las 6" hereda PM del fin original (16:00) → 18:00');
-    // inicio intacto
-    eq(new Date(te.inicio).getHours(), 8, 'la entrada queda igual (08:00)');
+    eq(rEditFin.execute.payload.date, w._aiShiftDateInputValue(_mesPas), 'editor recibe la fecha prellenada');
+    eq(rEditFin.execute.payload.single.kind, 'fin', 'editor recibe cambio parcial de salida');
   }
 
   // EDIT: cambiar entrada
   var rEditIni = w.aiAnswer(
     'cambiá el turno del 14 de ' + _nombreMes + ', entré a las 7',
     stEdit([turnoBorrar]));
-  truthy(rEditIni && rEditIni.execute && rEditIni.execute.type === 'EDIT_SHIFT',
-         '"cambiá ... entré a las 7" produce EDIT_SHIFT');
+  truthy(rEditIni && rEditIni.execute && rEditIni.execute.type === 'OPEN_SHIFT_EDIT_FORM',
+         '"cambiá ... entré a las 7" abre el formulario de edición');
   if (rEditIni && rEditIni.execute) {
-    eq(new Date(rEditIni.execute.payload.turno.inicio).getHours(), 7,
-       'entrada corregida a 07:00');
-    eq(new Date(rEditIni.execute.payload.turno.fin).getHours(), 16,
-       'la salida queda igual (16:00)');
+    eq(rEditIni.execute.payload.single.kind, 'inicio', 'editor recibe cambio parcial de entrada');
+    eq(rEditIni.execute.payload.single.h, 7, 'entrada sugerida a 07:00');
   }
 
   // EDIT: rango completo "fue de 8 a 5"
   var rEditRango = w.aiAnswer(
     'modificá el turno del 14 de ' + _nombreMes + ', fue de 8 a 5',
     stEdit([turnoBorrar]));
-  truthy(rEditRango && rEditRango.execute && rEditRango.execute.type === 'EDIT_SHIFT',
-         'rango completo en edición produce EDIT_SHIFT');
+  truthy(rEditRango && rEditRango.execute && rEditRango.execute.type === 'OPEN_SHIFT_EDIT_FORM',
+         'rango completo en edición abre el formulario');
   if (rEditRango && rEditRango.execute) {
-    var tr = rEditRango.execute.payload.turno;
-    eq(new Date(tr.inicio).getHours(), 8, 'rango: entrada 08:00');
-    eq(new Date(tr.fin).getHours(), 17, 'rango "de 8 a 5" → salida 17:00 (PM)');
+    eq(rEditRango.execute.payload.range.inicioTime, '08:00', 'rango: entrada sugerida 08:00');
+    eq(rEditRango.execute.payload.range.finTime, '17:00', 'rango "de 8 a 5" → salida sugerida 17:00');
   }
 
-  // EDIT sin turno ese día → honesto, sin execute
+  // EDIT sin turno ese día → igual abre el editor; la UI valida contra los datos.
   var rEditNo = w.aiAnswer(
     'corregí el turno del 2 de ' + _nombreMes + ', salí a las 6', stEdit([turnoBorrar]));
-  truthy(rEditNo && (rEditNo.text || '').indexOf('No encontré') >= 0 && !rEditNo.execute,
-         'corregir un día sin turno responde honesto, sin acción');
+  truthy(rEditNo && rEditNo.execute && rEditNo.execute.type === 'OPEN_SHIFT_EDIT_FORM',
+         'corregir un día sin turno abre editor para validar en UI');
 
-  // EDIT sin especificar qué cambia → pide aclaración, sin execute
+  // EDIT sin especificar qué cambia → abre editor vacío/parcial.
   var rEditAmb = w.aiAnswer(
     'corregí el turno del 14 de ' + _nombreMes, stEdit([turnoBorrar]));
-  truthy(rEditAmb && !rEditAmb.execute,
-         'corregir sin decir qué cambia no propone acción');
+  truthy(rEditAmb && rEditAmb.execute && rEditAmb.execute.type === 'OPEN_SHIFT_EDIT_FORM',
+         'corregir sin decir qué cambia abre editor');
 }());
 
 group('ai: desprendible de nómina (v300)');

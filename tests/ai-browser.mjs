@@ -9,7 +9,7 @@
 //       invitado CLOUD_MODE queda false (offline-first, no bloquea).
 //    3. UI real: el asistente renderiza, se escribe en el textarea y
 //       sale una burbuja con la respuesta.
-//    4. IA v283: presupuesto 50/30/20, encadenamiento de módulos
+//    4. IA asesor: presupuesto 50/30/20, encadenamiento de módulos
 //       ("dale" → fondo de emergencia → "la cuota"), indemnización
 //       y follow-up contextual ("llevo 4 años" → 90 días).
 //
@@ -44,6 +44,7 @@ var REACT =
   readIf('js/lib/react.production.min.js');
 var REACTDOM = readIf('node_modules/react-dom/umd/react-dom.production.min.js');
 var CHART = readIf('node_modules/chart.js/dist/chart.umd.js') || readIf('js/lib/chart.min.js');
+var EXPECTED_VERSION = JSON.parse(readIf('version.json') || '{"v":""}').v;
 
 var PASS = 0;
 var FAIL = 0;
@@ -116,10 +117,20 @@ try {
   // que Root() entre directo a la app (sin pasar por el login).
   await page.addInitScript(function () {
     try {
+      var uid = 'guest_ai_e2e';
+      var now = new Date();
+      var ini = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 8, 0, 0);
+      var fin = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 16, 0, 0);
+      var turno = {
+        id: 'turno-ai-edit',
+        inicio: ini.toISOString(),
+        fin: fin.toISOString(),
+        userId: uid
+      };
       localStorage.setItem(
         'mt_session',
         JSON.stringify({
-          uid: 'guest_ai_e2e',
+          uid: uid,
           email: 'invitado@local',
           guest: true,
           cloud: false,
@@ -128,6 +139,9 @@ try {
       );
       localStorage.setItem('mt_onboarding_done', '1');
       localStorage.setItem('mt_ob_done', 'true');
+      localStorage.setItem('mt_t_' + uid, JSON.stringify([turno]));
+      localStorage.setItem('mt_s_' + uid, JSON.stringify(2400000));
+      localStorage.setItem('mt_sc_' + uid, JSON.stringify(true));
     } catch (e) {}
   });
 
@@ -145,7 +159,7 @@ try {
   var ver = await page.evaluate(function () {
     return window.MT_APP_VERSION;
   });
-  ok(ver === 'v283', 'MT_APP_VERSION es v283 (vino: ' + ver + ')');
+  ok(ver === EXPECTED_VERSION, 'MT_APP_VERSION coincide con version.json (' + ver + ')');
   ok(pageErrors.length === 0, 'sin errores fatales de página' + (pageErrors.length ? ': ' + pageErrors[0] : ''));
   ok(
     await page.evaluate(function () {
@@ -214,8 +228,52 @@ try {
   await bubble.waitFor({ state: 'attached', timeout: 12000 });
   ok(true, '"cómo reparto mi sueldo" produce una burbuja con el presupuesto 50/30/20');
 
-  // ── 4. FLUJO IA v283 (vía window.aiAnswer en el navegador real) ──
-  console.log('\n→ Flujo IA v283 (código real corriendo en Chromium)');
+  console.log('\n→ UI del asistente (formulario de edición de turno)');
+  await input.fill('editar turno');
+  await input.press('Enter');
+  await page
+    .locator('.asistente-bubble.ai', { hasText: 'Te abro el editor de turno' })
+    .first()
+    .waitFor({ state: 'attached', timeout: 12000 });
+  var editDialog = page.locator('[role="dialog"][aria-label="Editar turno"]').first();
+  await editDialog.waitFor({ state: 'visible', timeout: 12000 });
+  var editDate = await page.evaluate(function () {
+    var turno = JSON.parse(localStorage.getItem('mt_t_guest_ai_e2e'))[0];
+    var d = new Date(turno.inicio);
+    function p(n) {
+      return (n < 10 ? '0' : '') + n;
+    }
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+  });
+  await editDialog.locator('input[aria-label="Fecha del turno"]').fill(editDate);
+  await editDialog.locator('input[aria-label="Hora de ingreso"]').fill('08:00');
+  await editDialog.locator('input[aria-label="Hora de salida"]').fill('18:00');
+  await editDialog.locator('button', { hasText: 'Guardar' }).click();
+  await page
+    .locator('.asistente-bubble.ai', { hasText: 'Listo, corregí el turno' })
+    .first()
+    .waitFor({ state: 'attached', timeout: 12000 });
+  var editedTurno = await page.evaluate(function () {
+    return JSON.parse(localStorage.getItem('mt_t_guest_ai_e2e'))[0];
+  });
+  ok(
+    new Date(editedTurno.fin).getHours() === 18,
+    'Confirmar la edición actualiza el turno local a salida 18:00'
+  );
+  var queuedUpdate = await page.evaluate(function () {
+    var all = JSON.parse(localStorage.getItem('mt_sync_queue') || '{}');
+    var q = all.guest_ai_e2e || [];
+    for (var i = 0; i < q.length; i++) {
+      if (q[i].actionType === 'updateTurno' && q[i].payload && q[i].payload.id === 'turno-ai-edit') {
+        return q[i].payload;
+      }
+    }
+    return null;
+  });
+  ok(!!queuedUpdate, 'Guardar encola updateTurno para sincronizar con Supabase');
+
+  // ── 4. FLUJO IA ASESOR (vía window.aiAnswer en el navegador real) ──
+  console.log('\n→ Flujo IA asesor (código real corriendo en Chromium)');
   var convo = await page.evaluate(function () {
     function mk(daysAgo, hStart, durH) {
       var d = new Date();

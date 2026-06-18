@@ -30,9 +30,13 @@ cp    manifest.json  dist/
 cp    sw.js          dist/
 cp    version.json   dist/
 cp    vercel.json    dist/
+cp    health.json    dist/ 2>/dev/null || true
+cp    privacy.html   dist/ 2>/dev/null || true
 cp    sitemap.xml    dist/ 2>/dev/null || true
 cp    robots.txt     dist/ 2>/dev/null || true
 cp -r .well-known    dist/ 2>/dev/null || true
+mkdir -p dist/js
+cp -r js/lib       dist/js/ 2>/dev/null || true
 
 # ── 2. Concatenar CSS locales en orden ─────────────────────────
 echo "🎨 Concatenando CSS..."
@@ -165,20 +169,43 @@ JS_FILES=(
   # 3. Servicios
   js/services/supabase.js
   js/services/supabase-init.js
-  js/services/error-logger.js
   js/services/session-sync.js
   js/services/calculator.js
   js/services/quincena.js
   js/services/data.js
   js/services/backup.js
+  js/services/ai-synonyms.js
+  js/services/ai-semantic.js
+  js/services/ai-query.js
+  js/services/ai-episodes.js
   js/services/ai-nlp.js
   js/services/ai.js
+  js/services/gender-lang.js
   js/services/ai-enhanced.js
-  js/services/ai-help.js
+  js/services/ai-engage.js
+  js/services/ai-calendar.js
+  js/services/push-notifications.js
   js/services/export-files.js
   js/services/export-email.js
+  js/services/ai-help.js
+  js/services/ai-app-kb.js
+  js/services/voice-agent.js
+  js/services/ai-achievements.js
+  js/services/audio-sfx.js
   js/services/ai-history.js
+  js/services/ai-memory.js
   js/services/ai-greeting.js
+  js/services/ai-insights.js
+  js/services/ai-proactive.js
+  js/services/ai-psychology.js
+  js/services/ai-knowledge.js
+  js/services/ai-auditor.js
+  js/services/ai-conversation.js
+  js/services/ai-advisor.js
+  js/services/ai-router.js
+  js/services/ai-collector.js
+  js/services/ai-reasoning.js
+  js/services/ai-responder.js
 
   # 4. Tabs
   js/tabs/home.js
@@ -238,7 +265,6 @@ fi
   echo "//  Generado por scripts/build.sh"
   echo "// ════════════════════════════════════════════════════════════"
   echo ""
-  echo "(function(){"
   echo "'use strict';"
   echo ""
 
@@ -249,7 +275,6 @@ fi
     echo ""
   done
 
-  echo "})();"
 } > dist/app.js
 
 # Tamaño del bundle
@@ -268,11 +293,15 @@ import re
 with open('app.html', 'r') as f:
     html = f.read()
 
+# En dist no existen los archivos fragmentados, solo app.css/app.js.
+# Quitamos sus preload para evitar 404 innecesarios.
+html = re.sub(r'\\n<link rel=\"preload\" href=\"(?:js|css)/[^\"]+\" as=\"(?:script|style)\">', '', html)
+
 # ── Reemplazar CSS ──
 # Buscar el bloque <!-- CSS FRAGMENTADO --> y reemplazar todo hasta
-# el comentario <!-- Librerías externas --> por un solo link
+# el comentario de librerías por un solo link
 css_marker = '<!-- CSS FRAGMENTADO -->'
-libs_marker = '<!-- Librerías externas -->'
+libs_marker = '<!-- Librerías self-hosted'
 pos_css = html.find(css_marker)
 pos_libs = html.find(libs_marker)
 
@@ -280,7 +309,7 @@ if pos_css == -1:
     print('ERROR: no se encontró el marcador CSS FRAGMENTADO en app.html')
     exit(1)
 if pos_libs == -1:
-    print('ERROR: no se encontró el marcador Librerías externas en app.html')
+    print('ERROR: no se encontró el marcador Librerías self-hosted en app.html')
     exit(1)
 
 # Conservar todo antes del marcador CSS

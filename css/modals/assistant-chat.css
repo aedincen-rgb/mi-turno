@@ -2614,3 +2614,102 @@
     padding-left: 0;
   }
 }
+
+/* ── Editor guiado de turnos abierto desde la IA ── */
+.shift-edit-ov {
+  z-index: 420;
+}
+
+.shift-edit-sheet {
+  padding-bottom: max(28px, calc(var(--sab) + 22px));
+}
+
+.shift-edit-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--text);
+  font-size: 20px;
+  font-weight: 800;
+  margin-bottom: 16px;
+}
+
+.shift-edit-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.shift-edit-field {
+  display: grid;
+  gap: 7px;
+}
+
+.shift-edit-field span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.shift-edit-picks {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.shift-edit-pick {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface2);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 750;
+  text-align: left;
+  padding: 10px 12px;
+}
+
+.shift-edit-pick.active {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+
+.shift-edit-status,
+.shift-edit-error {
+  border-radius: 14px;
+  font-size: 12.5px;
+  font-weight: 650;
+  line-height: 1.35;
+  margin-top: 12px;
+  padding: 10px 12px;
+}
+
+.shift-edit-status {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+
+.shift-edit-status.ok {
+  border-color: color-mix(in srgb, var(--success) 34%, var(--border));
+  color: var(--text);
+}
+
+.shift-edit-error {
+  background: var(--danger-dim);
+  border: 1px solid color-mix(in srgb, var(--danger) 35%, transparent);
+  color: var(--danger);
+}
+
+.shift-edit-actions {
+  margin-top: 16px;
+}
+
+.shift-edit-actions .btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}

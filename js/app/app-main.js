@@ -7,7 +7,6 @@ function App(props) {
   var session = props.session;
   var onSessionPatch = props.onSessionPatch;
   var uid = session.uid;
-  var isCloud = !session.pinOnly && !session.guest && CLOUD_MODE;
   var loadedRef = useRef(false);
 
   var th = useState(leer('mt_theme', 'light'));
@@ -1002,11 +1001,10 @@ function App(props) {
     queueAction(uid, 'insertTurno', nuevo);
   }
   // Edición de un turno existente (desde el asistente). Preserva el id;
-  // reemplaza inicio/fin local y sincroniza con updateTurno. ai.js solo
-  // propone editar cuando encontró un turno, así que existirá; chequeamos
-  // contra `turnos` de forma síncrona (no dentro del updater, que es async).
+  // reemplaza inicio/fin local y sincroniza con updateTurno. Si el turno no
+  // existe localmente, no creamos uno nuevo: editar exige verificación previa.
   function onEditarTurno(turno) {
-    if (!turno || !turno.id || !turno.inicio || !turno.fin) return;
+    if (!turno || !turno.id || !turno.inicio || !turno.fin) return false;
     haptic();
     var existe = false;
     for (var i = 0; i < turnos.length; i++) {
@@ -1016,22 +1014,18 @@ function App(props) {
       }
     }
     var editado = { id: turno.id, inicio: turno.inicio, fin: turno.fin, userId: uid };
-    if (existe) {
-      setTurnos(function (p) {
-        return p.map(function (t) {
-          return t.id === turno.id ? editado : t;
-        });
-      });
-      showToast('Turno corregido', 'success');
-      queueAction(uid, 'updateTurno', { id: turno.id, inicio: turno.inicio, fin: turno.fin });
-    } else {
-      // Defensa: si no estaba, lo damos de alta en vez de perder el dato.
-      setTurnos(function (p) {
-        return [editado].concat(p);
-      });
-      showToast('Turno registrado', 'success');
-      queueAction(uid, 'insertTurno', { id: turno.id, inicio: turno.inicio, fin: turno.fin });
+    if (!existe) {
+      showToast('No encontré ese turno para corregir', 'warning');
+      return false;
     }
+    setTurnos(function (p) {
+      return p.map(function (t) {
+        return t.id === turno.id ? editado : t;
+      });
+    });
+    showToast('Turno corregido', 'success');
+    queueAction(uid, 'updateTurno', { id: turno.id, inicio: turno.inicio, fin: turno.fin });
+    return true;
   }
   // Estado para modal de exportar (PDF o Excel)
   var ex = useState(null);

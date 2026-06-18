@@ -1,4 +1,4 @@
 {
-  "v": "v312",
-  "label": "Edicion de turno multi-paso: recuerda la edicion en curso y retoma con la hora suelta (fue de 8 a 5)"
+  "v": "v313",
+  "label": "Editor guiado de turno con sync Supabase"
 }

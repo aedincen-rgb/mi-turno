@@ -2217,6 +2217,13 @@ function _aiFmtHora(h, m) {
   return (h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m;
 }
 
+function _aiShiftDateInputValue(date) {
+  if (!date || isNaN(date.getTime())) return '';
+  var mm = date.getMonth() + 1;
+  var dd = date.getDate();
+  return date.getFullYear() + '-' + (mm < 10 ? '0' : '') + mm + '-' + (dd < 10 ? '0' : '') + dd;
+}
+
 // Hora única etiquetada como entrada o salida, para correcciones parciales.
 // "salí a las 6" → { kind:'fin', h:6, m:0, hadAP:false }
 // "entré a las 7:30" → { kind:'inicio', h:7, m:30, hadAP:false }
@@ -2341,120 +2348,29 @@ function _aiShiftEditIntent(q, t, c, state) {
 
   // ── CORREGIR / EDITAR ──
   if (esEditar) {
-    if (!fecha) {
-      return {
-        text:
-          'Decime de qué día es el turno que querés corregir (ej. "corregí el turno del ' +
-          'martes, salí a las 6" o "cambiá el turno del 14 de junio, fue de 8 a 5").'
-      };
-    }
-    var eKey = fecha.toDateString();
-    var eEnc = [];
-    for (var ei = 0; ei < turnosAll.length; ei++) {
-      var etn = turnosAll[ei];
-      if (!etn || !etn.fin) continue;
-      var edi = new Date(etn.inicio);
-      if (!isNaN(edi.getTime()) && edi.toDateString() === eKey) eEnc.push(etn);
-    }
-    var eLbl = fecha.getDate() + ' de ' + AI_QUERY_DICT.monthLabels[fecha.getMonth()];
-    if (eEnc.length === 0) {
-      return {
-        text:
-          'No encontré ningún turno el ' +
-          eLbl +
-          ' para corregir. Revisá la fecha o miralo en **Historial**.'
-      };
-    }
-    if (eEnc.length > 1) {
-      return {
-        text:
-          'Ese día (' +
-          eLbl +
-          ') tenés ' +
-          eEnc.length +
-          ' turnos. Para no corregir el equivocado, editalo desde **Historial**, ' +
-          'donde los ves uno por uno.'
-      };
-    }
-    var orig = eEnc[0];
-    var oIni = new Date(orig.inicio);
-    var oFin = new Date(orig.fin);
-    var nIni = oIni;
-    var nFin = oFin;
-
-    // ¿Rango completo? "de 8 a 5" → reemplaza ambos extremos.
     var eRango = _aiShiftTimeRange(t);
     var eSingle = eRango ? null : _aiShiftHourLabeled(t);
+    var payload = { date: fecha ? _aiShiftDateInputValue(fecha) : '' };
     if (eRango) {
-      nIni = new Date(
-        fecha.getFullYear(),
-        fecha.getMonth(),
-        fecha.getDate(),
-        eRango.h1,
-        eRango.m1,
-        0
-      );
-      nFin = new Date(
-        fecha.getFullYear(),
-        fecha.getMonth(),
-        fecha.getDate(),
-        eRango.h2,
-        eRango.m2,
-        0
-      );
-      if (eRango.overnight) nFin.setDate(nFin.getDate() + 1);
+      payload.range = {
+        inicioTime: _aiFmtHora(eRango.h1, eRango.m1),
+        finTime: _aiFmtHora(eRango.h2, eRango.m2),
+        overnight: eRango.overnight
+      };
     } else if (eSingle) {
-      if (eSingle.kind === 'fin') {
-        var hf = eSingle.h;
-        // Sin am/pm: heredamos la franja del fin original (si era PM, seguir PM)
-        if (!eSingle.hadAP && oFin.getHours() >= 12 && hf < 12) hf += 12;
-        nFin = new Date(oFin.getFullYear(), oFin.getMonth(), oFin.getDate(), hf, eSingle.m, 0);
-        if (nFin <= nIni) nFin.setDate(nFin.getDate() + 1); // cruzó medianoche
-      } else {
-        var hi = eSingle.h;
-        if (!eSingle.hadAP && oIni.getHours() >= 12 && hi < 12) hi += 12;
-        nIni = new Date(oIni.getFullYear(), oIni.getMonth(), oIni.getDate(), hi, eSingle.m, 0);
-      }
-    } else {
-      // Guardar la edición en curso para retomarla cuando el usuario responda
-      // solo con el horario (sin repetir verbo ni "turno").
-      _aiPendingShiftEdit = { fecha: fecha, ts: Date.now() };
-      return {
-        text:
-          'Decime qué cambia: la hora de entrada o la de salida. Por ejemplo ' +
-          '"entré a las 7" o "salí a las 6" (o el rango completo: "fue de 8 a 5").'
+      payload.single = {
+        kind: eSingle.kind,
+        h: eSingle.h,
+        m: eSingle.m,
+        hadAP: eSingle.hadAP
       };
     }
 
-    var eDur = Math.round((nFin - nIni) / 60000);
-    if (eDur <= 0 || eDur > 24 * 60) {
-      return {
-        text: 'Ese horario no me cuadra (la salida tiene que ser después de la entrada). ¿Lo repetís?'
-      };
-    }
-    var editPrompt =
-      'Voy a dejar el turno del ' +
-      eLbl +
-      ' de ' +
-      _aiFmtHora(nIni.getHours(), nIni.getMinutes()) +
-      ' a ' +
-      _aiFmtHora(nFin.getHours(), nFin.getMinutes()) +
-      ' — ' +
-      (typeof fDur === 'function' ? fDur(eDur) : eDur + ' min') +
-      ' (antes era ' +
-      _aiFmtHora(oIni.getHours(), oIni.getMinutes()) +
-      '–' +
-      _aiFmtHora(oFin.getHours(), oFin.getMinutes()) +
-      '). ¿Confirmás?';
     return {
-      text: editPrompt,
+      text: 'Te abro el editor de turno. Ingresá la fecha, verifico el turno guardado y después actualizo el horario en tu historial y en Supabase.',
       execute: {
-        type: 'EDIT_SHIFT',
-        confirmText: editPrompt,
-        payload: {
-          turno: { id: orig.id, inicio: nIni.toISOString(), fin: nFin.toISOString() },
-          label: eLbl
-        }
+        type: 'OPEN_SHIFT_EDIT_FORM',
+        payload: payload
       }
     };
   }
