@@ -474,10 +474,10 @@ var AI_SYNONYMS = {
   labor: 'trabajo',
   empleo: 'trabajo',
   // Turno / jornada
+  // OJO: "dia"/"dias" NO mapean a "turno" — "mejor día"/"peor día"/"cuántos días"
+  // son consultas de DÍA, no de turno. Mapearlo rompía mejor_dia/peor_dia
+  // (el token "turno" matcheaba iniciar_turno en varias keywords y ganaba).
   jornada: 'turno',
-  dia: 'turno',
-  días: 'turno',
-  dias: 'turno',
   guardia: 'turno',
   guardias: 'turno',
   // Descanso
@@ -1782,14 +1782,28 @@ function aiClassify(text, convState, userContext) {
     var intent = AI_INTENTS[i];
     var score = 0;
     var maxPossible = 0;
-    var textStr = ' ' + text.toLowerCase() + ' ';
+    // Normalizar para que el match de frase exacta funcione con input real:
+    // (1) sin tildes ("mi mejor día" vs kw 'mejor dia'); (2) la puntuación pegada
+    // (¿ ? ¡ !) pasa a espacio, si no "¿que podes hacer?" nunca matchea
+    // ' que podes hacer '. Antes ambos fallaban y caían al match parcial →
+    // confianza baja y misroutes. La kw también se normaliza (acentos).
+    var textStr =
+      ' ' +
+      text
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[̀-ͯ]/g, '')
+        .replace(/[^a-z0-9ñ ]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim() +
+      ' ';
 
     for (var j = 0; j < intent.kw.length; j++) {
-      var kw = intent.kw[j][0];
+      var kw = intent.kw[j][0].normalize('NFD').replace(/[̀-ͯ]/g, '');
       var weight = intent.kw[j][1];
       maxPossible += weight;
 
-      // Buscar la keyword completa (frase) en el texto original
+      // Buscar la keyword completa (frase) en el texto (ambos sin tildes)
       if (textStr.indexOf(' ' + kw + ' ') >= 0) {
         score += weight * 1.5; // bonus por frase exacta
       } else {
@@ -1911,12 +1925,23 @@ function aiClassify(text, convState, userContext) {
     // Racha: "¿cuánto llevo de racha?" caía a total_ganado porque 'cuanto'+'llevo'
     // pesan como dinero. Si menciona racha/días seguidos, ese es el intent.
     // Se usan palabras sin acento ('seguidos', 'consecutiv') porque _raw conserva
-    // las tildes y "días seguidos" no matchearía contra 'dias seguidos'.
+    // las tildes y "días seguidos" no matchearía contra 'dias seguidos'. Se excluye
+    // el contexto de fatiga: "estoy agotado, llevo varios turnos seguidos" es una
+    // queja emocional (queja_fatiga), no una consulta de racha.
+    var _esFatiga =
+      _raw.indexOf('agotad') >= 0 ||
+      _raw.indexOf('cansad') >= 0 ||
+      _raw.indexOf('revent') >= 0 ||
+      _raw.indexOf('mamad') >= 0 ||
+      _raw.indexOf('rendid') >= 0 ||
+      _raw.indexOf('no puedo') >= 0 ||
+      _raw.indexOf('no doy') >= 0;
     var _pideRacha =
-      _raw.indexOf('racha') >= 0 ||
-      _raw.indexOf('seguidos') >= 0 ||
-      _raw.indexOf('consecutiv') >= 0 ||
-      _raw.indexOf('sin parar') >= 0;
+      !_esFatiga &&
+      (_raw.indexOf('racha') >= 0 ||
+        _raw.indexOf('seguidos') >= 0 ||
+        _raw.indexOf('consecutiv') >= 0 ||
+        _raw.indexOf('sin parar') >= 0);
     if (intent.id === 'horas_trabajadas' && _pideHoras) score += 8;
     if (intent.id === 'promedio' && _pidePromedio) score += 8;
     if (intent.id === 'racha' && _pideRacha) score += 8;

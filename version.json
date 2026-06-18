@@ -1,4 +1,4 @@
 {
-  "v": "v310",
-  "label": "Ruteo de racha (no mas misroute a total_ganado) y follow-ups del chain clasico dejan de ser callejon sin salida: el si los ejecuta"
+  "v": "v311",
+  "label": "Sube cobertura del NLP: match sin acentos ni puntuacion, quita sinonimo dia-turno, segunda oportunidad con guard de margen. 73 a 93 por ciento al pipeline moderno"
 }

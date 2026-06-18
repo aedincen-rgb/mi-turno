@@ -2984,7 +2984,12 @@ function _aiAnswerCore(question, state) {
     }
   }
 
-  if (_nlp && _nlp.confidence >= 0.5) {
+  // Segunda oportunidad: confianza media (>= 0.35) PERO con un ganador claro
+  // (margin >= 1) también va por el pipeline moderno, no al chain clásico. Sube
+  // la cobertura sin arriesgar: los casi-empates (margin chico) sí quedan para el
+  // fallback. El guard de margin evita despachar clasificaciones ambiguas.
+  var _midConfOk = _nlp && _nlp.confidence >= 0.35 && (_nlp.margin || 0) >= 1;
+  if (_nlp && (_nlp.confidence >= 0.5 || _midConfOk)) {
     aiUpdateConversation(_nlp.intent, _nlp.topic);
     var _mood =
       typeof aiAnalyzeMood === 'function' ? aiAnalyzeMood(question, c) : { mood: 'neutral' };

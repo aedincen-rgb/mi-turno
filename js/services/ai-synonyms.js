@@ -12,8 +12,6 @@ var AI_SYNONYMS_DICT = {
     'jornada',
     'guardia',
     'guardias',
-    'dia',
-    'dias',
     'entrada',
     'salida',
     'servicio',
