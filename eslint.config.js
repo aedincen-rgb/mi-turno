@@ -407,6 +407,7 @@ const projectGlobals = {
   exportExcel: 'readonly',
   exportDesprendiblePDF: 'readonly',
   buildDesprendibleData: 'readonly',
+  aiMiniRazonamiento: 'readonly',
   exportPDFBase64: 'readonly',
   exportExcelBase64: 'readonly',
   enviarReportePorEmail: 'readonly',

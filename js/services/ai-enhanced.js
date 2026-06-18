@@ -1317,6 +1317,15 @@ function aiEnhancedRespond(
     }
   } catch (_) {}
 
+  // 4d. Mini-razonamiento de asesoría: una línea que conecta tus datos
+  // con el consejo (legal/financiero), sumada a la respuesta de siempre.
+  try {
+    if (typeof aiMiniRazonamiento === 'function' && text && text.indexOf('💭') < 0) {
+      var _mini = aiMiniRazonamiento(userContext, intent);
+      if (_mini) text += _mini;
+    }
+  } catch (_) {}
+
   // 5. Expansión contextual — solo en modo verboso.
   // En modo normal se omite para no agregar tips/ánimo sin que el usuario los pidiera.
   try {

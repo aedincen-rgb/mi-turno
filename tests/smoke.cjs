@@ -1198,6 +1198,37 @@ group('ai: tablas markdown en respuestas (v301)');
          'el optimizador usa una tabla markdown para el ranking');
 }());
 
+group('ai: mini-razonamiento de asesoría (v306)');
+(function () {
+  if (typeof w.aiMiniRazonamiento !== 'function') {
+    truthy(false, 'aiMiniRazonamiento existe');
+    return;
+  }
+  // Legal + mucho trabajo nocturno → razona sobre el +35%
+  var rLeg = w.aiMiniRazonamiento(
+    { vh: 10000, bd: { noctOrd: { mins: 480, cop: 108000 } } }, 'ley');
+  truthy(rLeg.indexOf('💭') >= 0 && rLeg.indexOf('nocturno') >= 0,
+         'asesoría legal con noches → razona sobre el recargo nocturno');
+
+  // Financiero + proyección sobre el salario → razona sobre el excedente
+  var rFin = w.aiMiniRazonamiento(
+    { vh: 10000, salario: 2400000, proy: 3000000 }, 'proyeccion');
+  truthy(rFin.indexOf('💭') >= 0 && rFin.indexOf('excedente') >= 0,
+         'asesoría financiera con superávit → razona sobre el ahorro');
+
+  // Por debajo del salario → razona sobre cerrar la brecha
+  var rBajo = w.aiMiniRazonamiento(
+    { vh: 10000, salario: 2400000, proy: 1800000 }, 'presupuesto');
+  truthy(rBajo.indexOf('brecha') >= 0, 'por debajo del salario → sugiere cerrar la brecha');
+
+  // Intent NO asesor → no agrega nada (no naguea)
+  eq(w.aiMiniRazonamiento({ vh: 10000, salario: 2400000, proy: 3000000 }, 'total_ganado'), '',
+     'una consulta común no recibe razonamiento');
+  // Sin datos relevantes → vacío
+  eq(w.aiMiniRazonamiento({ vh: 0 }, 'liquidacion'), '',
+     'sin datos suficientes no inventa un razonamiento');
+}());
+
 group('ai: optimizador de ingresos predictivo (v299)');
 (function () {
   if (typeof w.aiOptimizarProximo !== 'function') {

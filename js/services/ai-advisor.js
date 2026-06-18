@@ -1105,7 +1105,79 @@ function buildDesprendibleData(c, nombre) {
   };
 }
 
+// ─── MINI-RAZONAMIENTO DE ASESORÍA ───────────────────────────
+// Una sola línea de "porqué te importa a vos" para fusionar a las
+// respuestas de asesoría legal/financiera: encadena tu dato real →
+// implicación → acción. Corto y específico (nada de muros). Devuelve
+// '' si no hay nada relevante que decir (no naguea).
+function aiMiniRazonamiento(c, intent) {
+  if (!c) return '';
+  var LEGAL = { ley: 1, laboral: 1, liquidacion: 1 };
+  var FIN = {
+    presupuesto: 1,
+    ahorro: 1,
+    fiscal: 1,
+    simulacion: 1,
+    optimizador: 1,
+    comparativa_mes: 1,
+    proyeccion: 1
+  };
+  if (!LEGAL[intent] && !FIN[intent]) return '';
+
+  var vh = c.vh || 0;
+  var bd = c.bd || {};
+  function prem(cats) {
+    var cop = 0;
+    var min = 0;
+    for (var i = 0; i < cats.length; i++) {
+      var x = bd[cats[i]];
+      if (x) {
+        cop += x.cop || 0;
+        min += x.mins || 0;
+      }
+    }
+    return cop - (min / 60) * vh;
+  }
+
+  var razon = '';
+
+  if (LEGAL[intent]) {
+    var noctPrem = prem(['noctOrd', 'noctFest', 'extraNoct', 'extraFestNoct']);
+    var festPrem = prem(['diurnaFest', 'noctFest', 'extraFestDiur', 'extraFestNoct']);
+    if (c.hrsSemanales && c.hrsSemanales > 44) {
+      razon =
+        'Como ya pasás de 44h/semana, lo de más es hora extra: verificá que te lo paguen aparte (CST Art. 159).';
+    } else if (noctPrem > vh && vh > 0) {
+      razon =
+        'Tenés bastante trabajo nocturno; ahí está el +35% que más se pierde si no lo liquidan — vale revisarlo.';
+    } else if (festPrem > vh && vh > 0) {
+      razon =
+        'Trabajaste en domingo/festivo: ese +75% debe ir aparte en tu pago (CST Art. 179-180).';
+    }
+  }
+
+  if (!razon && FIN[intent]) {
+    if (c.proy && c.salario >= 500000 && c.proy > c.salario * 1.1) {
+      razon =
+        'Vas a cerrar ~' +
+        fCOP(Math.round(c.proy - c.salario)) +
+        ' por encima de tu salario base: ese excedente es ahorro potencial, apartalo antes de gastarlo.';
+    } else if (c.proy && c.salario >= 500000 && c.proy < c.salario * 0.9) {
+      razon =
+        'Al ritmo actual cerrás por debajo de tu salario; un par de turnos nocturnos o un festivo cierran la brecha rápido.';
+    } else if (c.copPorHoraReal && vh > 0 && c.copPorHoraReal > vh * 1.1) {
+      razon =
+        'Tu hora real (' +
+        fCOP(c.copPorHoraReal) +
+        ') ya supera tu base por los recargos: concentrá horas en noches/festivos para estirarla más.';
+    }
+  }
+
+  return razon ? '\n\n💭 ' + razon : '';
+}
+
 // ─── EXPORT ──────────────────────────────────────────────────
+window.aiMiniRazonamiento = aiMiniRazonamiento;
 window.buildDesprendibleData = buildDesprendibleData;
 window.aiOptimizarProximo = aiOptimizarProximo;
 window.aiAuditarPago = aiAuditarPago;
