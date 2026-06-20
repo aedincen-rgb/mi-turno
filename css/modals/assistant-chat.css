@@ -12,6 +12,16 @@
   flex-direction: column;
   gap: 24px;
   padding: 4px 0 24px;
+
+  /* ── Calma editorial: superficies planas, sombra neutra única,
+     radio coherente y motion sutil. Tokens locales para que el chat
+     sea consistente sin pisar los globales del resto de la app. ── */
+  --ai-surface: color-mix(in srgb, var(--surface) 82%, transparent);
+  --ai-hairline: color-mix(in srgb, var(--text) 9%, transparent);
+  --ai-radius: 18px;
+  --ai-shadow: 0 1px 2px rgba(20, 30, 80, 0.04), 0 8px 24px rgba(20, 30, 80, 0.05);
+  --ai-shadow-soft: 0 1px 2px rgba(20, 30, 80, 0.03), 0 4px 14px rgba(20, 30, 80, 0.04);
+  --ai-motion: 0.2s var(--ease);
 }
 
 /* ─── STICKY TOP: hero + about + chips fijos al hacer scroll ─── */
@@ -362,28 +372,20 @@
   letter-spacing: -0.1px;
 }
 .asistente-bubble.ai {
-  background: var(--glass-heavy);
-  backdrop-filter: var(--blur-sm);
-  -webkit-backdrop-filter: var(--blur-sm);
-  border: 1px solid var(--glass-border-sm);
+  background: var(--ai-surface);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid var(--ai-hairline);
   color: var(--text);
   border-top-left-radius: 6px;
-  border-left: 3px solid color-mix(in srgb, var(--accent) 50%, transparent);
-  box-shadow:
-    inset 0 1px 0 var(--spec-top),
-    0 4px 16px rgba(91, 134, 229, 0.08),
-    -1px 0 0 color-mix(in srgb, var(--accent) 20%, transparent);
+  box-shadow: var(--ai-shadow-soft);
 }
 .asistente-bubble.user {
-  background: linear-gradient(
-    135deg,
-    var(--text) 0%,
-    color-mix(in srgb, var(--text) 85%, var(--accent)) 100%
-  );
+  background: var(--text);
   color: var(--surface);
   border-top-right-radius: 6px;
   font-weight: 500;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+  box-shadow: var(--ai-shadow-soft);
 }
 .asistente-bubble.typing {
   display: flex;
@@ -410,12 +412,12 @@
   0%,
   60%,
   100% {
-    opacity: 0.35;
-    transform: translateY(0) scale(0.9);
+    opacity: 0.3;
+    transform: translateY(0);
   }
   30% {
-    opacity: 1;
-    transform: translateY(-5px) scale(1.1);
+    opacity: 0.85;
+    transform: translateY(-3px);
   }
 }
 
@@ -438,17 +440,11 @@
   min-width: 200px;
   max-width: 300px;
   padding: 16px 18px;
-  border-radius: 20px;
-  background: linear-gradient(
-    160deg,
-    color-mix(in srgb, var(--accent) 14%, var(--surface)) 0%,
-    var(--surface) 75%
-  );
-  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border));
-  box-shadow:
-    0 10px 30px rgba(20, 30, 80, 0.1),
-    inset 0 1px 0 var(--spec-top);
-  animation: fadeUp 0.4s var(--spring);
+  border-radius: var(--ai-radius);
+  background: var(--ai-surface);
+  border: 1px solid var(--ai-hairline);
+  box-shadow: var(--ai-shadow);
+  animation: fadeUp 0.4s var(--ease);
 }
 .asistente-card-label {
   font-size: 12.5px;
@@ -2000,7 +1996,7 @@
 .asistente-bubble.ai {
   border-left: 0;
   border-top-left-radius: 20px;
-  background: color-mix(in srgb, var(--surface) 78%, transparent);
+  background: var(--ai-surface);
 }
 
 .asistente-bubble.user {
@@ -2020,14 +2016,14 @@
   max-width: 480px;
   margin: 0 auto;
   padding: 8px;
-  border: 1px solid color-mix(in srgb, var(--text) 9%, transparent);
-  border-radius: 30px;
-  background: color-mix(in srgb, var(--surface) 86%, transparent);
+  border: 1px solid var(--ai-hairline);
+  border-radius: 26px;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
   box-shadow:
-    0 18px 52px rgba(20, 30, 80, 0.14),
-    inset 0 1px 0 var(--spec-top);
-  backdrop-filter: blur(34px) saturate(170%);
-  -webkit-backdrop-filter: blur(34px) saturate(170%);
+    0 2px 6px rgba(20, 30, 80, 0.05),
+    0 12px 32px rgba(20, 30, 80, 0.08);
+  backdrop-filter: blur(30px) saturate(150%);
+  -webkit-backdrop-filter: blur(30px) saturate(150%);
 }
 
 .asistente-input {
@@ -2424,7 +2420,7 @@
 /* ── Burbujas mejoradas ── */
 .asistente-msg {
   margin-bottom: 8px;
-  animation: msgSlideIn 0.3s var(--spring);
+  animation: msgSlideIn 0.26s var(--ease);
 }
 .asistente-msg.user {
   justify-content: flex-end;
@@ -2712,4 +2708,505 @@
 .shift-edit-actions .btn:disabled {
   cursor: not-allowed;
   opacity: 0.45;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ASISTENTE IA — v237 polish profesional / Liquid Glass sobrio
+   ═══════════════════════════════════════════════════════════════ */
+
+.asistente-ico {
+  display: block;
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
+.scr--assistant {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface) 16%, transparent), transparent 34%),
+    var(--bg);
+}
+
+.scr--assistant .asistente-wrap {
+  padding: calc(var(--safe-top) + 158px) 0 calc(114px + var(--sab));
+}
+
+.scr--assistant .asistente-wrap.has-chat {
+  padding-top: calc(var(--safe-top) + 132px);
+}
+
+.scr--assistant .asistente-sticky-top {
+  top: calc(var(--safe-top) + 8px);
+  padding: 8px 8px 10px;
+  border-radius: 28px;
+  border: 1px solid color-mix(in srgb, var(--text) 8%, transparent);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, #fff 36%, transparent), transparent 46%),
+    color-mix(in srgb, var(--surface) 84%, transparent);
+  box-shadow:
+    0 22px 60px rgba(20, 30, 80, 0.12),
+    0 2px 10px rgba(20, 30, 80, 0.05),
+    inset 0 1px 0 var(--spec-top),
+    inset 0 -1px 0 color-mix(in srgb, var(--text) 4%, transparent);
+  backdrop-filter: blur(36px) saturate(190%);
+  -webkit-backdrop-filter: blur(36px) saturate(190%);
+}
+
+.scr--assistant .asistente-sticky-top::after {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  border-radius: 27px;
+  pointer-events: none;
+  border-top: 1px solid color-mix(in srgb, #fff 72%, transparent);
+  opacity: 0.8;
+}
+
+.scr--assistant .asistente-topbar {
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  min-height: 48px;
+  gap: 2px;
+}
+
+.scr--assistant .asistente-menu-btn,
+.scr--assistant .asistente-new-btn,
+.scr--assistant .asistente-menu-close {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  color: var(--text);
+  background: color-mix(in srgb, var(--surface) 34%, transparent);
+  border: 1px solid color-mix(in srgb, var(--text) 7%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 55%, transparent);
+  transition:
+    transform 0.18s var(--spring),
+    background 0.2s var(--ease),
+    border-color 0.2s var(--ease);
+}
+
+.scr--assistant .asistente-menu-btn:active,
+.scr--assistant .asistente-new-btn:active,
+.scr--assistant .asistente-menu-close:active {
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+  border-color: color-mix(in srgb, var(--accent) 24%, transparent);
+  transform: scale(0.94);
+}
+
+.scr--assistant .asistente-new-btn:disabled {
+  cursor: default;
+  color: var(--success);
+}
+
+.asistente-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: currentColor;
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--success) 14%, transparent);
+}
+
+.scr--assistant .asistente-top-title {
+  padding: 0 2px;
+}
+
+.scr--assistant .asistente-wrap.has-chat .asistente-greeting,
+.scr--assistant .asistente-greeting {
+  font-size: clamp(22px, 6vw, 32px);
+  font-weight: 680;
+  letter-spacing: -0.035em;
+  line-height: 1.04;
+}
+
+.scr--assistant .asistente-personal-note {
+  display: -webkit-box;
+  margin: 4px 0 0;
+  color: color-mix(in srgb, var(--muted) 88%, var(--text));
+  font-size: 12.5px;
+  font-weight: 560;
+  letter-spacing: 0;
+  line-height: 1.34;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.scr--assistant .asistente-chips {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+  overflow-x: auto;
+  margin: 2px -2px 0;
+  padding: 8px 2px 0 46px;
+  scrollbar-width: none;
+}
+
+.scr--assistant .asistente-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.scr--assistant .asistente-chip {
+  min-height: 36px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--ai-hairline);
+  background: var(--ai-surface);
+  color: var(--text);
+  box-shadow: var(--ai-shadow-soft);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.scr--assistant .asistente-chip:active {
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  border-color: color-mix(in srgb, var(--accent) 28%, transparent);
+}
+
+.scr--assistant .asistente-chat {
+  width: 100%;
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 18px 0 18px;
+  gap: 16px;
+}
+
+.scr--assistant .asistente-chat-empty {
+  min-height: calc(100dvh - 320px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 8px;
+}
+
+.asistente-empty-shell {
+  width: 100%;
+  max-width: 480px;
+  display: grid;
+  gap: 16px;
+}
+
+.asistente-empty-kicker {
+  width: max-content;
+  border: 1px solid color-mix(in srgb, var(--text) 8%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 64%, transparent);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 680;
+  letter-spacing: 0.1em;
+  line-height: 1;
+  padding: 8px 11px;
+  text-transform: uppercase;
+}
+
+.asistente-empty-title {
+  margin: 0;
+  color: var(--text);
+  font-size: clamp(25px, 7vw, 36px);
+  font-weight: 680;
+  letter-spacing: -0.04em;
+  line-height: 1.04;
+}
+
+.asistente-empty-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.asistente-empty-card {
+  min-height: 78px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px;
+  border-radius: var(--ai-radius);
+  border: 1px solid var(--ai-hairline);
+  background: var(--ai-surface);
+  color: var(--text);
+  text-align: left;
+  box-shadow: var(--ai-shadow-soft);
+  transition:
+    transform 0.18s var(--ease),
+    border-color 0.2s var(--ease),
+    background 0.2s var(--ease);
+}
+
+.asistente-empty-card:active {
+  transform: scale(0.98);
+  border-color: color-mix(in srgb, var(--accent) 32%, transparent);
+  background: color-mix(in srgb, var(--accent) 9%, var(--surface));
+}
+
+.asistente-empty-card-label {
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.asistente-empty-card-arrow {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 999px;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 11%, transparent);
+}
+
+.scr--assistant .asistente-msg {
+  gap: 10px;
+  margin-bottom: 2px;
+}
+
+.scr--assistant .asistente-msg.user {
+  flex-direction: row;
+  justify-content: flex-end;
+}
+
+.scr--assistant .asistente-col {
+  max-width: min(88%, 660px);
+}
+
+.scr--assistant .asistente-bubble {
+  max-width: min(100%, 660px);
+  padding: 13px 16px;
+  border-radius: 20px;
+  font-size: 15px;
+  line-height: 1.58;
+  letter-spacing: 0;
+}
+
+.scr--assistant .asistente-bubble.ai {
+  color: var(--text);
+  border: 1px solid color-mix(in srgb, var(--text) 7%, transparent);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, #fff 24%, transparent), transparent 72%),
+    color-mix(in srgb, var(--surface) 88%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #fff 58%, transparent),
+    0 6px 18px rgba(20, 30, 80, 0.06);
+}
+
+.scr--assistant .asistente-bubble.user {
+  color: #fff;
+  border: 1px solid color-mix(in srgb, #fff 8%, transparent);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, #fff 10%, transparent), transparent 55%),
+    color-mix(in srgb, #111827 88%, var(--accent));
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #fff 18%, transparent),
+    0 10px 26px rgba(17, 24, 39, 0.16);
+}
+
+.scr--assistant .asistente-bubble.ai p + p,
+.scr--assistant .asistente-bubble.ai ul,
+.scr--assistant .asistente-bubble.ai ol {
+  margin-top: 8px;
+}
+
+.scr--assistant .asistente-card,
+.scr--assistant .asistente-chart-container,
+.scr--assistant .asistente-trivia,
+.scr--assistant .email-card {
+  border-color: color-mix(in srgb, var(--text) 8%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #fff 58%, transparent),
+    0 14px 34px rgba(20, 30, 80, 0.08);
+}
+
+.scr--assistant .asistente-speak-btn {
+  width: 34px;
+  height: 34px;
+  margin-top: 0;
+  border: 1px solid color-mix(in srgb, var(--text) 7%, transparent);
+  background: color-mix(in srgb, var(--surface) 74%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 48%, transparent);
+}
+
+.scr--assistant .asistente-composer {
+  bottom: calc(var(--sab) + 10px);
+  max-width: min(680px, calc(100vw - 28px));
+  padding: 8px 8px 8px 16px;
+  border-radius: 28px;
+  border: 1px solid color-mix(in srgb, var(--text) 9%, transparent);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, #fff 34%, transparent), transparent 58%),
+    color-mix(in srgb, var(--surface) 86%, transparent);
+  box-shadow:
+    0 24px 66px rgba(20, 30, 80, 0.16),
+    0 3px 12px rgba(20, 30, 80, 0.06),
+    inset 0 1px 0 var(--spec-top);
+  backdrop-filter: blur(38px) saturate(190%);
+  -webkit-backdrop-filter: blur(38px) saturate(190%);
+}
+
+.scr--assistant .asistente-input {
+  min-height: 46px;
+  padding: 12px 10px 12px 0;
+  color: var(--text);
+  caret-color: var(--accent);
+}
+
+.scr--assistant .asistente-input::placeholder {
+  color: color-mix(in srgb, var(--muted) 78%, var(--text));
+  opacity: 1;
+}
+
+.scr--assistant .asistente-input:focus {
+  outline: none;
+}
+
+.scr--assistant .asistente-smart-btn {
+  width: 46px;
+  height: 46px;
+  border: 1px solid color-mix(in srgb, var(--text) 8%, transparent);
+  background: color-mix(in srgb, var(--surface) 50%, transparent);
+  color: var(--muted);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 54%, transparent);
+}
+
+.scr--assistant .asistente-smart-btn.has-text {
+  color: #fff;
+  border-color: transparent;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, #fff 16%, transparent), transparent 58%),
+    linear-gradient(135deg, var(--accent2), var(--accent));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.32),
+    0 10px 26px var(--accent-glow);
+}
+
+.scr--assistant .asistente-scroll-btn {
+  position: fixed;
+  right: max(24px, calc((100vw - 680px) / 2 + 24px));
+  bottom: calc(var(--sab) + 88px);
+  width: 38px;
+  height: 38px;
+  margin: 0;
+  color: var(--text);
+  opacity: 0.76;
+}
+
+.scr--assistant .asistente-reset {
+  margin: 4px auto 6px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 56%, transparent);
+}
+
+.scr--assistant .asistente-side-menu {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, #fff 28%, transparent), transparent 44%),
+    color-mix(in srgb, var(--surface) 92%, transparent);
+  backdrop-filter: blur(34px) saturate(180%);
+  -webkit-backdrop-filter: blur(34px) saturate(180%);
+}
+
+.scr--assistant .asistente-menu-icon {
+  background: color-mix(in srgb, var(--text) 5%, var(--surface));
+}
+
+[data-theme='dark'] .scr--assistant {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--accent) 7%, transparent), transparent 34%),
+    var(--bg);
+}
+
+[data-theme='dark'] .scr--assistant .asistente-sticky-top,
+[data-theme='dark'] .scr--assistant .asistente-composer {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, #fff 7%, transparent), transparent 56%),
+    color-mix(in srgb, var(--surface2) 80%, transparent);
+  border-color: color-mix(in srgb, #fff 10%, transparent);
+  box-shadow:
+    0 24px 68px rgba(0, 0, 0, 0.42),
+    inset 0 1px 0 color-mix(in srgb, #fff 10%, transparent);
+}
+
+[data-theme='dark'] .scr--assistant .asistente-menu-btn,
+[data-theme='dark'] .scr--assistant .asistente-new-btn,
+[data-theme='dark'] .scr--assistant .asistente-chip,
+[data-theme='dark'] .asistente-empty-card,
+[data-theme='dark'] .asistente-empty-kicker,
+[data-theme='dark'] .scr--assistant .asistente-speak-btn,
+[data-theme='dark'] .scr--assistant .asistente-smart-btn,
+[data-theme='dark'] .scr--assistant .asistente-reset {
+  background: color-mix(in srgb, #fff 7%, transparent);
+  border-color: color-mix(in srgb, #fff 10%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 10%, transparent);
+}
+
+[data-theme='dark'] .scr--assistant .asistente-bubble.ai {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, #fff 6%, transparent), transparent 68%),
+    color-mix(in srgb, var(--surface2) 84%, transparent);
+  border-color: color-mix(in srgb, #fff 9%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #fff 9%, transparent),
+    0 12px 26px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme='dark'] .scr--assistant .asistente-bubble.user {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, #fff 10%, transparent), transparent 58%),
+    color-mix(in srgb, var(--accent-deep) 46%, var(--surface2));
+}
+
+[data-theme='dark'] .scr--assistant .asistente-side-menu {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, #fff 6%, transparent), transparent 42%),
+    color-mix(in srgb, var(--surface2) 92%, transparent);
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .scr--assistant .asistente-sticky-top,
+  .scr--assistant .asistente-composer,
+  .scr--assistant .asistente-side-menu {
+    background: var(--surface);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .scr--assistant .asistente-sticky-top,
+  .scr--assistant .asistente-composer,
+  .scr--assistant .asistente-side-menu,
+  .scr--assistant .asistente-chip,
+  .scr--assistant .asistente-bubble.ai,
+  .asistente-empty-card,
+  .asistente-empty-kicker {
+    background: var(--surface);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .asistente-msg-orb,
+  .asistente-smart-btn.recording,
+  .asistente-input.listening,
+  .asistente-status-dot {
+    animation: none !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .scr--assistant .asistente-wrap {
+    padding-top: calc(var(--safe-top) + 150px);
+  }
+
+  .scr--assistant .asistente-wrap.has-chat {
+    padding-top: calc(var(--safe-top) + 126px);
+  }
+
+  .scr--assistant .asistente-chips {
+    padding-left: 0;
+  }
+
+  .asistente-empty-grid {
+    grid-template-columns: 1fr;
+  }
 }

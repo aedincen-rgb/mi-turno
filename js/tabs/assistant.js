@@ -155,6 +155,45 @@ function _aiShiftLabel(turno) {
   return _aiTimeInputValue(ini) + ' - ' + _aiTimeInputValue(fin);
 }
 
+function _aiIcon(name, extraClass) {
+  var paths = {
+    menu: [
+      h('path', { key: 'a', d: 'M4 7h16' }),
+      h('path', { key: 'b', d: 'M4 12h16' }),
+      h('path', { key: 'c', d: 'M4 17h16' })
+    ],
+    close: [h('path', { key: 'a', d: 'M18 6 6 18' }), h('path', { key: 'b', d: 'm6 6 12 12' })],
+    plus: [h('path', { key: 'a', d: 'M12 5v14' }), h('path', { key: 'b', d: 'M5 12h14' })],
+    arrowRight: [
+      h('path', { key: 'a', d: 'M5 12h14' }),
+      h('path', { key: 'b', d: 'm13 6 6 6-6 6' })
+    ],
+    send: [h('path', { key: 'a', d: 'M12 19V5' }), h('path', { key: 'b', d: 'M5 12l7-7 7 7' })],
+    mic: [
+      h('path', { key: 'a', d: 'M12 3a4 4 0 0 0-4 4v5a4 4 0 0 0 8 0V7a4 4 0 0 0-4-4z' }),
+      h('path', { key: 'b', d: 'M19 11v1a7 7 0 0 1-14 0v-1' }),
+      h('path', { key: 'c', d: 'M12 19v3' })
+    ],
+    down: [h('path', { key: 'a', d: 'M12 5v14' }), h('path', { key: 'b', d: 'm19 12-7 7-7-7' })]
+  };
+  return h(
+    'svg',
+    {
+      className: 'asistente-ico' + (extraClass ? ' ' + extraClass : ''),
+      viewBox: '0 0 24 24',
+      width: 22,
+      height: 22,
+      fill: 'none',
+      stroke: 'currentColor',
+      'stroke-width': 2.1,
+      'stroke-linecap': 'round',
+      'stroke-linejoin': 'round',
+      'aria-hidden': 'true'
+    },
+    paths[name] || paths.arrowRight
+  );
+}
+
 // Tarjeta visual para respuestas de datos: destaca el número (la estrella)
 // con métricas secundarias. aria-hidden porque el texto de la burbuja ya
 // comunica lo mismo a lectores de pantalla (evita doble lectura).
@@ -1528,7 +1567,7 @@ function AsistenteTab(props) {
     },
     {
       id: 'simular',
-      icono: '🔮',
+      icono: '◇',
       titulo: 'Simulaciones',
       desc: 'Proyectá escenarios hipotéticos',
       preguntas: [
@@ -1555,7 +1594,7 @@ function AsistenteTab(props) {
     },
     {
       id: 'usarapp',
-      icono: '📱',
+      icono: '▣',
       titulo: 'Usar la app',
       desc: 'Guías paso a paso para cada función',
       preguntas: [
@@ -1570,7 +1609,7 @@ function AsistenteTab(props) {
     },
     {
       id: 'logros',
-      icono: '\ud83c�',
+      icono: '★',
       titulo: 'Comandos rápidos',
       desc: 'Insignias, metas, simulaciones y tendencias',
       preguntas: [
@@ -1861,7 +1900,7 @@ function AsistenteTab(props) {
               setMenuOpen(true);
             }
           },
-          '☰'
+          _aiIcon('menu')
         ),
         h(
           'div',
@@ -1870,12 +1909,35 @@ function AsistenteTab(props) {
           !tieneConversacion && personalNote
             ? h('p', { className: 'asistente-personal-note', key: heroIdx }, personalNote)
             : null
+        ),
+        h(
+          'button',
+          {
+            className: 'asistente-new-btn',
+            type: 'button',
+            'aria-label': tieneConversacion ? 'Nueva conversación' : 'Asistente listo',
+            disabled: !tieneConversacion,
+            onClick: tieneConversacion ? clearChat : undefined
+          },
+          tieneConversacion
+            ? _aiIcon('plus')
+            : h('span', { className: 'asistente-status-dot', 'aria-hidden': 'true' })
         )
       ),
 
       h(
         'div',
         { className: 'asistente-chips' },
+        h(
+          'button',
+          {
+            className: 'asistente-chip',
+            onClick: function () {
+              send('¿Cuánto gané hoy?');
+            }
+          },
+          'Hoy'
+        ),
         h(
           'button',
           {
@@ -1905,6 +1967,16 @@ function AsistenteTab(props) {
             }
           },
           'Proyección'
+        ),
+        h(
+          'button',
+          {
+            className: 'asistente-chip',
+            onClick: function () {
+              send('Revisá si mi pago está correcto');
+            }
+          },
+          'Revisar pago'
         )
       )
     ),
@@ -1939,7 +2011,7 @@ function AsistenteTab(props) {
                   'aria-label': 'Cerrar menú',
                   onClick: closeMenu
                 },
-                '×'
+                _aiIcon('close')
               )
             ),
             h(
@@ -1976,7 +2048,7 @@ function AsistenteTab(props) {
                     h(
                       'span',
                       { className: 'asistente-menu-chevron' },
-                      item.featured ? '→' : open ? '−' : '+'
+                      item.featured ? _aiIcon('arrowRight') : open ? '−' : '+'
                     )
                   ),
                   open ? renderDrawerBody(item) : null
@@ -1993,7 +2065,38 @@ function AsistenteTab(props) {
               role: 'region',
               'aria-label': 'Conversación con asistente'
             },
-            h('div', { className: 'asistente-empty-label' }, 'Conversación')
+            h(
+              'div',
+              { className: 'asistente-empty-shell' },
+              h('div', { className: 'asistente-empty-kicker' }, 'IA de nómina'),
+              h('h2', { className: 'asistente-empty-title' }, 'Listo para revisar tu turno.'),
+              h(
+                'div',
+                { className: 'asistente-empty-grid' },
+                [
+                  { label: 'Ganancia de hoy', query: '¿Cuánto gané hoy?' },
+                  { label: 'Resumen del mes', query: '¿Cuánto gané este mes?' },
+                  { label: 'Auditar pago', query: 'Revisá si mi pago está correcto' },
+                  { label: 'Enviar reporte', query: 'Enviá mi reporte e informe por correo' },
+                  { label: 'Horas extra', query: '¿Cuántas horas extra llevo?' },
+                  { label: 'Corregir turno', query: 'Necesito corregir un turno' }
+                ].map(function (item, idx) {
+                  return h(
+                    'button',
+                    {
+                      key: idx,
+                      className: 'asistente-empty-card',
+                      type: 'button',
+                      onClick: function () {
+                        send(item.query);
+                      }
+                    },
+                    h('span', { className: 'asistente-empty-card-label' }, item.label),
+                    h('span', { className: 'asistente-empty-card-arrow' }, _aiIcon('arrowRight'))
+                  );
+                })
+              )
+            )
           )
         : null,
 
@@ -2322,7 +2425,7 @@ function AsistenteTab(props) {
           'aria-label': 'Ir al último mensaje',
           title: 'Ir al final'
         },
-        '↓'
+        _aiIcon('down')
       ),
 
     // ═══ COMPOSER ═══
@@ -2427,38 +2530,8 @@ function AsistenteTab(props) {
           : busy
             ? h('span', { className: 'sp-in' })
             : input.trim()
-              ? h(
-                  'svg',
-                  {
-                    viewBox: '0 0 24 24',
-                    width: 22,
-                    height: 22,
-                    fill: 'none',
-                    stroke: 'currentColor',
-                    'stroke-width': 2.2,
-                    'stroke-linecap': 'round',
-                    'stroke-linejoin': 'round'
-                  },
-                  h('path', { d: 'M12 19V5' }),
-                  h('path', { d: 'M5 12l7-7 7 7' })
-                )
-              : h(
-                  'svg',
-                  {
-                    viewBox: '0 0 24 24',
-                    width: 22,
-                    height: 22,
-                    fill: 'none',
-                    stroke: 'currentColor',
-                    'stroke-width': 2.2,
-                    'stroke-linecap': 'round',
-                    'stroke-linejoin': 'round'
-                  },
-                  h('path', { d: 'M12 1a4 4 0 0 0-4 4v7a4 4 0 0 0 8 0V5a4 4 0 0 0-4-4z' }),
-                  h('path', { d: 'M19 10v2a7 7 0 0 1-14 0v-2' }),
-                  h('line', { x1: 12, y1: 19, x2: 12, y2: 23 }),
-                  h('line', { x1: 8, y1: 23, x2: 16, y2: 23 })
-                )
+              ? _aiIcon('send')
+              : _aiIcon('mic')
       )
     ),
 
