@@ -35,6 +35,12 @@ function findChrome() {
 }
 
 const chromiumExecutablePath = findChrome();
+const chromiumArgs = [
+  ...(chromiumExecutablePath && chromiumExecutablePath.indexOf('/snap/chromium/') === 0
+    ? ['--headless=old']
+    : []),
+  '--no-sandbox'
+];
 
 export default defineConfig({
   testDir: './tests/e2e',
@@ -73,11 +79,11 @@ export default defineConfig({
         viewport: { width: 1280, height: 800 },
         // Usar chromium snap del sistema porque ubuntu 26.04 no tiene
         // builds oficiales de Playwright todavía (jun 2026). Si snap no
-        // existe, usar el Chromium instalado por Playwright.
-        // --headless=old fuerza el modo clásico sin headless_shell separado.
+        // existe, usar el Chromium instalado por Playwright. El flag
+        // --headless=old solo aplica a snap; Chromium moderno ya no lo acepta.
         launchOptions: {
           ...(chromiumExecutablePath ? { executablePath: chromiumExecutablePath } : {}),
-          args: ['--headless=old', '--no-sandbox']
+          args: chromiumArgs
         }
       }
     },
