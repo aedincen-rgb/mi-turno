@@ -380,6 +380,7 @@ const projectGlobals = {
   aiGenerateResponse: 'readonly',
   aiValidateResponse: 'readonly',
   aiVerifyNumbers: 'readonly',
+  aiDeliberate: 'readonly',
   aiReferring: 'readonly',
   aiRankFindings: 'readonly',
   aiPolishResponse: 'readonly',

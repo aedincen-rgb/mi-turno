@@ -422,6 +422,14 @@ function aiEnrichResponse(originalText, intent, userContext, entities, turnosAll
   // la ACCIÓN ofrecida (actions[0].intent), no el de la respuesta actual — si no,
   // un "sí" re-ejecuta la misma pregunta en vez de la sugerencia. Se guarda la
   // query para poder reclasificar cuando la acción no trae intent explícito.
+  // Deliberación de módulos (MRKL): si no quedaron acciones específicas, la
+  // IA repasa su inventario y ofrece los 2 siguientes pasos MÁS relevantes
+  // para ESTE usuario (coherencia), en vez de chips genéricos o ninguno.
+  if ((!actions || !actions.length) && typeof aiDeliberate === 'function') {
+    var _delib = aiDeliberate('', intent, userContext);
+    if (_delib && _delib.length) actions = _delib;
+  }
+
   if (actions && actions.length > 0 && !_aiMemory.lastSuggestion) {
     _aiMemory.lastSuggestion = {
       intent: actions[0].intent || intent,
@@ -850,6 +858,119 @@ function aiThink(question, intent, userContext, convHistory) {
     tieneActivo: tieneActivo
   };
 }
+
+// ─── DELIBERADOR DE MÓDULOS (MRKL router + SMART anti-saturación) ──
+// "Pausa y piensa": en vez de disparar como flecha, la IA repasa su
+// INVENTARIO de capacidades y puntúa cuáles vienen al caso SEGÚN EL ENTORNO
+// (datos del usuario), devolviendo las más relevantes — capadas a 2 para no
+// saturar. No cambia la respuesta principal; alimenta los siguientes pasos
+// sugeridos con coherencia (lo que de verdad le sirve a ESTE usuario ahora).
+//   MRKL: una colección de módulos-experto con un router por relevancia.
+//   SMART (Tool Overuse Mitigation): usar solo lo necesario, no todo.
+var _AI_MODULE_REGISTRY = [
+  {
+    intent: 'configurar_salario',
+    label: '⚙️ Configurar mi salario',
+    query: 'quiero configurar mi salario',
+    rel: function (c) {
+      return c.salarioConfigurado ? 0 : 5;
+    }
+  },
+  {
+    intent: 'bienestar',
+    label: '🧘 ¿Cómo voy de descanso?',
+    query: 'cómo voy de descanso',
+    rel: function (c) {
+      return c.necesitaDescanso ? 4 : c.rachaActual >= 4 ? 2 : 0;
+    }
+  },
+  {
+    intent: 'auditoria',
+    label: '⚖️ ¿Me están pagando bien?',
+    query: 'me están pagando bien',
+    rel: function (c) {
+      return c.diasTrab > 0 ? 3 : 0;
+    }
+  },
+  {
+    intent: 'proyeccion',
+    label: '📈 Mi proyección al cierre',
+    query: 'proyección al cierre',
+    rel: function (c) {
+      return c.diasTrab > 0 ? 3 : 0;
+    }
+  },
+  {
+    intent: 'comparativa_mes',
+    label: '📊 Comparar con el mes pasado',
+    query: 'comparar con el mes pasado',
+    rel: function (c) {
+      return c.totalCOPMesPasado > 0 ? 2 : 0;
+    }
+  },
+  {
+    intent: 'distribucion',
+    label: '🔎 Desglose por tipo de hora',
+    query: 'desglose por tipo de hora',
+    rel: function (c) {
+      return c.diasTrab > 0 ? 2 : 0;
+    }
+  },
+  {
+    intent: 'liquidacion',
+    label: '🧾 Calcular mi liquidación',
+    query: 'calcular mi liquidación',
+    rel: function (c) {
+      return c.diasTrab > 0 ? 1 : 0;
+    }
+  },
+  {
+    intent: 'presupuesto',
+    label: '💸 Cómo repartir mi sueldo',
+    query: 'cómo reparto mi sueldo',
+    rel: function (c) {
+      return c.diasTrab > 0 ? 1 : 0;
+    }
+  },
+  {
+    intent: 'valor_hora',
+    label: '⏱️ ¿Cuánto vale mi hora?',
+    query: 'cuánto vale mi hora',
+    rel: function (c) {
+      return c.salarioConfigurado ? 1 : 0;
+    }
+  },
+  {
+    intent: 'festivos',
+    label: '📅 Próximos festivos',
+    query: 'próximos festivos',
+    rel: function () {
+      return 1;
+    }
+  }
+];
+
+function aiDeliberate(question, intent, c) {
+  c = c || {};
+  var scored = [];
+  for (var i = 0; i < _AI_MODULE_REGISTRY.length; i++) {
+    var m = _AI_MODULE_REGISTRY[i];
+    if (m.intent === intent) continue; // no sugerir lo que acaba de pedir
+    var score = 0;
+    try {
+      score = m.rel(c) || 0;
+    } catch (_) {}
+    if (score > 0) scored.push({ m: m, score: score });
+  }
+  scored.sort(function (a, b) {
+    return b.score - a.score;
+  });
+  var top = scored.slice(0, 2).map(function (x) {
+    return { label: x.m.label, query: x.m.query, intent: x.m.intent };
+  });
+  return top;
+}
+window.aiDeliberate = aiDeliberate;
 
 // ─── DETECTOR DE MODO VERBOSO ────────────────────────────────
 // El usuario pide explícitamente una respuesta larga/detallada.

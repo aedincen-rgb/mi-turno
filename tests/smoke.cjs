@@ -2161,6 +2161,27 @@ group('ai: saludo con chispa (resuelve el lienzo en blanco)');
     'usuario nuevo: orienta a configurar/empezar');
 })();
 
+group('ai: deliberador de módulos (MRKL router + SMART anti-saturación)');
+(function () {
+  if (typeof w.aiDeliberate !== 'function') { truthy(false, 'aiDeliberate existe'); return; }
+  // Usuario nuevo → prioriza configurar el salario
+  var nuevo = w.aiDeliberate('', 'total_ganado', { salarioConfigurado: false, diasTrab: 0 });
+  eq(nuevo[0].intent, 'configurar_salario', 'sin salario → "configurar salario" es lo más relevante');
+  // Racha alta / necesita descanso → bienestar arriba
+  var racha = w.aiDeliberate('', 'total_ganado', { salarioConfigurado: true, diasTrab: 8, necesitaDescanso: true, rachaActual: 6, totalCOPMesPasado: 900000 });
+  eq(racha[0].intent, 'bienestar', 'necesita descanso → bienestar lidera la deliberación');
+  // Anti-saturación: nunca más de 2
+  truthy(racha.length <= 2, 'cap de 2 sugerencias (SMART: no saturar)');
+  // No se sugiere a sí mismo lo que se acaba de preguntar
+  var tras = w.aiDeliberate('', 'proyeccion', { salarioConfigurado: true, diasTrab: 5, totalCOPMesPasado: 900000 });
+  truthy(tras.every(function (x) { return x.intent !== 'proyeccion'; }),
+    'no repite el intent actual (no se sugiere lo ya pedido)');
+  // Solo sugiere lo relevante al entorno (sin datos → no liquidación/desglose)
+  var vacio = w.aiDeliberate('', 'saludo', { salarioConfigurado: true, diasTrab: 0 });
+  truthy(vacio.every(function (x) { return x.intent !== 'liquidacion' && x.intent !== 'distribucion'; }),
+    'sin turnos no sugiere liquidación/desglose (relevancia por contexto)');
+})();
+
 // ── hashPassword / verifyPassword (PBKDF2 + salt, v49) ──────────
 group('password-hash (PBKDF2 con salt)');
 (async function () {
