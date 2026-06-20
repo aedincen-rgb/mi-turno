@@ -2182,6 +2182,27 @@ group('ai: deliberador de módulos (MRKL router + SMART anti-saturación)');
     'sin turnos no sugiere liquidación/desglose (relevancia por contexto)');
 })();
 
+group('ai: cierre enfocado / progressive disclosure (una sola CTA)');
+(function () {
+  if (typeof w.aiFocusClose !== 'function') { truthy(false, 'aiFocusClose existe'); return; }
+  // Bloque final con 3 preguntas apiladas → queda 1 (la última)
+  var apilado = 'Este mes llevás $300.000.\n\n¿Querés el desglose?\n¿Comparo con el mes pasado?\n¿Te muestro la proyección?';
+  var r = w.aiFocusClose(apilado);
+  var qs = (r.match(/\?/g) || []).length;
+  truthy(qs === 1, 'colapsa 3 preguntas de cierre en 1 (una sola CTA)');
+  truthy(r.indexOf('Este mes llevás $300.000') >= 0, 'NO toca el dato/contenido principal');
+  truthy(r.indexOf('proyección') >= 0, 'conserva la última (más accionable)');
+  // Una sola pregunta → intacto
+  var una = 'Llevás $300.000 este mes.\n\n¿Querés el desglose?';
+  eq(w.aiFocusClose(una), una, 'con una sola pregunta no cambia nada');
+  // Tabla → no se toca (datos estructurados)
+  var tabla = '| Recargo | Valor |\n| Nocturno | $1.000 |\n¿Algo más?\n¿Otra cosa?';
+  truthy(w.aiFocusClose(tabla).indexOf('| Recargo | Valor |') >= 0, 'respeta tablas');
+  // Pregunta a mitad de texto (no es cierre) → no se toca
+  var medio = '¿Sabías que la noche paga más?\n\nLlevás $300.000 este mes.';
+  eq(w.aiFocusClose(medio), medio, 'no toca preguntas que no son el bloque de cierre');
+})();
+
 // ── hashPassword / verifyPassword (PBKDF2 + salt, v49) ──────────
 group('password-hash (PBKDF2 con salt)');
 (async function () {

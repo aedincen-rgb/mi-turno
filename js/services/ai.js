@@ -5125,16 +5125,19 @@ function aiAnswer(question, state) {
           r = _stripPlaceholder(r);
           if (typeof aiHumanizar === 'function') r = aiHumanizar(r);
           if (typeof aiReferring === 'function') r = aiReferring(r);
+          if (typeof aiFocusClose === 'function') r = aiFocusClose(r);
           if (typeof aiVerifyNumbers === 'function') r = aiVerifyNumbers(r, _truth);
         } else if (r.text && !r.execute) {
           // Si trae execute, el placeholder es legítimo (la UI ejecuta la acción).
           r.text = _stripPlaceholder(r.text);
           if (typeof aiHumanizar === 'function') r.text = aiHumanizar(r.text);
           if (typeof aiReferring === 'function') r.text = aiReferring(r.text);
+          if (typeof aiFocusClose === 'function') r.text = aiFocusClose(r.text);
           if (typeof aiVerifyNumbers === 'function') r.text = aiVerifyNumbers(r.text, _truth);
         } else if (r.text) {
           if (typeof aiHumanizar === 'function') r.text = aiHumanizar(r.text);
           if (typeof aiReferring === 'function') r.text = aiReferring(r.text);
+          if (typeof aiFocusClose === 'function') r.text = aiFocusClose(r.text);
           if (typeof aiVerifyNumbers === 'function') r.text = aiVerifyNumbers(r.text, _truth);
         }
       }

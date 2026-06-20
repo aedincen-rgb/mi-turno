@@ -381,6 +381,7 @@ const projectGlobals = {
   aiValidateResponse: 'readonly',
   aiVerifyNumbers: 'readonly',
   aiDeliberate: 'readonly',
+  aiFocusClose: 'readonly',
   aiReferring: 'readonly',
   aiRankFindings: 'readonly',
   aiPolishResponse: 'readonly',

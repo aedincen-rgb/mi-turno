@@ -1818,6 +1818,55 @@ function aiReferring(text) {
 }
 window.aiReferring = aiReferring;
 
+// ─── REGLA DE CIERRE ENFOCADO (progressive disclosure) ──────────
+// Principio de revelación progresiva: "un paso a la vez". Apilar varias
+// preguntas al final abruma y diluye la acción. Esta regla detecta un BLOQUE
+// FINAL de 2+ preguntas cortas y deja solo UNA llamada a la acción. NO toca
+// el contenido del medio: el dato va completo, pero el cierre lleva a UNA
+// interacción. La profundidad extra ya vive en los chips deliberados.
+function aiFocusClose(text) {
+  if (!text || typeof text !== 'string') return text;
+  if (/\|[^|]*\|/.test(text)) return text; // respetar tablas
+  var lines = text.split('\n');
+  function esAsk(ln) {
+    var s = ln.trim();
+    if (s === '') return 'blank';
+    if (s.length <= 95 && s.charAt(s.length - 1) === '?') return true;
+    return false;
+  }
+  var asks = [];
+  var i = lines.length - 1;
+  while (i >= 0) {
+    var v = esAsk(lines[i]);
+    if (v === 'blank') {
+      i--;
+      continue;
+    }
+    if (v === true) {
+      asks.unshift(i);
+      i--;
+      continue;
+    }
+    break;
+  }
+  if (asks.length >= 2) {
+    var keep = asks[asks.length - 1];
+    var drop = {};
+    for (var k = 0; k < asks.length - 1; k++) drop[asks[k]] = true;
+    var out = [];
+    for (var j = 0; j < lines.length; j++) {
+      if (drop[j]) continue;
+      out.push(lines[j]);
+    }
+    text = out
+      .join('\n')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+  }
+  return text;
+}
+window.aiFocusClose = aiFocusClose;
+
 // ─── INICIALIZACIÓN ──────────────────────────────────────────
 window.aiHumanizar = aiHumanizar;
 window.aiVerifyNumbers = aiVerifyNumbers;
