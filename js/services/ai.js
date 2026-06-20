@@ -1614,6 +1614,27 @@ function _aiDispatchNLP(intent, c, state, q, t) {
     );
   }
 
+  // ── Valor hora ── (también atendido en la cascada clásica; acá para que
+  // el dispatch por NLP no caiga a un handler genérico que lo intercepte)
+  if (intent === 'valor_hora') {
+    if (!c.vh) {
+      return 'Configurá tu salario base en Ajustes para calcular tu valor hora.';
+    }
+    return (
+      '⏱️ **Tu valor hora:** ' +
+      fCOP(c.vh) +
+      '\n• Fórmula: ' +
+      fCOP(c.salario) +
+      ' (salario) / 240 horas\n• Nocturna: ' +
+      fCOP(c.vh * 1.35) +
+      ' (+35%)\n• Dominical/festiva diurna: ' +
+      fCOP(c.vh * 1.75) +
+      ' (+75%)\n• Extra nocturna: ' +
+      fCOP(c.vh * 1.75) +
+      ' (+75%)'
+    );
+  }
+
   // ── Configurar salario: acción SOLO si hay monto ──
   // La acción real (SET_SALARY) se crea en ai-enhanced solo con entities.money.
   // Sin monto NO es una acción: una pregunta ("qué incluye el sueldo base")

@@ -2062,6 +2062,32 @@ group('ai-psicología: mensaje de hora calibrado (no se pega a lo factual)');
     'hora no crítica → sin mensaje de hora (independiente del turno)');
 })();
 
+group('ai: correcciones de calidad (género + ruteo de valor_hora/días)');
+(function () {
+  // GÉNERO: la variación léxica NO debe romper concordancia. turno(m) solo
+  // varía a sinónimos masculinos; plata(f) ya no se varía a "lucas/billete".
+  if (typeof w.aiHumanizar === 'function') {
+    var g = w.aiHumanizar('tu turno nocturno');
+    truthy(g.indexOf('jornada nocturno') < 0 && g.indexOf('guardia nocturno') < 0,
+      'no genera "jornada/guardia nocturno" (concordancia de género intacta)');
+    eq(w.aiHumanizar('la plata del mes'), 'la plata del mes',
+      '"la plata del mes" no se rompe a "la lucas/billete"');
+  }
+  // RUTEO: "cuánto gano por hora" → valor_hora (no horas_trabajadas)
+  if (typeof w.aiClassifyIntent === 'function') {
+    eq((w.aiClassifyIntent('cuanto gano por hora') || {}).intent, 'valor_hora',
+      '"cuánto gano por hora" → valor_hora (tarifa), no horas trabajadas');
+    // "días trabajados" → stats (conteo), NUNCA queja_fatiga
+    var dc = (w.aiClassifyIntent('dias trabajados este mes') || {}).intent;
+    truthy(dc !== 'queja_fatiga', '"días trabajados" NO se misclasifica como fatiga');
+    eq(dc, 'stats', '"días trabajados este mes" → stats (conteo de turnos)');
+  }
+  // valor_hora se atiende vía _aiDispatchNLP (no cae a un handler genérico)
+  var rVH = respText(w.aiAnswer('cuanto gano por hora', _stMeta));
+  truthy(rVH.indexOf('valor hora') >= 0 || rVH.indexOf('Valor hora') >= 0 || rVH.indexOf('/ 240') >= 0 || rVH.indexOf('240 horas') >= 0,
+    '"cuánto gano por hora" responde la tarifa por hora (no horas acumuladas)');
+})();
+
 // ── hashPassword / verifyPassword (PBKDF2 + salt, v49) ──────────
 group('password-hash (PBKDF2 con salt)');
 (async function () {

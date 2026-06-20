@@ -987,6 +987,22 @@ var AI_INTENTS = [
     ]
   },
   {
+    id: 'valor_hora',
+    kw: [
+      ['cuanto gano por hora', 3],
+      ['gano por hora', 3],
+      ['por hora', 3],
+      ['valor hora', 3],
+      ['valor de la hora', 3],
+      ['valor de mi hora', 3],
+      ['cuanto vale la hora', 3],
+      ['cuanto vale mi hora', 3],
+      ['cuanto me pagan la hora', 3],
+      ['cuanto es la hora', 3],
+      ['cuanto la hora', 2]
+    ]
+  },
+  {
     id: 'promedio',
     kw: [
       ['promedio', 3],
@@ -1474,7 +1490,13 @@ var AI_INTENTS = [
       ['datos rápidos', 3],
       ['resumen rapido', 3],
       ['resumen rápido', 3],
-      ['cifras', 3]
+      ['cifras', 3],
+      ['dias trabajados', 3],
+      ['cuantos dias trabaje', 3],
+      ['cuantos dias', 3],
+      ['cuantos turnos', 3],
+      ['cuantos servicios', 2],
+      ['dias trabajados este mes', 3]
     ]
   },
 

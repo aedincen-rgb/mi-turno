@@ -1502,18 +1502,18 @@ var _AI_HUM_SYN = {
 // significado, y NUNCA términos técnicos/legales (recargo, festivo, dominical,
 // liquidación, indemnización) donde la precisión manda. Se fusionan en
 // _AI_HUM_SYN sin pisar claves existentes → cero cambios en aiHumanizar.
-// Variamos sustantivos REFERENCIALES e intensificadores (donde la repetición
-// suena robótica), pero dejamos los VERBOS FACTUALES intactos (trabajaste,
-// ganaste): en un recap de datos la precisión y el tono limpio mandan sobre
-// el adorno. Por eso "turno→jornada" sí, "trabajaste→camellaste" no.
+// Variamos sustantivos referenciales e intensificadores (donde la repetición
+// suena robótica), dejando los VERBOS FACTUALES intactos. CRÍTICO: solo
+// sinónimos del MISMO género/número que la palabra base — si no, rompe la
+// concordancia con artículos y adjetivos ("turno nocturno" → "jornada
+// nocturno" ✗, "la plata" → "la lucas" ✗). Por eso turno(m)→servicio(m) sí,
+// pero turno→jornada/guardia(f) y plata(f)→lucas/billete NO. Reemplazos
+// invariables en género (veloz, ágil) o adverbios (bastante) son seguros.
 var _AI_HUM_DOMAIN_SYN = {
-  turno: ['jornada', 'guardia', 'servicio'],
-  turnos: ['jornadas', 'guardias', 'servicios'],
-  jornada: ['turno', 'guardia'],
-  plata: ['lucas', 'billete'],
-  dinero: ['plata', 'lucas'],
-  sueldo: ['salario', 'paga'],
-  jefe: ['empleador', 'patrón'],
+  turno: ['servicio'],
+  turnos: ['servicios'],
+  sueldo: ['salario'],
+  jefe: ['empleador'],
   mucho: ['bastante', 'harto'],
   rapido: ['veloz', 'ágil']
 };
