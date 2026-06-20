@@ -2112,6 +2112,28 @@ group('ai-reasoning: comparación mensual calibrada (no se pega siempre)');
     'intent "comparativa_mes" SÍ incluye la comparación');
 })();
 
+group('ai: detección Out-of-Scope (CLINC150) — declina sin fabricar');
+(function () {
+  if (typeof w._aiIsOutOfScope !== 'function') { truthy(false, '_aiIsOutOfScope existe'); return; }
+  // OOS reales → detectados
+  truthy(w._aiIsOutOfScope('que hora es'), '"qué hora es" → OOS');
+  truthy(w._aiIsOutOfScope('quien gano el mundial'), '"quién ganó el mundial" → OOS');
+  truthy(w._aiIsOutOfScope('cuantos anos tiene messi'),
+    '"cuántos años tiene messi" → OOS (marcador sin ñ, igual que _aiNorm)');
+  truthy(w._aiIsOutOfScope('cual es la capital de francia'), 'capital de país → OOS');
+  // In-scope que SE PARECE a OOS → NO debe marcarse
+  eq(w._aiIsOutOfScope('cuanto llevo este mes'), false, 'in-scope no es OOS');
+  eq(w._aiIsOutOfScope('cuanto vale la hora'), false, '"vale la hora" no es OOS (es valor hora)');
+  eq(w._aiIsOutOfScope('cuantas horas trabaje'), false, '"horas trabajé" no es OOS');
+  // E2E: OOS declina con redirección; in-scope responde normal
+  w.aiResetConv();
+  truthy(respText(w.aiAnswer('que hora es', _stMeta)).indexOf('se me escapa') >= 0,
+    'OOS e2e → declina con gracia ("se me escapa")');
+  w.aiResetConv();
+  truthy(respText(w.aiAnswer('cuanto llevo este mes', _stMeta)).indexOf('se me escapa') < 0,
+    'in-scope e2e → NO declina (responde normal)');
+})();
+
 // ── hashPassword / verifyPassword (PBKDF2 + salt, v49) ──────────
 group('password-hash (PBKDF2 con salt)');
 (async function () {

@@ -18,7 +18,8 @@
     "test": "npm run test:smoke && npm run test:e2e",
     "prepare": "husky",
     "test:ai-browser": "node tests/ai-browser.mjs",
-    "test:coverage": "node tests/ai-coverage.mjs"
+    "test:coverage": "node tests/ai-coverage.mjs",
+    "test:benchmark": "node tests/ai-benchmark.mjs"
   },
   "lint-staged": {
     "js/**/*.js": [

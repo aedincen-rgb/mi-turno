@@ -2961,6 +2961,51 @@ function _aiSignalRoute(t, ent) {
   return null;
 }
 
+// Detección Out-of-Scope (CLINC150): marcadores de ALTA PRECISIÓN de temas
+// fuera del dominio (no nómina/turnos/app). Sin un umbral neuronal, un
+// blocklist preciso es la forma robusta de evitar que el clasificador (o el
+// salvataje) fabrique una respuesta de plata para "quién ganó el mundial".
+function _aiIsOutOfScope(t) {
+  if (!t) return false;
+  return _aiHas(
+    t,
+    'que hora es',
+    'que hora son',
+    'que horas son',
+    'la hora exacta',
+    'quien gano',
+    'quien es ',
+    'quien fue',
+    'quien invento',
+    'quien gobierna',
+    'capital de',
+    'capital del',
+    'pelicula',
+    'serie de',
+    'que ver',
+    'cancion',
+    'cantante',
+    'clima',
+    'va a llover',
+    'que tiempo hace',
+    'temperatura',
+    'presidente',
+    'futbol',
+    'el partido',
+    'mundial',
+    'seleccion gano',
+    'receta',
+    'como cocinar',
+    'noticia',
+    'traduc',
+    'horoscopo',
+    'cuantos anos tiene',
+    'edad de',
+    'casa blanca',
+    'planeta'
+  );
+}
+
 function _aiAnswerCore(question, state) {
   var q = question.toLowerCase().trim();
   var t = _aiNorm(question);
@@ -3246,6 +3291,20 @@ function _aiAnswerCore(question, state) {
         return _ctxResp;
       }
     }
+  }
+
+  // ── OUT-OF-SCOPE: declinar con gracia (no fabricar) ──
+  // Va ANTES del NLP para que "qué hora es" no se cuele como horas_trabajadas
+  // ni "quién ganó el mundial" como total ganado. Redirige a lo que SÍ sabe.
+  if (!_esSlash && _aiIsOutOfScope(t)) {
+    return {
+      text: '🤔 Eso se me escapa — soy tu asistente de **turnos y plata**. Te puedo decir cuánto llevás, tu proyección al cierre, recargos y festivos, liquidación, plan de ahorro y más. ¿Vemos algo de tu trabajo?',
+      actions: [
+        { label: '¿Cuánto llevo este mes?', query: 'cuánto llevo este mes' },
+        { label: 'Mi proyección', query: 'proyección al cierre' },
+        { label: 'Ver todo lo que sé', query: '/ayuda' }
+      ]
+    };
   }
 
   // ── NLP MEJORADO (v76): clasificación inteligente de intenciones ──

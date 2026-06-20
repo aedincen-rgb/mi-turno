@@ -1,4 +1,4 @@
 {
-  "v": "v320",
-  "label": "Comparación mensual calibrada por intent (no se pega siempre)"
+  "v": "v321",
+  "label": "Benchmark formal NLU (CheckList+CLINC150) + detección Out-of-Scope"
 }
