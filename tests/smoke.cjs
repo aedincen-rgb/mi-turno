@@ -53,7 +53,10 @@ var FILES = [
   'js/services/ai-history.js',
   'js/tabs/assistant.js',
   'js/services/ai-greeting.js',
-  'js/services/ai-proactive.js'
+  'js/services/ai-proactive.js',
+  // ai-reasoning.js es autocontenido en carga (define funciones puras);
+  // sus deps externas solo se usan en runtime del agente, no acá.
+  'js/services/ai-reasoning.js'
 ];
 
 // ── Stubs del entorno ────────────────────────────────────────────
@@ -1639,6 +1642,314 @@ group('ai-agente: interconexión — guards (sin falsos positivos)');
   var rIng = respText(w.aiAnswer('y si gano 4 millones?', _stMeta));
   truthy(rIng.indexOf(w.fCOP(3680000)) >= 0,
     'override de ingreso recalcula presupuesto, no encadena a otra opción');
+})();
+// ════════════════════════════════════════════════════════════════
+//  ai-advisor: calculadoras financieras SIN cobertura previa.
+//  Las 8 funciones de abajo no tenían ningún test (aiAdvisorAhorro,
+//  Fiscal, Optimizador, Optimizar, Informe, Historico, DescansoOptimo,
+//  Anual). Son el corazón de la "asesora financiera": acá se afirma la
+//  matemática real y, sobre todo, los guards que evitan inventar cifras.
+// ════════════════════════════════════════════════════════════════
+
+group('ai-advisor: planificador de ahorro (3 tiers de viabilidad)');
+(function () {
+  if (typeof w.aiAdvisorAhorro !== 'function') { truthy(false, 'aiAdvisorAhorro existe'); return; }
+  var c = { proy: 2000000, vh: 10000 };
+
+  // Tier realista: 200k/mes = 10% del ingreso (≤15%)
+  var rReal = w.aiAdvisorAhorro(c, 2400000, 12);
+  truthy(rReal.indexOf('Plan de ahorro') >= 0, 'titula el plan de ahorro');
+  truthy(rReal.indexOf(w.fCOP(200000)) >= 0, 'meta 2.4M / 12 meses = 200.000/mes');
+  truthy(rReal.indexOf('10.0%') >= 0, '200k sobre 2M de ingreso = 10% del proyectado');
+  truthy(rReal.indexOf('plan realista') >= 0, '≤15% del ingreso → lo marca como realista');
+
+  // Tier medio: 500k/mes = 25% → "alcanzable con disciplina"
+  var rMid = w.aiAdvisorAhorro(c, 6000000, 12);
+  truthy(rMid.indexOf('alcanzable') >= 0, '25% del ingreso → alcanzable con disciplina (no realista, no alarma)');
+
+  // Tier ambicioso: 1M/mes = 50% (>30%) → alerta + extiende el plazo a 18 meses
+  var rWarn = w.aiAdvisorAhorro(c, 12000000, 12);
+  truthy(rWarn.indexOf('⚠️') >= 0, '>30% del ingreso → dispara la advertencia');
+  truthy(rWarn.indexOf('18 meses') >= 0, 'propone extender el plazo a ceil(12×1.5)=18 meses');
+  truthy(rWarn.indexOf(w.fCOP(Math.round(12000000 / 18))) >= 0,
+    'recalcula la cuota mensual sobre el plazo extendido (12M/18)');
+
+  // Borde: sin meta no inventa un plan
+  eq(w.aiAdvisorAhorro(c, 0, 12), '', 'meta = 0 → cadena vacía (no arma un plan fantasma)');
+  eq(w.aiAdvisorAhorro(c, -100, 12), '', 'meta negativa → vacío');
+})();
+
+group('ai-advisor: análisis fiscal (deducibles + tope de renta)');
+(function () {
+  if (typeof w.aiAdvisorFiscal !== 'function') { truthy(false, 'aiAdvisorFiscal existe'); return; }
+
+  // Ingreso bajo: deducibles 4/4/8% y NO supera el tope de declaración
+  var rBajo = w.aiAdvisorFiscal({ salario: 2000000, totalCOP: 2000000, proy: 2200000 });
+  truthy(rBajo.indexOf('Análisis fiscal') >= 0, 'titula el análisis fiscal');
+  truthy(rBajo.indexOf(w.fCOP(960000)) >= 0, 'aportes salud 4% anuales = 2M×0.04×12 = 960.000');
+  truthy(rBajo.indexOf(w.fCOP(1920000)) >= 0, 'total deducible 8% anual = 1.920.000');
+  truthy(rBajo.indexOf('No (por debajo') >= 0, 'ingreso bajo → no supera topes de renta');
+
+  // Ingreso alto: supera el tope (UVT 1400) → posiblemente declara
+  var rAlto = w.aiAdvisorFiscal({ salario: 6000000, totalCOP: 6000000, proy: 6000000 });
+  truthy(rAlto.indexOf('Posiblemente') >= 0, 'ingreso anual > tope UVT 1400 → posiblemente declara renta');
+
+  // Borde: sin salario no calcula nada fiscal
+  eq(w.aiAdvisorFiscal({ totalCOP: 2000000 }), '', 'sin salario configurado → vacío (no calcula sobre el aire)');
+})();
+
+group('ai-advisor: optimizador para una meta extra (turnos necesarios)');
+(function () {
+  if (typeof w.aiAdvisorOptimizador !== 'function') { truthy(false, 'aiAdvisorOptimizador existe'); return; }
+  var r = w.aiAdvisorOptimizador({ vh: 10000 }, 200000);
+  truthy(r.indexOf('Optimizador de Horarios') >= 0, 'titula el optimizador de horarios');
+  // nocturno 8h = vh×1.35×8 = 108.000 → ceil(200k/108k)=2
+  truthy(r.indexOf(w.fCOP(108000)) >= 0 && r.indexOf('2 turnos nocturnos') >= 0,
+    'opción A: 2 turnos nocturnos de 108.000 c/u');
+  // dominical 8h = vh×1.75×8 = 140.000 → ceil(200k/140k)=2
+  truthy(r.indexOf(w.fCOP(140000)) >= 0, 'opción B: turno dominical/festivo a 140.000');
+  // extra diurna = vh×1.25 = 12.500 → ceil(200k/12500)=16
+  truthy(r.indexOf('16 horas extra') >= 0, 'opción C: 16 horas extra diurnas (a 12.500/h)');
+
+  // Bordes: sin meta o sin salario pide el dato, no inventa
+  truthy(w.aiAdvisorOptimizador({ vh: 10000 }, 0).indexOf('Por ejemplo') >= 0,
+    'meta extra = 0 → pide el dato con un ejemplo');
+  truthy(w.aiAdvisorOptimizador({}, 200000).indexOf('salario base') >= 0,
+    'sin vh/salario → pide configurarlo');
+})();
+
+// Contexto real (vía buildContext) para las calculadoras que leen c.dias
+var _advTurnos = [];
+for (var _ad = 2; _ad <= 12; _ad += 2) {
+  _advTurnos.push(mkTurno(new Date(_hoy.getFullYear(), _hoy.getMonth(), _ad), 8));
+}
+var _advState = {
+  turnos: _advTurnos, turnosAll: _advTurnos, activo: null,
+  calc: w.doCalc(_advTurnos, null, _hoy, 10000),
+  vh: 10000, salario: 2000000,
+  session: { uid: 'u-adv', email: 'a@x.com' }
+};
+var _cAdv = w.buildContext(_advState);
+
+group('ai-advisor: optimizar horarios (sobre días reales del mes)');
+(function () {
+  if (typeof w.aiAdvisorOptimizar !== 'function') { truthy(false, 'aiAdvisorOptimizar existe'); return; }
+  truthy(_cAdv.dias && _cAdv.dias.length >= 5, 'el contexto tiene ≥5 días trabajados para analizar');
+  var r = w.aiAdvisorOptimizar(_cAdv);
+  truthy(r.indexOf('Optimizador de horarios') >= 0, 'titula el optimizador');
+  truthy(r.indexOf('valor hora efectivo') >= 0, 'reporta el valor hora efectivo');
+  truthy(r.indexOf(w.fCOP(_cAdv.totalCOP * 1.15)) >= 0,
+    'proyecta ≈+15% optimizando (totalCOP × 1.15)');
+
+  // Bordes
+  eq(w.aiAdvisorOptimizar({ vh: 10000, dias: [] }), '', 'sin días → vacío');
+  eq(w.aiAdvisorOptimizar({ dias: _cAdv.dias }), '', 'sin vh → vacío');
+})();
+
+group('ai-advisor: optimizador de descanso (día más flojo/rentable)');
+(function () {
+  if (typeof w.aiAdvisorDescansoOptimo !== 'function') { truthy(false, 'aiAdvisorDescansoOptimo existe'); return; }
+  var r = w.aiAdvisorDescansoOptimo(_cAdv);
+  truthy(r.indexOf('Optimizador de descanso') >= 0, 'titula el optimizador de descanso');
+  truthy(r.indexOf('Día más flojo') >= 0, 'identifica el día menos rentable para descansar');
+
+  // Borde: menos de 5 días no alcanza para un patrón confiable
+  eq(w.aiAdvisorDescansoOptimo({ dias: [{}, {}, {}, {}] }), '',
+    '<5 días → vacío (no infiere un patrón de pocos datos)');
+})();
+
+group('ai-advisor: informe financiero completo');
+(function () {
+  if (typeof w.aiAdvisorInforme !== 'function') { truthy(false, 'aiAdvisorInforme existe'); return; }
+  var r = w.aiAdvisorInforme(_cAdv);
+  truthy(r.indexOf('Informe financiero completo') >= 0, 'arma el informe ejecutivo');
+  truthy(r.indexOf('Ingresos del período') >= 0, 'incluye la sección de ingresos');
+  truthy(r.indexOf(w.fCOP(_cAdv.totalCOP * 0.92)) >= 0, 'el neto estimado descuenta 8% (×0.92)');
+
+  // Borde: sin turnos del mes no hay informe
+  truthy(w.aiAdvisorInforme({ diasTrab: 0 }).indexOf('suficientes datos') >= 0,
+    'sin días trabajados → pide registrar turnos primero');
+})();
+
+group('ai-advisor: análisis histórico (multi-mes)');
+(function () {
+  if (typeof w.aiAdvisorHistorico !== 'function') { truthy(false, 'aiAdvisorHistorico existe'); return; }
+  function mk2(mesAtras, dia) {
+    return mkTurno(new Date(_hoy.getFullYear(), _hoy.getMonth() - mesAtras, dia), 8);
+  }
+  var hist6 = [mk2(0, 3), mk2(0, 5), mk2(0, 7), mk2(1, 3), mk2(1, 5), mk2(1, 7)];
+  var r = w.aiAdvisorHistorico(hist6, 10000, 2000000);
+  truthy(r.indexOf('Análisis histórico') >= 0, 'titula el análisis histórico');
+  truthy(r.indexOf('(2 meses)') >= 0, 'detecta los 2 meses distintos');
+  truthy(r.indexOf('Mejor mes') >= 0 && r.indexOf('Mes más bajo') >= 0, 'compara mejor vs peor mes');
+  truthy(r.indexOf('Promedio mensual') >= 0 && r.indexOf('Total acumulado') >= 0,
+    'reporta promedio y acumulado');
+
+  // Bordes que evitan estadística basura
+  eq(w.aiAdvisorHistorico(hist6.slice(0, 4), 10000, 2000000), '',
+    '<5 turnos → vacío (muestra insuficiente)');
+  var unMes = [mk2(0, 2), mk2(0, 4), mk2(0, 6), mk2(0, 8), mk2(0, 10)];
+  eq(w.aiAdvisorHistorico(unMes, 10000, 2000000), '',
+    '5 turnos pero un solo mes → vacío (no hay con qué comparar)');
+})();
+
+group('ai-advisor: proyección anual');
+(function () {
+  if (typeof w.aiAdvisorAnual !== 'function') { truthy(false, 'aiAdvisorAnual existe'); return; }
+  function mk2(mesAtras, dia) {
+    return mkTurno(new Date(_hoy.getFullYear(), _hoy.getMonth() - mesAtras, dia), 8);
+  }
+  var an10 = [];
+  for (var d = 2; d <= 10; d += 2) { an10.push(mk2(0, d)); an10.push(mk2(1, d)); }
+  var r = w.aiAdvisorAnual({ salario: 2000000 }, an10, 10000);
+  truthy(r.indexOf('Proyección anual') >= 0, 'titula la proyección anual');
+  truthy(r.indexOf('Promedio mensual') >= 0 && r.indexOf('Proyección 12 meses') >= 0,
+    'reporta promedio mensual y proyección a 12 meses');
+  truthy(r.indexOf('vs salario base') >= 0, 'con salario configurado compara contra el base anual');
+
+  // Borde: menos de 10 turnos no proyecta el año
+  eq(w.aiAdvisorAnual({ salario: 2000000 }, an10.slice(0, 9), 10000), '',
+    '<10 turnos → vacío (no proyecta el año con poca historia)');
+})();
+
+group('ai-advisor: dispatch de las ramas antes sin cobertura');
+(function () {
+  if (typeof w.aiAdvisorRespond !== 'function') { truthy(false, 'aiAdvisorRespond existe'); return; }
+  var cFin = { proy: 2000000, vh: 10000, salario: 2000000, totalCOP: 2000000 };
+  truthy((w.aiAdvisorRespond('ahorro', cFin, { meta: 6000000 }) || '').indexOf('Plan de ahorro') >= 0,
+    'respond(ahorro, meta) → planificador de ahorro');
+  truthy((w.aiAdvisorRespond('fiscal', cFin, null) || '').indexOf('Análisis fiscal') >= 0,
+    'respond(fiscal) → análisis fiscal');
+  var rOpt = w.aiAdvisorRespond('optimizar', _cAdv, null) || '';
+  truthy(rOpt.indexOf('Optimizador de horarios') >= 0 && rOpt.indexOf('Optimizador de descanso') >= 0,
+    'respond(optimizar) concatena horarios + descanso');
+  truthy((w.aiAdvisorRespond('total_ganado', _cAdv, null) || '').indexOf('Informe financiero completo') >= 0,
+    'respond(total_ganado) → informe completo');
+})();
+
+group('ai-agente: las 4 calculadoras antes huérfanas ahora se alcanzan (lenguaje natural)');
+(function () {
+  // Antes de este fix: "ahorrar"→cálculo de meta, "declarar renta"→queja
+  // de fatiga, "ganar X extra"→reflexión, "informe"→compositor de email.
+  // El router determinista del asesor (pre-NLP) las captura.
+  w.aiResetConv();
+  var rAh = respText(w.aiAnswer('quiero ahorrar 5 millones en un año', _stMeta));
+  truthy(rAh.indexOf('Plan de ahorro') >= 0,
+    '"quiero ahorrar 5 millones en un año" → planificador de ahorro (no cálculo de meta)');
+  truthy(rAh.indexOf('Análisis de Meta') < 0 && rAh.indexOf('te faltan') < 0,
+    '"quiero ahorrar..." ya NO cae al cálculo de meta (bug de ruteo corregido)');
+  w.aiResetConv();
+  truthy(respText(w.aiAnswer('/ahorro 5000000', _stMeta)).indexOf('Plan de ahorro') >= 0,
+    '/ahorro 5000000 → planificador de ahorro (no lo roba el follow-up numérico)');
+
+  w.aiResetConv();
+  var rFi = respText(w.aiAnswer('tengo que declarar renta este año', _stMeta));
+  truthy(rFi.indexOf('fiscal') >= 0 || rFi.indexOf('renta') >= 0,
+    '"declarar renta" → análisis fiscal (no queja de fatiga)');
+
+  w.aiResetConv();
+  var rOp = respText(w.aiAnswer('quiero ganar 200 mil extra este mes', _stMeta));
+  truthy(rOp.indexOf('Optimizador de Horarios') >= 0,
+    '"ganar 200 mil extra" → optimizador de meta extra (no reflexión)');
+
+  w.aiResetConv();
+  var rIn = respText(w.aiAnswer('dame un informe financiero completo', _stMeta));
+  truthy(rIn.indexOf('Informe financiero') >= 0,
+    '"informe financiero completo" → informe del asesor (no compositor de email)');
+
+  // Slash commands explícitos
+  w.aiResetConv();
+  truthy(respText(w.aiAnswer('/fiscal', _stMeta)).indexOf('fiscal') >= 0, '/fiscal → análisis fiscal');
+  w.aiResetConv();
+  truthy(respText(w.aiAnswer('/optimizador 200000', _stMeta)).indexOf('Optimizador de Horarios') >= 0,
+    '/optimizador 200000 → optimizador de meta extra');
+
+  // Guards: el router NO roba rutas legítimas
+  w.aiResetConv();
+  truthy(respText(w.aiAnswer('enviá mi informe por correo a juan@x.com', _stMeta)).indexOf('Informe financiero') < 0,
+    'guard: "enviá mi informe por correo" sigue siendo email, no informe del asesor');
+  w.aiResetConv();
+  truthy(respText(w.aiAnswer('qué turno me conviene tomar', _stMeta)).indexOf('Optimizador de Horarios') < 0,
+    'guard: "qué turno me conviene" sigue en el optimizador predictivo, no el de meta extra');
+})();
+
+group('ai-enhanced: lexicalización con sinónimos de dominio (Fase 2)');
+(function () {
+  if (typeof w.aiHumanizar !== 'function') { truthy(false, 'aiHumanizar existe'); return; }
+  // Varía sustantivos de nómina repetidos con el vocabulario de dominio
+  // (asset antes dormido). "turno" → jornada/guardia/servicio.
+  var out = w.aiHumanizar('turno turno');
+  truthy(/jornada|guardia|servicio/.test(out),
+    'aiHumanizar varía "turno" con un sinónimo de dominio');
+  // Protege datos y términos técnicos/legales
+  var h2 = w.aiHumanizar('Llevás **$1.190.000** en recargos dominicales');
+  truthy(h2.indexOf('$1.190.000') >= 0, 'preserva los montos al variar el texto');
+  truthy(h2.indexOf('dominicales') >= 0, 'NO altera términos legales (dominicales)');
+})();
+
+group('ai-enhanced: verificación anclada al oráculo doCalc (Fase 1, self-refine)');
+(function () {
+  if (typeof w.aiVerifyNumbers !== 'function') { truthy(false, 'aiVerifyNumbers existe'); return; }
+  // Mismatch del total del mes → anexa corrección (append-only)
+  var bad = w.aiVerifyNumbers('Llevás $500.000 este mes', { totalCOP: 1000000 });
+  truthy(bad.indexOf('Llevás $500.000') >= 0, 'append-only: conserva el texto original');
+  truthy(bad.indexOf('según tu tabla real') >= 0 && bad.indexOf(w.fCOP(1000000)) >= 0,
+    'corrige el total cuando NO cuadra con doCalc');
+  // Coincide (dentro de redondeo) → no toca
+  eq(w.aiVerifyNumbers('Llevás $1.000.000', { totalCOP: 1000000 }), 'Llevás $1.000.000',
+    'no anexa nada cuando el total coincide');
+  // SAFETY: NO toca cifras que no son el total del mes (cero falsos positivos)
+  eq(w.aiVerifyNumbers('Un turno nocturno paga $108.000', { totalCOP: 1000000 }),
+    'Un turno nocturno paga $108.000',
+    'NO corrige valores por turno / ley / simulación');
+  // Sin oráculo → no inventa
+  eq(w.aiVerifyNumbers('Llevás $500.000', null), 'Llevás $500.000',
+    'sin tabla real no inventa correcciones');
+  // Idempotente: no duplica el ajuste
+  var once = w.aiVerifyNumbers('Llevás $500.000', { totalCOP: 1000000 });
+  eq(w.aiVerifyNumbers(once, { totalCOP: 1000000 }), once, 'idempotente: no anexa dos veces');
+})();
+
+group('ai-reasoning: salience por sorpresa (aiRankFindings)');
+(function () {
+  if (typeof w.aiRankFindings !== 'function') { truthy(false, 'aiRankFindings existe'); return; }
+  // La prioridad entera SIEMPRE domina entre niveles (bonus < 1)
+  var r1 = w.aiRankFindings([
+    { priority: 7, data: { varCOP: 95 }, id: 'a' },
+    { priority: 9, data: { varCOP: 1 }, id: 'b' }
+  ]);
+  eq(r1[0].id, 'b', 'prioridad 9 va antes que prioridad 7 aunque tenga menos sorpresa');
+  // A IGUAL prioridad, el de mayor desvío (sorpresa) va primero
+  var r2 = w.aiRankFindings([
+    { priority: 8, data: { varCOP: 12 }, id: 'chico' },
+    { priority: 8, data: { varCOP: 80 }, id: 'grande' }
+  ]);
+  eq(r2[0].id, 'grande', 'a igual prioridad, el hallazgo de mayor variación lidera');
+  // No muta el array original (slice interno)
+  var orig = [{ priority: 5, id: 'x' }, { priority: 9, id: 'y' }];
+  w.aiRankFindings(orig);
+  eq(orig[0].id, 'x', 'no muta el array de entrada');
+  // Borde: vacío
+  eq(w.aiRankFindings([]).length, 0, 'lista vacía → vacía (no explota)');
+})();
+
+group('ai-enhanced: expresiones referenciales (aiReferring)');
+(function () {
+  if (typeof w.aiReferring !== 'function') { truthy(false, 'aiReferring existe'); return; }
+  // 2ª mención de la MISMA fecha → "ese día"; la 1ª se conserva completa
+  var r = w.aiReferring('Trabajaste el 5 de junio y el 5 de junio fue festivo');
+  truthy(r.indexOf('el 5 de junio y ese día') >= 0,
+    'primera mención completa, segunda → "ese día"');
+  // Preserva el artículo "del" → "de ese día"
+  var r2 = w.aiReferring('el turno del 5 de junio; cobraste por el trabajo del 5 de junio');
+  truthy(r2.indexOf('de ese día') >= 0, 'conserva el artículo: "del 5 de junio" → "de ese día"');
+  // Fechas DISTINTAS no se colapsan
+  var r3 = w.aiReferring('el 5 de junio y el 8 de junio');
+  truthy(r3.indexOf('5 de junio') >= 0 && r3.indexOf('8 de junio') >= 0,
+    'fechas distintas se mantienen ambas');
+  // Sin fechas → intacto
+  eq(w.aiReferring('Llevás $500.000 este mes'), 'Llevás $500.000 este mes',
+    'texto sin fechas queda igual');
 })();
 
 // ── hashPassword / verifyPassword (PBKDF2 + salt, v49) ──────────

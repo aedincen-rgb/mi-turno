@@ -2083,6 +2083,125 @@ function _aiFinancieroIntent(q, t, c) {
     }
   }
 
+  // ── Plan de ahorro (meta + plazo) ──
+  // Distinto de "cuánto me falta para la meta": esto arma un plan para
+  // juntar X en N meses. Va ANTES del follow-up numérico para que
+  // "/ahorro 5000000" no se lea como ingreso de un presupuesto previo.
+  if (
+    !_resp &&
+    (q.indexOf('/ahorro') === 0 ||
+      _aiHas(
+        t,
+        'plan de ahorro',
+        'plan de ahorros',
+        'plan para ahorrar',
+        'quiero ahorrar',
+        'necesito ahorrar',
+        'ayudame a ahorrar',
+        'como ahorro',
+        'como ahorrar',
+        'como puedo ahorrar',
+        'metas de ahorro',
+        'planificar ahorro'
+      ))
+  ) {
+    if (typeof aiAdvisorAhorro === 'function') {
+      var _ahNum = _aiNum(t);
+      if (!_ahNum && q.indexOf('/ahorro') === 0 && q.split(' ').length > 1)
+        _ahNum = parseFloat(q.split(' ')[1].replace(/[^0-9]/g, ''));
+      _intent = 'ahorro';
+      if (!_ahNum || _ahNum < 1000) {
+        _resp =
+          '🐷 Con gusto armamos tu plan de ahorro. ¿Cuánto querés juntar y en cuánto tiempo? Por ejemplo: "quiero ahorrar 5 millones en 12 meses".';
+      } else {
+        var _ahPlazo = 12;
+        var _ahMes = t.match(/en (\d+) mes/);
+        var _ahAno = t.match(/en (\d+) ano/);
+        if (_ahMes) _ahPlazo = parseInt(_ahMes[1], 10);
+        else if (_ahAno) _ahPlazo = parseInt(_ahAno[1], 10) * 12;
+        _resp = aiAdvisorAhorro(c, _ahNum, _ahPlazo);
+      }
+    }
+  }
+
+  // ── Análisis fiscal (renta, retención, deducciones) ──
+  if (
+    !_resp &&
+    (q === '/fiscal' ||
+      _aiHas(
+        t,
+        'declarar renta',
+        'declaracion de renta',
+        'declaracion renta',
+        'impuesto',
+        'impuestos',
+        'retencion en la fuente',
+        'retencion fuente',
+        'analisis fiscal',
+        'tema fiscal',
+        'optimizacion fiscal',
+        'cuanto me descuentan',
+        'que me descuentan',
+        'deduccion de impuestos'
+      ))
+  ) {
+    if (typeof aiAdvisorFiscal === 'function') {
+      _intent = 'fiscal';
+      _resp =
+        aiAdvisorFiscal(c) ||
+        '📊 Para tu análisis fiscal necesito tu salario base. Configuralo en **Ajustes > Preferencias de pago**.';
+    }
+  }
+
+  // ── Optimizador para una meta extra ("ganar 200 mil extra") ──
+  // Requiere verbo de ganancia + marca de "extra" + cifra: NO pisa al
+  // optimizador predictivo ("qué turno me conviene", sin cifra).
+  if (
+    !_resp &&
+    (q.indexOf('/optimizador') === 0 ||
+      (_aiHas(t, 'ganar', 'gano', 'sacar', 'generar') &&
+        _aiHas(t, 'extra', 'adicional', 'aparte', 'de mas', 'mas plata')))
+  ) {
+    if (typeof aiAdvisorOptimizador === 'function') {
+      var _opNum = _aiNum(t);
+      if (!_opNum && q.indexOf('/optimizador') === 0 && q.split(' ').length > 1)
+        _opNum = parseFloat(q.split(' ')[1].replace(/[^0-9]/g, ''));
+      if (_opNum && _opNum >= 1000) {
+        _intent = 'optimizador';
+        _resp = aiAdvisorOptimizador(c, _opNum);
+      } else if (q.indexOf('/optimizador') === 0) {
+        _intent = 'optimizador';
+        _resp =
+          '💡 Usá **/optimizador 200000** para ver qué turnos te conviene tomar para ganar esa plata extra.';
+      }
+    }
+  }
+
+  // ── Informe financiero completo (NO es enviar un correo) ──
+  if (
+    !_resp &&
+    (q === '/informe' ||
+      (typeof _aiIsEmailIntent === 'function' &&
+        !_aiIsEmailIntent(t) &&
+        _aiHas(
+          t,
+          'informe financiero',
+          'informe completo',
+          'informe detallado',
+          'reporte financiero',
+          'reporte completo',
+          'dame un informe',
+          'quiero un informe',
+          'generar informe',
+          'informe de mis finanzas'
+        )))
+  ) {
+    if (typeof aiAdvisorInforme === 'function') {
+      _intent = 'stats';
+      _resp = aiAdvisorInforme(c);
+    }
+  }
+
   // Un intent fresco (con sus propias keywords) gana siempre. Solo si
   // NINGUNO matcheó probamos las respuestas encadenadas.
 
@@ -4615,11 +4734,19 @@ function aiAnswer(question, state) {
   // Se aplica una sola vez, acá, para cubrir todas las rutas de respuesta.
   // _aiAnswerCore puede devolver una Promise (pipeline del agente): en ese caso
   // se resuelve antes de pulir para no aplicar aiHumanizar sobre el objeto Promise.
+  var _truth = state && state.calc ? state.calc : null;
   var _polish = function (r) {
     try {
-      if (typeof aiHumanizar === 'function' && r) {
-        if (typeof r === 'string') r = aiHumanizar(r);
-        else if (r.text) r.text = aiHumanizar(r.text);
+      if (r) {
+        if (typeof r === 'string') {
+          if (typeof aiHumanizar === 'function') r = aiHumanizar(r);
+          if (typeof aiReferring === 'function') r = aiReferring(r);
+          if (typeof aiVerifyNumbers === 'function') r = aiVerifyNumbers(r, _truth);
+        } else if (r.text) {
+          if (typeof aiHumanizar === 'function') r.text = aiHumanizar(r.text);
+          if (typeof aiReferring === 'function') r.text = aiReferring(r.text);
+          if (typeof aiVerifyNumbers === 'function') r.text = aiVerifyNumbers(r.text, _truth);
+        }
       }
     } catch (_) {}
     return r;

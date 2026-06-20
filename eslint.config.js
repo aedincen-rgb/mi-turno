@@ -379,6 +379,9 @@ const projectGlobals = {
   // services/ai-responder.js
   aiGenerateResponse: 'readonly',
   aiValidateResponse: 'readonly',
+  aiVerifyNumbers: 'readonly',
+  aiReferring: 'readonly',
+  aiRankFindings: 'readonly',
   aiPolishResponse: 'readonly',
   aiResponderReset: 'readonly',
   // services/ai-insights.js (todas las funciones exportadas)

@@ -1488,6 +1488,34 @@ var _AI_HUM_SYN = {
   facilisimo: ['sencillísimo', 'pan comido', 'sin enredo']
 };
 
+// Sinónimos de DOMINIO para variar la redacción (capa de lexicalización de
+// Reiter & Dale). El conocimiento vive en ai-synonyms.js, pero ese dict está
+// pensado para ENTENDER la entrada (variantes ambiguas, frases). Acá curamos
+// un subconjunto seguro para GENERAR: registro natural colombiano, mismo
+// significado, y NUNCA términos técnicos/legales (recargo, festivo, dominical,
+// liquidación, indemnización) donde la precisión manda. Se fusionan en
+// _AI_HUM_SYN sin pisar claves existentes → cero cambios en aiHumanizar.
+// Variamos sustantivos REFERENCIALES e intensificadores (donde la repetición
+// suena robótica), pero dejamos los VERBOS FACTUALES intactos (trabajaste,
+// ganaste): en un recap de datos la precisión y el tono limpio mandan sobre
+// el adorno. Por eso "turno→jornada" sí, "trabajaste→camellaste" no.
+var _AI_HUM_DOMAIN_SYN = {
+  turno: ['jornada', 'guardia', 'servicio'],
+  turnos: ['jornadas', 'guardias', 'servicios'],
+  jornada: ['turno', 'guardia'],
+  plata: ['lucas', 'billete'],
+  dinero: ['plata', 'lucas'],
+  sueldo: ['salario', 'paga'],
+  jefe: ['empleador', 'patrón'],
+  mucho: ['bastante', 'harto'],
+  rapido: ['veloz', 'ágil']
+};
+(function () {
+  for (var _dk in _AI_HUM_DOMAIN_SYN) {
+    if (!_AI_HUM_SYN[_dk]) _AI_HUM_SYN[_dk] = _AI_HUM_DOMAIN_SYN[_dk];
+  }
+})();
+
 function _aiHumNorm(w) {
   var s = w.toLowerCase();
   try {
@@ -1619,8 +1647,52 @@ function aiHumanizar(text) {
   return out;
 }
 
+// ─── VERIFICACIÓN ANCLADA AL ORÁCULO (self-refine seguro) ────────
+// La auto-corrección sin "ground truth" degrada la calidad (survey TACL
+// 2024). En este caso SÍ hay oráculo: la tabla real del usuario (doCalc →
+// truth.totalCOP). Verificamos UN solo claim canónico —el total del mes en
+// curso ("llevás $X")— y, si no cuadra con la tabla, ANEXAMOS una corrección
+// (nunca reescribimos: append-only no puede romper una respuesta correcta).
+// Deliberadamente NO toca cifras por turno, valores de ley ni simulaciones:
+// solo el patrón "llevás/llevo $X", para no generar falsos positivos.
+function aiVerifyNumbers(text, truth) {
+  if (!text || typeof text !== 'string') return text;
+  if (!truth || !truth.totalCOP || truth.totalCOP <= 0) return text;
+  if (text.indexOf('según tu tabla real') >= 0) return text; // ya verificado
+  var m = text.match(/llev(?:[aá]s|o)\s+\*{0,2}\$\s*([\d.]+)/i);
+  if (!m) return text;
+  var stated = parseInt(m[1].replace(/[^\d]/g, ''), 10);
+  if (!stated || stated < 1000) return text;
+  var real = Math.round(truth.totalCOP);
+  if (Math.abs(stated - real) / real <= 0.02) return text; // coincide (redondeo)
+  var fmt = typeof fCOP === 'function' ? fCOP(real) : '$' + real;
+  return text + '\n\n_Ajuste: según tu tabla real llevás ' + fmt + ' este mes._';
+}
+
+// ─── EXPRESIONES REFERENCIALES (referring expression generation) ──
+// Microplanificación de Reiter & Dale: la primera mención de una fecha va
+// completa ("el 5 de junio"); las repeticiones se vuelven "ese día" para que
+// no suene a robot que repite la fecha. Conservador: solo colapsa una fecha
+// EXACTA que ya apareció, preservando el artículo ("del 5 de junio" → "de ese
+// día"). No toca números ni la primera mención (que es la que informa).
+function aiReferring(text) {
+  if (!text || typeof text !== 'string') return text;
+  var meses =
+    'enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre';
+  var re = new RegExp('(\\bdel |\\bel |\\b)(\\d{1,2} de (?:' + meses + '))', 'gi');
+  var seen = {};
+  return text.replace(re, function (m, art, date) {
+    var key = date.toLowerCase();
+    if (seen[key]) return /del/i.test(art) ? 'de ese día' : 'ese día';
+    seen[key] = true;
+    return m;
+  });
+}
+window.aiReferring = aiReferring;
+
 // ─── INICIALIZACIÓN ──────────────────────────────────────────
 window.aiHumanizar = aiHumanizar;
+window.aiVerifyNumbers = aiVerifyNumbers;
 window.aiThink = aiThink;
 window.aiResolveContextRef = aiResolveContextRef;
 console.log('[MT] ai-enhanced.js cargado — IA potenciada v124');

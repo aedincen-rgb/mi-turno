@@ -99,10 +99,9 @@ function aiReason(bag, ctx, conversationHistory) {
     findings = findings.concat(effFindings);
   }
 
-  // 6. Ordenar por prioridad (más relevante primero)
-  findings.sort(function (a, b) {
-    return (b.priority || 5) - (a.priority || 5);
-  });
+  // 6. Ordenar por salience (prioridad + sorpresa: a igual prioridad, el de
+  //    mayor desvío va primero — content selection de data-to-text).
+  findings = aiRankFindings(findings);
 
   // 7. Limitar a 5 hallazgos máximo (no abrumar)
   var topFindings = findings.slice(0, 5);
@@ -506,7 +505,33 @@ function aiIsOutlier(val, serie) {
   return Math.abs(val - avg) / std > 2;
 }
 
+/**
+ * Salience: ordena hallazgos por prioridad + "sorpresa" (magnitud del
+ * desvío). El bonus está acotado a <1 a propósito: la prioridad (entera)
+ * SIEMPRE domina entre niveles (un ANOMALY=9 no baja de un RISK=7), y la
+ * sorpresa solo decide a IGUAL prioridad — el hallazgo con mayor variación
+ * va primero. Es content selection de data-to-text, sin reordenar de más.
+ */
+function aiRankFindings(findings) {
+  if (!findings || !findings.length) return findings || [];
+  function surprise(f) {
+    var d = f && f.data ? f.data : null;
+    if (!d) return 0;
+    var keys = ['varCOP', 'varEf', 'pct', 'deviation', 'magnitude', 'varMins'];
+    var max = 0;
+    for (var i = 0; i < keys.length; i++) {
+      var v = d[keys[i]];
+      if (typeof v === 'number' && Math.abs(v) > max) max = Math.abs(v);
+    }
+    return Math.min(0.9, max / 100);
+  }
+  return findings.slice().sort(function (a, b) {
+    return (b.priority || 5) + surprise(b) - ((a.priority || 5) + surprise(a));
+  });
+}
+
 window.aiReason = aiReason;
 window.aiVarPct = aiVarPct;
 window.aiIsOutlier = aiIsOutlier;
+window.aiRankFindings = aiRankFindings;
 console.log('[MT] ai-reasoning.js cargado — Reasoning Engine ✓');
