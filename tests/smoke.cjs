@@ -2088,6 +2088,30 @@ group('ai: correcciones de calidad (género + ruteo de valor_hora/días)');
     '"cuánto gano por hora" responde la tarifa por hora (no horas acumuladas)');
 })();
 
+group('ai-reasoning: comparación mensual calibrada (no se pega siempre)');
+(function () {
+  if (typeof w.aiReason !== 'function') { truthy(false, 'aiReason existe'); return; }
+  var bag = { collected: {} };
+  var ctx = { totalCOPMesPasado: 1000000, totalCOP: 800000, totalMins: 6000, totalMinsMesPasado: 6600, vh: 10000, salario: 2000000 };
+  function tieneComparacion(r) {
+    var fs = (r && r.findings) || [];
+    for (var i = 0; i < fs.length; i++) {
+      if (fs[i].data && typeof fs[i].data.varCOP === 'number') return true;
+    }
+    return false;
+  }
+  truthy(!tieneComparacion(w.aiReason(bag, ctx, [], 'ayer')),
+    'intent "ayer" NO incluye la comparación mensual');
+  truthy(!tieneComparacion(w.aiReason(bag, ctx, [], 'valor_hora')),
+    'intent "valor_hora" NO incluye la comparación mensual');
+  truthy(!tieneComparacion(w.aiReason(bag, ctx, [], 'horas_trabajadas')),
+    'intent "horas_trabajadas" NO incluye la comparación mensual');
+  truthy(tieneComparacion(w.aiReason(bag, ctx, [], 'total_ganado')),
+    'intent "total_ganado" SÍ incluye la comparación (viene al caso)');
+  truthy(tieneComparacion(w.aiReason(bag, ctx, [], 'comparativa_mes')),
+    'intent "comparativa_mes" SÍ incluye la comparación');
+})();
+
 // ── hashPassword / verifyPassword (PBKDF2 + salt, v49) ──────────
 group('password-hash (PBKDF2 con salt)');
 (async function () {

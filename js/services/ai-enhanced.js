@@ -1003,7 +1003,7 @@ function _aiRunAgentPass(enriched, intent, question, userContext, verbose, thoug
   var convLevel = typeof aiConvLevel === 'function' ? aiConvLevel() : 0;
 
   return aiCollectData(tools, ctx, session).then(function (bag) {
-    var reasoning = aiReason(bag, ctx, _aiMemory.history || []);
+    var reasoning = aiReason(bag, ctx, _aiMemory.history || [], intent);
     var agentResp = aiGenerateResponse(reasoning, intent, ctx, bag, convLevel);
     var currentText = enriched.text || '';
     var finalText = currentText;

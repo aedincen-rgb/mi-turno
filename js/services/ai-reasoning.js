@@ -38,7 +38,7 @@ var AI_FINDING_TYPES = {
  * @param {Array} conversationHistory - Historial reciente de conversación
  * @returns {object} { findings: Array, summary: string, confidence: number }
  */
-function aiReason(bag, ctx, conversationHistory) {
+function aiReason(bag, ctx, conversationHistory, intent) {
   var findings = [];
   var confidence = 0.85; // base
 
@@ -59,8 +59,19 @@ function aiReason(bag, ctx, conversationHistory) {
     findings = findings.concat(breakdownFindings);
   }
 
-  // 3. Comparar con mes anterior — usa los campos reales de buildContext
-  if (ctx.totalCOPMesPasado && ctx.totalCOPMesPasado > 0) {
+  // 3. Comparar con mes anterior — SOLO en consultas donde la comparación
+  //    viene al caso (panorama/total/proyección/comparativa). Pegarla a
+  //    "cuántas horas trabajé ayer" o "valor hora" es ruido fuera de tema.
+  //    Sin intent (llamada genérica) se permite por compatibilidad.
+  var _cmpOk =
+    !intent ||
+    intent === 'comparativa_mes' ||
+    intent === 'comparativa_semana' ||
+    intent === 'total_ganado' ||
+    intent === 'proyeccion' ||
+    intent === 'stats' ||
+    intent === 'eficiencia';
+  if (_cmpOk && ctx.totalCOPMesPasado && ctx.totalCOPMesPasado > 0) {
     var compareFindings = _aiComparePeriods(ctx);
     findings = findings.concat(compareFindings);
   }
