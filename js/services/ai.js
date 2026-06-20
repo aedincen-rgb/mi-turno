@@ -810,31 +810,57 @@ function _aiDispatchNLP(intent, c, state, q, t) {
     var s = typeof _saludoHora === 'function' ? _saludoHora(c.ahora) : 'Hola';
     var nm = state.session && state.session.email ? state.session.email.split('@')[0] : '';
     var nombre = nm ? ', ' + nm.charAt(0).toUpperCase() + nm.slice(1) : '';
-    // Personalizar el saludo según el contexto situacional
-    var saludoExtra = '';
+    // Resuelve el "lienzo en blanco": gancho personalizado con su dato real
+    // (curiosity gap) + chips tappables (cero fricción, no hay que escribir).
+    // Se adapta al estado: turno activo / usuario nuevo / usuario con datos.
+    var _hook = '';
+    var _chips = [];
     if (c.alertaTurnoLargo) {
-      saludoExtra =
-        ' Llevás ' + Math.round(c.minutosEnTurnoActual / 60) + ' horas en turno — ¿todo bien?';
-    } else if (c.alertaNocturnaActivo) {
-      saludoExtra = ' Trabajando de noche, ¿cómo vas?';
+      _hook =
+        ' Llevás ' +
+        Math.round(c.minutosEnTurnoActual / 60) +
+        'h en este turno — ¿todo bien? Cuidate. 🤝';
+      _chips = [
+        { label: '¿Cuánto llevo en el turno?', query: 'cuánto llevo en este turno' },
+        { label: 'Cerrar turno', query: 'cerrar turno' }
+      ];
     } else if (c.tieneActivo) {
-      saludoExtra = ' Turno activo en curso.';
-    } else if (c.periodoDelDia === 'madrugada') {
-      saludoExtra = ' Trasnochando, ¿todo bien?';
-    } else if (!c.salarioConfigurado) {
-      saludoExtra =
-        ' Antes de empezar, te recomiendo configurar tu salario base en Ajustes para que las proyecciones sean exactas.';
-    } else if (c.necesitaDescanso) {
-      saludoExtra = ' Llevas ' + c.rachaActual + ' días seguidos — acordate de descansar.';
+      _hook = ' Tenés un turno corriendo ahora mismo. 🟢';
+      _chips = [
+        { label: '¿Cuánto llevo en el turno?', query: 'cuánto llevo en este turno' },
+        { label: '¿Cómo voy este mes?', query: 'cuánto llevo este mes' }
+      ];
+    } else if (!c.salarioConfigurado || c.diasTrab === 0) {
+      // Usuario nuevo / sin datos → onboarding con valor claro y concreto.
+      _hook =
+        ' Soy tu calculadora de turnos y plata: en un minuto te muestro cuánto ganás **de verdad** — con recargos, festivos y proyección al cierre.';
+      _chips = [
+        { label: '⚙️ Configurar mi salario', query: 'quiero configurar mi salario' },
+        { label: '¿Cómo registro un turno?', query: 'cómo registro un turno' },
+        { label: '¿Qué sabés hacer?', query: 'qué podés hacer' }
+      ];
+    } else {
+      // Usuario con datos → gancho personalizado + acciones de alto valor.
+      _hook =
+        ' Este mes llevás **' +
+        fCOP(c.totalCOP) +
+        '** en ' +
+        c.diasTrab +
+        ' turno' +
+        (c.diasTrab !== 1 ? 's' : '') +
+        '.';
+      if (c.necesitaDescanso)
+        _hook += ' Ojo, ' + c.rachaActual + ' días seguidos — date un respiro.';
+      _chips = [
+        { label: '¿Cómo voy este mes?', query: 'cómo voy este mes' },
+        { label: '📈 Mi proyección', query: 'proyección al cierre' },
+        { label: '¿Me pagan bien?', query: 'me están pagando bien' }
+      ];
     }
-    return (
-      '¡' +
-      s +
-      nombre +
-      '!' +
-      saludoExtra +
-      ' Puedo decirte cómo vas este mes, proyectar tus ingresos, calcular tu liquidación o avisarte si necesitás un descanso. ¿Qué querés mirar hoy?'
-    );
+    return {
+      text: '¡' + s + nombre + '!' + _hook + '\n\nTocá una opción 👇 o escribime con tus palabras.',
+      actions: _chips
+    };
   }
   if (intent === 'despedida') {
     var despedidas =
@@ -3383,6 +3409,9 @@ function _aiAnswerCore(question, state) {
           en.text = _pref + en.text + _suff;
           if (_isAction) en.action = _resp.action;
           if (_isObj && _resp.chart) en.chart = _resp.chart;
+          // Chips explícitos del handler (ej. starters del saludo) ganan:
+          // si el handler los definió a propósito, no los pisa el enriquecedor.
+          if (_isObj && _resp.actions && _resp.actions.length) en.actions = _resp.actions;
           return en;
         }
         return null;

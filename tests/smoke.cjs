@@ -2134,6 +2134,33 @@ group('ai: detección Out-of-Scope (CLINC150) — declina sin fabricar');
     'in-scope e2e → NO declina (responde normal)');
 })();
 
+group('ai: saludo con chispa (resuelve el lienzo en blanco)');
+(function () {
+  // Usuario con datos → gancho personalizado + chips tappables
+  w.aiResetConv();
+  var rs = w.aiAnswer('hola', _stMeta);
+  truthy(rs && typeof rs === 'object' && rs.actions && rs.actions.length >= 2,
+    'el saludo trae chips tappables (no obliga a escribir)');
+  var ts = respText(rs);
+  truthy(ts.indexOf('llevás') >= 0 || ts.indexOf('Buen') >= 0 || ts.indexOf('Hola') >= 0,
+    'el saludo da un gancho (dato del mes o bienvenida)');
+  truthy(ts.indexOf('Tocá una opción') >= 0, 'invita a tocar o escribir (afordance)');
+  // Usuario NUEVO (sin salario) → chips de onboarding
+  var uid = 'u-nuevo';
+  w.localStorage.removeItem(w.dk(uid, 'sc'));
+  var stNuevo = {
+    turnos: [], turnosAll: [], activo: null,
+    calc: w.doCalc([], null, new Date(), 8333),
+    vh: 8333, salario: w.SMIN, session: { uid: uid, email: 'n@x.com' }
+  };
+  w.aiResetConv();
+  var rn = w.aiAnswer('buenas', stNuevo);
+  var tn = respText(rn);
+  truthy(rn && rn.actions && rn.actions.length >= 2, 'usuario nuevo: chips de arranque');
+  truthy(tn.toLowerCase().indexOf('salario') >= 0 || tn.toLowerCase().indexOf('configurar') >= 0 || tn.toLowerCase().indexOf('minuto') >= 0,
+    'usuario nuevo: orienta a configurar/empezar');
+})();
+
 // ── hashPassword / verifyPassword (PBKDF2 + salt, v49) ──────────
 group('password-hash (PBKDF2 con salt)');
 (async function () {
