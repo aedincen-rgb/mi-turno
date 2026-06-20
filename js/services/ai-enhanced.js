@@ -1162,10 +1162,17 @@ function aiEnhancedRespond(
     _thought = aiThink(question, intent, userContext, _aiMemory.history) || {};
   } catch (_) {}
 
-  // 0. Memoria persistente entre sesiones — solo en la primera llamada de cada sesión
+  // 0. Memoria persistente entre sesiones — solo en la primera llamada de cada
+  //    sesión, y SOLO si la apertura es conversacional. Un "bienvenido de
+  //    vuelta, la última vez te sugerí..." pegado a una pregunta factual
+  //    ("qué incluye el sueldo base") se siente fuera de lugar; lo reservamos
+  //    para saludos/charla. Si no es conversacional NO se computa, así el flag
+  //    de "primer mensaje" no se consume y el saludo aparece en el próximo hola.
   var _welcomePrefix = '';
+  var _welcomeOk =
+    _AI_CONVERSATIONAL_INTENTS[intent] || !intent || intent === 'general' || intent === 'contexto';
   try {
-    if (typeof aiMemoryOnFirstMessage === 'function') {
+    if (_welcomeOk && typeof aiMemoryOnFirstMessage === 'function') {
       var _uid = userContext && userContext.uid ? userContext.uid : null;
       _welcomePrefix = aiMemoryOnFirstMessage(_uid, userContext) || '';
     }

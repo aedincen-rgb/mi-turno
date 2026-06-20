@@ -1614,15 +1614,51 @@ function _aiDispatchNLP(intent, c, state, q, t) {
     );
   }
 
-  // ── Acciones del Agente ──
+  // ── Configurar salario: acción SOLO si hay monto ──
+  // La acción real (SET_SALARY) se crea en ai-enhanced solo con entities.money.
+  // Sin monto NO es una acción: una pregunta ("qué incluye el sueldo base")
+  // se explica; un comando sin monto ("cambiar salario") pide el dato. Antes
+  // ambos caían al placeholder "Procesando acción..." y lo filtraban al chat.
+  if (intent === 'configurar_salario') {
+    if (_aiNum(t)) return 'Procesando acción...';
+    if (
+      _aiHas(
+        t,
+        'cambiar',
+        'cambia',
+        'configurar',
+        'configura',
+        'poner',
+        'pon',
+        'ajustar',
+        'ajusta',
+        'actualizar',
+        'establecer',
+        'modificar',
+        'editar',
+        'quiero cambiar'
+      )
+    ) {
+      return 'Para actualizar tu salario base, decime el valor: por ejemplo *"mi salario es 2.000.000"*. También podés cambiarlo en **Ajustes › Salario base**.';
+    }
+    return (
+      '💼 **Sueldo base**\n\n' +
+      'Es tu salario mensual ordinario bruto — sin recargos, horas extra ni auxilios. Es la base de todos los cálculos:\n\n' +
+      '• **Valor hora** = sueldo base ÷ 240\n' +
+      '• Sobre él se aplican los recargos (nocturno +35%, dominical +75%, festivo +75%, extras…)\n' +
+      '• El auxilio de transporte y las prestaciones se suman aparte\n\n' +
+      '💡 Para cambiarlo: **Ajustes › Salario base**.'
+    );
+  }
+
+  // ── Otras acciones del Agente ──
   if (
-    intent === 'configurar_salario' ||
     intent === 'iniciar_turno' ||
     intent === 'cerrar_turno' ||
     intent === 'navegar_ajustes' ||
     intent === 'navegar_historial'
   ) {
-    // Devolvemos un string temporal, aiEnhancedRespond lo reemplazará con el texto final y la acción
+    // String temporal; aiEnhancedRespond lo reemplaza con el texto + la acción real.
     return 'Procesando acción...';
   }
 
@@ -4965,13 +5001,28 @@ function aiAnswer(question, state) {
   // _aiAnswerCore puede devolver una Promise (pipeline del agente): en ese caso
   // se resuelve antes de pulir para no aplicar aiHumanizar sobre el objeto Promise.
   var _truth = state && state.calc ? state.calc : null;
+  // Guard defensivo: "Procesando acción..." es un placeholder INTERNO de las
+  // acciones del agente — jamás debe llegar al chat. Si una acción no adjuntó
+  // su texto final (execute), lo limpiamos antes de pulir.
+  var _stripPlaceholder = function (s) {
+    if (typeof s !== 'string') return s;
+    var out = s.replace(/Procesando acci[oó]n\.\.\.\s*/gi, '').trim();
+    return out || 'Decime con tus palabras qué necesitás y lo resuelvo. 🙂';
+  };
   var _polish = function (r) {
     try {
       if (r) {
         if (typeof r === 'string') {
+          r = _stripPlaceholder(r);
           if (typeof aiHumanizar === 'function') r = aiHumanizar(r);
           if (typeof aiReferring === 'function') r = aiReferring(r);
           if (typeof aiVerifyNumbers === 'function') r = aiVerifyNumbers(r, _truth);
+        } else if (r.text && !r.execute) {
+          // Si trae execute, el placeholder es legítimo (la UI ejecuta la acción).
+          r.text = _stripPlaceholder(r.text);
+          if (typeof aiHumanizar === 'function') r.text = aiHumanizar(r.text);
+          if (typeof aiReferring === 'function') r.text = aiReferring(r.text);
+          if (typeof aiVerifyNumbers === 'function') r.text = aiVerifyNumbers(r.text, _truth);
         } else if (r.text) {
           if (typeof aiHumanizar === 'function') r.text = aiHumanizar(r.text);
           if (typeof aiReferring === 'function') r.text = aiReferring(r.text);

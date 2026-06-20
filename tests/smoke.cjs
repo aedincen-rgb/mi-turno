@@ -56,7 +56,9 @@ var FILES = [
   'js/services/ai-proactive.js',
   // ai-reasoning.js es autocontenido en carga (define funciones puras);
   // sus deps externas solo se usan en runtime del agente, no acá.
-  'js/services/ai-reasoning.js'
+  'js/services/ai-reasoning.js',
+  // ai-psychology.js no toca DOM ni deps de carga; seguro en node.
+  'js/services/ai-psychology.js'
 ];
 
 // ── Stubs del entorno ────────────────────────────────────────────
@@ -2009,6 +2011,55 @@ group('ai-nlp: el captador evita el fallback genérico (e2e)');
   w.aiResetConv();
   truthy(typeof respText(w.aiAnswer('asdfghjk qwerty', _stMeta)) === 'string',
     'guard: texto sin señales no rompe el pipeline');
+})();
+
+group('ai: el placeholder "Procesando acción" no se filtra + pregunta de concepto');
+(function () {
+  // Pregunta informativa sobre el salario: NO debe filtrar el placeholder
+  // ni misruteo a acción. Debe explicar el concepto.
+  w.aiResetConv();
+  var rQ = respText(w.aiAnswer('¿qué incluye el sueldo base?', _stMeta));
+  truthy(rQ.indexOf('Procesando') < 0, 'pregunta de salario NO filtra "Procesando acción..."');
+  truthy(rQ.indexOf('Sueldo base') >= 0 || rQ.indexOf('valor hora') >= 0 || rQ.indexOf('Valor hora') >= 0,
+    '"qué incluye el sueldo base" → explicación real del concepto');
+
+  // Comando sin monto → pide el valor (no placeholder)
+  w.aiResetConv();
+  var rCmd = respText(w.aiAnswer('quiero cambiar mi salario', _stMeta));
+  truthy(rCmd.indexOf('Procesando') < 0, 'comando de salario sin monto NO filtra el placeholder');
+  truthy(rCmd.indexOf('valor') >= 0 || rCmd.indexOf('Ajustes') >= 0,
+    'comando sin monto pide el valor / indica dónde cambiarlo');
+
+  // Comando CON monto → sigue ejecutando la acción real (no se rompió)
+  w.aiResetConv();
+  var rSet = w.aiAnswer('mi salario es 2 millones', _stMeta);
+  var rSetText = respText(rSet);
+  truthy(rSetText.indexOf('Procesando') < 0, 'comando con monto no muestra el placeholder');
+  truthy((rSet && rSet.execute && rSet.execute.type === 'SET_SALARY') || rSetText.indexOf('actualiza') >= 0,
+    'comando con monto sigue disparando la acción real (SET_SALARY)');
+})();
+
+group('ai-psicología: mensaje de hora calibrado (no se pega a lo factual)');
+(function () {
+  if (typeof w.aiPsychRespond !== 'function') { truthy(false, 'aiPsychRespond existe'); return; }
+  // Hora crítica (madrugada, 4 AM). El mensaje asume que estás trabajando.
+  var d4 = new Date(); d4.setHours(4, 0, 0, 0);
+  // Consulta factual SIN turno activo → NO debe pegar el mensaje de hora
+  var rFact = w.aiPsychRespond({ ahora: d4, tieneActivo: false }, 'configurar_salario');
+  truthy(rFact.indexOf('🕐') < 0,
+    'consulta factual sin turno activo NO recibe el mensaje de hora');
+  // Con turno activo → el mensaje de hora SÍ aplica (estás trabajando)
+  var rActivo = w.aiPsychRespond({ ahora: d4, tieneActivo: true }, 'hoy');
+  truthy(rActivo.indexOf('🕐') >= 0,
+    'con turno activo el mensaje de hora sí viene al caso');
+  // Contexto emocional → también aplica
+  var rEmo = w.aiPsychRespond({ ahora: d4, tieneActivo: false }, 'bienestar');
+  truthy(rEmo.indexOf('🕐') >= 0,
+    'en bienestar/fatiga el mensaje de hora sí aplica');
+  // Hora normal (mediodía) → nunca hay mensaje de hora
+  var d12 = new Date(); d12.setHours(12, 0, 0, 0);
+  truthy(w.aiPsychRespond({ ahora: d12, tieneActivo: true }, 'hoy').indexOf('🕐') < 0,
+    'hora no crítica → sin mensaje de hora (independiente del turno)');
 })();
 
 // ── hashPassword / verifyPassword (PBKDF2 + salt, v49) ──────────

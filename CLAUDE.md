@@ -1,6 +1,6 @@
 # Mi Turno — guía para agentes
 
-App PWA de cálculo de nómina para trabajadores por turnos en Colombia. Vanilla JS sin build, React via CDN UMD, Supabase como backend.
+App PWA de cálculo de nómina para trabajadores por turnos en Colombia. Vanilla JS sin build obligatorio, React via CDN UMD, Supabase como backend. La documentación técnica completa para onboarding está en `ARCHITECTURE.md`.
 
 ## Stack
 
@@ -22,8 +22,8 @@ App PWA de cálculo de nómina para trabajadores por turnos en Colombia. Vanilla
 
 ## Carga de scripts
 
-- Todo es global (`window.*`). Orden de `<script>` en `index.html` importa.
-- Al agregar un archivo nuevo: hay que ponerlo en **`index.html`** Y en **el array `appResources` de `sw.js`** (precache). Si falta en sw.js, falla offline. Hay un linter rudimentario en `scripts/check.sh`.
+- Todo es global (`window.*`). Orden de `<script>` en `app.html` importa.
+- Al agregar un archivo nuevo: hay que ponerlo en **`app.html`** Y en **el array `appResources` de `sw.js`** (precache). Si falta en sw.js, falla offline. Hay un linter rudimentario en `scripts/check.sh`.
 
 ## Versionado (las 3 fuentes de verdad)
 
@@ -32,7 +32,7 @@ Tres archivos tienen que decir lo mismo en cada release:
 | Archivo | Línea |
 |---|---|
 | `js/config/globals.js` | `var MT_APP_VERSION = 'vNN';` |
-| `sw.js` | `const CACHE = 'mt-vNN';` |
+| `sw.js` | `const SHELL_CACHE = 'mt-shell-vNN';` |
 | `version.json` | `"v": "vNN"` |
 
 **Usá siempre `scripts/bump.sh NN "Label"` para bumpear** — el sed sincroniza las 3. Hacerlo a mano causó el bug del bucle nuclear infinito en v28 (sw.js iba a v28, globals.js seguía en v27, el detector de reload fantasma loopeaba). `scripts/check.sh` aborta si están desincronizados.
@@ -150,37 +150,32 @@ La app pasa auditoría **axe-core** con **0 violaciones** en las 6 pantallas (re
 
 Si CI falla, los artifacts (videos del navegador en el momento del bug) están en la pestaña "Artifacts" del workflow run en GitHub Actions.
 
-## Arquitectura de IA (14 módulos, v202)
+## Arquitectura de IA (v317)
 
-El asistente usa un **pipeline de 6 etapas**:
+El asistente usa un pipeline local por capas. El detalle completo está en `ARCHITECTURE.md`; esta guía conserva los puntos operativos que suelen romperse.
 
 ```
-ai-nlp.js → ai.js → ai-enhanced.js [ORQUESTADOR]
-  │
-  ├─ 1. Expandir: tips + contexto
-  ├─ 2. Analizar: ai-insights.js (desglose, eficiencia, escenarios, legal)
-  ├─ 3. Enriquecer: acciones rápidas + follow-ups
-  ├─ 4. Personalizar: ai-achievements.js + ai-psychology.js + ai-proactive.js + ai-advisor.js
-  └─ 5. Pulir: ai-conversation.js + gender-lang.js + ai-knowledge.js
+mensaje usuario
+  -> normalización / NLP
+  -> ai.js: rutas canónicas + _aiSignalRoute(t, ent)
+  -> buildContext(state)
+  -> ai-router.js: selección de herramientas
+  -> ai-collector.js: datos locales / Supabase / CPU
+  -> ai-reasoning.js: hallazgos, salience, anomalías
+  -> ai-responder.js: respuesta, fuentes y acciones
+  -> ai-enhanced.js: polish, humanización y verificación
 ```
 
-Los 14 módulos son:
-- `ai-nlp.js` — clasificación 50+ intents, stemming, sinónimos
-- `ai.js` — dispatch principal, comandos slash, fallback clásico
-- `ai-enhanced.js` — orquestador central del pipeline
-- `ai-insights.js` — desglose de recargos, proyecciones, eficiencia, legal
-- `ai-advisor.js` — 10 calculadoras (liquidación, simulación, ahorro, fiscal, optimizador, ofertas, informe, histórico, descanso, anual)
-- `ai-proactive.js` — briefing diario, alertas, seguimiento de metas
-- `ai-psychology.js` — mensajes por hora crítica, framing positivo, apoyo
-- `ai-conversation.js` — niveles progresivos 0→3, sin abrumar
-- `ai-knowledge.js` — base de conocimiento laboral (recargos, leyes, valores)
-- `ai-help.js` — 38 guías paso a paso
-- `ai-achievements.js` — 20 logros desbloqueables
-- `voice-agent.js` — 30+ comandos de voz
-- `gender-lang.js` — vocabulario adaptativo M/F/N
-- `ai-greeting.js` — frases del hero + nombre personal
+Módulos principales:
+- Entendimiento: `ai-synonyms.js`, `ai-semantic.js`, `ai-query.js`, `ai-episodes.js`, `ai-nlp.js`
+- Core: `ai.js`
+- Router/collector/reasoning/response: `ai-router.js`, `ai-collector.js`, `ai-reasoning.js`, `ai-responder.js`
+- Dominio: `ai-insights.js`, `ai-advisor.js`, `ai-auditor.js`, `ai-knowledge.js`, `ai-help.js`, `ai-app-kb.js`, `ai-calendar.js`
+- Experiencia: `ai-enhanced.js`, `ai-engage.js`, `ai-conversation.js`, `ai-history.js`, `ai-memory.js`, `ai-greeting.js`, `ai-proactive.js`, `ai-psychology.js`, `ai-achievements.js`, `voice-agent.js`, `gender-lang.js`, `audio-sfx.js`
 
-**Pipeline unificado:** todos los módulos reciben `userContext` (objeto `c` de `buildContext`). Cada etapa envuelta en try-catch independiente. Si un módulo falla, los demás siguen. El orden siempre es: `ai-nlp → ai.js → ai-enhanced.js → respuesta`.
+**Pipeline unificado:** todos los módulos reciben o derivan `userContext` (objeto `c` de `buildContext`). Cada etapa debe degradar con fallback local. Si Supabase no está disponible, el asistente usa datos locales y lo comunica en la evidencia.
+
+**Regla v317:** no resolver jerga agregando frases infinitas. Primero detectar señales de dominio con `_aiSignalRoute(t, ent)` y enviar a un intent existente. Prioridad: legal/pago injusto antes que plata genérica; bienestar antes que fallback; hipotéticos de simulación deben quedarse en las rutas de simulador.
 
 **Variables globales de IA:** `aiClassifyIntent`, `aiAnswer`, `aiEnhancedRespond`, `aiHelpAnswer`, `aiKnowledgeSearch`, `aiCheckAchievements`, etc. Todas en `window.*`.
 
@@ -218,7 +213,7 @@ Los 14 módulos son:
 - ❌ `display: none` en `<input type="file">` — `.click()` no funciona (v91 fix)
 - ❌ `overflow: hidden` en contenedores de avatar con badge flotante (v79 fix)
 - ❌ Crear archivos `*.md` sin pedido explícito
-- ❌ Crear archivos nuevos sin agregarlos a `index.html` Y `sw.js`
+- ❌ Crear archivos nuevos sin agregarlos a `app.html` Y `sw.js`
 - ❌ Bumpear versión manual (usar `scripts/bump.sh`)
 - ❌ Upsert en `pin_lookup` sin `{onConflict: 'user_id'}`
 - ❌ Lookup por `user_email` (usar `user_id`)
@@ -295,6 +290,7 @@ Registradas durante la sesión del 3-4 de junio de 2026 con DeepSeek v4 Pro + Co
 | v137-139 | **Barra inferior (home indicator):** Múltiples enfoques probados (escalón de degradado, doble-blur, color sólido). Ninguno funcionó hasta v160. |
 | v160 | **Solución definitiva barra inferior (estable — no tocar):** La tab bar flota con `bottom: calc(var(--sab) + 12px)` y `padding: 10px 8px`, **idéntica al header** que usa `margin-top: calc(var(--safe-top) + 12px)`. **`html::after` eliminado** — era la causa del problema: su `z-index: 99` tapaba los **orbs animados** (`.bg-shapes`, z-index: 0) en la zona del home indicator, haciendo que se vea como vidrio sólido distinto al resto. Sin `html::after`, la zona del home indicator muestra el fondo natural (gradiente + orbs azules), igual que la zona de la barra de estado arriba del header. **NO agregar** `html::after` de vuelta. **NO** cambiar `bottom` del `.tabs` a `0` ni agregar `margin-bottom: 0` — convierte la píldora en rectángulo pegado. **NO** cambiar `border-radius` a `32px 32px 0 0`. Diseño estable. |
 | v143 | **Recuperación de versiones perdidas:** un force-push reescribió `master` hacia atrás (v142→v138) y se perdieron v140-142 (perfil iOS, asistente, OG dedup, `jcenter`→`mavenCentral`). Recuperado vía `git reflog` (commit `977ce3e`) y fusionado con el linaje del fix de barra inferior — eran ortogonales salvo los 3 archivos de versión. Lección: **nunca force-push a `master`**; si hay divergencia, fusionar por archivo (`git checkout <commit> -- <archivos>`), no resetear. El refinamiento de perfil v140 puso el hint del avatar en `var(--accent)` (#5b86e5, ~3:1 sobre claro, reprueba AA) → corregido a `var(--accent-deep)` sin opacity. |
+| v318 | **Placeholder filtrado + calibración de tono (no pegar fluff a lo factual).** (1) `"Procesando acción..."` es un placeholder INTERNO de acciones del agente que se filtraba al chat: una pregunta ("¿qué incluye el sueldo base?") se misclasificaba como `configurar_salario` (acción) y, sin monto, no generaba `execute` → el placeholder quedaba como respuesta. Fix en `_aiDispatchNLP`: el branch de salario distingue **comando con monto** (ejecuta SET_SALARY), **comando sin monto** (pide el valor) y **pregunta** (explica el concepto: salario ordinario bruto, base del valor hora ÷240). Guard defensivo en `_polish` de `aiAnswer`: nunca mostrar "Procesando acción..." salvo respuesta con `execute` legítimo. (2) **Tono:** el saludo de bienvenida (`aiMemoryOnFirstMessage`) y el mensaje de hora crítica (`aiPsychMensajePorHora`, que ASUME que estás trabajando: "pasaste la noche") se pegaban a respuestas factuales. Calibrado: el welcome solo se computa para intents conversacionales (y no consume el flag si no aplica); el mensaje de hora solo dispara con `c.tieneActivo` o intents emocionales (bienestar/queja_fatiga/motivacion/estado_animo). Tests deterministas pasando `ahora`+`tieneActivo` (sin depender del reloj real). |
 | v317 | **Robustez por orquestación, no por cargar frases (captador de señales).** El colombiano habla rarísimo; cargar sinónimo por sinónimo no escala. En vez de eso, `_aiSignalRoute(t, ent)` (ai.js) detecta el DOMINIO por señales sueltas (plata, legal/pago-justo, bienestar/fatiga, ayuda/app, datos-por-tiempo) y devuelve un intent que un handler EXISTENTE ya responde (o 'HELP' para `aiHelpAnswer`), reusando `_aiDispatchNLP`. Corre como último recurso, ANTES del fallback genérico: si hay señal clara, responde; si no, cae a los chips de desambiguación. Cero conocimiento nuevo — orquesta los 28 módulos. **Prioridad importa:** "me pagan mal el recargo" debe ir a legal aunque tenga 'pag' (señal de plata) → el guard de pago-injusto va ANTES de la ruta de plata. **Bug de substring:** 'cansad' no matchea "cansancio" → usar raíz 'cansa'. Guards: hipotéticos ("si meto 4 noches") → null (los maneja simulación); texto sin señal → null (no inventa). Sinónimos de jerga sumados al dict (lana, saqué, junté, me van a pagar). Filosofía: pasar de "¿reconozco esta frase?" a "¿qué señales trae y qué módulo mío las atiende?". |
 | v316 | **Cierre de la microplanificación NLG (salience + referring expressions).** Completa la pipeline Reiter & Dale sobre lo de v315. (a) `aiRankFindings` (ai-reasoning.js) — salience por sorpresa: ordena hallazgos por `prioridad + min(0.9, |desvío|/100)`; el bonus acotado <1 garantiza que la prioridad entera SIEMPRE domina entre niveles (un ANOMALY=9 nunca baja de un RISK=7) y la sorpresa solo decide a IGUAL prioridad. Reemplaza el `findings.sort` plano de `aiReason`. (b) `aiReferring` (ai-enhanced.js) — referring expression generation: la 1ª mención de una fecha va completa, las repeticiones → "ese día" (preserva artículo: "del 5 de junio"→"de ese día"). Enganchado en `_polish` entre humanizar y verificar. **Nota de test:** `ai-reasoning.js` NO estaba en la lista `FILES` del smoke (su razonamiento solo se testeaba e2e) → agregado (es autocontenido en carga). Salience por prioridad ya existía; lo nuevo es el peso por sorpresa. Verdadera *aggregation* (fusionar frases) se dejó fuera: es reescritura estructural, muy riesgosa para shippear sin más red de tests. |
 | v315 | **Más "inteligencia" = sumar capas, no podar (Reiter & Dale + self-refine anclado).** El razonamiento ya existía (`aiReason`, loop `Tool→Collect→Reason→Generate→Validate`) pero (1) `aiThink` se usaba para **apagar** módulos (`skipModules`) en vez de planear, y (2) la lexicalización (`aiHumanizar`) y el diccionario de sinónimos (`ai-synonyms.js`) estaban infrautilizados — el dict solo se usaba para ENTENDER la entrada, nunca para variar la SALIDA. **Fix aditivo:** (a) `_AI_HUM_DOMAIN_SYN` — sinónimos de dominio curados para salida (turno→jornada/guardia, plata→lucas) fusionados en `_AI_HUM_SYN` sin pisar claves; **se varían sustantivos referenciales, NUNCA verbos factuales** (trabajaste/ganaste se quedan literales: en un recap de datos manda la precisión, y dos tests ya dependían de eso). (b) `aiVerifyNumbers` — self-refine **append-only** anclado al oráculo `doCalc`: verifica solo el claim canónico "llevás $X" contra `truth.totalCOP` y anexa corrección si no cuadra; deliberadamente NO toca cifras por turno/ley/simulación (cero falsos positivos). Enganchado una sola vez en `_polish` de `aiAnswer` (cubre todas las rutas, resuelve la Promise). **Lección:** la auto-corrección sin ground-truth degrada (TACL 2024) — acá es segura porque el oráculo es la tabla real. Verificar SIEMPRE con `npm run test:coverage` que la mejora no "limite/desconecte" (el error histórico). |

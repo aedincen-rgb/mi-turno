@@ -230,9 +230,21 @@ function aiPsychRespond(c, intent) {
   var parts = [];
   var ahora = c.ahora || new Date();
 
-  // 1. Mensaje por hora crítica (si aplica)
-  var horaMsg = aiPsychMensajePorHora(ahora, c);
-  if (horaMsg) parts.push('\n\n🕐 ' + horaMsg);
+  // 1. Mensaje por hora crítica — SOLO si viene al caso. Los textos asumen
+  //    que estás trabajando ("pasaste la noche", "tu turno"), así que solo
+  //    aplican con turno activo o cuando la charla es emocional/de bienestar.
+  //    Pegarlo a una consulta factual ("qué incluye el sueldo base") a las
+  //    6 AM sin turno activo se siente robótico y fuera de contexto.
+  var _horaOk =
+    !!c.tieneActivo ||
+    intent === 'bienestar' ||
+    intent === 'queja_fatiga' ||
+    intent === 'motivacion' ||
+    intent === 'estado_animo';
+  if (_horaOk) {
+    var horaMsg = aiPsychMensajePorHora(ahora, c);
+    if (horaMsg) parts.push('\n\n🕐 ' + horaMsg);
+  }
 
   // 2. Framing positivo de números (en respuestas de dinero o tiempo trabajado).
   // Ocasional y sin repetir el anterior: si aparece en cada respuesta cansa
