@@ -2712,6 +2712,198 @@ function _aiDesprendibleIntent(q, t, c, state) {
   };
 }
 
+// Captador de señales: dado el texto normalizado (sin tildes) y las entidades
+// ya extraídas, infiere el DOMINIO por señales sueltas y devuelve un intent
+// que _aiDispatchNLP sabe responder, 'HELP' (para aiHelpAnswer) o null. Es
+// PURO y testeable. Corre solo como último recurso (clasificación fallida).
+// Prioridad: hipotético→skip · ayuda/app · plata/datos · legal · bienestar ·
+// datos por tiempo. La idea: dejar de preguntar "¿reconozco esta frase?" y
+// pasar a "¿qué señales trae y qué módulo mío las atiende?".
+function _aiSignalRoute(t, ent) {
+  if (!t) return null;
+  ent = ent || {};
+
+  // Hipotéticos: los maneja la simulación, no el salvataje.
+  if (_aiHas(t, 'si trabajo', 'si hago', 'si meto', 'si trabajara', 'cuanto gano si', 'simul')) {
+    return null;
+  }
+
+  // 1) Ayuda / cómo usar / errores de la app.
+  if (
+    _aiHas(
+      t,
+      'no funciona',
+      'no guarda',
+      'no carga',
+      'no aparece',
+      'no me deja',
+      'error',
+      'se traba',
+      'se cierra',
+      'bug'
+    ) ||
+    (_aiHas(t, 'como ', 'donde ', 'no se como', 'no encuentro', 'no se donde') &&
+      _aiHas(
+        t,
+        'registr',
+        'export',
+        'cambi',
+        'configur',
+        'pin',
+        'foto',
+        'contrasen',
+        'clave',
+        'turno',
+        'salario',
+        'cuenta',
+        'correo',
+        'respald',
+        'backup',
+        'borr',
+        'edit'
+      ))
+  ) {
+    return 'HELP';
+  }
+
+  // Pago INJUSTO → legal, aunque mencione "pagar" (gana a la ruta de plata).
+  if (
+    _aiHas(
+      t,
+      'pagan mal',
+      'pagando mal',
+      'me pagan poco',
+      'me roban',
+      'me explota',
+      'es justo',
+      'no me pagan bien',
+      'me estan pagando',
+      'pagar mal'
+    )
+  ) {
+    return 'ley';
+  }
+
+  var _money =
+    _aiHas(
+      t,
+      'plata',
+      'dinero',
+      'lana',
+      'gane',
+      'gano',
+      'ganar',
+      'cobr',
+      'sueld',
+      'salari',
+      'pag',
+      'llev',
+      'saqu',
+      'junt',
+      'ingreso',
+      'factur',
+      'embols',
+      'cuanto me hice',
+      'cuanto me queda',
+      'platica',
+      'lucas'
+    ) || !!ent.money;
+  var _pregunta = _aiHas(t, 'cuanto', 'cuanta', 'cuant');
+
+  // 2) Plata / datos económicos (con anclaje temporal si existe).
+  if (_money || _pregunta) {
+    if (ent.timeRelative === 'ayer' || _aiHas(t, 'ayer', 'anoche', 'antier', 'anteayer'))
+      return 'ayer';
+    if (ent.timeRelative === 'hoy' || _aiHas(t, ' hoy ', 'hoy?', 'de hoy', 'llevo hoy'))
+      return 'hoy';
+    if (
+      _aiHas(
+        t,
+        'van a pagar',
+        'voy a ganar',
+        'al cierre',
+        'al final',
+        'proyec',
+        'terminar el mes',
+        'fin de mes',
+        'voy a terminar'
+      )
+    )
+      return 'proyeccion';
+    if (
+      ent.timeRelative === 'mes_pasado' ||
+      _aiHas(t, 'mes pasado', 'mes anterior', 'comparar mes', 'vs el mes')
+    )
+      return 'comparativa_mes';
+    if (_aiHas(t, 'cuantas horas', 'horas trabaj', 'horas llevo', 'horas hice'))
+      return 'horas_trabajadas';
+    if (_money) return 'total_ganado';
+  }
+
+  // 3) Legal / pago justo / recargos.
+  if (_aiHas(t, 'vale la hora', 'cuanto vale la hora', 'valor de la hora', 'valor hora'))
+    return 'valor_hora';
+  if (
+    _aiHas(
+      t,
+      'recargo',
+      'nocturn',
+      'dominical',
+      'hora extra',
+      'horas extra',
+      'ley',
+      'derecho',
+      'legal',
+      'me explota',
+      'me roban',
+      'me pagan mal',
+      'es justo',
+      'normativa',
+      'codigo sustantivo',
+      'me estan pagando'
+    )
+  ) {
+    return 'ley';
+  }
+
+  // 4) Bienestar / fatiga (emocional, sin pregunta de datos).
+  if (
+    _aiHas(
+      t,
+      'cansa',
+      'agotad',
+      'rendid',
+      'revent',
+      'quemad',
+      'no doy mas',
+      'no puedo mas',
+      'harto',
+      'estres',
+      'dormir',
+      'sueno',
+      'descans',
+      'fatiga',
+      'burnout',
+      'explotad',
+      'muerto',
+      'no aguanto'
+    )
+  ) {
+    if (_aiHas(t, 'no doy mas', 'no puedo mas', 'no aguanto', 'explotad', 'harto'))
+      return 'queja_fatiga';
+    return 'bienestar';
+  }
+
+  // 5) Datos por tiempo / patrón (sin plata explícita).
+  if (_aiHas(t, 'racha')) return 'racha';
+  if (_aiHas(t, 'mejor dia')) return 'mejor_dia';
+  if (_aiHas(t, 'peor dia')) return 'peor_dia';
+  if (_aiHas(t, 'festiv')) return 'festivos';
+  if (_aiHas(t, 'semana')) return 'comparativa_semana';
+
+  return null;
+}
+
 function _aiAnswerCore(question, state) {
   var q = question.toLowerCase().trim();
   var t = _aiNorm(question);
@@ -4643,6 +4835,44 @@ function _aiAnswerCore(question, state) {
       text: emailAction.preview,
       action: { type: 'email_compose', data: emailAction.data }
     };
+  }
+
+  // ════════════════════════════════════════════════════════════
+  //  CAPTADOR DE SEÑALES MULTI-DOMINIO (pensar con lo que ya hay)
+  // ════════════════════════════════════════════════════════════
+  // El colombiano habla rarísimo: no alcanza con cargar frase por frase.
+  // Cuando el clasificador no se decidió, _aiSignalRoute infiere el DOMINIO
+  // por señales (plata, legal, bienestar, ayuda, tiempo) — no por frases
+  // exactas — y devuelve un intent que un handler EXISTENTE ya sabe
+  // responder (o 'HELP' para aiHelpAnswer). No agrega conocimiento: orquesta
+  // los 28 módulos que ya hay antes de rendirse al fallback genérico.
+  if (!_esSlash) {
+    var _sig = _aiSignalRoute(t, _entities);
+    if (_sig === 'HELP') {
+      var _helpResp = typeof aiHelpAnswer === 'function' ? aiHelpAnswer(q) : null;
+      if (_helpResp) return _helpResp;
+      _sig = 'capacidades';
+    }
+    if (_sig) {
+      var _sigTopic = typeof _aiIntentTopic === 'function' ? _aiIntentTopic(_sig) : 'general';
+      var _sigResp = _aiDispatchNLP(_sig, c, state, q, t);
+      if (_sigResp) {
+        if (typeof aiUpdateConversation === 'function') aiUpdateConversation(_sig, _sigTopic);
+        if (typeof aiEnhancedRespond === 'function') {
+          var _sigEnriched = aiEnhancedRespond(
+            _sigResp,
+            _sig,
+            _sigTopic,
+            q,
+            c,
+            null,
+            state.turnosAll
+          );
+          if (_sigEnriched && _sigEnriched.text) return _sigEnriched;
+        }
+        return _sigResp;
+      }
+    }
   }
 
   // ════════════════════════════════════════════════════════════

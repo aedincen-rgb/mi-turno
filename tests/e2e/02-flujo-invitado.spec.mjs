@@ -14,6 +14,8 @@
 
 import { test, expect } from '@playwright/test';
 
+const APP_PATH = '/app.html';
+
 // Auto-skip si el entorno no puede llegar a la CDN de React.
 // El environment de Claude Code on the web bloquea cdnjs.cloudflare.com,
 // así que estos tests funcionales solo corren en CI (red abierta).
@@ -36,7 +38,7 @@ test.beforeAll(async ({ request }) => {
 async function bootAsGuest(page) {
   // Necesitamos un origin antes de poder escribir en localStorage,
   // así que primero hacemos una nav y después seteamos + reload.
-  await page.goto('/');
+  await page.goto(APP_PATH);
   await page.evaluate(() => {
     const guestSession = {
       uid: 'guest_test_e2e',
@@ -49,7 +51,10 @@ async function bootAsGuest(page) {
     // Marcar el onboarding como visto: su tooltip flota sobre el botón
     // de acción y en webkit-iphone interceptaba el click. Este spec no
     // prueba el onboarding, así que lo sacamos del medio.
+    localStorage.setItem('mt_onboarding_done', '1');
     localStorage.setItem('mt_ob_done', 'true');
+    localStorage.setItem('mt_sc_' + guestSession.uid, JSON.stringify(true));
+    localStorage.setItem('mt_s_' + guestSession.uid, JSON.stringify(2000000));
   });
   await page.reload();
   // App montada cuando MT_APP_VERSION existe
@@ -77,8 +82,8 @@ test('iniciar y parar turno actualiza localStorage', async ({ page }) => {
   // No hay turno activo aún
   expect(await getActivoFromStorage(page), 'sin turno al inicio').toBeNull();
 
-  // Click el botón principal (action-btn). Es el único de su clase.
-  const actionBtn = page.locator('button.action-btn');
+  // Click el botón principal. Es el único botón de inicio/parada en Home.
+  const actionBtn = page.getByRole('button', { name: /iniciar turno|detener turno/i });
   await expect(actionBtn).toBeVisible({ timeout: 10_000 });
   // Invocamos el handler directamente (el.click()): el botón tiene una
   // animación CSS continua y, en webkit-iphone, el click por coordenadas
@@ -91,8 +96,8 @@ test('iniciar y parar turno actualiza localStorage', async ({ page }) => {
     { message: 'turno activo debe aparecer tras click', timeout: 5_000 }
   ).not.toBeNull();
 
-  // La clase del botón cambia a action-btn-stop (parar)
-  await expect(actionBtn).toHaveClass(/action-btn-stop/, { timeout: 3_000 });
+  // La clase del botón cambia a start-card--stop (parar)
+  await expect(actionBtn).toHaveClass(/start-card--stop/, { timeout: 3_000 });
 
   // Damos 1.5s antes de parar (el código descarta turnos < 60s, pero
   // el cambio de estado en localStorage es lo que importa acá)
@@ -107,13 +112,13 @@ test('iniciar y parar turno actualiza localStorage', async ({ page }) => {
     async () => await getActivoFromStorage(page),
     { message: 'activo debe limpiarse tras click', timeout: 5_000 }
   ).toBeNull();
-  await expect(actionBtn).toHaveClass(/action-btn-go/, { timeout: 3_000 });
+  await expect(actionBtn).toHaveClass(/start-card--go/, { timeout: 3_000 });
 });
 
 test('turno activo persiste a través de un reload', async ({ page }) => {
   await bootAsGuest(page);
 
-  const actionBtn = page.locator('button.action-btn');
+  const actionBtn = page.getByRole('button', { name: /iniciar turno|detener turno/i });
   await expect(actionBtn).toBeVisible({ timeout: 10_000 });
   // Invocamos el handler directamente (el.click()): el botón tiene una
   // animación CSS continua y, en webkit-iphone, el click por coordenadas
@@ -142,7 +147,7 @@ test('turno activo persiste a través de un reload', async ({ page }) => {
   expect(activoDespues.inicio, 'mismo inicio').toBe(activoAntes.inicio);
 
   // El botón también refleja el estado "stop"
-  await expect(page.locator('button.action-btn')).toHaveClass(/action-btn-stop/, {
+  await expect(page.getByRole('button', { name: /detener turno/i })).toHaveClass(/start-card--stop/, {
     timeout: 5_000
   });
 });

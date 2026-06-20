@@ -7,12 +7,14 @@
 
 import { test, expect } from '@playwright/test';
 
-test('GET / responde 200 y contiene #root', async ({ page, request, baseURL }) => {
+const APP_PATH = '/app.html';
+
+test('GET /app.html responde 200 y contiene #root', async ({ page, request, baseURL }) => {
   console.log('[TEST] baseURL =', baseURL);
 
   // Primero: el server responde a HTTP directo (sin renderizar).
-  const res = await request.get('/');
-  console.log('[TEST] GET / status =', res.status());
+  const res = await request.get(APP_PATH);
+  console.log('[TEST] GET ' + APP_PATH + ' status =', res.status());
   expect(res.status()).toBeLessThan(400);
 
   const html = await res.text();
@@ -21,7 +23,7 @@ test('GET / responde 200 y contiene #root', async ({ page, request, baseURL }) =
   expect(html).toContain('id="initSplash"');
 
   // Segundo: la página navega sin errores.
-  const navRes = await page.goto('/', { waitUntil: 'domcontentloaded' });
+  const navRes = await page.goto(APP_PATH, { waitUntil: 'domcontentloaded' });
   console.log('[TEST] page.goto status =', navRes?.status());
   expect(navRes?.status()).toBeLessThan(400);
 

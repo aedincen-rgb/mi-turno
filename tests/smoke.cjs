@@ -1952,6 +1952,65 @@ group('ai-enhanced: expresiones referenciales (aiReferring)');
     'texto sin fechas queda igual');
 })();
 
+group('ai-nlp: comprensión de jerga de plata (lana, saqué, junté)');
+(function () {
+  if (typeof w.aiClassifyIntent !== 'function') { truthy(false, 'aiClassifyIntent existe'); return; }
+  eq((w.aiClassifyIntent('cuanta lana hice este mes') || {}).intent, 'total_ganado',
+    '"lana" se entiende como dinero → total ganado');
+  eq((w.aiClassifyIntent('cuanto saque ayer') || {}).intent, 'ayer',
+    '"saqué" (= gané) + ayer → intent ayer');
+  var rj = w.aiClassifyIntent('cuanta lana junte') || {};
+  truthy(rj.intent === 'total_ganado' || rj.topic === 'dinero',
+    '"lana junté" rutea a dinero (antes caía en motivación)');
+  // No rompe lo que ya andaba: "plata" sigue siendo dinero
+  var rp = w.aiClassifyIntent('cuanta plata llevo') || {};
+  truthy(rp.intent === 'total_ganado' || rp.topic === 'dinero',
+    'regresión: "plata" sigue entendiéndose como dinero');
+})();
+
+group('ai-nlp: captador de señales multi-dominio (_aiSignalRoute, puro)');
+(function () {
+  if (typeof w._aiSignalRoute !== 'function') { truthy(false, '_aiSignalRoute existe'); return; }
+  var SR = w._aiSignalRoute;
+  // Plata + tiempo
+  eq(SR('cuanto saque ayer', {}), 'ayer', 'plata + ayer → intent ayer');
+  eq(SR('en cuanto voy a terminar el mes', {}), 'proyeccion', 'futuro → proyección');
+  eq(SR('uy la lana que junte por ahi', {}), 'total_ganado', 'jerga de plata → total ganado');
+  // Legal / pago justo
+  eq(SR('cuanto vale la hora nocturna', {}), 'valor_hora', '"vale la hora" → valor_hora');
+  eq(SR('siento que me estan pagando mal el recargo', {}), 'ley', 'pago injusto/recargo → ley');
+  // Bienestar
+  eq(SR('estoy reventado no doy mas', {}), 'queja_fatiga', 'queja fuerte → queja_fatiga');
+  eq(SR('uf que cansancio', {}), 'bienestar', 'cansancio → bienestar');
+  // Ayuda / app
+  eq(SR('como exporto mis turnos a pdf', {}), 'HELP', 'cómo + acción de app → HELP');
+  eq(SR('la app no guarda nada', {}), 'HELP', 'error de la app → HELP');
+  // Datos por tiempo
+  eq(SR('como va mi racha', {}), 'racha', '"racha" → racha');
+  eq(SR('proximos festivos', {}), 'festivos', '"festivos" → festivos');
+  // Guards: no secuestrar ni inventar
+  eq(SR('cuanto gano si meto 4 noches', {}), null, 'guard: hipotético → null (lo maneja simulación)');
+  eq(SR('hola que tal todo', {}), null, 'guard: saludo sin señal → null (cae a desambiguación/fallback)');
+  eq(SR('', {}), null, 'guard: vacío → null');
+})();
+
+group('ai-nlp: el captador evita el fallback genérico (e2e)');
+(function () {
+  function answered(q) {
+    var r = respText(w.aiAnswer(q, _stMeta));
+    return !!r && r.indexOf('No estoy seguro') < 0 && r.indexOf('No estoy 100') < 0 && r.length > 0;
+  }
+  ['cuánto me van a pagar', 'uy y la platica que junté por ahí', 'me estan pagando mal',
+   'uf parce qué cansancio', 'cómo exporto a excel'].forEach(function (q) {
+    w.aiResetConv();
+    truthy(answered(q), 'responde de verdad (no fallback): "' + q + '"');
+  });
+  // Degradación con gracia
+  w.aiResetConv();
+  truthy(typeof respText(w.aiAnswer('asdfghjk qwerty', _stMeta)) === 'string',
+    'guard: texto sin señales no rompe el pipeline');
+})();
+
 // ── hashPassword / verifyPassword (PBKDF2 + salt, v49) ──────────
 group('password-hash (PBKDF2 con salt)');
 (async function () {

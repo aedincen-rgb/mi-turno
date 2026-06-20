@@ -9,9 +9,32 @@
 // ════════════════════════════════════════════════════════════════
 
 import { defineConfig, devices } from '@playwright/test';
+import fs from 'node:fs';
 
 const PORT = 8123; // distinto al 8000 del dev server para no colisionar
 const BASE_URL = `http://127.0.0.1:${PORT}`;
+
+function findChrome() {
+  const snapChrome = '/snap/chromium/current/usr/lib/chromium-browser/chrome';
+  if (fs.existsSync(snapChrome)) return snapChrome;
+
+  const base = `${process.env.HOME}/.cache/ms-playwright`;
+  try {
+    const dirs = fs
+      .readdirSync(base)
+      .filter((d) => d.indexOf('chromium-') === 0 && d.indexOf('headless') < 0);
+    for (const d of dirs) {
+      const chromeLinux64 = `${base}/${d}/chrome-linux64/chrome`;
+      if (fs.existsSync(chromeLinux64)) return chromeLinux64;
+      const chromeLinux = `${base}/${d}/chrome-linux/chrome`;
+      if (fs.existsSync(chromeLinux)) return chromeLinux;
+    }
+  } catch (_) {}
+
+  return undefined;
+}
+
+const chromiumExecutablePath = findChrome();
 
 export default defineConfig({
   testDir: './tests/e2e',
@@ -49,10 +72,11 @@ export default defineConfig({
         ...devices['Desktop Chrome'],
         viewport: { width: 1280, height: 800 },
         // Usar chromium snap del sistema porque ubuntu 26.04 no tiene
-        // builds oficiales de Playwright todavía (jun 2026).
+        // builds oficiales de Playwright todavía (jun 2026). Si snap no
+        // existe, usar el Chromium instalado por Playwright.
         // --headless=old fuerza el modo clásico sin headless_shell separado.
         launchOptions: {
-          executablePath: '/snap/chromium/current/usr/lib/chromium-browser/chrome',
+          ...(chromiumExecutablePath ? { executablePath: chromiumExecutablePath } : {}),
           args: ['--headless=old', '--no-sandbox']
         }
       }
