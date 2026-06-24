@@ -2148,12 +2148,15 @@
   justify-content: center;
   background: var(--surface2);
   color: var(--accent);
-  font-weight: 800;
+  font-size: 15px;
+  line-height: 1;
+  font-weight: 600;
 }
 
 .asistente-menu-item.featured .asistente-menu-icon {
   background: linear-gradient(135deg, var(--accent2), var(--accent));
   color: #fff;
+  font-size: 17px;
   box-shadow: 0 8px 20px var(--accent-glow);
 }
 
