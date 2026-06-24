@@ -8,6 +8,12 @@
       <stop offset="100%" stop-color="#D2E4F8"/>
     </linearGradient>
 
+    <!-- ── Brillo de vidrio superior del fondo ── -->
+    <linearGradient id="g-glass" x1="256" y1="6" x2="256" y2="300" gradientUnits="userSpaceOnUse">
+      <stop offset="0%"   stop-color="rgba(255,255,255,0.55)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+    </linearGradient>
+
     <!-- ── Letras: azul claro → azul vivo → azul profundo ── -->
     <linearGradient id="g-ltr" x1="256" y1="55" x2="256" y2="425" gradientUnits="userSpaceOnUse">
       <stop offset="0%"   stop-color="#B4D0FF"/>
@@ -31,46 +37,59 @@
     </linearGradient>
 
   </defs>
+
   <!-- ════════════════════════════════════════════
-       Letras "mi" con efecto de volumen/vidrio
-       Stroke path = trazo esquelético de cada letra
-       con stroke-width grueso y extremos redondeados
+       Fondo squircle helado (full-bleed, iOS redondea
+       las esquinas; el favicon lo muestra como badge)
        ════════════════════════════════════════════ -->
-  <!-- Letras base (sin sombra, dibujadas encima) -->
-  <path
-    d="M 96,422 L 96,182
-       C 96,93  196,93  196,182 L 196,422
-       M 196,422 L 196,182
-       C 196,93  296,93  296,182 L 296,422"
-    fill="none" stroke="url(#g-ltr)" stroke-width="86"
-    stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="6" y="6" width="500" height="500" rx="116" fill="url(#g-bg)"/>
+  <rect x="6" y="6" width="500" height="500" rx="116" fill="url(#g-glass)"/>
+  <rect x="7.5" y="7.5" width="497" height="497" rx="114.5" fill="none" stroke="url(#g-bd)" stroke-width="3"/>
+  <circle cx="430" cy="94" r="19" fill="rgba(255,255,255,0.5)"/>
 
-  <line x1="398" y1="182" x2="398" y2="422"
-    stroke="url(#g-ltr)" stroke-width="86" stroke-linecap="round"/>
+  <!-- ════════════════════════════════════════════
+       Letras "mi" — escaladas a 0.70 para dejar aire
+       alrededor; el trazo de 86 queda en ~60 efectivo
+       (más fino, ya no se ve "gordo")
+       ════════════════════════════════════════════ -->
+  <g transform="translate(75.05,94.85) scale(0.70)">
 
-  <circle cx="418" cy="70" r="46" fill="url(#g-ltr)"/>
+    <!-- Letras base -->
+    <path
+      d="M 96,422 L 96,182
+         C 96,93  196,93  196,182 L 196,422
+         M 196,422 L 196,182
+         C 196,93  296,93  296,182 L 296,422"
+      fill="none" stroke="url(#g-ltr)" stroke-width="86"
+      stroke-linecap="round" stroke-linejoin="round"/>
 
-  <!-- ── Brillo especular encima de las letras ── -->
-  <!-- Capa blanca semi-transparente que crea el efecto "inflado"/vidrio -->
-  <path
-    d="M 96,422 L 96,182
-       C 96,93  196,93  196,182 L 196,422
-       M 196,422 L 196,182
-       C 196,93  296,93  296,182 L 296,422"
-    fill="none" stroke="url(#g-hi)" stroke-width="86"
-    stroke-linecap="round" stroke-linejoin="round"/>
+    <line x1="398" y1="182" x2="398" y2="422"
+      stroke="url(#g-ltr)" stroke-width="86" stroke-linecap="round"/>
 
-  <line x1="398" y1="182" x2="398" y2="248"
-    stroke="url(#g-hi)" stroke-width="86" stroke-linecap="round"/>
+    <circle cx="418" cy="70" r="46" fill="url(#g-ltr)"/>
 
-  <circle cx="418" cy="70" r="46" fill="url(#g-hi)"/>
+    <!-- ── Brillo especular encima de las letras (efecto vidrio) ── -->
+    <path
+      d="M 96,422 L 96,182
+         C 96,93  196,93  196,182 L 196,422
+         M 196,422 L 196,182
+         C 196,93  296,93  296,182 L 296,422"
+      fill="none" stroke="url(#g-hi)" stroke-width="86"
+      stroke-linecap="round" stroke-linejoin="round"/>
 
-  <!-- Destello brillante dentro de cada arco del "m" (punto de luz en el vértice) -->
-  <path d="M 113,180 C 113,106 196,106 196,180"
-    fill="none" stroke="rgba(255,255,255,0.32)" stroke-width="22" stroke-linecap="round"/>
-  <path d="M 196,180 C 196,106 279,106 279,180"
-    fill="none" stroke="rgba(255,255,255,0.32)" stroke-width="22" stroke-linecap="round"/>
+    <line x1="398" y1="182" x2="398" y2="248"
+      stroke="url(#g-hi)" stroke-width="86" stroke-linecap="round"/>
 
-  <!-- Pequeño destello en el punto del "i" -->
-  <circle cx="406" cy="57" r="16" fill="rgba(255,255,255,0.42)"/>
+    <circle cx="418" cy="70" r="46" fill="url(#g-hi)"/>
+
+    <!-- Destello en el vértice de cada arco del "m" -->
+    <path d="M 113,180 C 113,106 196,106 196,180"
+      fill="none" stroke="rgba(255,255,255,0.32)" stroke-width="22" stroke-linecap="round"/>
+    <path d="M 196,180 C 196,106 279,106 279,180"
+      fill="none" stroke="rgba(255,255,255,0.32)" stroke-width="22" stroke-linecap="round"/>
+
+    <!-- Destello en el punto del "i" -->
+    <circle cx="406" cy="57" r="16" fill="rgba(255,255,255,0.42)"/>
+
+  </g>
 </svg>
