@@ -4,7 +4,7 @@
 // ════════════════════════════════════════════════════════════════
 // Versión visible de la app (mostrada en Ajustes → Acerca de).
 // Mantener sincronizada con CACHE en sw.js y "v" en version.json.
-var MT_APP_VERSION = 'v329'; // hito documentación completa v2.1
+var MT_APP_VERSION = 'v330'; // hito documentación completa v2.1
 
 // Variables globales de Supabase
 var SUPA = null;
@@ -32,6 +32,7 @@ function getHSEM(fecha) {
 var HSEM = getHSEM(new Date()); // límite de la semana actual (referencia)
 var SMIN = 1750905; // Salario mínimo Colombia 2026 (Decretos 1469-1470 dic 2025)
 var AUX_TRANSPORTE_2026 = 249095; // Auxilio de transporte fijo 2026 (Decreto 1470 dic 2025)
+var UVT_2026 = 52374; // Unidad de Valor Tributario 2026 (Resolución DIAN 000238 dic 2025)
 var PRESTACIONES_PCT = 0.218; // Aproximado: cesantías (8.33%) + prima (8.33%) + vacaciones (4.17%) + intereses cesantías (~1%)
 var U12H = 12 * 3600000; // 12 horas en milisegundos
 var SKEY = 'mt_session'; // Clave para la sesión en localStorage

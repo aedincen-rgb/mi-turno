@@ -80,6 +80,21 @@ function aiAdvisorLiquidacion(c) {
   resp +=
     '💡 Las cesantías se consignan antes del 15 de febrero del año siguiente. La prima se paga la mitad en junio y la otra en diciembre. Las vacaciones se disfrutan, no se compensan en dinero (salvo terminación del contrato).';
 
+  // Insight clave para quien trabaja por turnos: los recargos HABITUALES
+  // (nocturno, dominical, festivo) integran el salario para liquidar
+  // prestaciones (salario variable, CST Art. 127). Un error común —y costoso—
+  // es que el empleador liquide cesantías/prima solo sobre el básico.
+  if (c.totalCOP && c.salario && c.totalCOP > c.salario * 1.05) {
+    var promedio = c.totalCOP; // devengado real del mes (incluye recargos)
+    resp +=
+      '\n\n⚖️ **Ojo con tu base de prestaciones:** este mes devengaste **' +
+      fCOP(promedio) +
+      '** (con recargos), no solo tu básico de **' +
+      fCOP(sal) +
+      '**. Tus recargos habituales **cuentan para la base** de cesantías y prima (salario variable, CST Art. 127). ' +
+      'Si te las liquidan solo sobre el básico, te están pagando de menos: preguntá con qué salario promedio te las calculan.';
+  }
+
   return resp;
 }
 
@@ -273,14 +288,19 @@ function aiAdvisorFiscal(c) {
 
   var resp = '📊 **Análisis fiscal**\n\n';
 
-  // Retención en la fuente (simplificado)
-  var uvtAnual = 47065 * 365; // UVT aproximado 2026 (~$47,065)
-  var enRenta = ingresoTotal > (uvtAnual * 1400) / 365;
+  // Declaración de renta: obligado si los ingresos brutos anuales superan
+  // 1.400 UVT (Art. 592 ET). UVT 2026 = $52.374 (Resolución DIAN 000238/2025).
+  var uvt = typeof UVT_2026 === 'number' ? UVT_2026 : 52374;
+  var topeRenta = 1400 * uvt; // ~$73,3M
+  var enRenta = ingresoTotal > topeRenta;
 
   resp += '• Ingreso anual estimado: ' + fCOP(ingresoTotal) + '\n';
+  resp += '• Tope para declarar (1.400 UVT): ' + fCOP(topeRenta) + '\n';
   resp +=
     '• ¿Debe declarar renta?: ' +
-    (enRenta ? 'Posiblemente (supera topes)' : 'No (por debajo de topes)') +
+    (enRenta
+      ? 'Posiblemente sí — superás el tope de ingresos'
+      : 'No por ingresos (revisá igual patrimonio y consumos)') +
     '\n\n';
 
   resp += '**Deducciones estimadas:**\n';
@@ -289,7 +309,10 @@ function aiAdvisorFiscal(c) {
   resp += '• Total deducible: ' + fCOP(c.totalCOP * 0.08 * 12) + '/año\n\n';
 
   resp +=
-    '💡 Los aportes a salud y pensión son deducibles de la base de retención. Si ganás menos de 2 SMMLV, no te retienen. Si tu empleador no te está afiliando, exigilo — es tu derecho.';
+    '💡 Los aportes a salud y pensión son deducibles de la base de retención. Si ganás menos de 2 SMMLV, no te retienen. Si tu empleador no te está afiliando, exigilo — es tu derecho.\n\n' +
+    'También declarás si tu patrimonio bruto supera 4.500 UVT (' +
+    fCOP(4500 * uvt) +
+    ') o tus consumos/consignaciones pasan de 1.400 UVT.';
 
   return resp;
 }
@@ -894,16 +917,22 @@ function aiAuditarPago(c, montoPagado, periodoLabel) {
   }
   var recargosTotal = owed - (minsTot / 60) * vh;
 
+  var _Dh = c.ahora || new Date();
+  var _domPct = Math.round(getRecargoFestivo(_Dh) * 100); // 80 hoy (Ley 2466/2025)
   function lineasRecargos() {
     var filas = [];
     if (noctPrem > 1) {
       filas.push(
-        '| 🌙 Recargo nocturno +35% | CST Art. 168 | ' + fCOP(Math.round(noctPrem)) + ' |'
+        '| 🌙 Recargo nocturno +35% | CST Art. 168 · Ley 2466/2025 | ' +
+          fCOP(Math.round(noctPrem)) +
+          ' |'
       );
     }
     if (festPrem > 1) {
       filas.push(
-        '| ⛪ Recargo dominical/festivo +75% | CST Art. 179-180 | ' +
+        '| ⛪ Recargo dominical/festivo +' +
+          _domPct +
+          '% | CST Art. 179-180 · Ley 2466/2025 | ' +
           fCOP(Math.round(festPrem)) +
           ' |'
       );
@@ -1006,13 +1035,24 @@ function aiOptimizarProximo(c) {
   }
   var dias = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
 
+  var _Do = c.ahora || new Date();
+  var _fNoctFest = rcFactor('noctFest', _Do); // 2.15 hoy (Ley 2466/2025)
+  var _fDiurFest = rcFactor('diurnaFest', _Do); // 1.80 hoy
   var lineas = [
     '💰 **Qué turno te rinde más** (8h, tu hora vale ' + fCOP(vh) + '):',
     '',
     '| Turno | Pago | Factor |',
     '|---|---|---|',
-    '| 🌙⛪ Domingo/festivo noche | **' + fCOP(t8(2.1)) + '** | 2.1x |',
-    '| ⛪ Domingo/festivo día | **' + fCOP(t8(1.75)) + '** | 1.75x |',
+    '| 🌙⛪ Domingo/festivo noche | **' +
+      fCOP(t8(_fNoctFest)) +
+      '** | ' +
+      _fNoctFest.toFixed(2) +
+      'x |',
+    '| ⛪ Domingo/festivo día | **' +
+      fCOP(t8(_fDiurFest)) +
+      '** | ' +
+      _fDiurFest.toFixed(2) +
+      'x |',
     '| 🌙 Noche entre semana | **' + fCOP(t8(1.35)) + '** | 1.35x |'
   ];
 

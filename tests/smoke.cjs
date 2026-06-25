@@ -1210,6 +1210,21 @@ group('ai: calculadoras usan tablas (v303)');
     var rL = w.aiAdvisorLiquidacion(cCalc);
     truthy(rL.indexOf('| Concepto | Valor |') >= 0, 'liquidación: devengado/prestaciones en tabla');
     truthy(rL.indexOf('Neto a recibir') >= 0, 'liquidación: conserva el neto');
+    // Insight Tier 1: los recargos habituales integran la base de prestaciones
+    // (salario variable, CST Art. 127). Aparece SOLO si el devengado supera el
+    // básico — es el aviso que protege a quien le liquidan solo sobre el básico.
+    var rLalto = w.aiAdvisorLiquidacion({
+      vh: 10000, totalCOP: 3000000, salario: 2000000, diasTrab: 20, bd: {}
+    });
+    truthy(rLalto.indexOf('base de prestaciones') >= 0,
+           'liquidación: avisa que los recargos cuentan para la base de prestaciones');
+    truthy(rLalto.indexOf('Art. 127') >= 0,
+           'liquidación: cita el CST Art. 127 (salario variable)');
+    var rLigual = w.aiAdvisorLiquidacion({
+      vh: 10000, totalCOP: 2000000, salario: 2000000, diasTrab: 20, bd: {}
+    });
+    truthy(rLigual.indexOf('base de prestaciones') < 0,
+           'liquidación: sin recargos (devengado = básico) NO mete el aviso');
   }
   // 2) Simulador
   if (typeof w.aiAdvisorSimular === 'function') {
@@ -1306,9 +1321,10 @@ group('ai: optimizador de ingresos predictivo (v299)');
   };
   var r = w.aiOptimizarProximo(cOpt);
   truthy(r.indexOf('rinde más') >= 0, 'lidera con qué turno rinde más');
-  // 8h a 2.1x con vh 10000 = 168.000 (top del ranking)
-  truthy(r.indexOf(w.fCOP(Math.round(10000 * 2.1 * 8))) >= 0,
-         'muestra el valor del turno dominical/festivo nocturno (2.1x)');
+  // 8h al factor festivo nocturno VIGENTE (date-aware, Ley 2466/2025): hoy 2.15x
+  var _fnf = w.rcFactor('noctFest', new Date());
+  truthy(r.indexOf(w.fCOP(Math.round(10000 * _fnf * 8))) >= 0,
+         'muestra el valor del turno dominical/festivo nocturno (factor vigente)');
   truthy(r.indexOf('Próximo festivo') >= 0, 'señala la próxima oportunidad concreta (festivo)');
   truthy(r.indexOf('sábado') >= 0, 'personaliza con el mejor día del historial');
 
@@ -1748,10 +1764,11 @@ group('ai-advisor: análisis fiscal (deducibles + tope de renta)');
   truthy(rBajo.indexOf('Análisis fiscal') >= 0, 'titula el análisis fiscal');
   truthy(rBajo.indexOf(w.fCOP(960000)) >= 0, 'aportes salud 4% anuales = 2M×0.04×12 = 960.000');
   truthy(rBajo.indexOf(w.fCOP(1920000)) >= 0, 'total deducible 8% anual = 1.920.000');
-  truthy(rBajo.indexOf('No (por debajo') >= 0, 'ingreso bajo → no supera topes de renta');
+  truthy(rBajo.indexOf('No por ingresos') >= 0, 'ingreso bajo → no supera topes de renta');
 
-  // Ingreso alto: supera el tope (UVT 1400) → posiblemente declara
-  var rAlto = w.aiAdvisorFiscal({ salario: 6000000, totalCOP: 6000000, proy: 6000000 });
+  // Ingreso alto: supera el tope (1.400 UVT × $52.374 = ~$73,3M/año).
+  // 7M/mes × 12 = 84M > 73,3M → posiblemente declara.
+  var rAlto = w.aiAdvisorFiscal({ salario: 7000000, totalCOP: 7000000, proy: 7000000 });
   truthy(rAlto.indexOf('Posiblemente') >= 0, 'ingreso anual > tope UVT 1400 → posiblemente declara renta');
 
   // Borde: sin salario no calcula nada fiscal

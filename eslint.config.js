@@ -224,6 +224,7 @@ const projectGlobals = {
   getRecargoFestivo: 'readonly',
   getInicioNocturno: 'readonly',
   rcFactor: 'readonly',
+  UVT_2026: 'readonly',
   MT_APP_VERSION: 'readonly',
 
   // utils/password-hash.js (v49)
