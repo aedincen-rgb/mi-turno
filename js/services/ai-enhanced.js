@@ -339,9 +339,9 @@ function aiEnrichResponse(originalText, intent, userContext, entities, turnosAll
   if (!actions || actions.length === 0) {
     var followUps = {
       total_ganado: [
+        { label: '🧮 ¿Cómo lo calculaste?', query: '¿cómo lo calculaste?' },
         { label: '📊 VS mes pasado', query: '¿vs mes pasado?' },
-        { label: '🔮 Proyección', query: 'Proyección al cierre' },
-        { label: '📧 Enviar reporte', query: 'Enviame el reporte por correo' }
+        { label: '🔮 Proyección', query: 'Proyección al cierre' }
       ],
       hoy: [
         { label: '📅 ¿Y ayer?', query: '¿Cuánto gané ayer?' },

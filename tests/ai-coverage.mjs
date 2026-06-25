@@ -168,6 +168,7 @@ try {
       ['Simulación de turno', 'simular 4 horas nocturnas', ['simul', 'nocturn']],
       ['Tabla de recargos (ley)', 'cuál es la tabla de recargos', ['recargo', 'nocturn']],
       ['Total ganado mes', 'cuánto llevo este mes', ['$', 'llevás', 'llevas', 'ganado']],
+      ['Explicabilidad', '¿cómo lo calculaste?', ['cómo calculé', 'paso a paso', 'base legal']],
       ['Comparar con mes pasado', 'comparar con el mes pasado', ['mes pasado', 'vs', 'comparado']],
       ['Festivos', 'cuántos festivos trabajé este mes', ['festiv']],
       ['Proyección al cierre', 'cuánto voy a ganar este mes', ['proyec', 'cierre', '≈', '$']],

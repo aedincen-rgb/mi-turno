@@ -798,6 +798,79 @@ function _bdLines(bd) {
     .join('\n');
 }
 
+// Base legal por categoría (para la traza de explicabilidad).
+var _AI_BASE_LEGAL = {
+  diurnaOrd: '—',
+  noctOrd: 'CST Art. 168',
+  diurnaFest: 'CST Art. 179 · Ley 2466/25',
+  noctFest: 'CST Art. 168+179 · Ley 2466/25',
+  extraDiurna: 'CST Art. 159',
+  extraNoct: 'CST Art. 159+168',
+  extraFestDiur: 'CST Art. 159+179',
+  extraFestNoct: 'CST Art. 159+168+179'
+};
+
+// Explainability (Tier 2): traza paso a paso de CÓMO se llegó al total del mes.
+// Anclada a doCalc (el oráculo): el factor de cada franja se deriva del COP real
+// (cop / horas / vh), no se recalcula, así nunca diverge de la cifra mostrada.
+// Cada franja lleva su base legal. Progressive disclosure: solo bajo pedido.
+function _aiExplicarCalculo(c) {
+  if (!c || !c.vh || !c.bd || !c.diasTrab) {
+    return (
+      'Para mostrarte el paso a paso necesito tu **salario base** configurado y al ' +
+      'menos un turno este mes. Con eso te desgloso de dónde sale cada peso.'
+    );
+  }
+  var vh = c.vh;
+  var bd = c.bd;
+  var keys = Object.keys(bd).filter(function (k) {
+    return bd[k] && bd[k].mins > 0;
+  });
+  var out =
+    '🧮 **Cómo calculé tus ' +
+    fCOP(c.totalCOP) +
+    ' de este mes** (paso a paso):\n\n' +
+    '**1.** Valor hora = salario base ÷ 240 = **' +
+    fCOP(vh) +
+    '/h**\n\n' +
+    '**2.** Clasifiqué tus ' +
+    c.diasTrab +
+    ' turnos por franja — la ley paga distinto cada una:\n\n' +
+    '| Franja | Horas | Factor | Subtotal | Base legal |\n|---|---|---|---|---|\n';
+  var suma = 0;
+  for (var i = 0; i < keys.length; i++) {
+    var k = keys[i];
+    var hrs = bd[k].mins / 60;
+    var cop = bd[k].cop;
+    suma += cop;
+    var factor = hrs > 0 && vh > 0 ? cop / (hrs * vh) : 1;
+    out +=
+      '| ' +
+      RC[k].label +
+      ' | ' +
+      fDur(bd[k].mins) +
+      ' | ×' +
+      factor.toFixed(2) +
+      ' | ' +
+      fCOP(Math.round(cop)) +
+      ' | ' +
+      (_AI_BASE_LEGAL[k] || '—') +
+      ' |\n';
+  }
+  out += '| **Total** | | | **' + fCOP(Math.round(suma)) + '** | |\n\n';
+  var nd = getInicioNocturno(c.ahora || new Date()) === 19 ? '7 p.m.' : '9 p.m.';
+  out +=
+    '**3.** Sumé los subtotales = **' +
+    fCOP(c.totalCOP) +
+    '** ✓\n\n' +
+    '💡 La noche corre desde las ' +
+    nd +
+    ' y el recargo dominical/festivo va al **' +
+    Math.round(getRecargoFestivo(c.ahora || new Date()) * 100) +
+    '%** hoy (Ley 2466/2025). Cada turno se calcula con la ley vigente a **su** fecha.';
+  return out;
+}
+
 function _trend(curr, prev) {
   if (prev <= 0) return curr > 0 ? '+∞%' : 'sin cambio';
   var pct = ((curr - prev) / prev) * 100;
@@ -2797,6 +2870,34 @@ function _aiOptimizarIntent(q, t, c) {
 }
 
 // ════════════════════════════════════════════════════════════════
+//  EXPLICABILIDAD · "¿cómo lo calculaste?" / "de dónde sale ese número"
+//  Transparencia = confianza. Devuelve la traza grounded de _aiExplicarCalculo.
+//  Detecta el pedido de EXPLICAR el propio total (2ª persona: "calculaste",
+//  "sacaste", "llegaste") sin secuestrar preguntas de concepto de la KB
+//  ("¿cómo se calcula la hora nocturna?").
+// ════════════════════════════════════════════════════════════════
+function _aiExplainIntent(q, t, c) {
+  var trig =
+    /(como lo calculaste|como calculaste|como (lo )?sacaste|de donde (sale|salen|sacaste)|como llegaste|paso a paso|explica(me|s)? (la cuenta|el calculo|como|de donde|el total)|muestrame la cuenta|desglosa el total|como sale ese|por que me da ese|de donde sale ese)/.test(
+      t
+    );
+  if (!trig) return null;
+  // No interceptar preguntas de concepto general (tarifas/definiciones).
+  if (/\b(que es|una hora|la tarifa|el recargo nocturno|el recargo dominical)\b/.test(t)) {
+    return null;
+  }
+  if (typeof aiUpdateConversation === 'function') {
+    aiUpdateConversation('explicabilidad', 'dinero');
+  }
+  var txt = _aiExplicarCalculo(c);
+  if (!txt) return null;
+  return {
+    text: txt,
+    actions: [{ label: '⚖️ ¿Me pagan bien?', query: 'me están pagando bien' }]
+  };
+}
+
+// ════════════════════════════════════════════════════════════════
 //  DESPRENDIBLE DE NÓMINA · comprobante de pago descargable (PDF)
 //  Arma los datos con buildDesprendibleData y los entrega como acción
 //  GENERATE_PAYSLIP para que el asistente renderice el PDF.
@@ -3098,6 +3199,11 @@ function _aiAnswerCore(question, state) {
   // ═══ OPTIMIZADOR DE INGRESOS ("¿qué turno me conviene?") ═══
   var _optim = _aiOptimizarIntent(q, t, c);
   if (_optim) return _optim;
+
+  // ═══ EXPLICABILIDAD ("¿cómo lo calculaste?") ═══
+  // Antes del atajo de "cómo" → ayuda, que si no lo secuestraría.
+  var _explain = _aiExplainIntent(q, t, c);
+  if (_explain) return _explain;
 
   // ═══ DESPRENDIBLE DE NÓMINA (comprobante PDF) ═══
   var _desp = _aiDesprendibleIntent(q, t, c, state);

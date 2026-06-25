@@ -280,6 +280,35 @@ eq(
   '19:00–20:00 en ene 2026 es nocturna +35% (13.500)'
 );
 
+// ── Explicabilidad (Tier 2): "¿cómo lo calculaste?" ──────────────────
+// Traza grounded en doCalc: factor por franja derivado del COP real, base
+// legal por categoría, y el total que cuadra. Progressive disclosure.
+group('Tier 2 explicabilidad: traza paso a paso del cálculo');
+if (typeof w._aiExplicarCalculo === 'function') {
+  // Domingo 8h este mes, vh 10000 → diurnaFest date-aware (×1.80 en 2026).
+  var _calcEx = w.doCalc([mkTurno(primerDomingo(_hoy.getFullYear(), _hoy.getMonth()), 8)], null, new Date(), 10000);
+  var _cEx = { vh: 10000, totalCOP: _calcEx.totalCOP, bd: _calcEx.bd, diasTrab: 1, ahora: new Date() };
+  var _exp = w._aiExplicarCalculo(_cEx);
+  truthy(_exp.indexOf('Cómo calculé') >= 0, 'explica: titula la traza del cálculo');
+  truthy(_exp.indexOf('÷ 240') >= 0, 'explica: muestra la fórmula del valor hora');
+  truthy(_exp.indexOf('Base legal') >= 0 && _exp.indexOf('Art. 179') >= 0,
+         'explica: cita la base legal por franja');
+  truthy(_exp.indexOf(w.fCOP(_calcEx.totalCOP)) >= 0, 'explica: el total cuadra con doCalc');
+  // Sin datos → mensaje guía, no crash
+  var _expVacio = w._aiExplicarCalculo({ vh: 0, bd: {}, diasTrab: 0 });
+  truthy(_expVacio.indexOf('salario base') >= 0, 'explica: sin datos pide salario/turnos');
+}
+if (typeof w._aiExplainIntent === 'function') {
+  var _calcEx2 = w.doCalc([mkTurno(primerDomingo(_hoy.getFullYear(), _hoy.getMonth()), 8)], null, new Date(), 10000);
+  var _cEx2 = { vh: 10000, totalCOP: _calcEx2.totalCOP, bd: _calcEx2.bd, diasTrab: 1, ahora: new Date() };
+  var _r1 = w._aiExplainIntent('¿cómo lo calculaste?', 'como lo calculaste', _cEx2);
+  truthy(_r1 && _r1.text && _r1.text.indexOf('Cómo calculé') >= 0,
+         'ruteo: "cómo lo calculaste" dispara la traza');
+  // No secuestra preguntas de concepto de la KB
+  var _r2 = w._aiExplainIntent('¿qué es la hora nocturna?', 'que es la hora nocturna', _cEx2);
+  truthy(_r2 === null, 'ruteo: NO intercepta preguntas de concepto (KB)');
+}
+
 group('ai-query: scoping temporal (bug preguntas precargadas de Análisis)');
 var qFest = w.aiQueryParse('¿Cuántos días festivos trabajé este mes?');
 truthy(qFest, 'pregunta precargada de Análisis es reclamada');
@@ -763,6 +792,10 @@ truthy(typeof _rVacio === 'string' || (typeof _rVacio === 'object' && _rVacio !=
 
 // ── Acknowledgments conversacionales ───────────────────────────
 group('acknowledgments: respuestas breves a "gracias", "ok", "dale"');
+// Un acknowledgment se prueba SIN oferta pendiente (escenario real): si quedó
+// una sugerencia de un grupo anterior, "ok"/"dale" la consumirían. Limpiar la
+// memoria conversacional aísla el caso.
+if (typeof w.aiClearMemory === 'function') w.aiClearMemory();
 var _stAck = {
   turnos: [], turnosAll: [],
   calc: w.doCalc([], null, new Date(), 0),
