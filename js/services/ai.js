@@ -1999,6 +1999,18 @@ var _aiTurnCounter = 0;
 var _aiLastFin = null; // { intent: string, turn: number }
 var _aiFinOffer = null; // { options: [intent...], turn } — próximos pasos ofrecidos
 
+// ── Trazabilidad (v339, opt-in): por qué la IA respondió lo que respondió ──
+// Solo se computa cuando window.MT_AI_DEBUG === true. Es ADITIVO: jamás altera
+// la respuesta. v1 captura lo disponible en el límite de aiAnswer (clasificación,
+// camino async/agente, duración). NO instrumenta cada guard de la cascada (eso
+// tocaría el núcleo); el orquestador futuro poblará la ruta exacta. Ver
+// AI_ROUTE_MAP.md §6 y §10.
+var _aiLastTrace = null;
+function aiLastTrace() {
+  return _aiLastTrace;
+}
+if (typeof window !== 'undefined') window.aiLastTrace = aiLastTrace;
+
 // ── INTERCONEXIÓN: qué próximos pasos ofrece cada cálculo ──────────
 // Cuando una calculadora termina, deja "ofertas" encadenables. Si el
 // usuario responde "sí/dale", nombra una ("la cuota") o pide "ambos",
@@ -5331,6 +5343,13 @@ function aiAnswer(question, state) {
     }
   } catch (_) {}
 
+  var _dbg = typeof window !== 'undefined' && window.MT_AI_DEBUG === true;
+  var _t0 = _dbg
+    ? typeof performance !== 'undefined' && performance.now
+      ? performance.now()
+      : Date.now()
+    : 0;
+
   var resp = _aiAnswerCore(question, state);
 
   try {
@@ -5389,10 +5408,56 @@ function aiAnswer(question, state) {
     return r;
   };
 
+  // Trazabilidad opt-in: registra el "porqué" sin tocar la respuesta.
+  var _recordTrace = function (finalResp, isAsync) {
+    if (!_dbg) return finalResp;
+    try {
+      var _now =
+        typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now();
+      var _kind = finalResp && typeof finalResp === 'object' ? 'object' : 'string';
+      var _txt = _kind === 'object' ? finalResp.text || '' : finalResp || '';
+      var _nlp = _aiLastNlp || {};
+      var _ent = null;
+      try {
+        _ent = typeof aiExtractEntities === 'function' ? aiExtractEntities(question) : null;
+      } catch (_e) {}
+      var _spec = typeof aiIntentSpec === 'function' ? aiIntentSpec(_nlp.intent) : null;
+      _aiLastTrace = {
+        question: question,
+        normalized: typeof _aiNorm === 'function' ? _aiNorm(question) : null,
+        intent: _nlp.intent || null,
+        confidence: typeof _nlp.confidence === 'number' ? _nlp.confidence : null,
+        candidates: [
+          { intent: _nlp.intent || null, score: _nlp.score || null },
+          { intent: _nlp.secondIntent || null, score: null }
+        ],
+        margin: typeof _nlp.margin === 'number' ? _nlp.margin : null,
+        // Ruta declarada en el registry para el intent clasificado (referencia;
+        // NO necesariamente el guard de la cascada que respondió — ver §6 del mapa).
+        registryRoute: _spec ? _spec.route : null,
+        domain: _spec ? _spec.domain : null,
+        agentPath: !!isAsync,
+        durationMs: Math.round((_now - _t0) * 100) / 100,
+        responseKind: _kind,
+        hasCard: !!(finalResp && finalResp.card),
+        hasActions: !!(finalResp && finalResp.actions && finalResp.actions.length),
+        entities: _ent,
+        usedRealData: /\$\s?\d/.test(_txt),
+        turn: _aiTurnCounter
+      };
+      if (typeof console !== 'undefined' && console.debug) {
+        console.debug('[MT_AI_DEBUG]', _aiLastTrace);
+      }
+    } catch (_) {}
+    return finalResp;
+  };
+
   if (resp && typeof resp.then === 'function') {
-    return resp.then(_polish);
+    return resp.then(function (r) {
+      return _recordTrace(_polish(r), true);
+    });
   }
-  return _polish(resp);
+  return _recordTrace(_polish(resp), false);
 }
 
 // ════════════════════════════════════════════════════════════════

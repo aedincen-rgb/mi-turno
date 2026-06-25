@@ -1,0 +1,873 @@
+{
+  "_meta": {
+    "purpose": "Golden cases que CONGELAN el comportamiento actual de la IA (v339) antes del refactor. Sirven de red de seguridad: si una migración de ruteo cambia una respuesta, esto lo caza.",
+    "fields": {
+      "q": "pregunta del usuario (español colombiano)",
+      "expectedIntent": "intent(s) aceptable(s) de aiClassifyIntent. Array = cualquiera vale. null = no se valida intent.",
+      "expectedRoute": "ruta declarada esperada (informativo: se compara con la ruta del registry, NO con el guard real de la cascada).",
+      "mustContain": "subcadenas que DEBEN aparecer (case-insensitive). Conservadoras a propósito.",
+      "mustNotContain": "subcadenas que NO deben aparecer.",
+      "shouldUseRealData": "true si la respuesta debe incluir una cifra de datos reales ($).",
+      "shouldUseLegacy": "false para rutas que NO deberían caer al fallback clásico (informativo en v1).",
+      "note": "contexto del caso"
+    },
+    "assertion_policy": "HARD: expectedIntent, mustContain, mustNotContain, shouldUseRealData. SOFT (warn): expectedRoute, shouldUseLegacy — la traza v1 no conoce el guard exacto."
+  },
+  "cases": [
+    {
+      "q": "cuánto gané hoy",
+      "expectedIntent": [
+        "hoy",
+        "total_ganado"
+      ],
+      "expectedRoute": "query",
+      "mustContain": [
+        "$"
+      ],
+      "shouldUseRealData": true,
+      "shouldUseLegacy": false
+    },
+    {
+      "q": "cuánto hice hoy",
+      "expectedIntent": [
+        "hoy",
+        "total_ganado"
+      ],
+      "expectedRoute": "query",
+      "mustContain": [
+        "$"
+      ],
+      "shouldUseRealData": true,
+      "shouldUseLegacy": false
+    },
+    {
+      "q": "cuánto llevo hoy",
+      "expectedIntent": [
+        "hoy",
+        "total_ganado"
+      ],
+      "expectedRoute": "query",
+      "shouldUseRealData": true,
+      "shouldUseLegacy": false
+    },
+    {
+      "q": "cuánto gané ayer",
+      "expectedIntent": [
+        "ayer"
+      ],
+      "expectedRoute": "query",
+      "shouldUseRealData": true,
+      "shouldUseLegacy": false,
+      "note": "ayer debe ganarle a knowledge: tiene anclaje temporal"
+    },
+    {
+      "q": "cuánto saqué ayer",
+      "expectedIntent": [
+        "ayer"
+      ],
+      "expectedRoute": "query",
+      "shouldUseRealData": true
+    },
+    {
+      "q": "cuánto llevo este mes",
+      "expectedIntent": [
+        "total_ganado"
+      ],
+      "expectedRoute": "query",
+      "mustContain": [
+        "$"
+      ],
+      "shouldUseRealData": true,
+      "shouldUseLegacy": false
+    },
+    {
+      "q": "cuánta plata hice este mes",
+      "expectedIntent": [
+        "total_ganado"
+      ],
+      "expectedRoute": "query",
+      "shouldUseRealData": true
+    },
+    {
+      "q": "cuánta lana llevo",
+      "expectedIntent": [
+        "total_ganado",
+        "hoy",
+        "proyeccion"
+      ],
+      "shouldUseRealData": true,
+      "note": "jerga colombiana lana=plata"
+    },
+    {
+      "q": "en cuánto voy este mes",
+      "expectedIntent": [
+        "total_ganado",
+        "proyeccion"
+      ],
+      "shouldUseRealData": true
+    },
+    {
+      "q": "cuánto voy a ganar este mes",
+      "expectedIntent": [
+        "proyeccion",
+        "total_ganado"
+      ],
+      "expectedRoute": "query",
+      "shouldUseRealData": true
+    },
+    {
+      "q": "proyección del mes",
+      "expectedIntent": [
+        "proyeccion",
+        "comparativa_mes"
+      ],
+      "expectedRoute": "query",
+      "shouldUseRealData": true
+    },
+    {
+      "q": "cuántas horas trabajé este mes",
+      "expectedIntent": [
+        "horas_trabajadas"
+      ],
+      "expectedRoute": "query",
+      "mustContain": [
+        "h"
+      ],
+      "shouldUseRealData": false,
+      "shouldUseLegacy": false
+    },
+    {
+      "q": "cuántas horas llevo",
+      "expectedIntent": [
+        "horas_trabajadas",
+        "total_ganado",
+        "stats"
+      ],
+      "shouldUseLegacy": false
+    },
+    {
+      "q": "cuánto camello llevo este mes",
+      "expectedIntent": [
+        "horas_trabajadas",
+        "total_ganado",
+        "stats"
+      ],
+      "note": "camello=trabajo"
+    },
+    {
+      "q": "cuánto llevo en la quincena",
+      "expectedIntent": [
+        "quincena",
+        "total_ganado"
+      ],
+      "expectedRoute": "query",
+      "shouldUseRealData": true,
+      "note": "quincena anclaje temporal"
+    },
+    {
+      "q": "cuánto va de quincena",
+      "expectedIntent": [
+        "celebracion"
+      ],
+      "knownGap": true,
+      "note": "GAP: cae en celebracion sin datos; debería ir a query/quincena. Punch-list migración D1."
+    },
+    {
+      "q": "cuánto gané el domingo",
+      "expectedIntent": [
+        "festivos",
+        "total_ganado",
+        "ayer"
+      ],
+      "expectedRoute": "query",
+      "shouldUseLegacy": false
+    },
+    {
+      "q": "cuántos festivos trabajé este mes",
+      "expectedIntent": [
+        "festivos",
+        "total_ganado"
+      ],
+      "expectedRoute": "query",
+      "shouldUseLegacy": false
+    },
+    {
+      "q": "cuánto gano por hora",
+      "expectedIntent": [
+        "valor_hora"
+      ],
+      "expectedRoute": "calculator",
+      "mustContain": [
+        "$"
+      ],
+      "shouldUseRealData": true,
+      "shouldUseLegacy": false
+    },
+    {
+      "q": "cuánto vale mi hora",
+      "expectedIntent": [
+        "valor_hora"
+      ],
+      "expectedRoute": "calculator",
+      "shouldUseRealData": true,
+      "shouldUseLegacy": false,
+      "note": "se parece a OOS pero es in-scope"
+    },
+    {
+      "q": "cuál es mi mejor día",
+      "expectedIntent": [
+        "mejor_dia"
+      ],
+      "expectedRoute": "query",
+      "shouldUseLegacy": false
+    },
+    {
+      "q": "qué día gano más",
+      "expectedIntent": [
+        "mejor_dia"
+      ],
+      "shouldUseLegacy": false
+    },
+    {
+      "q": "cómo va mi racha",
+      "expectedIntent": [
+        "racha"
+      ],
+      "expectedRoute": "query",
+      "shouldUseLegacy": false
+    },
+    {
+      "q": "cuántos días seguidos llevo",
+      "expectedIntent": [
+        "racha",
+        "stats"
+      ],
+      "shouldUseLegacy": false
+    },
+    {
+      "q": "días trabajados este mes",
+      "expectedIntent": [
+        "stats",
+        "horas_trabajadas"
+      ],
+      "expectedRoute": "query",
+      "shouldUseLegacy": false
+    },
+    {
+      "q": "resumen del mes",
+      "expectedIntent": [
+        "stats",
+        "comparativa_mes"
+      ],
+      "expectedRoute": "query",
+      "shouldUseLegacy": false
+    },
+    {
+      "q": "muéstrame la tendencia",
+      "expectedIntent": [
+        "tendencia",
+        "proyeccion"
+      ],
+      "expectedRoute": "query",
+      "shouldUseLegacy": false,
+      "mustContain": [
+        "tendencia"
+      ]
+    },
+    {
+      "q": "voy subiendo o bajando",
+      "expectedIntent": [
+        "tendencia",
+        "hoy",
+        "proyeccion"
+      ],
+      "shouldUseLegacy": false,
+      "knownGap": true,
+      "note": "GAP: responde sobre 'hoy' en vez de tendencia."
+    },
+    {
+      "q": "qué hice la semana pasada",
+      "expectedIntent": [
+        "comparativa_semana",
+        "stats",
+        "total_ganado"
+      ],
+      "shouldUseLegacy": false
+    },
+    {
+      "q": "compará con el mes pasado",
+      "expectedIntent": [
+        "comparativa_mes"
+      ],
+      "expectedRoute": "query",
+      "shouldUseLegacy": false
+    },
+    {
+      "q": "junio vs mayo",
+      "expectedIntent": [
+        "comparativa_mes"
+      ],
+      "shouldUseLegacy": false
+    },
+    {
+      "q": "cuánto me falta para 2 millones",
+      "expectedIntent": [
+        "meta",
+        "ahorro"
+      ],
+      "expectedRoute": "calculator",
+      "shouldUseLegacy": false,
+      "mustContain": [
+        "falta"
+      ]
+    },
+    {
+      "q": "tengo un turno activo?",
+      "expectedIntent": [
+        "planificacion_semana",
+        "turno_activo",
+        "stats"
+      ],
+      "shouldUseLegacy": false,
+      "knownGap": true,
+      "note": "GAP: cae en disambiguación; debería reportar estado del turno activo."
+    },
+    {
+      "q": "olvidé cerrar turno",
+      "expectedIntent": [
+        "cerrar_turno",
+        "turno_activo"
+      ],
+      "expectedRoute": "action",
+      "shouldUseLegacy": false
+    },
+    {
+      "q": "qué es recargo nocturno",
+      "expectedIntent": [
+        "ley",
+        "laboral"
+      ],
+      "expectedRoute": "knowledge",
+      "mustContain": [
+        "35"
+      ],
+      "mustNotContain": [
+        "llevás $"
+      ],
+      "shouldUseLegacy": false,
+      "note": "concepto legal, NO datos del usuario"
+    },
+    {
+      "q": "qué es el recargo dominical",
+      "expectedIntent": [
+        "ley",
+        "laboral"
+      ],
+      "expectedRoute": "knowledge",
+      "mustNotContain": [
+        "llevás $"
+      ]
+    },
+    {
+      "q": "cuánto vale la hora nocturna",
+      "expectedIntent": [
+        "ley",
+        "valor_hora",
+        "laboral"
+      ],
+      "note": "frontera valor_hora vs ley"
+    },
+    {
+      "q": "cuántas horas son legales por semana",
+      "expectedIntent": [
+        "laboral",
+        "ley",
+        "horas_trabajadas"
+      ],
+      "expectedRoute": "knowledge",
+      "mustNotContain": [
+        "llevás $"
+      ],
+      "knownGap": true,
+      "note": "GAP D1: la señal 'horas' gana a la legal; responde horas del usuario en vez del marco legal."
+    },
+    {
+      "q": "qué dice la ley de festivos",
+      "expectedIntent": [
+        "ley",
+        "festivos",
+        "laboral"
+      ],
+      "expectedRoute": "knowledge"
+    },
+    {
+      "q": "me pagan bien?",
+      "expectedIntent": null,
+      "expectedRoute": "advisor",
+      "shouldUseLegacy": false,
+      "note": "verificador de pago justo (guard de cascada, prioridad alta)"
+    },
+    {
+      "q": "creo que me pagan mal el recargo",
+      "expectedIntent": null,
+      "expectedRoute": "advisor",
+      "mustNotContain": [
+        "qué es"
+      ],
+      "shouldUseLegacy": false,
+      "note": "legal antes que plata genérica"
+    },
+    {
+      "q": "calculá mi liquidación",
+      "expectedIntent": [
+        "liquidacion"
+      ],
+      "expectedRoute": "advisor",
+      "mustContain": [],
+      "shouldUseLegacy": false
+    },
+    {
+      "q": "cuánto me dan si me despiden",
+      "expectedIntent": null,
+      "expectedRoute": "advisor",
+      "mustContain": [
+        "indemniz"
+      ]
+    },
+    {
+      "q": "cuánto me dan de cesantías",
+      "expectedIntent": [
+        "liquidacion"
+      ],
+      "expectedRoute": "advisor",
+      "shouldUseLegacy": false
+    },
+    {
+      "q": "cómo lo calculaste",
+      "expectedIntent": null,
+      "expectedRoute": "calculator",
+      "mustNotContain": [
+        "no encontré"
+      ],
+      "shouldUseLegacy": false,
+      "note": "explicabilidad, NO ayuda"
+    },
+    {
+      "q": "por qué me da ese total",
+      "expectedIntent": null,
+      "expectedRoute": "calculator",
+      "shouldUseLegacy": false
+    },
+    {
+      "q": "simula 4 horas nocturnas",
+      "expectedIntent": [
+        "simulacion",
+        "simular"
+      ],
+      "expectedRoute": "advisor",
+      "shouldUseLegacy": false
+    },
+    {
+      "q": "cuánto ganaría con 3 festivos",
+      "expectedIntent": [
+        "simulacion",
+        "simular"
+      ],
+      "expectedRoute": "advisor",
+      "shouldUseLegacy": false
+    },
+    {
+      "q": "si meto 4 noches cuánto saco",
+      "expectedIntent": [
+        "simulacion",
+        "simular"
+      ],
+      "expectedRoute": "advisor",
+      "shouldUseLegacy": false,
+      "note": "hipotético → simulador, no datos reales"
+    },
+    {
+      "q": "qué turno me conviene",
+      "expectedIntent": null,
+      "expectedRoute": "advisor",
+      "mustContain": [
+        "rinde"
+      ]
+    },
+    {
+      "q": "quiero ganar 200 mil extra",
+      "expectedIntent": [
+        "optimizador"
+      ],
+      "expectedRoute": "advisor",
+      "mustContain": [],
+      "shouldUseLegacy": false
+    },
+    {
+      "q": "quiero ahorrar 5 millones en un año",
+      "expectedIntent": [
+        "ahorro"
+      ],
+      "expectedRoute": "advisor",
+      "shouldUseLegacy": false
+    },
+    {
+      "q": "cómo reparto mi sueldo",
+      "expectedIntent": null,
+      "expectedRoute": "advisor",
+      "mustContain": [
+        "50/30/20"
+      ],
+      "note": "presupuesto 50/30/20"
+    },
+    {
+      "q": "tengo una oferta de 3 millones",
+      "expectedIntent": null,
+      "expectedRoute": "advisor",
+      "mustContain": [
+        "comparador"
+      ]
+    },
+    {
+      "q": "cómo exporto PDF",
+      "expectedIntent": [
+        "ayuda_app",
+        "ayuda_navegacion"
+      ],
+      "expectedRoute": "help",
+      "mustContain": [
+        "pdf"
+      ],
+      "mustNotContain": [
+        "recargo nocturno"
+      ],
+      "shouldUseLegacy": false,
+      "note": "ayuda de uso, NO recargos"
+    },
+    {
+      "q": "cómo registro un turno",
+      "expectedIntent": null,
+      "expectedRoute": "help",
+      "mustNotContain": [
+        "llevás $"
+      ]
+    },
+    {
+      "q": "cómo cambio el salario",
+      "expectedIntent": [
+        "configurar_salario",
+        "ayuda_app",
+        "ayuda_navegacion"
+      ],
+      "shouldUseLegacy": false
+    },
+    {
+      "q": "dónde veo mi historial",
+      "expectedIntent": [
+        "ayuda_navegacion",
+        "ayuda_app",
+        "navegar_historial"
+      ],
+      "expectedRoute": "help",
+      "shouldUseLegacy": false
+    },
+    {
+      "q": "estoy sin internet",
+      "expectedIntent": [
+        "diagnostico_red",
+        "ayuda_app",
+        "ayuda_navegacion"
+      ],
+      "expectedRoute": "help",
+      "shouldUseLegacy": false
+    },
+    {
+      "q": "por qué no sincroniza",
+      "expectedIntent": [
+        "diagnostico_red",
+        "ayuda_app",
+        "ayuda_navegacion"
+      ],
+      "expectedRoute": "help",
+      "shouldUseLegacy": false,
+      "knownGap": true,
+      "note": "GAP: cae en disambiguación genérica."
+    },
+    {
+      "q": "hazme un informe",
+      "expectedIntent": [
+        "email"
+      ],
+      "expectedRoute": "action",
+      "shouldUseLegacy": false
+    },
+    {
+      "q": "enviame el reporte por correo",
+      "expectedIntent": [
+        "email",
+        "correo_formal"
+      ],
+      "expectedRoute": "action",
+      "shouldUseLegacy": false
+    },
+    {
+      "q": "compartí por whatsapp",
+      "expectedIntent": [
+        "whatsapp_share"
+      ],
+      "expectedRoute": "action",
+      "shouldUseLegacy": false
+    },
+    {
+      "q": "mi salario es 2 millones",
+      "expectedIntent": [
+        "configurar_salario"
+      ],
+      "expectedRoute": "action",
+      "shouldUseLegacy": false
+    },
+    {
+      "q": "hola",
+      "expectedIntent": [
+        "saludo"
+      ],
+      "expectedRoute": "conversation",
+      "mustNotContain": [
+        "no encontré"
+      ],
+      "shouldUseLegacy": false
+    },
+    {
+      "q": "buenas",
+      "expectedIntent": [
+        "saludo"
+      ],
+      "expectedRoute": "conversation",
+      "shouldUseLegacy": false
+    },
+    {
+      "q": "qué más parce",
+      "expectedIntent": [
+        "saludo",
+        "contexto"
+      ],
+      "shouldUseLegacy": false
+    },
+    {
+      "q": "chao",
+      "expectedIntent": [
+        "despedida"
+      ],
+      "expectedRoute": "conversation",
+      "shouldUseLegacy": false
+    },
+    {
+      "q": "nos vemos",
+      "expectedIntent": [
+        "despedida"
+      ],
+      "shouldUseLegacy": false
+    },
+    {
+      "q": "gracias",
+      "expectedIntent": [
+        "agradecimiento",
+        "despedida"
+      ],
+      "shouldUseLegacy": false
+    },
+    {
+      "q": "qué podés hacer",
+      "expectedIntent": [
+        "capacidades",
+        "curiosidad_app"
+      ],
+      "expectedRoute": "conversation",
+      "shouldUseLegacy": false
+    },
+    {
+      "q": "qué sabés",
+      "expectedIntent": [
+        "capacidades",
+        "curiosidad_app"
+      ],
+      "shouldUseLegacy": false
+    },
+    {
+      "q": "estoy cansado",
+      "expectedIntent": [
+        "queja_fatiga",
+        "bienestar",
+        "estado_animo"
+      ],
+      "expectedRoute": "conversation",
+      "shouldUseLegacy": false
+    },
+    {
+      "q": "uf qué cansancio",
+      "expectedIntent": [
+        "queja_fatiga",
+        "bienestar",
+        "estado_animo"
+      ],
+      "shouldUseLegacy": false
+    },
+    {
+      "q": "estoy reventado",
+      "expectedIntent": [
+        "queja_fatiga",
+        "bienestar",
+        "estado_animo"
+      ],
+      "shouldUseLegacy": false
+    },
+    {
+      "q": "necesito descansar",
+      "expectedIntent": [
+        "bienestar",
+        "queja_fatiga"
+      ],
+      "shouldUseLegacy": false
+    },
+    {
+      "q": "dame ánimo",
+      "expectedIntent": [
+        "motivacion",
+        "estado_animo"
+      ],
+      "shouldUseLegacy": false
+    },
+    {
+      "q": "cuato gane ayer",
+      "expectedIntent": [
+        "ayer"
+      ],
+      "shouldUseRealData": true,
+      "note": "typo: cuato/cuánto"
+    },
+    {
+      "q": "kuanto saque hoy",
+      "expectedIntent": [
+        "hoy",
+        "total_ganado"
+      ],
+      "shouldUseRealData": true,
+      "note": "typo fonético"
+    },
+    {
+      "q": "que es el recago nocturno",
+      "expectedIntent": [
+        "ley",
+        "laboral"
+      ],
+      "mustNotContain": [
+        "llevás $"
+      ],
+      "note": "typo: recago"
+    },
+    {
+      "q": "cuanto gane el festibo",
+      "expectedIntent": [
+        "festivos",
+        "total_ganado",
+        "ayer"
+      ],
+      "note": "typo: festibo"
+    },
+    {
+      "q": "cuanta lana hice",
+      "expectedIntent": [
+        "total_ganado",
+        "hoy"
+      ],
+      "shouldUseRealData": true,
+      "note": "jerga + sin acento"
+    },
+    {
+      "q": "y los sábados?",
+      "expectedIntent": null,
+      "note": "follow-up: hereda contexto solo si el anterior es compatible; sin contexto previo no debe inventar"
+    },
+    {
+      "q": "y en plata?",
+      "expectedIntent": null,
+      "note": "follow-up de conversión a pesos"
+    },
+    {
+      "q": "y ayer?",
+      "expectedIntent": [
+        "ayer",
+        "contexto"
+      ],
+      "note": "follow-up temporal"
+    },
+    {
+      "q": "qué hora es",
+      "expectedIntent": null,
+      "expectedRoute": "fallback",
+      "mustNotContain": [
+        "llevás $",
+        "ganaste $"
+      ],
+      "shouldUseRealData": false,
+      "note": "OOS: debe declinar, no fabricar"
+    },
+    {
+      "q": "quién ganó el mundial",
+      "expectedIntent": null,
+      "expectedRoute": "fallback",
+      "mustNotContain": [
+        "llevás $",
+        "ganaste $"
+      ],
+      "note": "OOS"
+    },
+    {
+      "q": "cuál es la capital de francia",
+      "expectedIntent": null,
+      "expectedRoute": "fallback",
+      "mustNotContain": [
+        "llevás $"
+      ],
+      "note": "OOS"
+    },
+    {
+      "q": "recomiéndame una película",
+      "expectedIntent": null,
+      "expectedRoute": "fallback",
+      "mustNotContain": [
+        "llevás $"
+      ],
+      "note": "OOS"
+    },
+    {
+      "q": "cómo está el clima",
+      "expectedIntent": null,
+      "expectedRoute": "fallback",
+      "mustNotContain": [
+        "llevás $"
+      ],
+      "note": "OOS"
+    },
+    {
+      "q": "asdfgh",
+      "expectedIntent": null,
+      "expectedRoute": "fallback",
+      "mustNotContain": [
+        "llevás $",
+        "ganaste $"
+      ],
+      "note": "ruido: no debe inventar cifras"
+    },
+    {
+      "q": "ayuda",
+      "expectedIntent": null,
+      "shouldUseLegacy": false,
+      "knownGap": true,
+      "mustNotContain": [
+        "llevás $"
+      ],
+      "note": "GAP: 'ayuda' a secas cae en planificacion_semana/disambiguación."
+    }
+  ]
+}

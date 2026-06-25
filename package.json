@@ -19,7 +19,8 @@
     "prepare": "husky",
     "test:ai-browser": "node tests/ai-browser.mjs",
     "test:coverage": "node tests/ai-coverage.mjs",
-    "test:benchmark": "node tests/ai-benchmark.mjs"
+    "test:benchmark": "node tests/ai-benchmark.mjs",
+    "test:golden": "node tests/ai/ai-golden-runner.js"
   },
   "lint-staged": {
     "js/**/*.js": [
