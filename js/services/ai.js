@@ -2844,6 +2844,29 @@ function _aiQuincenaTotalIntent(q, t, c, state) {
   );
 }
 
+// Estado del turno en curso ("¿tengo un turno activo?", "¿hay un servicio abierto?").
+// Pregunta de ESTADO, no comando: el trigger exige turno/servicio + activo/abierto,
+// así no secuestra "iniciá/cerrá un turno" (acciones con su propio handler).
+function _aiTurnoActivoIntent(q, t, c) {
+  var asksStatus =
+    /\b(tengo|hay|tenes|queda|sigo|estoy)\b/.test(t) &&
+    /\b(turno|servicio|jornada|guardia)\b/.test(t) &&
+    /\b(activo|abierto|en curso|corriendo|andando|sin cerrar|prendido|encendido)\b/.test(t);
+  if (!asksStatus) return null;
+  if (c.tieneActivo && c.activo && c.activo.inicio) {
+    var ini = new Date(c.activo.inicio);
+    var mins = Math.round((Date.now() - ini.getTime()) / 60000);
+    var dur = typeof fDur === 'function' ? fDur(mins > 0 ? mins : 0) : mins + 'm';
+    if (typeof aiUpdateConversation === 'function') aiUpdateConversation('stats', 'tiempo');
+    return {
+      text: 'Sí 🟢, tenés un servicio activo. Llevás **' + dur + '** en curso. ¿Lo cerramos?',
+      actions: [{ label: '⏹ Cerrar turno', query: 'cerrá el turno' }]
+    };
+  }
+  if (typeof aiUpdateConversation === 'function') aiUpdateConversation('stats', 'tiempo');
+  return 'No, ahora mismo no tenés ningún servicio activo. Cuando arranques uno, te lo llevo. ✋';
+}
+
 // ════════════════════════════════════════════════════════════════
 //  VERIFICADOR DE PAGO JUSTO · "¿me pagan bien?"
 //  Detecta la intención de auditar el pago y delega en aiAuditarPago,
@@ -3502,6 +3525,13 @@ function _aiAnswerCore(question, state) {
   if (!_esSlash) {
     var _qTot = _aiQuincenaTotalIntent(q, t, c, state);
     if (_qTot) return _qTot;
+  }
+
+  // ── ESTADO DEL TURNO ACTIVO (datos, no NLP) ──
+  // "¿tengo un turno activo?" caía en disambiguación; reporta el estado real.
+  if (!_esSlash) {
+    var _act = _aiTurnoActivoIntent(q, t, c);
+    if (_act) return _act;
   }
 
   // ── REFERENCIAS CONTEXTUALES: "¿y la quincena pasada?", "¿y eso por qué?" ──

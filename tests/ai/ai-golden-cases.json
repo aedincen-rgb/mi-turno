@@ -327,14 +327,15 @@
     },
     {
       "q": "tengo un turno activo?",
-      "expectedIntent": [
-        "planificacion_semana",
-        "turno_activo",
-        "stats"
-      ],
+      "expectedIntent": null,
       "shouldUseLegacy": false,
-      "knownGap": true,
-      "note": "GAP: cae en disambiguación; debería reportar estado del turno activo."
+      "note": "Fixed: guard de estado reporta el turno activo real.",
+      "mustContain": [
+        "activo"
+      ],
+      "mustNotContain": [
+        "no estoy seguro"
+      ]
     },
     {
       "q": "olvidé cerrar turno",
