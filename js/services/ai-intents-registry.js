@@ -741,6 +741,252 @@ var AI_INTENT_REGISTRY = [
     confirms: false
   },
 
+  // ── Conversacionales adicionales (NLP) ─────────────────────────
+  {
+    id: 'agradecimiento',
+    domain: 'conversation',
+    priority: 30,
+    route: 'conversation',
+    source: 'nlp',
+    examples: ['gracias', 'mil gracias', 'te pasaste'],
+    keywords: ['gracias', 'mil gracias', 'genial'],
+    tools: [],
+    preferredHandler: '_aiDispatchNLP',
+    forbiddenRoutes: ['query', 'knowledge'],
+    allowFollowUp: false,
+    needsRealData: false,
+    offline: true,
+    confirms: false
+  },
+  {
+    id: 'identidad',
+    domain: 'conversation',
+    priority: 30,
+    route: 'conversation',
+    source: 'nlp',
+    examples: ['quién sos', 'cómo te llamás', 'qué eres'],
+    keywords: ['quien sos', 'como te llamas', 'que eres', 'tu nombre'],
+    tools: [],
+    preferredHandler: '_aiDispatchNLP',
+    forbiddenRoutes: ['query', 'knowledge'],
+    allowFollowUp: true,
+    needsRealData: false,
+    offline: true,
+    confirms: false
+  },
+  {
+    id: 'curiosidad_app',
+    domain: 'conversation',
+    priority: 30,
+    route: 'conversation',
+    source: 'nlp',
+    examples: ['qué sabés de mí', 'qué datos tenés', 'cómo funcionás'],
+    keywords: ['que sabes de mi', 'que datos', 'como funcionas'],
+    tools: ['doCalc'],
+    preferredHandler: '_aiDispatchNLP',
+    forbiddenRoutes: ['knowledge'],
+    allowFollowUp: true,
+    needsRealData: false,
+    offline: true,
+    confirms: false
+  },
+  {
+    id: 'celebracion',
+    domain: 'wellbeing',
+    priority: 30,
+    route: 'conversation',
+    source: 'nlp',
+    examples: ['lo logré', 'qué buen mes', 'estoy contento con lo que gané'],
+    keywords: ['lo logre', 'buen mes', 'contento', 'orgulloso'],
+    tools: ['doCalc'],
+    preferredHandler: '_aiDispatchNLP',
+    forbiddenRoutes: ['query', 'knowledge'],
+    allowFollowUp: true,
+    needsRealData: false,
+    offline: true,
+    confirms: false
+  },
+  {
+    id: 'reflexion',
+    domain: 'wellbeing',
+    priority: 30,
+    route: 'conversation',
+    source: 'nlp',
+    examples: ['vale la pena tanto turno', 'estoy pensando en cambiar de trabajo'],
+    keywords: ['vale la pena', 'pensando en', 'no se que hacer'],
+    tools: ['doCalc'],
+    preferredHandler: '_aiDispatchNLP',
+    forbiddenRoutes: ['query', 'knowledge'],
+    allowFollowUp: true,
+    needsRealData: false,
+    offline: true,
+    confirms: false
+  },
+  {
+    id: 'correo_formal',
+    domain: 'app_action',
+    priority: 50,
+    route: 'action',
+    source: 'nlp',
+    examples: ['redactá un correo formal a mi jefe', 'escribí un email serio'],
+    keywords: ['correo formal', 'email formal', 'carta', 'a mi jefe'],
+    tools: [],
+    preferredHandler: '_aiDispatchNLP',
+    forbiddenRoutes: ['knowledge'],
+    allowFollowUp: true,
+    needsRealData: true,
+    offline: false,
+    confirms: true
+  },
+
+  // ── Datos: estadística fina (NLP) ──────────────────────────────
+  {
+    id: 'distribucion',
+    domain: 'payroll',
+    priority: 70,
+    route: 'query',
+    source: 'nlp',
+    examples: ['cómo se reparten mis horas', 'distribución diurnas vs nocturnas'],
+    keywords: ['distribucion', 'reparten', 'diurnas vs', 'que tipo de horas'],
+    tools: ['doCalc'],
+    preferredHandler: '_aiDispatchNLP',
+    forbiddenRoutes: ['knowledge'],
+    allowFollowUp: true,
+    needsRealData: true,
+    offline: true,
+    confirms: false
+  },
+  {
+    id: 'promedio',
+    domain: 'payroll',
+    priority: 70,
+    route: 'query',
+    source: 'nlp',
+    examples: ['cuánto gano en promedio por turno', 'mi promedio diario'],
+    keywords: ['promedio', 'en promedio', 'media'],
+    tools: ['doCalc'],
+    preferredHandler: '_aiDispatchNLP',
+    forbiddenRoutes: ['knowledge'],
+    allowFollowUp: true,
+    needsRealData: true,
+    offline: true,
+    confirms: false
+  },
+  {
+    id: 'peor_dia',
+    domain: 'payroll',
+    priority: 70,
+    route: 'query',
+    source: 'nlp',
+    examples: ['cuál es mi peor día', 'qué día gano menos'],
+    keywords: ['peor dia', 'dia que menos', 'gano menos'],
+    tools: ['doCalc'],
+    preferredHandler: '_aiDispatchNLP',
+    forbiddenRoutes: ['knowledge'],
+    allowFollowUp: true,
+    needsRealData: true,
+    offline: true,
+    confirms: false
+  },
+  {
+    id: 'turno_largo',
+    domain: 'payroll',
+    priority: 70,
+    route: 'query',
+    source: 'nlp',
+    examples: ['cuál fue mi turno más largo', 'mi jornada más larga'],
+    keywords: ['turno mas largo', 'jornada mas larga', 'el mas largo'],
+    tools: ['doCalc'],
+    preferredHandler: '_aiDispatchNLP',
+    forbiddenRoutes: ['knowledge'],
+    allowFollowUp: true,
+    needsRealData: true,
+    offline: true,
+    confirms: false
+  },
+  {
+    id: 'turno_corto',
+    domain: 'payroll',
+    priority: 70,
+    route: 'query',
+    source: 'nlp',
+    examples: ['cuál fue mi turno más corto', 'mi jornada más corta'],
+    keywords: ['turno mas corto', 'jornada mas corta', 'el mas corto'],
+    tools: ['doCalc'],
+    preferredHandler: '_aiDispatchNLP',
+    forbiddenRoutes: ['knowledge'],
+    allowFollowUp: true,
+    needsRealData: true,
+    offline: true,
+    confirms: false
+  },
+  {
+    id: 'velocidad',
+    domain: 'payroll',
+    priority: 70,
+    route: 'query',
+    source: 'nlp',
+    examples: ['a qué ritmo voy ganando', 'cuánto gano por hora trabajada en promedio'],
+    keywords: ['ritmo', 'que tan rapido', 'velocidad de ganancia'],
+    tools: ['doCalc'],
+    preferredHandler: '_aiDispatchNLP',
+    forbiddenRoutes: ['knowledge'],
+    allowFollowUp: true,
+    needsRealData: true,
+    offline: true,
+    confirms: false
+  },
+  {
+    id: 'planificacion_semana',
+    domain: 'simulation',
+    priority: 60,
+    route: 'advisor',
+    source: 'nlp',
+    examples: ['ayudame a planear la semana', 'cómo organizo mis turnos esta semana'],
+    keywords: ['planear la semana', 'organizar turnos', 'planificar semana'],
+    tools: ['doCalc'],
+    preferredHandler: '_aiDispatchNLP',
+    forbiddenRoutes: ['knowledge'],
+    allowFollowUp: true,
+    needsRealData: true,
+    offline: true,
+    confirms: false
+  },
+
+  // ── Asesor financiero (ruteados por _aiFinancieroIntent, no por el NLP) ──
+  {
+    id: 'emergencia',
+    domain: 'simulation',
+    priority: 60,
+    route: 'advisor',
+    source: 'financiero',
+    examples: ['cuánto debería tener de fondo de emergencia', 'colchón financiero'],
+    keywords: ['fondo de emergencia', 'colchon', 'imprevisto'],
+    tools: ['doCalc', 'aiAdvisorEmergencia'],
+    preferredHandler: '_aiFinancieroIntent',
+    forbiddenRoutes: ['knowledge', 'query'],
+    allowFollowUp: true,
+    needsRealData: true,
+    offline: true,
+    confirms: false
+  },
+  {
+    id: 'endeudamiento',
+    domain: 'simulation',
+    priority: 60,
+    route: 'advisor',
+    source: 'financiero',
+    examples: ['cuánto me puedo endeudar', 'puedo pagar una cuota de 500 mil'],
+    keywords: ['endeudar', 'cuota', 'capacidad de pago', 'prestamo'],
+    tools: ['doCalc', 'aiAdvisorEndeudamiento'],
+    preferredHandler: '_aiFinancieroIntent',
+    forbiddenRoutes: ['knowledge', 'query'],
+    allowFollowUp: true,
+    needsRealData: true,
+    offline: true,
+    confirms: false
+  },
+
   // ── Fallback / fuera de dominio ────────────────────────────────
   {
     id: 'out_of_scope',
@@ -802,9 +1048,68 @@ function aiResolveByPriority(ids) {
   return best ? best.id : null;
 }
 
+// IDs que NO emite el clasificador (aiClassifyIntent / AI_INTENTS). Son rutas de
+// respuesta reales pero las dispara otra capa: guards de cascada, el router
+// financiero (_aiFinancieroIntent) o consultas/slash (aiQuery). El validador no
+// exige que estén en AI_INTENTS. Quien tenga campo `source` lo declara directo.
+var _AI_NON_NLP_IDS = [
+  // guards de cascada (pre-NLP)
+  'auditoria_pago',
+  'editar_turno',
+  'explicabilidad',
+  'out_of_scope',
+  'desambiguacion',
+  // derivados / query / slash
+  'quincena',
+  'turno_activo',
+  'tendencia',
+  'meta',
+  'diagnostico_red',
+  // ruteados por el asesor financiero
+  'presupuesto',
+  'emergencia',
+  'endeudamiento',
+  'indemnizacion',
+  'comparar_oferta'
+];
+
+// Origen de un id: 'nlp' (lo emite el clasificador) | 'guard'|'financiero'|'derived'.
+function aiRegistrySourceOf(id) {
+  var s = aiIntentSpec(id);
+  if (s && s.source) return s.source;
+  return _AI_NON_NLP_IDS.indexOf(id) >= 0 ? 'non-nlp' : 'nlp';
+}
+
+// Valida la cobertura del registro contra la lista canónica de intents del NLP
+// (AI_INTENTS de ai-nlp.js → pasar sus ids). Devuelve qué falta y qué sobra para
+// que el registro NO se desincronice del clasificador. Pensado para un test.
+function aiRegistryValidate(nlpIds) {
+  nlpIds = nlpIds || [];
+  var ids = {};
+  for (var i = 0; i < AI_INTENT_REGISTRY.length; i++) ids[AI_INTENT_REGISTRY[i].id] = true;
+  var missingFromRegistry = [];
+  for (var j = 0; j < nlpIds.length; j++) {
+    if (!ids[nlpIds[j]]) missingFromRegistry.push(nlpIds[j]);
+  }
+  var phantomNlp = [];
+  for (var k = 0; k < AI_INTENT_REGISTRY.length; k++) {
+    var e = AI_INTENT_REGISTRY[k];
+    var src = e.source || (_AI_NON_NLP_IDS.indexOf(e.id) >= 0 ? 'non-nlp' : 'nlp');
+    if (src === 'nlp' && nlpIds.indexOf(e.id) < 0) phantomNlp.push(e.id);
+  }
+  return {
+    ok: missingFromRegistry.length === 0 && phantomNlp.length === 0,
+    total: AI_INTENT_REGISTRY.length,
+    missingFromRegistry: missingFromRegistry,
+    phantomNlp: phantomNlp
+  };
+}
+
 if (typeof window !== 'undefined') {
   window.AI_INTENT_REGISTRY = AI_INTENT_REGISTRY;
   window.aiIntentSpec = aiIntentSpec;
   window.aiIntentsByDomain = aiIntentsByDomain;
   window.aiResolveByPriority = aiResolveByPriority;
+  window.aiRegistrySourceOf = aiRegistrySourceOf;
+  window.aiRegistryValidate = aiRegistryValidate;
 }

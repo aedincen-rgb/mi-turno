@@ -254,6 +254,8 @@ const projectGlobals = {
   aiIntentSpec: 'readonly',
   aiIntentsByDomain: 'readonly',
   aiResolveByPriority: 'readonly',
+  aiRegistrySourceOf: 'readonly',
+  aiRegistryValidate: 'readonly',
   aiLastTrace: 'readonly',
   MT_AI_DEBUG: 'writable',
   aiClassifyIntent: 'readonly',

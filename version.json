@@ -1,4 +1,4 @@
 {
-  "v": "v339",
-  "label": "infra IA: registry declarativo + trazabilidad + golden tests (fases seguras)"
+  "v": "v340",
+  "label": "registry de intenciones completo + validador de cobertura (paso 2 cerrado)"
 }

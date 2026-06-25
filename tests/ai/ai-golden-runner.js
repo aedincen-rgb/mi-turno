@@ -183,6 +183,18 @@ try {
     return out;
   }, CASES);
 
+  // ── Integridad del registry: cobertura vs intents reales del NLP ──
+  var registryCheck = await page.evaluate(function () {
+    try {
+      var nlpIds = (window.AI_INTENTS || []).map(function (x) {
+        return x.id;
+      });
+      return window.aiRegistryValidate ? window.aiRegistryValidate(nlpIds) : null;
+    } catch (e) {
+      return { ok: false, error: String(e) };
+    }
+  });
+
   // Artefacto de la corrida (útil para calibrar y depurar).
   try {
     fs.writeFileSync(
@@ -238,6 +250,22 @@ try {
     else pass++;
   }
 
+  // Validación del registry (cobertura completa de intents del NLP)
+  var registryFail = false;
+  console.log('\n═══ REGISTRY · integridad ═══');
+  if (!registryCheck) {
+    console.log('  ~ no se pudo validar (aiRegistryValidate ausente)');
+  } else if (registryCheck.ok) {
+    console.log('  ✓ ' + registryCheck.total + ' rutas · cobertura NLP completa, sin ids fantasma');
+  } else {
+    registryFail = true;
+    if (registryCheck.missingFromRegistry && registryCheck.missingFromRegistry.length)
+      console.log('  ✗ intents del NLP sin entrada: ' + registryCheck.missingFromRegistry.join(', '));
+    if (registryCheck.phantomNlp && registryCheck.phantomNlp.length)
+      console.log('  ✗ ids marcados nlp que el NLP no emite: ' + registryCheck.phantomNlp.join(', '));
+    if (registryCheck.error) console.log('  ✗ ' + registryCheck.error);
+  }
+
   console.log('\n═══ GOLDEN · ' + CASES.length + ' casos ═══');
   console.log('  ✓ ' + pass + ' OK · ✗ ' + hardFails.length + ' fallos duros');
   if (hardFails.length) {
@@ -257,7 +285,7 @@ try {
     if (softWarns.length > 30) console.log('  … (' + (softWarns.length - 30) + ' más)');
   }
   console.log('');
-  exitCode = hardFails.length ? 1 : 0;
+  exitCode = hardFails.length || registryFail ? 1 : 0;
 } catch (e) {
   console.error('Error en golden runner:', e && e.message ? e.message : e);
   exitCode = 1;
