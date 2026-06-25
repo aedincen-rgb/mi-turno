@@ -1554,11 +1554,8 @@ function _aiDispatchNLP(intent, c, state, q, t) {
       'cual es el recargo',
       'cuanto recargo'
     );
-    if (_esDefinitoria && typeof aiBestSearch === 'function') {
-      var kRespDef = aiBestSearch(q);
-      if (kRespDef) return kRespDef;
-    } else if (_esDefinitoria && typeof aiKnowledgeSearch === 'function') {
-      var kRespDef = aiKnowledgeSearch(q);
+    if (_esDefinitoria) {
+      var kRespDef = _aiKnowledgeLookup(q);
       if (kRespDef) return kRespDef;
     }
 
@@ -1659,13 +1656,8 @@ function _aiDispatchNLP(intent, c, state, q, t) {
 
     // PRIORIDAD: buscar en la base de conocimiento para respuestas específicas
     // Primero keyword matching (rápido), luego semántico como fallback (v259)
-    if (typeof aiBestSearch === 'function') {
-      var kResp = aiBestSearch(q);
-      if (kResp) return kResp;
-    } else if (typeof aiKnowledgeSearch === 'function') {
-      var kResp = aiKnowledgeSearch(q);
-      if (kResp) return kResp;
-    }
+    var kResp = _aiKnowledgeLookup(q);
+    if (kResp) return kResp;
     var hsemActual = typeof getHSEM === 'function' ? getHSEM(c.ahora) : 44;
     var _Dn = c.ahora || new Date();
     var _ndn = getInicioNocturno(_Dn) === 19 ? '7pm' : '9pm';
@@ -2994,6 +2986,16 @@ function _aiConexionEstado(state) {
   _resp +=
     '\n💡 La app funciona 100% sin internet. Tus datos se guardan localmente y se sincronizan cuando vuelve la conexión.';
   return _resp;
+}
+
+// Punto ÚNICO de búsqueda en la base de conocimiento (D2). Antes este patrón
+// (aiBestSearch con fallback a aiKnowledgeSearch) estaba duplicado en 3 lugares
+// de la cascada. Prefiere el semántico+keyword (aiBestSearch) y cae al keyword
+// puro si no está. Devuelve el texto de la respuesta o null.
+function _aiKnowledgeLookup(q) {
+  if (typeof aiBestSearch === 'function') return aiBestSearch(q) || null;
+  if (typeof aiKnowledgeSearch === 'function') return aiKnowledgeSearch(q) || null;
+  return null;
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -4677,13 +4679,8 @@ function _aiAnswerCore(question, state) {
       'que recargo'
     )
   ) {
-    if (typeof aiBestSearch === 'function') {
-      var kRespClas = aiBestSearch(q);
-      if (kRespClas) return kRespClas;
-    } else if (typeof aiKnowledgeSearch === 'function') {
-      var kRespClas = aiKnowledgeSearch(q);
-      if (kRespClas) return kRespClas;
-    }
+    var kRespClas = _aiKnowledgeLookup(q);
+    if (kRespClas) return kRespClas;
   }
 
   // Festivos
