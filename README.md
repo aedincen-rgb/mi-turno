@@ -1,6 +1,6 @@
 # Mi Turno
 
-[![Version](https://img.shields.io/badge/version-v317-blue.svg)](version.json)
+[![Version](https://img.shields.io/badge/version-v338-blue.svg)](version.json)
 [![CI](https://github.com/aedincen-rgb/mi-turno-BETA/actions/workflows/e2e.yml/badge.svg)](https://github.com/aedincen-rgb/mi-turno-BETA/actions/workflows/e2e.yml)
 [![PWA](https://img.shields.io/badge/PWA-offline--first-5B86E5.svg)](manifest.json)
 
@@ -9,8 +9,13 @@ calcula ingresos con recargos colombianos, funciona sin conexión, sincroniza co
 Supabase cuando hay sesión y expone un asistente IA contextual para consultar
 ingresos, proyecciones, descanso, reportes y ayuda de uso.
 
-La versión actual publicada en `version.json` es `v317`
-(`IA contextual: captador de señales multi-dominio`).
+La versión actual publicada en `version.json` es `v338`
+(`tarjeta nativa de desglose que reemplaza las tablas que se rompían en móvil`).
+
+Hitos recientes: cálculo **date-aware** de la Reforma Laboral (Ley 2466/2025),
+asesor financiero/legal por tiers (prestaciones, verificador "¿me pagan bien?",
+explicabilidad y alertas de cumplimiento), motor de continuidad conversacional y
+un benchmark formal de NLU con detección de fuera de dominio.
 
 ## Documentación principal
 
@@ -29,6 +34,10 @@ luego `ARCHITECTURE.md`.
 - Calcula horas ordinarias, nocturnas, dominicales, festivas y extras.
 - Aplica la reducción de jornada de la Ley 2101/2021 por fecha mediante
   `getHSEM(fecha)`.
+- Aplica la Reforma Laboral (Ley 2466/2025) de forma **date-aware**: cada turno
+  se paga con el recargo vigente a su fecha (dominical/festivo 75→80→90→100% y
+  jornada nocturna desde las 19:00 a partir del 25-dic-2025), vía
+  `getRecargoFestivo(fecha)`, `getInicioNocturno(fecha)` y `rcFactor(rk, fecha)`.
 - Permite trabajar offline con persistencia local y cola de sincronización.
 - Sincroniza turnos, turno activo, salario y PIN con Supabase cuando hay sesión.
 - Exporta reportes PDF/XLSX localmente y puede enviarlos por correo usando una
@@ -37,6 +46,9 @@ luego `ARCHITECTURE.md`.
   invitado.
 - Incluye asistente IA local y contextual, con proxy opcional a Gemini en una
   Edge Function para casos conversacionales.
+- Incluye un asesor financiero/legal por tiers: prestaciones, verificador de pago
+  justo, explicabilidad del cálculo, alertas de cumplimiento y simuladores, todo
+  anclado a las cifras reales de `doCalc`.
 - Es instalable como PWA y actualiza el service worker de forma silenciosa.
 
 ## Stack
@@ -84,6 +96,7 @@ npm run test:smoke        # pruebas puras sin navegador
 npm run test:e2e          # Playwright
 npm run test:a11y         # auditoría WCAG con axe-core
 npm run test:coverage     # cobertura funcional del asistente IA
+npm run test:benchmark    # benchmark de NLU (intent, OOS, groundedness)
 ./scripts/check.sh        # gate pre-push del proyecto
 ```
 
@@ -178,10 +191,20 @@ El asistente no depende de un LLM para operar. Tiene una cadena local con:
 - Ruteo por señales multi-dominio (`ai.js`, v317).
 - Router de herramientas (`ai-router.js`).
 - Colector de datos local/Supabase (`ai-collector.js`).
-- Motor de razonamiento (`ai-reasoning.js`).
+- Motor de razonamiento con salience y verificación anclada (`ai-reasoning.js`).
 - Generador de respuesta con evidencias (`ai-responder.js`).
+- Asesor financiero/legal por tiers (`ai-advisor.js`, `ai-knowledge.js`): cálculo
+  date-aware de la Ley 2466/2025, prestaciones, verificador de pago justo,
+  explicabilidad y alertas de cumplimiento.
+- Motor de continuidad conversacional (`ai-conversation.js`, v334): chips de
+  "profundizar + abrir" con cobertura, anti-repetición y dosificación.
 - Módulos de memoria, conversación, conocimiento, auditoría, asesoría,
   logros, voz, calendario, ayuda y psicología.
+
+La calidad de la IA se mide con un benchmark formal de NLU
+(`npm run test:benchmark`, metodología CheckList + CLINC150): accuracy de intent,
+invarianza ante paráfrasis, detección de fuera de dominio y groundedness contra
+`doCalc`. Baseline objetivo: 100/100 sin regresiones.
 
 `ai-chat` existe como proxy remoto seguro hacia Gemini para respuesta libre o
 extracción estructurada, pero el flujo principal de cálculo y datos se mantiene
@@ -191,7 +214,7 @@ anclado al motor local para no inventar cifras.
 
 `sw.js` usa dos caches:
 
-- `mt-shell-v317`: archivos propios de la app. Cambia en cada release.
+- `mt-shell-v338`: archivos propios de la app. Cambia en cada release.
 - `mt-cdn-v2`: librerías CDN. Sobrevive entre releases salvo cambio de URL.
 
 El registro en `js/app/sw-register.js` busca actualizaciones en background. Si
@@ -214,7 +237,7 @@ Vercel despliega automáticamente desde `master`.
 Para cambiar versión:
 
 ```bash
-./scripts/bump.sh 318 "Label de la release"
+./scripts/bump.sh 339 "Label de la release"
 ```
 
 Ese script sincroniza:

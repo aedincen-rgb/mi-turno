@@ -4,7 +4,7 @@ Este documento está escrito para que un ingeniero nuevo entienda cómo funciona
 Mi Turno en producción, qué integraciones existen, dónde vive cada pieza y qué
 reglas no conviene romper.
 
-Estado revisado: `v317`, 20 de junio de 2026.
+Estado revisado: `v338`, 25 de junio de 2026.
 
 ## 1. Resumen ejecutivo
 
@@ -123,8 +123,8 @@ loader para la app principal.
 └── .github/workflows/e2e.yml CI
 ```
 
-Hay 129 archivos locales bajo `js/` y `css/`. Esa fragmentación es intencional
-para mantener el proyecto auditable sin build obligatorio.
+Hay 129 archivos locales bajo `js/` y `css/` (84 JS + 45 CSS). Esa fragmentación
+es intencional para mantener el proyecto auditable sin build obligatorio.
 
 ## 6. Estilo técnico
 
@@ -312,6 +312,29 @@ La lógica legal vive principalmente en:
 Los recargos están centralizados en `RC`. Cualquier cambio legal debe actualizar
 ese mapa, los tests smoke y la documentación correspondiente.
 
+### Reforma Laboral · Ley 2466/2025 (cálculo date-aware, v329+)
+
+La reforma introduce dos cambios graduales y fechados. El cálculo es **date-aware**:
+cada turno se paga con el valor vigente a SU fecha, no con un número fijo. Un turno
+de mayo 2025 y otro de hoy se liquidan distinto. Funciones en `globals.js`:
+
+- `getRecargoFestivo(fecha)`: recargo por descanso obligatorio (dominical/festivo,
+  Art. 6). Devuelve el EXTRA: 0.75 hasta 30-jun-2025, 0.80 desde 1-jul-2025, 0.90
+  desde 1-jul-2026, 1.00 desde 1-jul-2027.
+- `getInicioNocturno(fecha)`: hora de inicio de la jornada nocturna (Art. 5). Pasa
+  de las 21:00 a las 19:00 desde el 25-dic-2025. El recargo sigue en 35%; solo
+  cambia desde qué hora corre.
+- `rcFactor(rk, fecha)`: recompone el factor de una categoría con el componente
+  dominical vigente a la fecha. Las categorías no-festivas devuelven su factor
+  estático de `RC`. `RC[rk].factor` se conserva para labels/UI (asume dominical
+  75%); el cálculo real de plata pasa por `rcFactor`.
+
+`calculator.js` (`calcCats`, `doCalc`, `doCalcPerTurno`) usa el inicio nocturno por
+fecha. Los textos del asistente (`ai.js`, `ai-knowledge.js`, `ai-app-kb.js`,
+`ai-help.js`, etc.) están armonizados para describir los valores vigentes, no
+hardcodeados. Al cambiar una fecha o un porcentaje legal hay que tocar estas
+funciones, los tests smoke y `tests/ai-benchmark.mjs` (sección legal).
+
 ## 14. UI y componentes
 
 `AppMain` conserva el estado principal:
@@ -393,6 +416,45 @@ atenderlas:
 La prioridad importa. Por ejemplo, "me pagan mal el recargo" debe ir a legal
 aunque contenga una señal de pago/plata.
 
+### Asesor financiero/legal por tiers (v329–v333)
+
+`ai-advisor.js` y `ai-knowledge.js` exponen capacidades de asesoría ancladas a las
+cifras reales de `doCalc`, alcanzables por lenguaje natural (todo intent que el NLP
+clasifica tiene handler en `_aiDispatchNLP`):
+
+- Cálculo legal date-aware de la Ley 2466/2025 (Tier 0).
+- Profundización financiera/legal: prestaciones, cesantías, verificador "¿me pagan
+  bien?", módulo fiscal (Tier 1).
+- Explicabilidad: "¿cómo lo calculaste?" desglosa el razonamiento (Tier 2).
+- Cierre date-aware del simulador/optimizador con los factores vigentes.
+- Alertas de cumplimiento y barrido legal date-aware (Tier 4).
+
+Las rutas financieras se resuelven en `_aiFinancieroIntent` (router canónico,
+pre-NLP, maneja slash y lenguaje natural) y devuelven crudo para no regenerarse al
+pasar por el enriquecimiento.
+
+### Motor de continuidad conversacional (v334)
+
+`aiNextChips(intent, c, baseActions)` en `ai-conversation.js` evita que el chat
+muera o se vuelva repetitivo. Refina los chips de seguimiento a un patrón
+"profundizar + abrir" con tres reglas:
+
+- Cobertura: ofrece ángulos no explorados según el contexto.
+- Anti-repetición: no repite el chip de profundización ya mostrado.
+- Dosificación: a lo sumo un chip cada ~4 turnos para dejar respirar.
+
+Se engancha en `ai-enhanced.js`. Complementa la revelación progresiva (v324: una
+sola CTA por turno) y el deliberador de módulos MRKL+SMART (v323).
+
+### Calidad medida: benchmark de NLU
+
+`tests/ai-benchmark.mjs` (`npm run test:benchmark`) mide la IA con metodología
+CheckList + CLINC150: accuracy de intent (MFT), invarianza ante paráfrasis/typos
+(INV), perturbación direccional (DIR), detección de fuera de dominio (OOS) y calidad
+(QLT: sin leaks, género correcto, groundedness contra `doCalc`). Emite un puntaje
+compuesto 0–100. La detección de fuera de dominio (`_aiIsOutOfScope`) gatea ANTES
+del NLP para declinar con gracia preguntas off-domain en vez de fabricar cifras.
+
 ### IA remota
 
 `supabase/functions/ai-chat/index.ts` llama a Gemini 2.0 Flash Lite con dos
@@ -431,7 +493,7 @@ Ambas funciones:
 
 | Cache | Contenido | Invalidación |
 |---|---|---|
-| `mt-shell-v317` | Archivos propios de app, CSS, JS, iconos, manifest, version. | Cambia en cada release. |
+| `mt-shell-v338` | Archivos propios de app, CSS, JS, iconos, manifest, version. | Cambia en cada release. |
 | `mt-cdn-v2` | React, ReactDOM, jsPDF, AutoTable, XLSX. | Solo cambia si cambian URLs CDN. |
 
 Estrategia:
@@ -486,6 +548,7 @@ Scripts relevantes:
 | `npm run test:a11y` | axe-core WCAG 2.1 A/AA. |
 | `npm run test:ai-browser` | Pruebas de IA en navegador. |
 | `npm run test:coverage` | Frases naturales que deben alcanzar capacidades IA. |
+| `npm run test:benchmark` | Benchmark de NLU: intent, invarianza, OOS y groundedness. |
 | `npm run lint` | ESLint sobre `js/**/*.js`. |
 | `npm run format:check` | Prettier check. |
 
@@ -526,7 +589,7 @@ Tres fuentes deben estar sincronizadas:
 Usar:
 
 ```bash
-./scripts/bump.sh 318 "Label de la release"
+./scripts/bump.sh 339 "Label de la release"
 ```
 
 No editar esas tres fuentes a mano. Una desincronización puede disparar reloads
