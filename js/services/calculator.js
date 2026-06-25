@@ -96,9 +96,13 @@ function calcCats(inicio, fin, minsOrd) {
   var current = new Date(inicio.getTime());
   var remainingOrd = minsOrd;
   while (current < fin) {
+    // Hora de inicio nocturno vigente a la fecha del chunk (Ley 2466/2025:
+    // 19:00 desde 25-dic-2025; 21:00 antes). Date-aware para no recalcular
+    // turnos viejos con la regla nueva.
+    var nightStart = getInicioNocturno(current);
     var nextBoundary = new Date(current.getTime());
     if (current.getHours() < 6) nextBoundary.setHours(6, 0, 0, 0);
-    else if (current.getHours() < 21) nextBoundary.setHours(21, 0, 0, 0);
+    else if (current.getHours() < nightStart) nextBoundary.setHours(nightStart, 0, 0, 0);
     else {
       // Corte en medianoche para re-evaluar estado festivo del nuevo día
       nextBoundary.setDate(nextBoundary.getDate() + 1);
@@ -107,7 +111,7 @@ function calcCats(inicio, fin, minsOrd) {
     var chunkEnd = new Date(Math.min(nextBoundary.getTime(), fin.getTime()));
     var minsInChunk = (chunkEnd - current) / 60000;
     if (minsInChunk > 0) {
-      var isNight = current.getHours() >= 21 || current.getHours() < 6;
+      var isNight = current.getHours() >= nightStart || current.getHours() < 6;
       var isHoliday = esFest(current);
       var isExtra = remainingOrd <= 0;
       if (!isExtra) {
@@ -177,7 +181,7 @@ function doCalc(turnos, activo, ahoraRef, vh) {
       Object.keys(cats).forEach(function (rk) {
         var m = cats[rk];
         if (m > 0) {
-          var c = (m / 60) * vh * RC[rk].factor;
+          var c = (m / 60) * vh * rcFactor(rk, ini);
           bd[rk].mins += m;
           bd[rk].cop += c;
           tMins += m;
@@ -233,7 +237,7 @@ function doCalcPerTurno(turnos, vh) {
       Object.keys(cats).forEach(function (rk) {
         var m = cats[rk];
         if (m > 0) {
-          var c = (m / 60) * vh * RC[rk].factor;
+          var c = (m / 60) * vh * rcFactor(rk, ini);
           bd[rk] = { mins: m, cop: c };
           cop += c;
           mins += m;
@@ -293,7 +297,7 @@ function calcPorDia(turnos, vh) {
         var m = cats[rk];
         if (m > 0) {
           dias[k].mins += m;
-          dias[k].cop += (m / 60) * vh * RC[rk].factor;
+          dias[k].cop += (m / 60) * vh * rcFactor(rk, ini);
         }
       });
       var ord = cats.diurnaOrd + cats.noctOrd + cats.diurnaFest + cats.noctFest;

@@ -4,7 +4,7 @@
 // ════════════════════════════════════════════════════════════════
 // Versión visible de la app (mostrada en Ajustes → Acerca de).
 // Mantener sincronizada con CACHE en sw.js y "v" en version.json.
-var MT_APP_VERSION = 'v328'; // hito documentación completa v2.1
+var MT_APP_VERSION = 'v329'; // hito documentación completa v2.1
 
 // Variables globales de Supabase
 var SUPA = null;
@@ -112,6 +112,54 @@ var RC = {
     icon: '🌌'
   }
 };
+
+// ── Reforma laboral · Ley 2466 de 2025 ──────────────────────────────
+// Dos cambios que afectan el cálculo de plata, ambos graduales/fechados.
+// Por eso el cálculo es DATE-AWARE: cada turno usa el valor vigente a SU fecha,
+// no un número fijo (un turno de mayo 2025 y otro de hoy se pagan distinto).
+//
+// 1) Recargo por descanso obligatorio (dominical/festivo), Art. 6:
+//      hasta 30-jun-2025 ......... 75%   (CST Art. 179, redacción previa)
+//      desde  1-jul-2025 ......... 80%
+//      desde  1-jul-2026 ......... 90%
+//      desde  1-jul-2027 ........ 100%
+// Devuelve el EXTRA (0.75 … 1.00), no el factor. Fuente: Ley 2466/2025 Art. 6.
+function getRecargoFestivo(fecha) {
+  var d = fecha instanceof Date ? fecha : new Date(fecha);
+  if (d >= new Date(2027, 6, 1)) return 1.0;
+  if (d >= new Date(2026, 6, 1)) return 0.9;
+  if (d >= new Date(2025, 6, 1)) return 0.8;
+  return 0.75;
+}
+
+// 2) Inicio de la jornada nocturna, Art. 5: pasa de las 21:00 a las 19:00,
+//    con efecto a partir del 25-dic-2025 (6 meses tras la vigencia de la ley).
+//    El recargo nocturno sigue siendo 35%; solo cambia DESDE qué hora corre.
+//    Devuelve la hora (19 o 21). Fuente: Ley 2466/2025 Art. 5.
+function getInicioNocturno(fecha) {
+  var d = fecha instanceof Date ? fecha : new Date(fecha);
+  return d >= new Date(2025, 11, 25) ? 19 : 21;
+}
+
+// Factor de recargo DATE-AWARE para una categoría dada. RC[rk].factor es el
+// valor estático (asume dominical 75%) usado para labels/UI; acá se recompone
+// el componente dominical con el vigente a la fecha del turno. Las categorías
+// no-festivas devuelven su factor estático sin cambios.
+function rcFactor(rk, fecha) {
+  var fe = getRecargoFestivo(fecha); // extra dominical/festivo vigente
+  switch (rk) {
+    case 'diurnaFest':
+      return 1 + fe; // 1 + dominical
+    case 'noctFest':
+      return 1 + fe + 0.35; // + recargo nocturno
+    case 'extraFestDiur':
+      return 1 + fe + 0.25; // + recargo extra diurna
+    case 'extraFestNoct':
+      return 1 + fe + 0.75; // + recargo extra nocturna
+    default:
+      return RC[rk] ? RC[rk].factor : 1;
+  }
+}
 
 /**
  * Calcula el Domingo de Ramos para un año dado (Algoritmo de Butcher-Meeus)

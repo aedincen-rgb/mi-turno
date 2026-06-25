@@ -221,6 +221,9 @@ const projectGlobals = {
 
   // config/globals.js
   getHSEM: 'readonly',
+  getRecargoFestivo: 'readonly',
+  getInicioNocturno: 'readonly',
+  rcFactor: 'readonly',
   MT_APP_VERSION: 'readonly',
 
   // utils/password-hash.js (v49)

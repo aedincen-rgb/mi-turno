@@ -127,17 +127,22 @@ function _aiFactor(tipo) {
   return factores[tipo] || 1.0;
 }
 
-// Etiquetas legibles por tipo
+// Etiquetas legibles por tipo. Los recargos festivos son date-aware (Ley
+// 2466/2025): el % mostrado se deriva del vigente HOY para que coincida con
+// los montos (calculados por doCalc según la fecha del turno).
 function _aiLabelTipo(tipo) {
+  var p = function (rk) {
+    return Math.round((rcFactor(rk, new Date()) - 1) * 100);
+  };
   var labels = {
     diurnaOrd: 'diurnas ordinarias',
     noctOrd: 'nocturnas (+35%)',
-    diurnaFest: 'festivas diurnas (+75%)',
-    noctFest: 'festivas nocturnas (+110%)',
+    diurnaFest: 'festivas diurnas (+' + p('diurnaFest') + '%)',
+    noctFest: 'festivas nocturnas (+' + p('noctFest') + '%)',
     extraDiurna: 'extra diurnas (+25%)',
     extraNoct: 'extra nocturnas (+75%)',
-    extraFestDiur: 'extra festivas diurnas (+100%)',
-    extraFestNoct: 'extra festivas nocturnas (+150%)'
+    extraFestDiur: 'extra festivas diurnas (+' + p('extraFestDiur') + '%)',
+    extraFestNoct: 'extra festivas nocturnas (+' + p('extraFestNoct') + '%)'
   };
   return labels[tipo] || tipo;
 }
@@ -1006,7 +1011,9 @@ function _aiDispatchNLP(intent, c, state, q, t) {
         ? 'Te faltan **' + fCOP(c.falta) + '** para llegar a tu salario base.'
         : 'Ya alcanzaste tu salario base este mes.';
     return (
-      '📅 Para planear bien la semana necesito saber qué buscás:\n\n• Si querés **maximizar ingresos** → los turnos nocturnos y en festivo pagan hasta 75% más.\n• Si querés **descansar más** → un día libre cada 6 trabajados es tu derecho legal.\n• Si querés **alcanzar tu meta** → ' +
+      '📅 Para planear bien la semana necesito saber qué buscás:\n\n• Si querés **maximizar ingresos** → los turnos nocturnos y en festivo pagan hasta ' +
+      Math.round((rcFactor('diurnaFest', c.ahora || new Date()) - 1) * 100) +
+      '% más.\n• Si querés **descansar más** → un día libre cada 6 trabajados es tu derecho legal.\n• Si querés **alcanzar tu meta** → ' +
       faltaDinero +
       '\n\n¿Cuántos turnos estás pensando hacer esta semana?'
     );
@@ -1351,11 +1358,15 @@ function _aiDispatchNLP(intent, c, state, q, t) {
       '• Extra diurna (25%): +' +
       fCOP(hrs * c.vh * 1.25) +
       '\n' +
-      '• Festiva diurna (75%): +' +
-      fCOP(hrs * c.vh * 1.75) +
+      '• Festiva diurna (' +
+      Math.round((rcFactor('diurnaFest', c.ahora || new Date()) - 1) * 100) +
+      '%): +' +
+      fCOP(hrs * c.vh * rcFactor('diurnaFest', c.ahora || new Date())) +
       '\n' +
-      '• Festiva nocturna (110%): +' +
-      fCOP(hrs * c.vh * 2.1) +
+      '• Festiva nocturna (' +
+      Math.round((rcFactor('noctFest', c.ahora || new Date()) - 1) * 100) +
+      '%): +' +
+      fCOP(hrs * c.vh * rcFactor('noctFest', c.ahora || new Date())) +
       '\n\n' +
       '💡 Decime el tipo (ej. "4 horas nocturnas") para un cálculo exacto.'
     );
@@ -1374,7 +1385,9 @@ function _aiDispatchNLP(intent, c, state, q, t) {
     return (
       '📅 **Próximos festivos:**\n\n' +
       flist +
-      '\n\n⚠️ Recordá: los festivos pagan con recargo del 75%.'
+      '\n\n⚠️ Recordá: los festivos pagan con recargo del ' +
+      Math.round((rcFactor('diurnaFest', c.ahora || new Date()) - 1) * 100) +
+      '% (sube por fases hasta 100% en 2027).'
     );
   }
 
@@ -1481,8 +1494,12 @@ function _aiDispatchNLP(intent, c, state, q, t) {
             return (
               '🌙⛪ **Hora extra festiva nocturna:**\n\nTu hora base es ' +
               fCOP(c.vh) +
-              '.\nCon el recargo del 150% (2.50x), te pagan **' +
-              fCOP(c.vh * 2.5) +
+              '.\nCon el recargo del ' +
+              Math.round((rcFactor('extraFestNoct', c.ahora || new Date()) - 1) * 100) +
+              '% (' +
+              rcFactor('extraFestNoct', c.ahora || new Date()).toFixed(2) +
+              'x), te pagan **' +
+              fCOP(c.vh * rcFactor('extraFestNoct', c.ahora || new Date())) +
               '** por cada hora.'
             );
           }
@@ -1498,16 +1515,24 @@ function _aiDispatchNLP(intent, c, state, q, t) {
           return (
             '🌙⛪ **Hora festiva nocturna:**\n\nTu hora base es ' +
             fCOP(c.vh) +
-            '.\nCon el recargo del 110% (2.10x), te pagan **' +
-            fCOP(c.vh * 2.1) +
+            '.\nCon el recargo del ' +
+            Math.round((rcFactor('noctFest', c.ahora || new Date()) - 1) * 100) +
+            '% (' +
+            rcFactor('noctFest', c.ahora || new Date()).toFixed(2) +
+            'x), te pagan **' +
+            fCOP(c.vh * rcFactor('noctFest', c.ahora || new Date())) +
             '** por cada hora.'
           );
         }
         return (
           '☀️⛪ **Hora dominical/festiva diurna:**\n\nTu hora base es ' +
           fCOP(c.vh) +
-          '.\nCon el recargo del 75% (1.75x), te pagan **' +
-          fCOP(c.vh * 1.75) +
+          '.\nCon el recargo del ' +
+          Math.round((rcFactor('diurnaFest', c.ahora || new Date()) - 1) * 100) +
+          '% (' +
+          rcFactor('diurnaFest', c.ahora || new Date()).toFixed(2) +
+          'x), te pagan **' +
+          fCOP(c.vh * rcFactor('diurnaFest', c.ahora || new Date())) +
           '** por cada hora.'
         );
       }
@@ -1562,16 +1587,29 @@ function _aiDispatchNLP(intent, c, state, q, t) {
       if (kResp) return kResp;
     }
     var hsemActual = typeof getHSEM === 'function' ? getHSEM(c.ahora) : 44;
+    var _Dn = c.ahora || new Date();
+    var _ndn = getInicioNocturno(_Dn) === 19 ? '7pm' : '9pm';
+    var _pn = function (rk) {
+      return Math.round((rcFactor(rk, _Dn) - 1) * 100);
+    };
     return (
-      '⚖️ **Normativa laboral colombiana:**\n\n' +
+      '⚖️ **Normativa laboral colombiana (Ley 2466/2025):**\n\n' +
       '| Concepto | Recargo |\n' +
       '|---|---|\n' +
-      '| 🌙 Nocturno (9pm–6am) | +35% |\n' +
-      '| ⛪ Dominical/festivo | +75% |\n' +
+      '| 🌙 Nocturno (' +
+      _ndn +
+      '–6am) | +35% |\n' +
+      '| ⛪ Dominical/festivo | +' +
+      _pn('diurnaFest') +
+      '% |\n' +
       '| ⏱ Extra diurna | +25% |\n' +
       '| 🌙 Extra nocturna | +75% |\n' +
-      '| ⛪ Extra festiva diurna | +100% |\n' +
-      '| 🌙 Extra festiva nocturna | +150% |\n\n' +
+      '| ⛪ Extra festiva diurna | +' +
+      _pn('extraFestDiur') +
+      '% |\n' +
+      '| 🌙 Extra festiva nocturna | +' +
+      _pn('extraFestNoct') +
+      '% |\n\n' +
       '• Jornada máxima: **' +
       hsemActual +
       'h/semana** (Ley 2101/2021)\n' +
@@ -1654,8 +1692,10 @@ function _aiDispatchNLP(intent, c, state, q, t) {
       ' (salario) / 240 horas\n• Nocturna: ' +
       fCOP(c.vh * 1.35) +
       ' (+35%)\n• Dominical/festiva diurna: ' +
-      fCOP(c.vh * 1.75) +
-      ' (+75%)\n• Extra nocturna: ' +
+      fCOP(c.vh * rcFactor('diurnaFest', c.ahora || new Date())) +
+      ' (+' +
+      Math.round((rcFactor('diurnaFest', c.ahora || new Date()) - 1) * 100) +
+      '%)\n• Extra nocturna: ' +
       fCOP(c.vh * 1.75) +
       ' (+75%)'
     );
@@ -1692,7 +1732,9 @@ function _aiDispatchNLP(intent, c, state, q, t) {
       '💼 **Sueldo base**\n\n' +
       'Es tu salario mensual ordinario bruto — sin recargos, horas extra ni auxilios. Es la base de todos los cálculos:\n\n' +
       '• **Valor hora** = sueldo base ÷ 240\n' +
-      '• Sobre él se aplican los recargos (nocturno +35%, dominical +75%, festivo +75%, extras…)\n' +
+      '• Sobre él se aplican los recargos (nocturno +35%, dominical/festivo +' +
+      Math.round((rcFactor('diurnaFest', c.ahora || new Date()) - 1) * 100) +
+      '%, extras…)\n' +
       '• El auxilio de transporte y las prestaciones se suman aparte\n\n' +
       '💡 Para cambiarlo: **Ajustes › Salario base**.'
     );
@@ -4167,7 +4209,8 @@ function _aiAnswerCore(question, state) {
     var addCOP = hrs * c.vh * 1.0; // diurna ord por defecto
     var addNoct = hrs * c.vh * 1.35;
     var addExtra = hrs * c.vh * 1.25;
-    var addFest = hrs * c.vh * 1.75;
+    var _Da = c.ahora || new Date();
+    var addFest = hrs * c.vh * rcFactor('diurnaFest', _Da);
     return (
       'Si trabajas **' +
       hrs +
@@ -4180,7 +4223,7 @@ function _aiAnswerCore(question, state) {
       '\n• Festiva diurna: ' +
       fCOP(addFest) +
       '\n• Festiva nocturna: ' +
-      fCOP(hrs * c.vh * 2.1) +
+      fCOP(hrs * c.vh * rcFactor('noctFest', _Da)) +
       '\n\nTotal mes proyectado con extras diurnas: ' +
       fCOP(c.totalCOP + addExtra)
     );
@@ -4348,11 +4391,15 @@ function _aiAnswerCore(question, state) {
       fDur(c.bd.extraNoct.mins) +
       ' · ' +
       fCOP(c.bd.extraNoct.cop) +
-      '\n• Extra fest. diurna (+100%): ' +
+      '\n• Extra fest. diurna (+' +
+      Math.round((rcFactor('extraFestDiur', c.ahora || new Date()) - 1) * 100) +
+      '%): ' +
       fDur(c.bd.extraFestDiur.mins) +
       ' · ' +
       fCOP(c.bd.extraFestDiur.cop) +
-      '\n• Extra fest. nocturna (+150%): ' +
+      '\n• Extra fest. nocturna (+' +
+      Math.round((rcFactor('extraFestNoct', c.ahora || new Date()) - 1) * 100) +
+      '%): ' +
       fDur(c.bd.extraFestNoct.mins) +
       ' · ' +
       fCOP(c.bd.extraFestNoct.cop)
@@ -4412,14 +4459,26 @@ function _aiAnswerCore(question, state) {
       (c.festTrab.length !== 1 ? 's' : '') +
       ' festivos · **' +
       fCOP(c.festCOP) +
-      '**.\n\nEsos pagan +75% (diurna) o +110% (nocturna). Si fueran extras, +100% / +150%.'
+      '**.\n\nEsos pagan +' +
+      Math.round((rcFactor('diurnaFest', c.ahora || new Date()) - 1) * 100) +
+      '% (diurna) o +' +
+      Math.round((rcFactor('noctFest', c.ahora || new Date()) - 1) * 100) +
+      '% (nocturna). Si fueran extras, +' +
+      Math.round((rcFactor('extraFestDiur', c.ahora || new Date()) - 1) * 100) +
+      '% / +' +
+      Math.round((rcFactor('extraFestNoct', c.ahora || new Date()) - 1) * 100) +
+      '%.'
     );
   }
 
   // Nocturnas
   if (_aiHas(t, 'nocturn', 'noche', 'noct', 'madrugad', '21', '3am', 'de noche')) {
     if (c.nocturnasMins === 0)
-      return 'No has trabajado horas nocturnas este mes. El recargo nocturno aplica de **9pm a 6am**.';
+      return (
+        'No has trabajado horas nocturnas este mes. El recargo nocturno aplica de **' +
+        (getInicioNocturno(c.ahora || new Date()) === 19 ? '7pm' : '9pm') +
+        ' a 6am**.'
+      );
     var pctN = ((c.nocturnasMins / c.totalMins) * 100).toFixed(0);
     return (
       'Tienes **' +
@@ -4428,7 +4487,9 @@ function _aiAnswerCore(question, state) {
       pctN +
       '% de tu tiempo) · **' +
       fCOP(c.nocturnasCOP) +
-      '**.\n\nEstas horas tienen recargo del **+35% mínimo** (ordinaria) hasta **+150%** (extra festiva nocturna).'
+      '**.\n\nEstas horas tienen recargo del **+35% mínimo** (ordinaria) hasta **+' +
+      Math.round((rcFactor('extraFestNoct', c.ahora || new Date()) - 1) * 100) +
+      '%** (extra festiva nocturna).'
     );
   }
 
@@ -4568,21 +4629,70 @@ function _aiAnswerCore(question, state) {
     ) &&
     !_aiHas(t, 'extra', 'noctur', 'jornada nocturn')
   ) {
+    var _Dt = c.ahora || new Date();
+    var _nd = getInicioNocturno(_Dt) === 19 ? '7pm' : '9pm';
+    var _pf = function (rk) {
+      return Math.round((rcFactor(rk, _Dt) - 1) * 100);
+    };
+    var _ff = function (rk) {
+      return rcFactor(rk, _Dt).toFixed(2);
+    };
     return (
-      '⚖️ **Ley 2101/2021 (Colombia)** · factores sobre valor hora base (' +
+      '⚖️ **Recargos vigentes (Colombia, Ley 2466/2025)** · factores sobre valor hora base (' +
       fCOP(c.vh) +
-      '):\n\n• Diurna ord. (6am-9pm) = ×1.00\n• Nocturna ord. (9pm-6am) = ×1.35 (+35%)\n• Festiva diurna = ×1.75 (+75%)\n• Festiva nocturna = ×2.10 (+110%)\n• Extra diurna = ×1.25 (+25%)\n• Extra nocturna = ×1.75 (+75%)\n• Extra fest. diurna = ×2.00 (+100%)\n• Extra fest. nocturna = ×2.50 (+150%)\n\n**Las extras** arrancan al superar 46h semanales (jornada máxima legal).'
+      '):\n\n• Diurna ord. (6am-' +
+      _nd +
+      ') = ×1.00\n• Nocturna ord. (' +
+      _nd +
+      '-6am) = ×1.35 (+35%)\n• Festiva diurna = ×' +
+      _ff('diurnaFest') +
+      ' (+' +
+      _pf('diurnaFest') +
+      '%)\n• Festiva nocturna = ×' +
+      _ff('noctFest') +
+      ' (+' +
+      _pf('noctFest') +
+      '%)\n• Extra diurna = ×1.25 (+25%)\n• Extra nocturna = ×1.75 (+75%)\n• Extra fest. diurna = ×' +
+      _ff('extraFestDiur') +
+      ' (+' +
+      _pf('extraFestDiur') +
+      '%)\n• Extra fest. nocturna = ×' +
+      _ff('extraFestNoct') +
+      ' (+' +
+      _pf('extraFestNoct') +
+      '%)\n\nEl recargo dominical/festivo sube por fases (80→90→100% entre 2025 y 2027).\n\n**Las extras** arrancan al superar ' +
+      getHSEM(_Dt) +
+      'h semanales (jornada máxima legal, Ley 2101/2021).'
     );
   }
 
   // Jornada nocturna legal
   if (_aiHas(t, 'jornada nocturn', 'que es nocturn', 'horario nocturn', 'desde que hora nocturn')) {
-    return 'La **jornada nocturna** en Colombia va de **9:00pm a 6:00am**. Cualquier minuto trabajado en esa franja recibe recargo del **+35%** sobre el valor hora base (Ley 2101/2021).';
+    var _ndh = getInicioNocturno(c.ahora || new Date()) === 19 ? '7:00pm' : '9:00pm';
+    return (
+      'La **jornada nocturna** en Colombia va de **' +
+      _ndh +
+      ' a 6:00am**. Cualquier minuto trabajado en esa franja recibe recargo del **+35%** sobre el valor hora base. La Ley 2466/2025 (Art. 5) movió el inicio de las 9 PM a las 7 PM desde el 25-dic-2025.'
+    );
   }
 
   // Qué cuenta como hora extra
   if (_aiHas(t, 'que es extra', 'cuando es extra', 'desde cuando extra', 'que cuenta como extra')) {
-    return 'Las **horas extras** son las que superan la **jornada máxima legal de 46h semanales** (Ley 2101/2021, vigente desde 2023). Mi motor las suma por semana (lunes a domingo) y todo lo que pase de 46h se cuenta como extra. El recargo varía: +25% diurna, +75% nocturna, +100% festiva diurna, +150% festiva nocturna.';
+    var _hsem = getHSEM(c.ahora || new Date());
+    var _Dx = c.ahora || new Date();
+    var _exd = Math.round((rcFactor('extraFestDiur', _Dx) - 1) * 100);
+    var _exn = Math.round((rcFactor('extraFestNoct', _Dx) - 1) * 100);
+    return (
+      'Las **horas extras** son las que superan la **jornada máxima legal de ' +
+      _hsem +
+      'h semanales** (Ley 2101/2021, que la reduce por fases). Mi motor las suma por semana (lunes a domingo) y todo lo que pase de ' +
+      _hsem +
+      'h se cuenta como extra. El recargo varía: +25% diurna, +75% nocturna, +' +
+      _exd +
+      '% festiva diurna, +' +
+      _exn +
+      '% festiva nocturna.'
+    );
   }
 
   // Máximo legal de horas
@@ -4787,7 +4897,11 @@ function _aiAnswerCore(question, state) {
     return (
       '📅 **Próximos festivos:**\n\n' +
       lf +
-      '\n\nEn festivos el recargo arranca en +75% (diurna). Si además son nocturnos o extras, puede llegar a +150%.'
+      '\n\nEn festivos el recargo arranca en +' +
+      Math.round((rcFactor('diurnaFest', c.ahora || new Date()) - 1) * 100) +
+      '% (diurna). Si además son nocturnos o extras, puede llegar a +' +
+      Math.round((rcFactor('extraFestNoct', c.ahora || new Date()) - 1) * 100) +
+      '%.'
     );
   }
 
@@ -4806,18 +4920,33 @@ function _aiAnswerCore(question, state) {
       'mas rentable'
     )
   ) {
+    var _Dr = c.ahora || new Date();
+    var _rf = function (rk) {
+      return rcFactor(rk, _Dr);
+    };
+    var _rp = function (rk) {
+      return Math.round((rcFactor(rk, _Dr) - 1) * 100);
+    };
     return (
       '💰 **Ranking de rentabilidad** (sobre tu valor hora ' +
       fCOP(c.vh) +
       '):\n\n1️⃣ Extra fest. nocturna: ' +
-      fCOP(c.vh * 2.5) +
-      '/h (+150%)\n2️⃣ Festiva nocturna: ' +
-      fCOP(c.vh * 2.1) +
-      '/h (+110%)\n3️⃣ Extra fest. diurna: ' +
-      fCOP(c.vh * 2.0) +
-      '/h (+100%)\n4️⃣ Festiva diurna: ' +
-      fCOP(c.vh * 1.75) +
-      '/h (+75%)\n5️⃣ Extra nocturna: ' +
+      fCOP(c.vh * _rf('extraFestNoct')) +
+      '/h (+' +
+      _rp('extraFestNoct') +
+      '%)\n2️⃣ Festiva nocturna: ' +
+      fCOP(c.vh * _rf('noctFest')) +
+      '/h (+' +
+      _rp('noctFest') +
+      '%)\n3️⃣ Extra fest. diurna: ' +
+      fCOP(c.vh * _rf('extraFestDiur')) +
+      '/h (+' +
+      _rp('extraFestDiur') +
+      '%)\n4️⃣ Festiva diurna: ' +
+      fCOP(c.vh * _rf('diurnaFest')) +
+      '/h (+' +
+      _rp('diurnaFest') +
+      '%)\n5️⃣ Extra nocturna: ' +
       fCOP(c.vh * 1.75) +
       '/h (+75%)\n6️⃣ Nocturna ordinaria: ' +
       fCOP(c.vh * 1.35) +
@@ -4825,7 +4954,9 @@ function _aiAnswerCore(question, state) {
       fCOP(c.vh * 1.25) +
       '/h (+25%)\n8️⃣ Diurna ordinaria: ' +
       fCOP(c.vh) +
-      '/h\n\n👉 Un turno **nocturno en festivo** paga **2.1×** un turno diurno normal.'
+      '/h\n\n👉 Un turno **nocturno en festivo** paga **' +
+      _rf('noctFest').toFixed(2) +
+      '×** un turno diurno normal.'
     );
   }
 
@@ -5296,8 +5427,14 @@ function _aiBuildEmail(raw, t, c, state) {
       ' · ' +
       fCOP(c.extraCOP) +
       '\n\n' +
-      'Recuerdo que las horas extras se generan al superar las 46 horas semanales (jornada máxima legal, Ley 2101/2021). ' +
-      'Los recargos aplicados son: +25% diurna, +75% nocturna, +100% festiva diurna y +150% festiva nocturna sobre el valor hora base.\n\n' +
+      'Recuerdo que las horas extras se generan al superar las ' +
+      getHSEM(c.ahora || new Date()) +
+      ' horas semanales (jornada máxima legal, Ley 2101/2021). ' +
+      'Los recargos aplicados son: +25% diurna, +75% nocturna, +' +
+      Math.round((rcFactor('extraFestDiur', c.ahora || new Date()) - 1) * 100) +
+      '% festiva diurna y +' +
+      Math.round((rcFactor('extraFestNoct', c.ahora || new Date()) - 1) * 100) +
+      '% festiva nocturna sobre el valor hora base.\n\n' +
       'Adjunto el reporte completo con la trazabilidad por turno.\n\n' +
       'Quedo atento.\n\nSaludos.';
   } else if (tipo === 'festivos') {
@@ -5324,8 +5461,12 @@ function _aiBuildEmail(raw, t, c, state) {
       ' · ' +
       fCOP(c.festCOP) +
       '\n\n' +
-      'Recargos aplicados: +75% (diurna festiva), +110% (nocturna festiva), ' +
-      'según la Ley 2101 de 2021.\n\n' +
+      'Recargos aplicados: +' +
+      Math.round((rcFactor('diurnaFest', c.ahora || new Date()) - 1) * 100) +
+      '% (diurna festiva), +' +
+      Math.round((rcFactor('noctFest', c.ahora || new Date()) - 1) * 100) +
+      '% (nocturna festiva), ' +
+      'según la Ley 2466 de 2025.\n\n' +
       'Adjunto el reporte completo.\n\n' +
       'Saludos.';
   } else if (tipo === 'nocturnas') {

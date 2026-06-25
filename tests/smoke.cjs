@@ -233,6 +233,53 @@ function primerDiaNoFestivo(year, month) {
 var _hoy = new Date();
 var _ctx = { vh: 10000, uid: 'u-test' };
 
+// ── Reforma laboral · Ley 2466 de 2025 (motor legal date-aware) ──────
+// El cálculo de plata DEBE usar el valor vigente a la fecha de CADA turno.
+function mkTurnoHora(d, hIni, hFin) {
+  var ini = new Date(d.getFullYear(), d.getMonth(), d.getDate(), hIni, 0, 0);
+  var fin = new Date(d.getFullYear(), d.getMonth(), d.getDate(), hFin, 0, 0);
+  return { id: ini.toISOString(), inicio: ini.toISOString(), fin: fin.toISOString() };
+}
+group('Ley 2466/2025: recargo dominical/festivo gradual (75→80→90→100%)');
+eq(w.getRecargoFestivo(new Date(2025, 4, 1)), 0.75, 'mayo 2025 (pre-reforma) = 75%');
+eq(w.getRecargoFestivo(new Date(2025, 7, 1)), 0.8, 'agosto 2025 = 80%');
+eq(w.getRecargoFestivo(new Date(2026, 5, 24)), 0.8, 'junio 2026 (hoy) = 80%');
+eq(w.getRecargoFestivo(new Date(2026, 7, 1)), 0.9, 'agosto 2026 = 90%');
+eq(w.getRecargoFestivo(new Date(2027, 7, 1)), 1.0, 'agosto 2027 = 100%');
+// Integración por doCalc: domingo diurno 4h ordinarias (8–12h), vh=10000.
+// El factor diurnaFest pasa de 1.75 (75%) al vigente por fecha.
+eq(
+  Math.round(w.doCalc([mkTurno(primerDomingo(2025, 4), 4)], null, _hoy, 10000).totalCOP),
+  70000,
+  'domingo diurno 4h en mayo 2025 paga al 75% (70.000)'
+);
+eq(
+  Math.round(w.doCalc([mkTurno(primerDomingo(2026, 0), 4)], null, _hoy, 10000).totalCOP),
+  72000,
+  'domingo diurno 4h en enero 2026 paga al 80% (72.000)'
+);
+eq(
+  Math.round(w.doCalc([mkTurno(primerDomingo(2026, 7), 4)], null, _hoy, 10000).totalCOP),
+  76000,
+  'domingo diurno 4h en agosto 2026 paga al 90% (76.000)'
+);
+
+group('Ley 2466/2025: jornada nocturna desde 19:00 (antes 21:00) desde 25-dic-2025');
+eq(w.getInicioNocturno(new Date(2025, 10, 1)), 21, 'nov 2025 (pre) = 21:00');
+eq(w.getInicioNocturno(new Date(2026, 0, 1)), 19, 'ene 2026 (post) = 19:00');
+// Integración: una hora 19:00–20:00 en día ordinario. Pre-reforma es DIURNA
+// (factor 1.0); post-reforma es NOCTURNA (factor 1.35).
+eq(
+  Math.round(w.doCalc([mkTurnoHora(primerDiaNoFestivo(2025, 10), 19, 20)], null, _hoy, 10000).totalCOP),
+  10000,
+  '19:00–20:00 en nov 2025 es diurna (10.000)'
+);
+eq(
+  Math.round(w.doCalc([mkTurnoHora(primerDiaNoFestivo(2026, 0), 19, 20)], null, _hoy, 10000).totalCOP),
+  13500,
+  '19:00–20:00 en ene 2026 es nocturna +35% (13.500)'
+);
+
 group('ai-query: scoping temporal (bug preguntas precargadas de Análisis)');
 var qFest = w.aiQueryParse('¿Cuántos días festivos trabajé este mes?');
 truthy(qFest, 'pregunta precargada de Análisis es reclamada');

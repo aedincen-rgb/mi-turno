@@ -7,19 +7,68 @@
 
 // ─── BASE DE CONOCIMIENTO ─────────────────────────────────────
 
+// Valores legales VIGENTES HOY, derivados del motor date-aware (globals.js).
+// La reforma laboral (Ley 2466/2025) subió el recargo dominical/festivo de
+// forma gradual (75→80→90→100%) y movió el inicio nocturno a las 7 PM. Estos
+// textos describen la situación actual; la plata histórica la calcula doCalc
+// por la fecha de cada turno. Recalcular al cargar mantiene el texto al día sin
+// tocar código en cada fase.
+var _LEY = (function () {
+  var D = new Date();
+  var fe = typeof getRecargoFestivo === 'function' ? getRecargoFestivo(D) : 0.8;
+  var noc = typeof getInicioNocturno === 'function' ? getInicioNocturno(D) : 19;
+  function f(x) {
+    return x.toFixed(2);
+  }
+  function p(x) {
+    return Math.round(x * 100);
+  }
+  return {
+    domPct: p(fe), // 80 hoy
+    domF: f(1 + fe), // 1.80
+    noctFestPct: p(fe + 0.35), // 115
+    noctFestF: f(1 + fe + 0.35), // 2.15
+    exDiurPct: p(fe + 0.25), // 105
+    exDiurF: f(1 + fe + 0.25), // 2.05
+    exNoctPct: p(fe + 0.75), // 155
+    exNoctF: f(1 + fe + 0.75), // 2.55
+    nocDesde: noc === 19 ? '7:00 PM' : '9:00 PM'
+  };
+})();
+
 var AI_KNOWLEDGE = {
   domingo:
-    '⛪ **Trabajar un domingo o festivo paga con recargo del 75%** sobre tu valor hora ordinario.\n\n' +
-    '• Hora diurna dominical: **1.75x** (75% extra)\n' +
-    '• Hora nocturna dominical: **2.10x** (110% extra)\n' +
-    '• Extra diurna dominical: **2.00x** (100% extra)\n' +
-    '• Extra nocturna dominical: **2.50x** (150% extra)\n\n' +
-    '📐 **Cómo calcularlo:** valor_hora × factor. Si tu hora vale $10,000, una hora dominical diurna son $17,500.\n\n' +
+    '⛪ **Trabajar un domingo o festivo paga con recargo del ' +
+    _LEY.domPct +
+    '%** sobre tu valor hora ordinario.\n\n' +
+    '• Hora diurna dominical: **' +
+    _LEY.domF +
+    'x** (' +
+    _LEY.domPct +
+    '% extra)\n' +
+    '• Hora nocturna dominical: **' +
+    _LEY.noctFestF +
+    'x** (' +
+    _LEY.noctFestPct +
+    '% extra)\n' +
+    '• Extra diurna dominical: **' +
+    _LEY.exDiurF +
+    'x** (' +
+    _LEY.exDiurPct +
+    '% extra)\n' +
+    '• Extra nocturna dominical: **' +
+    _LEY.exNoctF +
+    'x** (' +
+    _LEY.exNoctPct +
+    '% extra)\n\n' +
+    '📈 **Sube por fases (Ley 2466/2025, Art. 6):** 80% (jul-2025) → 90% (jul-2026) → 100% (jul-2027).\n\n' +
     '💡 También tenés derecho a un descanso compensatorio si trabajás domingo.\n\n' +
     '📌 **Sábado:** NO es festivo. Se paga como día ordinario, salvo que sea festivo por ley (ej. Sábado Santo).',
   nocturno:
     '🌙 **El recargo nocturno es del 35%** sobre el valor hora ordinario.\n\n' +
-    'Aplica entre las **9:00 PM y las 6:00 AM**.\n\n' +
+    'Aplica entre las **' +
+    _LEY.nocDesde +
+    ' y las 6:00 AM** (la Ley 2466/2025, Art. 5, movió el inicio de las 9 PM a las 7 PM desde el 25-dic-2025).\n\n' +
     '• Hora nocturna ordinaria: **1.35x** (35% extra)\n' +
     '• Hora extra nocturna: **1.75x** (75% extra)\n\n' +
     '📐 Si tu hora vale $10,000, una hora nocturna vale $13,500.\n\n' +
@@ -28,17 +77,41 @@ var AI_KNOWLEDGE = {
     '➕ **Horas extra en Colombia:**\n\n' +
     '• Extra diurna: **+25%** (1.25x)\n' +
     '• Extra nocturna: **+75%** (1.75x)\n' +
-    '• Extra dominical/festiva diurna: **+100%** (2.00x)\n' +
-    '• Extra dominical/festiva nocturna: **+150%** (2.50x)\n\n' +
+    '• Extra dominical/festiva diurna: **+' +
+    _LEY.exDiurPct +
+    '%** (' +
+    _LEY.exDiurF +
+    'x)\n' +
+    '• Extra dominical/festiva nocturna: **+' +
+    _LEY.exNoctPct +
+    '%** (' +
+    _LEY.exNoctF +
+    'x)\n\n' +
     '⚖️ **Límites legales:** máximo 2 horas extra por día y 12 por semana (CST Art. 159).\n\n' +
     '💡 Las horas extra se calculan cuando superás la jornada ordinaria (8h/día o el límite semanal).',
   festivo:
-    '⛪ **Recargos en días festivos y domingos:**\n\n' +
-    '• Diurno festivo: **+75%** (1.75x)\n' +
-    '• Nocturno festivo: **+110%** (2.10x)\n' +
-    '• Extra festivo diurno: **+100%** (2.00x)\n' +
-    '• Extra festivo nocturno: **+150%** (2.50x)\n\n' +
-    '💡 La app detecta automáticamente si un día es festivo. Todos los festivos colombianos están precargados.',
+    '⛪ **Recargos en días festivos y domingos (Ley 2466/2025):**\n\n' +
+    '• Diurno festivo: **+' +
+    _LEY.domPct +
+    '%** (' +
+    _LEY.domF +
+    'x)\n' +
+    '• Nocturno festivo: **+' +
+    _LEY.noctFestPct +
+    '%** (' +
+    _LEY.noctFestF +
+    'x)\n' +
+    '• Extra festivo diurno: **+' +
+    _LEY.exDiurPct +
+    '%** (' +
+    _LEY.exDiurF +
+    'x)\n' +
+    '• Extra festivo nocturno: **+' +
+    _LEY.exNoctPct +
+    '%** (' +
+    _LEY.exNoctF +
+    'x)\n\n' +
+    '💡 La app detecta automáticamente si un día es festivo y aplica el recargo vigente a esa fecha. Todos los festivos colombianos están precargados.',
   salario:
     '💰 **Salario mínimo 2026:** $1,750,905 (Decreto 1470/2025).\n\n' +
     '**Auxilio de transporte 2026:** $249,095 mensuales.\n\n' +
