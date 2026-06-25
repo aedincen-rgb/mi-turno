@@ -736,8 +736,19 @@ truthy(
 var _rOk = respText(w.aiAnswer('ok', _stAck));
 truthy(_rOk.length < 120, '"ok" da respuesta corta: ' + _rOk.length + ' chars');
 
+// REGRESIÓN: un "dale" suelto (acknowledgment) NO debe encadenarse a un chip de
+// DELIBERACIÓN (v323) que la IA mostró por iniciativa propia. El bug devolvía la
+// explicación de "Sueldo base" (371 chars) porque aiDeliberate registraba su
+// primer chip como oferta afirmable en lastSuggestion. Los turnos previos
+// (gracias/ok en este mismo _stAck) siembran esa sugerencia ambiental; el "dale"
+// no debe dispararla. Verificado: revertir el guard !_fromDeliberate reintroduce
+// el fallo de 371 chars aquí.
 var _rDale = respText(w.aiAnswer('dale', _stAck));
 truthy(_rDale.length < 120, '"dale" da respuesta corta: ' + _rDale.length + ' chars');
+truthy(
+  _rDale.indexOf('Sueldo base') < 0,
+  '"dale" no abre la explicación de salario que nadie pidió'
+);
 
 // ── Referencias contextuales ────────────────────────────────────
 group('contexto: referencias elípticas resuelven correctamente');

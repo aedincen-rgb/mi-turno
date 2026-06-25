@@ -32,6 +32,26 @@ function readIf(path) {
   }
 }
 
+// Chromium de Playwright (full build); fallback al que resuelva playwright.
+// Igual que tests/ai-coverage.mjs: lanzar con executablePath explícito evita el
+// desajuste de revisión del chromium_headless_shell (Playwright pide una build
+// que puede no coincidir con la instalada). Robustece la auditoría en sandbox.
+function findChrome() {
+  var base = process.env.HOME + '/.cache/ms-playwright';
+  try {
+    var dirs = fs.readdirSync(base).filter(function (d) {
+      return d.indexOf('chromium-') === 0 && d.indexOf('headless') < 0;
+    });
+    for (var i = 0; i < dirs.length; i++) {
+      var p = base + '/' + dirs[i] + '/chrome-linux64/chrome';
+      if (fs.existsSync(p)) return p;
+      var p2 = base + '/' + dirs[i] + '/chrome-linux/chrome';
+      if (fs.existsSync(p2)) return p2;
+    }
+  } catch (_) {}
+  return undefined;
+}
+
 var AXE = readIf('node_modules/axe-core/axe.min.js');
 if (!AXE) {
   console.error('Falta axe-core. Instalá las devDependencies:  npm install');
@@ -90,7 +110,10 @@ try {
   var up = alreadyUp || (await waitForServer(BASE, 30));
   if (!up) throw new Error('El servidor no respondió en el puerto ' + PORT);
 
-  browser = await chromium.launch();
+  browser = await chromium.launch({
+    executablePath: findChrome(),
+    args: ['--headless=old', '--no-sandbox']
+  });
   var context = await browser.newContext({
     viewport: { width: 390, height: 844 },
     serviceWorkers: 'block'
@@ -129,15 +152,20 @@ try {
     await page.waitForTimeout(1500);
     all.push(['Inicio', await audit(page, 'Tab Inicio')]);
 
-    var tabs = ['Historial', 'Análisis', 'Asistente', 'Ajustes'];
+    // El Asistente (tab 'ai') oculta la barra de navegación inferior por diseño
+    // (modo full-screen), así que desde él no se llega a otras tabs por el nav.
+    // Por eso va ÚLTIMO: cada tab se abre mientras la barra sigue visible.
+    var tabs = ['Historial', 'Análisis', 'Ajustes', 'Asistente'];
     for (var t of tabs) {
       var ok = false;
+      // La barra real son botones role="tab" (.tab-btn) dentro de .tabs
+      // (role="tablist"). Apuntarlos por su rol/clase reales evita matchear por
+      // casualidad otros elementos homónimos de la pantalla (lo que dejaba
+      // "Ajustes" — único como tab — sin auditar).
       var cands = [
-        page.getByRole('button', { name: new RegExp(t, 'i') }).first(),
-        page
-          .locator('nav button, .nav-item, .tab-item, [class*="nav"] button')
-          .filter({ hasText: new RegExp(t, 'i') })
-          .first()
+        page.getByRole('tab', { name: new RegExp(t, 'i') }).first(),
+        page.locator('.tabs .tab-btn').filter({ hasText: new RegExp(t, 'i') }).first(),
+        page.getByRole('button', { name: new RegExp(t, 'i') }).first()
       ];
       for (var sel of cands) {
         if (await sel.count()) {

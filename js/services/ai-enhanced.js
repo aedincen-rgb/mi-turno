@@ -425,12 +425,20 @@ function aiEnrichResponse(originalText, intent, userContext, entities, turnosAll
   // Deliberación de módulos (MRKL): si no quedaron acciones específicas, la
   // IA repasa su inventario y ofrece los 2 siguientes pasos MÁS relevantes
   // para ESTE usuario (coherencia), en vez de chips genéricos o ninguno.
+  // Estos chips son sugerencias AMBIENTALES ("esto te serviría ahora"), NO una
+  // pregunta sí/no: por eso NO se registran como lastSuggestion. Si se hiciera,
+  // un "dale"/"ok"/"sí" suelto (acknowledgment) dispararía el primer chip del
+  // menú de forma sorpresiva — eran tappables, no afirmables.
+  var _fromDeliberate = false;
   if ((!actions || !actions.length) && typeof aiDeliberate === 'function') {
     var _delib = aiDeliberate('', intent, userContext);
-    if (_delib && _delib.length) actions = _delib;
+    if (_delib && _delib.length) {
+      actions = _delib;
+      _fromDeliberate = true;
+    }
   }
 
-  if (actions && actions.length > 0 && !_aiMemory.lastSuggestion) {
+  if (actions && actions.length > 0 && !_aiMemory.lastSuggestion && !_fromDeliberate) {
     _aiMemory.lastSuggestion = {
       intent: actions[0].intent || intent,
       query: actions[0].query || null,
