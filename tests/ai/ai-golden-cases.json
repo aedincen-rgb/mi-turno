@@ -865,13 +865,15 @@
     },
     {
       "q": "ayuda",
-      "expectedIntent": null,
-      "shouldUseLegacy": false,
-      "knownGap": true,
-      "mustNotContain": [
-        "llevás $"
+      "expectedIntent": [
+        "ayuda_app",
+        "capacidades"
       ],
-      "note": "GAP: 'ayuda' a secas cae en planificacion_semana/disambiguación."
+      "shouldUseLegacy": false,
+      "mustNotContain": [
+        "no estoy seguro",
+        "llevás $"
+      ]
     }
   ]
 }

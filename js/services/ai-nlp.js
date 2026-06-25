@@ -1336,7 +1336,11 @@ var AI_INTENTS = [
       ['guía', 3],
       ['explicame', 3],
       ['explicame', 3],
-      ['no entiendo', 3]
+      ['no entiendo', 3],
+      ['ayuda', 3],
+      ['necesito ayuda', 3],
+      ['me ayudas', 3],
+      ['quiero ayuda', 3]
     ]
   },
 
