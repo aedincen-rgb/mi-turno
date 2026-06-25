@@ -342,20 +342,25 @@ if (typeof w._aiExplicarCalculo === 'function') {
   // Domingo 8h este mes, vh 10000 → diurnaFest date-aware (×1.80 en 2026).
   var _calcEx = w.doCalc([mkTurno(primerDomingo(_hoy.getFullYear(), _hoy.getMonth()), 8)], null, new Date(), 10000);
   var _cEx = { vh: 10000, totalCOP: _calcEx.totalCOP, bd: _calcEx.bd, diasTrab: 1, ahora: new Date() };
+  // Ahora devuelve { text, card } — el detalle por franja vive en la tarjeta.
   var _exp = w._aiExplicarCalculo(_cEx);
-  truthy(_exp.indexOf('Cómo calculé') >= 0, 'explica: titula la traza del cálculo');
-  truthy(_exp.indexOf('÷ 240') >= 0, 'explica: muestra la fórmula del valor hora');
-  truthy(_exp.indexOf('Base legal') >= 0 && _exp.indexOf('Art. 179') >= 0,
-         'explica: cita la base legal por franja');
-  truthy(_exp.indexOf(w.fCOP(_calcEx.totalCOP)) >= 0, 'explica: el total cuadra con doCalc');
-  // Sin datos → mensaje guía, no crash
+  truthy(_exp.text.indexOf('Cómo calculé') >= 0, 'explica: titula la traza del cálculo');
+  truthy(_exp.text.indexOf('÷ 240') >= 0, 'explica: muestra la fórmula del valor hora');
+  // La tarjeta de desglose: filas con base legal + total que cuadra con doCalc.
+  truthy(_exp.card && _exp.card.kind === 'breakdown' && _exp.card.rows.length > 0,
+         'explica: entrega una tarjeta de desglose (no tabla markdown)');
+  truthy(_exp.card.rows.some(function (r) { return (r.legal || '').indexOf('Art. 179') >= 0; }),
+         'explica: la tarjeta cita la base legal por franja');
+  truthy(_exp.card.total === Math.round(_calcEx.totalCOP), 'explica: el total de la tarjeta cuadra con doCalc');
+  // Sin datos → string guía, no crash
   var _expVacio = w._aiExplicarCalculo({ vh: 0, bd: {}, diasTrab: 0 });
-  truthy(_expVacio.indexOf('salario base') >= 0, 'explica: sin datos pide salario/turnos');
+  truthy(typeof _expVacio === 'string' && _expVacio.indexOf('salario base') >= 0,
+         'explica: sin datos pide salario/turnos');
   // REGRESIÓN (prueba real 25-jun): el conteo de "turnos" usa turnosMesN
   // (turnos reales), NO diasTrab (días). Si hay 10 turnos en 8 días, dice "10".
   var _cCount = { vh: 10000, totalCOP: _calcEx.totalCOP, bd: _calcEx.bd, diasTrab: 8, turnosMesN: 10, ahora: new Date() };
   var _expC = w._aiExplicarCalculo(_cCount);
-  truthy(_expC.indexOf('tus 10 turnos') >= 0,
+  truthy(_expC.text.indexOf('tus 10 turnos') >= 0,
          'explica: usa el conteo de TURNOS (10), no de días (8)');
 }
 if (typeof w._aiExplainIntent === 'function') {
@@ -1486,11 +1491,13 @@ group('ai: verificador de pago justo (v294)');
   var calcP = w.doCalc(dsP, null, new Date(), 10000);
   var cP = { vh: 10000, totalCOP: calcP.totalCOP, bd: calcP.bd, diasTrab: 1 };
 
-  // Sin monto → explicación + lo que corresponde, sin card
+  // Sin monto → explicación + tarjeta de desglose de recargos (no tabla)
   var rExpl = w.aiAuditarPago(cP, 0);
-  truthy(rExpl.text.indexOf('Verificador') >= 0 && !rExpl.card,
-         'sin monto: muestra el verificador y lo que corresponde');
-  truthy(rExpl.text.indexOf('Recargo') >= 0, 'desglosa los recargos que la ley garantiza');
+  truthy(rExpl.text.indexOf('Verificador') >= 0, 'sin monto: muestra el verificador');
+  truthy(rExpl.card && rExpl.card.kind === 'breakdown' && rExpl.card.rows.length > 0,
+         'sin monto: entrega tarjeta de desglose de recargos (no tabla markdown)');
+  truthy(rExpl.card.rows.some(function (r) { return (r.legal || '').indexOf('Art.') >= 0; }),
+         'sin monto: cada recargo lleva su base legal');
 
   // Pago justo
   var rOk = w.aiAuditarPago(cP, calcP.totalCOP);
@@ -1502,8 +1509,9 @@ group('ai: verificador de pago justo (v294)');
   truthy(rUnder.card && rUnder.card.status === 'under', 'subpago → estado under');
   truthy(rUnder.text.indexOf('de menos') >= 0 && rUnder.text.indexOf('Art. 179') >= 0,
          'subpago: alerta + cita la norma del recargo dominical');
-  truthy(rUnder.text.indexOf('| Recargo | Base legal | Valor |') >= 0,
-         'subpago: desglosa los recargos en una tabla');
+  truthy(rUnder.text.indexOf('Recargo dominical/festivo') >= 0 &&
+         rUnder.text.indexOf('| Recargo |') < 0,
+         'subpago: desglosa los recargos en texto apilado (no tabla que se desborda)');
   truthy(rUnder.text.indexOf('3 años') >= 0 || rUnder.text.indexOf('3 a') >= 0,
          'subpago: menciona la prescripción de 3 años');
 

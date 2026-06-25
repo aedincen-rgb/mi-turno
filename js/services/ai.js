@@ -831,17 +831,8 @@ function _aiExplicarCalculo(c) {
   var keys = Object.keys(bd).filter(function (k) {
     return bd[k] && bd[k].mins > 0;
   });
-  var out =
-    '🧮 **Cómo calculé tus ' +
-    fCOP(c.totalCOP) +
-    ' de este mes** (paso a paso):\n\n' +
-    '**1.** Valor hora = salario base ÷ 240 = **' +
-    fCOP(vh) +
-    '/h**\n\n' +
-    '**2.** Clasifiqué tus ' +
-    (c.turnosMesN || c.diasTrab) +
-    ' turnos por franja — la ley paga distinto cada una:\n\n' +
-    '| Franja | Horas | Factor | Subtotal | Base legal |\n|---|---|---|---|---|\n';
+  // Filas del desglose para la tarjeta nativa (lista agrupada, no tabla).
+  var rows = [];
   var suma = 0;
   for (var i = 0; i < keys.length; i++) {
     var k = keys[i];
@@ -849,31 +840,34 @@ function _aiExplicarCalculo(c) {
     var cop = bd[k].cop;
     suma += cop;
     var factor = hrs > 0 && vh > 0 ? cop / (hrs * vh) : 1;
-    out +=
-      '| ' +
-      RC[k].label +
-      ' | ' +
-      fDur(bd[k].mins) +
-      ' | ×' +
-      factor.toFixed(2) +
-      ' | ' +
-      fCOP(Math.round(cop)) +
-      ' | ' +
-      (_AI_BASE_LEGAL[k] || '—') +
-      ' |\n';
+    rows.push({
+      icon: RC[k] ? RC[k].icon : '',
+      label: RC[k] ? RC[k].label : k,
+      value: Math.round(cop),
+      meta: fDur(bd[k].mins) + '  ·  ×' + factor.toFixed(2),
+      legal: _AI_BASE_LEGAL[k] || ''
+    });
   }
-  out += '| **Total** | | | **' + fCOP(Math.round(suma)) + '** | |\n\n';
   var nd = getInicioNocturno(c.ahora || new Date()) === 19 ? '7 p.m.' : '9 p.m.';
-  out +=
-    '**3.** Sumé los subtotales = **' +
+  // Texto conciso (lleva la a11y/TTS); el detalle por franja vive en la tarjeta.
+  var text =
+    '🧮 **Cómo calculé tus ' +
     fCOP(c.totalCOP) +
-    '** ✓\n\n' +
+    '** de este mes:\n\n' +
+    'Tu **valor hora** = salario base ÷ 240 = **' +
+    fCOP(vh) +
+    '/h**. Clasifiqué tus ' +
+    (c.turnosMesN || c.diasTrab) +
+    ' turnos por franja (la ley paga distinto cada una) y sumé los subtotales:\n\n' +
     '💡 La noche corre desde las ' +
     nd +
     ' y el recargo dominical/festivo va al **' +
     Math.round(getRecargoFestivo(c.ahora || new Date()) * 100) +
     '%** hoy (Ley 2466/2025). Cada turno se calcula con la ley vigente a **su** fecha.';
-  return out;
+  return {
+    text: text,
+    card: { kind: 'breakdown', rows: rows, total: Math.round(suma), totalLabel: '💰 Total' }
+  };
 }
 
 function _trend(curr, prev) {
@@ -2902,12 +2896,12 @@ function _aiExplainIntent(q, t, c) {
   if (typeof aiUpdateConversation === 'function') {
     aiUpdateConversation('explicabilidad', 'dinero');
   }
-  var txt = _aiExplicarCalculo(c);
-  if (!txt) return null;
-  return {
-    text: txt,
-    actions: [{ label: '⚖️ ¿Me pagan bien?', query: 'me están pagando bien' }]
-  };
+  var res = _aiExplicarCalculo(c);
+  if (!res) return null;
+  // _aiExplicarCalculo devuelve string (sin datos) u objeto {text, card}.
+  var out = typeof res === 'object' ? { text: res.text, card: res.card } : { text: res };
+  out.actions = [{ label: '⚖️ ¿Me pagan bien?', query: 'me están pagando bien' }];
+  return out;
 }
 
 // ════════════════════════════════════════════════════════════════

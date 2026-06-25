@@ -933,33 +933,51 @@ function aiAuditarPago(c, montoPagado, periodoLabel) {
 
   var _Dh = c.ahora || new Date();
   var _domPct = Math.round(getRecargoFestivo(_Dh) * 100); // 80 hoy (Ley 2466/2025)
-  function lineasRecargos() {
-    var filas = [];
-    if (noctPrem > 1) {
-      filas.push(
-        '| 🌙 Recargo nocturno +35% | CST Art. 168 · Ley 2466/2025 | ' +
-          fCOP(Math.round(noctPrem)) +
-          ' |'
-      );
-    }
-    if (festPrem > 1) {
-      filas.push(
-        '| ⛪ Recargo dominical/festivo +' +
-          _domPct +
-          '% | CST Art. 179-180 · Ley 2466/2025 | ' +
-          fCOP(Math.round(festPrem)) +
-          ' |'
-      );
-    }
-    if (extraPrem > 1) {
-      filas.push('| ⏱ Horas extra | CST Art. 159 | ' + fCOP(Math.round(extraPrem)) + ' |');
-    }
-    if (!filas.length) return '';
-    return '\n\n| Recargo | Base legal | Valor |\n|---|---|---|\n' + filas.join('\n');
+  // Filas del desglose para la tarjeta nativa (lista agrupada, no tabla — la
+  // tabla de 3 columnas se rompía en móvil).
+  function recargoRows() {
+    var rows = [];
+    if (noctPrem > 1)
+      rows.push({
+        icon: '🌙',
+        label: 'Recargo nocturno +35%',
+        value: Math.round(noctPrem),
+        legal: 'CST Art. 168 · Ley 2466/25'
+      });
+    if (festPrem > 1)
+      rows.push({
+        icon: '⛪',
+        label: 'Recargo dominical/festivo +' + _domPct + '%',
+        value: Math.round(festPrem),
+        legal: 'CST Art. 179-180 · Ley 2466/25'
+      });
+    if (extraPrem > 1)
+      rows.push({
+        icon: '⏱',
+        label: 'Horas extra',
+        value: Math.round(extraPrem),
+        legal: 'CST Art. 159'
+      });
+    return rows;
+  }
+  // Versión en texto apilado (para paths donde el slot de tarjeta ya lo ocupa la
+  // comparación de auditoría). Sin tabla → no se desborda en móvil.
+  function lineasRecargosTexto() {
+    var r = recargoRows();
+    if (!r.length) return '';
+    return (
+      '\n\n' +
+      r
+        .map(function (x) {
+          return x.icon + ' **' + x.label + '** — ' + fCOP(x.value) + '\n_' + x.legal + '_';
+        })
+        .join('\n\n')
+    );
   }
 
-  // Sin monto declarado: explicar y mostrar lo que le corresponde.
+  // Sin monto declarado: explicar y mostrar lo que le corresponde (en tarjeta).
   if (!montoPagado || montoPagado < 10000) {
+    var rowsNM = recargoRows();
     var msg =
       '🔍 **Verificador de pago justo**\n\n' +
       'Por tus turnos de ' +
@@ -968,10 +986,19 @@ function aiAuditarPago(c, montoPagado, periodoLabel) {
       fCOP(owed) +
       '**. De eso, **' +
       fCOP(Math.round(recargosTotal)) +
-      '** son recargos que tu empleador debe pagarte aparte del básico:' +
-      lineasRecargos() +
-      '\n\nDecime cuánto te pagaron y lo comparo (ej. *"me pagaron 900 mil este mes"*).';
-    return { text: msg, card: null };
+      '** son recargos que tu empleador debe pagarte **aparte del básico**:\n\n' +
+      'Decime cuánto te pagaron y lo comparo (ej. *"me pagaron 900 mil este mes"*).';
+    return {
+      text: msg,
+      card: rowsNM.length
+        ? {
+            kind: 'breakdown',
+            rows: rowsNM,
+            total: Math.round(recargosTotal),
+            totalLabel: '⚖️ Recargos aparte'
+          }
+        : null
+    };
   }
 
   var gap = owed - montoPagado;
@@ -1027,7 +1054,7 @@ function aiAuditarPago(c, montoPagado, periodoLabel) {
     pct +
     '% por debajo).\n\n' +
     'Esto es lo que la ley te garantiza y conviene verificar que te lo paguen:' +
-    lineasRecargos() +
+    lineasRecargosTexto() +
     '\n\n📅 Tenés hasta **3 años** para reclamar lo que te deben (prescripción laboral, ' +
     'CST Art. 488-489). Guardá tus comprobantes de pago como soporte.';
   return { text: out, card: card };

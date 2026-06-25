@@ -310,6 +310,48 @@ function _aiDataCard(card) {
       )
     );
   }
+  // Desglose de recargos como LISTA AGRUPADA (estilo iOS) en vez de tabla: en
+  // móvil una tabla de 3 columnas se rompe (columnas que se parten letra por
+  // letra). Cada fila: nombre + valor en una línea, detalle (horas·factor·base
+  // legal) abajo en gris. aria-hidden: el texto del bubble lleva la a11y/TTS.
+  if (card.kind === 'breakdown') {
+    var bdRows = (card.rows || []).map(function (r, i) {
+      return h(
+        'div',
+        { key: i, className: 'asistente-card-bd-row' },
+        h(
+          'div',
+          { className: 'asistente-card-bd-main' },
+          h(
+            'span',
+            { className: 'asistente-card-bd-label' },
+            (r.icon ? r.icon + '  ' : '') + r.label
+          ),
+          h('span', { className: 'asistente-card-bd-val' }, fcop(r.value))
+        ),
+        r.meta || r.legal
+          ? h(
+              'div',
+              { className: 'asistente-card-bd-sub' },
+              [r.meta, r.legal].filter(Boolean).join('  ·  ')
+            )
+          : null
+      );
+    });
+    return h(
+      'div',
+      { className: 'asistente-card asistente-card--bd', 'aria-hidden': 'true' },
+      bdRows,
+      card.total != null
+        ? h(
+            'div',
+            { className: 'asistente-card-bd-total' },
+            h('span', { className: 'asistente-card-bd-label' }, card.totalLabel || 'Total'),
+            h('span', { className: 'asistente-card-bd-val' }, fcop(card.total))
+          )
+        : null
+    );
+  }
   return null;
 }
 

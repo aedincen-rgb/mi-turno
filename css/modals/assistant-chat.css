@@ -518,6 +518,68 @@
   padding: 6px 10px;
   font-variant-numeric: tabular-nums;
 }
+
+/* Desglose de recargos: lista agrupada (reemplaza la tabla rota en móvil).
+   Clave anti-desborde: el valor NUNCA se parte (nowrap) y el nombre toma el
+   resto del ancho y envuelve por palabras, no letra por letra. */
+.asistente-card--bd {
+  min-width: 244px;
+  max-width: 320px;
+  padding: 6px 18px;
+}
+.asistente-card-bd-row {
+  padding: 11px 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--text) 7%, transparent);
+}
+.asistente-card-bd-main {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.asistente-card-bd-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 13.5px;
+  font-weight: 650;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+.asistente-card-bd-val {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  font-size: 15.5px;
+  font-weight: 750;
+  letter-spacing: -0.03em;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.asistente-card-bd-sub {
+  margin-top: 3px;
+  font-size: 11.5px;
+  line-height: 1.35;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.asistente-card-bd-total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 2px;
+  padding: 12px 0 4px;
+  border-top: 1.5px solid color-mix(in srgb, var(--text) 14%, transparent);
+}
+.asistente-card-bd-total .asistente-card-bd-label {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--accent-deep, var(--accent));
+}
+.asistente-card-bd-total .asistente-card-bd-val {
+  font-size: 18px;
+  font-weight: 850;
+  color: var(--accent-deep, var(--accent));
+}
 /* Subpago detectado: tono de alerta cálido (ámbar), sin rojo duro */
 .asistente-card-cmp-diff--warn {
   color: #9a6a00;

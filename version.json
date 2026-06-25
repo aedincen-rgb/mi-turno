@@ -1,4 +1,4 @@
 {
-  "v": "v337",
-  "label": "Fix chips: query ruteable en engage (#6, adiós 'No estoy seguro') + dedup en el motor (#4)"
+  "v": "v338",
+  "label": "tarjeta nativa de desglose (lista agrupada) reemplaza tablas que se rompían en móvil"
 }
