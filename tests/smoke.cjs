@@ -342,6 +342,12 @@ if (typeof w._aiExplicarCalculo === 'function') {
   // Sin datos → mensaje guía, no crash
   var _expVacio = w._aiExplicarCalculo({ vh: 0, bd: {}, diasTrab: 0 });
   truthy(_expVacio.indexOf('salario base') >= 0, 'explica: sin datos pide salario/turnos');
+  // REGRESIÓN (prueba real 25-jun): el conteo de "turnos" usa turnosMesN
+  // (turnos reales), NO diasTrab (días). Si hay 10 turnos en 8 días, dice "10".
+  var _cCount = { vh: 10000, totalCOP: _calcEx.totalCOP, bd: _calcEx.bd, diasTrab: 8, turnosMesN: 10, ahora: new Date() };
+  var _expC = w._aiExplicarCalculo(_cCount);
+  truthy(_expC.indexOf('tus 10 turnos') >= 0,
+         'explica: usa el conteo de TURNOS (10), no de días (8)');
 }
 if (typeof w._aiExplainIntent === 'function') {
   var _calcEx2 = w.doCalc([mkTurno(primerDomingo(_hoy.getFullYear(), _hoy.getMonth()), 8)], null, new Date(), 10000);
@@ -575,6 +581,17 @@ group('ai: humanizador léxico (v296)');
     if (synDale.indexOf(w.aiHumanizar('dale')) >= 0) hitD = true;
   }
   truthy(hitD, '"dale" rota (afirmación variada)');
+  // REGRESIÓN (prueba real 25-jun): "listo para ayudarte" es ADJETIVO, no
+  // interjección — swappear "listo" rompe la frase ("va para ayudarte" ✗).
+  // "listo" no debe variar acá en 30 corridas.
+  var _listoRoto = false;
+  for (var _lh = 0; _lh < 30; _lh++) {
+    if (w.aiHumanizar('Procesando números y listo para ayudarte.').indexOf('listo para') < 0) {
+      _listoRoto = true;
+      break;
+    }
+  }
+  truthy(!_listoRoto, '"listo para" se mantiene intacto (no se swappea el adjetivo)');
   // Preserva mayúscula inicial al sustituir
   var capR = w.aiHumanizar('Genial');
   truthy(capR.charAt(0) === capR.charAt(0).toUpperCase(),

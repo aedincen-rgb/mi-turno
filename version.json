@@ -1,4 +1,4 @@
 {
-  "v": "v335",
-  "label": "Fix bugs de prueba real: verificador atrapa '¿me pagan bien?' + proyección de ritmo coherente"
+  "v": "v336",
+  "label": "2ª tanda de fixes: conteo de turnos consistente (#3) + humanizador no rompe 'listo para' (#5)"
 }

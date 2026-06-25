@@ -1623,8 +1623,9 @@ var _AI_HUM_SYN = {
   obvio: ['claro', 'por supuesto', 'de una', 'dale'],
   claro: ['obvio', 'por supuesto', 'de una'],
   dale: ['listo', 'de una', 'hágale', 'va'],
-  listo: ['dale', 'hecho', 'de una', 'va'],
-  hecho: ['listo', 'dale', 'va'],
+  // 'listo' y 'hecho' NO son fuentes de swap: suelen ser adjetivo/participio
+  // ("listo para ayudarte", "has hecho") y cualquier sinónimo rompe la frase
+  // ("va para ayudarte" ✗). Lección v319 — solo invariables o misma clase.
   // ── Ánimo / aliento ──
   animo: ['con toda', 'vos podés', 'dale', 'arriba esos ánimos'],
   tranquilo: ['con calma', 'sin afán', 'tranqui'],

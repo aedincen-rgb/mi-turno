@@ -689,6 +689,11 @@ function buildContext(state) {
     totalMins: totalMins,
     totalCOP: totalCOP,
     diasTrab: diasTrab,
+    // turnosMesN = cantidad de TURNOS del mes (puede ser > diasTrab si hay días
+    // con 2 turnos). El texto debe decir "N turnos" con este conteo, no con
+    // diasTrab (días), para no contradecir el footer de evidencia.
+    turnosMesN: turnosMes.length,
+    promPorTurno: turnosMes.length > 0 ? totalCOP / turnosMes.length : 0,
     prom: prom,
     promHoras: promHoras,
     mejor: mejor,
@@ -834,7 +839,7 @@ function _aiExplicarCalculo(c) {
     fCOP(vh) +
     '/h**\n\n' +
     '**2.** Clasifiqué tus ' +
-    c.diasTrab +
+    (c.turnosMesN || c.diasTrab) +
     ' turnos por franja — la ley paga distinto cada una:\n\n' +
     '| Franja | Horas | Factor | Subtotal | Base legal |\n|---|---|---|---|---|\n';
   var suma = 0;
@@ -923,9 +928,9 @@ function _aiDispatchNLP(intent, c, state, q, t) {
         ' Este mes llevás **' +
         fCOP(c.totalCOP) +
         '** en ' +
-        c.diasTrab +
+        (c.turnosMesN || c.diasTrab) +
         ' turno' +
-        (c.diasTrab !== 1 ? 's' : '') +
+        ((c.turnosMesN || c.diasTrab) !== 1 ? 's' : '') +
         '.';
       if (c.necesitaDescanso)
         _hook += ' Ojo, ' + c.rachaActual + ' días seguidos — date un respiro.';
@@ -1076,9 +1081,9 @@ function _aiDispatchNLP(intent, c, state, q, t) {
       '\n\nEn números: **' +
       fCOP(c.totalCOP) +
       '** brutos en ' +
-      c.diasTrab +
+      (c.turnosMesN || c.diasTrab) +
       ' turnos, promedio **' +
-      fCOP(c.prom) +
+      fCOP(c.promPorTurno || c.prom) +
       '** por turno.\n\n¿Querés compararlo con el mes pasado o ver qué podría mejorar?'
     );
   }
@@ -1130,7 +1135,7 @@ function _aiDispatchNLP(intent, c, state, q, t) {
       'Este mes llevás **' +
       fCOP(c.totalCOP) +
       '** brutos en ' +
-      c.diasTrab +
+      (c.turnosMesN || c.diasTrab) +
       ' turnos — ' +
       c.pctSalario.toFixed(1) +
       '% de tu meta.\n' +
