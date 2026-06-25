@@ -8,6 +8,13 @@
 //  100% offline · ES5 · sin dependencias externas.
 // ════════════════════════════════════════════════════════════════
 
+// Valores legales vigentes al cargar (Ley 2466/2025, date-aware).
+var _ENG_FEST =
+  typeof getRecargoFestivo === 'function' ? Math.round(getRecargoFestivo(new Date()) * 100) : 80;
+var _ENG_NOC =
+  typeof getInicioNocturno === 'function' && getInicioNocturno(new Date()) === 19 ? '7pm' : '9pm';
+var _ENG_FEST8 = (1 + (_ENG_FEST / 100 || 0.8)) * 8; // horas diurnas equivalentes a 8h festivas
+
 // ─── BANCO DE PREGUNTAS DE ENGAGEMENT ─────────────────────────
 // Organizado por intent para máxima relevancia contextual.
 
@@ -455,8 +462,14 @@ _aiEngageQuestions._reflexion = [
 // ─── BANCO DE CURIOSIDADES (DATOS BREVES) ────────────────────
 // Uno por respuesta, nunca repetir en la misma sesión.
 var _aiCuriosidades = [
-  '🌙 Dato curioso: si trabajás de noche (9pm-6am), cada hora vale 35% más. Un turno nocturno de 8h te paga como 10.8h diurnas.',
-  '⛪ ¿Sabías que los domingos y festivos pagan 75% extra? Un turno de 8h en domingo equivale a 14h un día normal.',
+  '🌙 Dato curioso: si trabajás de noche (' +
+    _ENG_NOC +
+    '-6am), cada hora vale 35% más. Un turno nocturno de 8h te paga como 10.8h diurnas.',
+  '⛪ ¿Sabías que los domingos y festivos pagan ' +
+    _ENG_FEST +
+    '% extra? Un turno de 8h en domingo equivale a ' +
+    _ENG_FEST8.toFixed(1) +
+    'h un día normal.',
   '📅 En Colombia hay 18 festivos al año — si trabajás todos, ganás como si hubieras trabajado 31.5 días extra.',
   '💰 El auxilio de transporte para 2026 es de ' +
     (typeof AUX_TRANSPORTE_2026 !== 'undefined' ? fCOP(AUX_TRANSPORTE_2026) : '$200.000') +
@@ -473,7 +486,9 @@ var _aiCuriosidades = [
   '💼 Los intereses de cesantías son el 12% anual sobre el saldo acumulado. Se pagan en enero de cada año.',
   '🩺 La EPS y ARL son obligatorias desde el primer día de trabajo. El empleador paga la mayor parte.',
   '📈 El salario mínimo en Colombia sube cada 1° de enero — revisá tus cálculos a inicio de año.',
-  '⏰ Las horas extra diurnas (6am-9pm) pagan 25% sobre el valor hora. Las nocturnas pagan 75%.',
+  '⏰ Las horas extra diurnas (6am-' +
+    _ENG_NOC +
+    ') pagan 25% sobre el valor hora. Las nocturnas pagan 75%.',
   '🛡️ Si te despiden sin justa causa, tenés derecho a indemnización: entre 20 y 45 días de salario por año.',
   '💎 La liquidación incluye: cesantías + intereses + prima + vacaciones + dotación pendiente.',
   '🔄 Podés negociar con tu empleador compensar horas extra con tiempo libre en vez de plata.'
@@ -500,7 +515,10 @@ var _aiTrivia = [
     q: '¿Cuánto paga un domingo trabajado?',
     opts: ['+25%', '+50%', '+75%', '+100%'],
     correcta: 2,
-    explicacion: 'Los domingos y festivos pagan con recargo del 75% sobre el valor hora ordinario.'
+    explicacion:
+      'Los domingos y festivos pagan con recargo del ' +
+      _ENG_FEST +
+      '% sobre el valor hora ordinario (Ley 2466/2025).'
   },
   {
     q: '¿Cuál es el máximo de horas extra por semana?',
@@ -518,7 +536,7 @@ var _aiTrivia = [
     q: '¿Cuánto paga una hora extra nocturna?',
     opts: ['+35%', '+50%', '+75%', '+100%'],
     correcta: 2,
-    explicacion: 'La hora extra nocturna (después de las 9pm) tiene recargo del 75%.'
+    explicacion: 'La hora extra nocturna (después de las ' + _ENG_NOC + ') tiene recargo del 75%.'
   },
   {
     q: '¿Qué son los intereses de cesantías?',
@@ -566,7 +584,9 @@ var _aiTrivia = [
     opts: ['0%', '+25%', '+35%', '+75%'],
     correcta: 2,
     explicacion:
-      'Las horas ordinarias entre 9pm y 6am tienen recargo del 35% sobre el valor hora diurna.'
+      'Las horas ordinarias entre ' +
+      _ENG_NOC +
+      ' y 6am tienen recargo del 35% sobre el valor hora diurna.'
   },
   {
     q: '¿La jornada máxima semanal en Colombia (2026) es de?',
@@ -586,7 +606,11 @@ var _aiTrivia = [
     opts: ['+75%', '+100%', '+125%', '+150%'],
     correcta: 1,
     explicacion:
-      'Hora extra diurna en domingo o festivo = 75% (domingo) + 25% (extra diurna) = 100% de recargo.'
+      'Hora extra diurna en domingo o festivo = ' +
+      _ENG_FEST +
+      '% (domingo) + 25% (extra diurna) = ' +
+      (_ENG_FEST + 25) +
+      '% de recargo.'
   }
 ];
 

@@ -1038,7 +1038,11 @@ function _aiDispatchNLP(intent, c, state, q, t) {
   // ── Conversacionales exploratorias ──
   if (intent === 'curiosidad_app') {
     var curiosidades = [
-      'La hora extra nocturna en festivo es la tarifa más cara del mercado laboral colombiano: 75% de recargo sobre el valor hora. Si trabajás 8 horas en esas condiciones, es como cobrar 14 horas diurnas.',
+      'La hora extra nocturna en festivo es la tarifa más cara del mercado laboral colombiano: +' +
+        Math.round((rcFactor('extraFestNoct', c.ahora || new Date()) - 1) * 100) +
+        '% de recargo sobre el valor hora. Si trabajás 8 horas así, es como cobrar ' +
+        (8 * rcFactor('extraFestNoct', c.ahora || new Date())).toFixed(0) +
+        ' horas diurnas.',
       'Esta app no envía nada a ningún servidor externo durante los cálculos. Todo el motor de nómina corre en tu dispositivo, sin internet. Podés usarla en el metro sin señal.',
       'El auxilio de transporte no es proporcional si trabajás menos de 15 días. Si ingresaste a mitad de mes, solo aplica desde la fecha de ingreso.',
       'Podés exportar todo tu historial como PDF o Excel desde la pestaña Historial. Útil si alguna vez tenés que demostrar tus ingresos o negociar un crédito.',
@@ -1579,8 +1583,12 @@ function _aiDispatchNLP(intent, c, state, q, t) {
           return (
             '☀️⛪ **Hora extra festiva diurna:**\n\nTu hora base es ' +
             fCOP(c.vh) +
-            '.\nCon el recargo del 100% (2.00x), te pagan **' +
-            fCOP(c.vh * 2.0) +
+            '.\nCon el recargo del ' +
+            Math.round((rcFactor('extraFestDiur', c.ahora || new Date()) - 1) * 100) +
+            '% (' +
+            rcFactor('extraFestDiur', c.ahora || new Date()).toFixed(2) +
+            'x), te pagan **' +
+            fCOP(c.vh * rcFactor('extraFestDiur', c.ahora || new Date())) +
             '** por cada hora.'
           );
         }
@@ -5579,7 +5587,9 @@ function _aiBuildEmail(raw, t, c, state) {
     subject = 'Detalle de jornada nocturna · ' + mesCap;
     body =
       'Hola,\n\n' +
-      'Comparto el detalle de mis horas nocturnas (9pm-6am) trabajadas en ' +
+      'Comparto el detalle de mis horas nocturnas (' +
+      (getInicioNocturno(c && c.ahora ? c.ahora : new Date()) === 19 ? '7pm' : '9pm') +
+      '-6am) trabajadas en ' +
       mesNombre +
       ':\n\n' +
       '• Nocturna ordinaria: ' +
@@ -5826,8 +5836,10 @@ function _aiDispatchCalc(intent, params, state) {
       fCOP(c.vh * 1.35) +
       ' (+35%)\n' +
       '• Dominical diurna: ' +
-      fCOP(c.vh * 1.75) +
-      ' (+75%)\n' +
+      fCOP(c.vh * rcFactor('diurnaFest', c.ahora || new Date())) +
+      ' (+' +
+      Math.round((rcFactor('diurnaFest', c.ahora || new Date()) - 1) * 100) +
+      '%)\n' +
       '• Extra nocturna: ' +
       fCOP(c.vh * 1.75) +
       ' (+75%)'

@@ -6,6 +6,14 @@
 //  100% offline · ES5 · sin dependencias externas.
 // ════════════════════════════════════════════════════════════════
 
+// Valores legales vigentes al cargar (Ley 2466/2025, date-aware).
+var _APPKB_FEST =
+  typeof getRecargoFestivo === 'function' ? Math.round(getRecargoFestivo(new Date()) * 100) : 80;
+var _APPKB_FESTN =
+  typeof rcFactor === 'function' ? Math.round((rcFactor('noctFest', new Date()) - 1) * 100) : 115;
+var _APPKB_NOC =
+  typeof getInicioNocturno === 'function' && getInicioNocturno(new Date()) === 19 ? '7PM' : '9PM';
+
 var AI_APP_KB = [
   // ═══ QUÉ ES MI TURNO ═══
   {
@@ -64,7 +72,16 @@ var AI_APP_KB = [
       'como se hace el calculo',
       'metodo de calculo'
     ],
-    a: 'La app calcula los recargos según el **Código Sustantivo del Trabajo** colombiano:\n\n1. **Valor hora base** = salario mensual ÷ 240 horas\n2. Cada minuto de tu turno se clasifica en 8 categorías según:\n   - Hora del día (6AM-9PM = diurno, 9PM-6AM = nocturno)\n   - Tipo de día (hábil, domingo, festivo)\n   - Si supera el límite ordinario (8h/día o jornada semanal)\n3. Se aplica el **recargo** correspondiente:\n   - Nocturno: +35% | Festivo: +75% | Extra diurno: +25%\n   - Extra nocturno: +75% | Extra festivo diurno: +100%\n   - Extra festivo nocturno: +150%\n\nTodo el cálculo es 100% local — no depende de internet.'
+    a:
+      'La app calcula los recargos según el **Código Sustantivo del Trabajo** + la **Ley 2466/2025**:\n\n1. **Valor hora base** = salario mensual ÷ 240 horas\n2. Cada minuto de tu turno se clasifica en 8 categorías según:\n   - Hora del día (6AM-' +
+      _APPKB_NOC +
+      ' = diurno, ' +
+      _APPKB_NOC +
+      '-6AM = nocturno)\n   - Tipo de día (hábil, domingo, festivo)\n   - Si supera el límite ordinario (8h/día o jornada semanal)\n3. Se aplica el **recargo** correspondiente:\n   - Nocturno: +35% | Festivo: +' +
+      _APPKB_FEST +
+      '% | Extra diurno: +25%\n   - Extra nocturno: +75% | Extra festivo nocturno: +' +
+      Math.round(_APPKB_FESTN + 40) +
+      '%\n\nCada turno se calcula con la ley vigente a su fecha. Todo 100% local — no depende de internet.'
   },
   {
     q: ['funciona sin internet', 'offline', 'sin conexion', 'modo avion', 'no tengo datos'],
@@ -158,7 +175,10 @@ var AI_APP_KB = [
   },
   {
     q: ['que es un festivo', 'como se que dia es festivo', 'calendario festivos'],
-    a: 'Los festivos en Colombia son determinados por la **Ley Emiliani**. Algunos se trasladan al lunes siguiente para crear puentes.\n\nLa app tiene **todos los festivos precargados** hasta 2030. Si trabajás un festivo, tu turno se paga con **75% de recargo** (o más si también es nocturno o extra).'
+    a:
+      'Los festivos en Colombia son determinados por la **Ley Emiliani**. Algunos se trasladan al lunes siguiente para crear puentes.\n\nLa app tiene **todos los festivos precargados** hasta 2030. Si trabajás un festivo, tu turno se paga con **' +
+      _APPKB_FEST +
+      '% de recargo** (Ley 2466/2025, sube hasta 100% en 2027; o más si también es nocturno o extra).'
   },
   {
     q: ['como funciona el genero', 'hombre mujer app', 'para que sirve genero', 'selector genero'],

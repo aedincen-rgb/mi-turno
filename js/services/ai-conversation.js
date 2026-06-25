@@ -130,7 +130,9 @@ function _aiConvTips(c) {
 
   if (c.vh > 0 && !aiConvHasSeen('nocturno')) {
     tips.push(
-      '🌙 Tip rápido: si trabajás de noche (9pm-6am), cada hora vale 35% más. Un turno nocturno de 8h te paga como 10.8h diurnas.'
+      '🌙 Tip rápido: si trabajás de noche (' +
+        (getInicioNocturno(c.ahora || new Date()) === 19 ? '7pm' : '9pm') +
+        '-6am), cada hora vale 35% más. Un turno nocturno de 8h te paga como 10.8h diurnas.'
     );
     aiConvMarkSeen('nocturno');
   }

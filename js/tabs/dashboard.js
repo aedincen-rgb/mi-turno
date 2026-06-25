@@ -441,7 +441,11 @@ function DashboardTab(props) {
     tip =
       'Has trabajado <strong>' +
       fDur(ctx.festMins) +
-      '</strong> en festivos, esos turnos pagan con recargo del 75% al 150%.';
+      '</strong> en festivos, esos turnos pagan con recargo del ' +
+      Math.round(getRecargoFestivo(ctx.ahora || new Date()) * 100) +
+      '% al ' +
+      Math.round((rcFactor('extraFestNoct', ctx.ahora || new Date()) - 1) * 100) +
+      '%.';
   else if (ctx.noctMins > ctx.totalMins * 0.4)
     tip =
       'El ' +

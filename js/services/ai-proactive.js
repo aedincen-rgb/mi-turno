@@ -68,22 +68,31 @@ function aiAlerts(c) {
 
   // Alerta: viernes + debajo del promedio → oportunidad fin de semana
   var ahora = c.ahora || new Date();
+  var _domPct = Math.round(getRecargoFestivo(ahora) * 100); // 80 hoy (Ley 2466/2025)
+  var _fDom = rcFactor('diurnaFest', ahora); // 1.80
   var diaSemana = ahora.getDay();
   if (diaSemana === 5 && c.pctSalario < 70) {
     alerts.push(
       '📅 Hoy es viernes. Si trabajás sábado y domingo, podrías sumar ≈' +
-        fCOP(c.prom * 2.5) +
-        ' extra este fin de semana (con recargos dominicales del 75%).'
+        fCOP(c.prom * (1 + _fDom)) +
+        ' extra este fin de semana (con recargos dominicales del ' +
+        _domPct +
+        '%).'
     );
   }
 
-  // Alerta: cerca del límite legal
-  if (c.hrsSemanales > 40) {
+  // Alerta: cerca del límite legal (jornada máxima date-aware, Ley 2101/2021)
+  var _hsem = getHSEM(ahora);
+  if (c.hrsSemanales > _hsem - 4) {
     alerts.push(
       '⚖️ Vas ' +
         c.hrsSemanales.toFixed(1) +
-        'h esta semana. El límite legal es 44h. ' +
-        'Si pasás de 44h, asegurate de que te paguen las extras (25% a 75% según horario).'
+        'h esta semana. El límite legal es ' +
+        _hsem +
+        'h. ' +
+        'Si pasás de ' +
+        _hsem +
+        'h, asegurate de que te paguen las extras (25% a 75% según horario).'
     );
   }
 
@@ -105,12 +114,27 @@ function aiAlerts(c) {
   var manana = new Date(ahora);
   manana.setDate(manana.getDate() + 1);
   if (typeof esFest === 'function' && esFest(manana)) {
+    var _fManana = rcFactor('diurnaFest', manana); // factor vigente a esa fecha
     alerts.push(
-      '⛪ ¡Mañana es festivo! Si trabajás, cada hora vale 75% más. Un turno de 8h te daría ≈' +
-        fCOP(c.vh * 8 * 1.75) +
+      '⛪ ¡Mañana es festivo! Si trabajás, cada hora vale ' +
+        Math.round((_fManana - 1) * 100) +
+        '% más. Un turno de 8h te daría ≈' +
+        fCOP(c.vh * 8 * _fManana) +
         ' en vez de ' +
         fCOP(c.vh * 8) +
         '.'
+    );
+  }
+
+  // Alerta de cumplimiento: trabajaste domingo/festivo → ese recargo debe ir
+  // aparte del básico. Es el caso "te pagan mal" en modo proactivo (Tier 4).
+  if (c.festMins && c.festMins >= 240) {
+    alerts.push(
+      '🔍 Llevás ' +
+        (c.festMins / 60).toFixed(1) +
+        'h en domingo/festivo este mes. Ese recargo del ' +
+        _domPct +
+        '% debe llegarte aparte del básico (Ley 2466/2025). Decime *"¿me pagan bien?"* y lo verifico.'
     );
   }
 

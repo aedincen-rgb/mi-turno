@@ -208,6 +208,25 @@ try {
       report.quality.push({ q: qualityQ[c], leak: leak, gender: gender, empty: empty, grounded: grounded, ok: !leak && !gender && !empty && grounded });
     }
 
+    // ── F. LEG — exactitud legal VIGENTE (protege Tier 0/1, Ley 2466/2025) ──
+    // Atrapa regresiones si alguien revierte un valor date-aware: la app debe
+    // afirmar 80% dominical / noche desde 7pm / UVT 2026, no los viejos.
+    var legChecks = [
+      { q: 'cuál es la tabla de recargos', must: ['80%'] },
+      { q: 'cuánto pagan un domingo trabajado', must: ['80%'] },
+      { q: 'cuánto vale mi hora dominical diurna', must: ['80%'] },
+      { q: 'tengo que declarar renta este año', must: ['1.400'] }
+    ];
+    report.legal = [];
+    for (var L = 0; L < legChecks.length; L++) {
+      var lt = (await answer(legChecks[L].q)).toLowerCase();
+      var allHit = true;
+      for (var lm = 0; lm < legChecks[L].must.length; lm++) {
+        if (lt.indexOf(legChecks[L].must[lm].toLowerCase()) < 0) { allHit = false; break; }
+      }
+      report.legal.push({ q: legChecks[L].q, must: legChecks[L].must, ok: allHit, snippet: lt.slice(0, 70) });
+    }
+
     return { report: report, truthTotal: truthTotal };
   });
 
@@ -225,8 +244,11 @@ try {
   var oosRate = pct(oosOk, rep.oos.length);
   var qOk = rep.quality.filter(function (x) { return x.ok; }).length;
   var qRate = pct(qOk, rep.quality.length);
+  var legArr = rep.legal || [];
+  var legOk = legArr.filter(function (x) { return x.ok; }).length;
+  var legRate = pct(legOk, legArr.length);
 
-  var composite = Math.round(mftAcc * 0.30 + invRate * 0.20 + dirRate * 0.15 + oosRate * 0.15 + qRate * 0.20);
+  var composite = Math.round(mftAcc * 0.25 + invRate * 0.15 + dirRate * 0.15 + oosRate * 0.15 + qRate * 0.15 + legRate * 0.15);
 
   function bar(p) { var n = Math.round(p / 5); return '█'.repeat(n) + '░'.repeat(20 - n); }
   console.log('\n╔══════════════════════════════════════════════════════════════╗');
@@ -237,6 +259,7 @@ try {
   console.log('  DIR  Direccional       ' + bar(dirRate) + ' ' + dirRate + '%  (' + dirOk + '/' + rep.dir.length + ')');
   console.log('  OOS  Fuera de dominio  ' + bar(oosRate) + ' ' + oosRate + '%  (' + oosOk + '/' + rep.oos.length + ')');
   console.log('  QLT  Calidad respuesta ' + bar(qRate) + ' ' + qRate + '%  (' + qOk + '/' + rep.quality.length + ')');
+  console.log('  LEG  Exactitud legal   ' + bar(legRate) + ' ' + legRate + '%  (' + legOk + '/' + legArr.length + ')');
   console.log('  ──────────────────────────────────────────────────────────');
   console.log('  ★ PUNTAJE COMPUESTO    ' + bar(composite) + ' ' + composite + '/100');
   console.log('  ──────────────────────────────────────────────────────────');
@@ -249,6 +272,7 @@ try {
   fails(rep.dir, function (x) { return '[DIR] "' + x.a + '"=' + x.ia + ' vs "' + x.b + '"=' + x.ib + ' (no difieren)'; });
   fails(rep.oos, function (x) { return '[OOS] "' + x.q + '" → ' + x.snippet; });
   fails(rep.quality, function (x) { return '[QLT] "' + x.q + '"' + (x.leak ? ' LEAK' : '') + (x.gender ? ' GÉNERO' : '') + (x.empty ? ' VACÍO' : '') + (!x.grounded ? ' NO-GROUNDED' : ''); });
+  fails(legArr, function (x) { return '[LEG] "' + x.q + '" → falta ' + x.must.join('+') + ' · ' + x.snippet; });
   console.log('');
 } catch (err) {
   console.error('Error en el benchmark:', err && err.message ? err.message : err);

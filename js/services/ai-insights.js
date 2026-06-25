@@ -49,16 +49,23 @@ function aiInsightBreakdown(c) {
     ((bd.extraFestDiur || {}).mins || 0) +
     ((bd.extraFestNoct || {}).mins || 0);
   if (festMins > 0) {
+    var _Df = c.ahora || new Date();
+    var _feD = Math.round(getRecargoFestivo(_Df) * 100); // 80 hoy (Ley 2466/2025)
+    var _feN = Math.round((rcFactor('noctFest', _Df) - 1) * 100); // 115
     parts.push(
       '⛪ **Festivos trabajados:** ' +
         fDur(festMins) +
         ' en ' +
         (c.festDiasCount || 0) +
         ' día(s). ' +
-        'El recargo festivo es del 75% (diurno) o 110% (nocturno). ' +
+        'El recargo festivo es del ' +
+        _feD +
+        '% (diurno) o ' +
+        _feN +
+        '% (nocturno). ' +
         'Por ley, el trabajo en domingo o festivo debe compensarse con descanso o pago doble. ' +
         'Cada festivo trabajado suma aproximadamente ' +
-        fCOP(((c.salario || 0) / 30) * 0.75) +
+        fCOP(((c.salario || 0) / 30) * getRecargoFestivo(_Df)) +
         ' extra sobre un día normal.'
     );
   }
@@ -230,7 +237,9 @@ function aiInsightEfficiency(c) {
       '/día)\n';
     if (bestDia === 0) {
       resp +=
-        '  Los domingos pagan recargo del 75%. Trabajar domingos es la forma más rápida de aumentar tu ingreso.\n';
+        '  Los domingos pagan recargo del ' +
+        Math.round(getRecargoFestivo(c.ahora || new Date()) * 100) +
+        '%. Trabajar domingos es la forma más rápida de aumentar tu ingreso.\n';
     }
   }
 
@@ -315,7 +324,9 @@ function aiInsightRecommendations(c) {
         c.pctSalario.toFixed(0) +
         '% de tu salario base. Para llegar al 100%, necesitás ≈' +
         fCOP((c.salario - c.totalCOP) * 1.1) +
-        ' más. Probá trabajar fines de semana o noches — pagan entre 35% y 75% extra.'
+        ' más. Probá trabajar fines de semana o noches — pagan entre 35% y ' +
+        Math.round(getRecargoFestivo(c.ahora || new Date()) * 100) +
+        '% extra.'
     );
   }
 

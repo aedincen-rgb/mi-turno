@@ -12,6 +12,10 @@
 // keywords: array de frases que disparan esta guía
 // related: IDs de guías relacionadas
 
+// Recargo dominical/festivo vigente al cargar (Ley 2466/2025, date-aware).
+var _HELP_FEST =
+  typeof getRecargoFestivo === 'function' ? Math.round(getRecargoFestivo(new Date()) * 100) : 80;
+
 var AI_HELP_GUIDES = [
   // ═══ TURNOS ═══
   {
@@ -649,7 +653,11 @@ var AI_HELP_GUIDES = [
     steps: [
       'La app usa la legislación colombiana vigente (Código Sustantivo del Trabajo + Ley 2101 de 2021).',
       '**Valor hora:** salario base ÷ 240 horas (jornada máxima legal).',
-      '**Recargos:** nocturno 35%, extra diurno 25%, extra nocturno 75%, dominical/festivo 75%, extra dominical 100%.',
+      '**Recargos:** nocturno 35%, extra diurno 25%, extra nocturno 75%, dominical/festivo ' +
+        _HELP_FEST +
+        '%, extra dominical ' +
+        (_HELP_FEST + 25) +
+        '%.',
       'Los minutos se clasifican en 8 categorías según el momento del día y tipo de día.',
       'El límite ordinario es 8h/día o la jornada semanal (44h en 2026), lo que se agote primero determina las extras.',
       'El cálculo es 100% local — no depende de internet ni de servidores externos.'
@@ -792,8 +800,8 @@ var AI_HELP_GUIDES = [
       'El recargo nocturno en Colombia es del **35%** sobre el valor hora ordinario.',
       'Aplica entre las **9:00 PM y las 6:00 AM**.',
       'Si trabajás de noche, cada hora vale 1.35 veces más.',
-      'Si además es festivo o domingo, se acumula con el recargo festivo (75%).',
-      'Total nocturno + festivo: 210% del valor hora (2.1x).',
+      'Si además es festivo o domingo, se acumula con el recargo festivo (' + _HELP_FEST + '%).',
+      'Total nocturno + festivo: ' + (_HELP_FEST + 35) + '% del valor hora.',
       'La app detecta automáticamente las horas nocturnas de cada turno.'
     ],
     related: ['como_calcula_recargos', 'ley_2101']
@@ -812,7 +820,9 @@ var AI_HELP_GUIDES = [
       'cuanto pagan domingo'
     ],
     steps: [
-      'El recargo dominical/festivo es del **75%** sobre el valor hora ordinario.',
+      'El recargo dominical/festivo es del **' +
+        _HELP_FEST +
+        '%** sobre el valor hora ordinario (Ley 2466/2025, sube hasta 100% en 2027).',
       'Aplica todo el día (24h) del domingo o festivo.',
       'Si el turno empieza un día hábil y termina en festivo, la parte festiva se calcula aparte.',
       'Los festivos colombianos se determinan por la ley Emiliani (algunos se trasladan al lunes).',

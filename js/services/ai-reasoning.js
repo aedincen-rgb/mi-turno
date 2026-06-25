@@ -304,11 +304,16 @@ function _aiAnalyzeBreakdownDeep(ctx) {
         'Solo el ' +
         pctRecargo.toFixed(0) +
         '% de tus ingresos vienen de recargos. Si trabajaras 8h un domingo, ganarías ≈' +
-        fCOP(ctx.vh * 8 * 1.75) +
-        ' extra (75% más que un día normal).',
+        fCOP(ctx.vh * 8 * rcFactor('diurnaFest', ctx.ahora || new Date())) +
+        ' extra (' +
+        Math.round((rcFactor('diurnaFest', ctx.ahora || new Date()) - 1) * 100) +
+        '% más que un día normal).',
       source: 'breakdown.recargo',
       priority: 6,
-      data: { pctRecargo: pctRecargo, valorDomingo: ctx.vh * 8 * 1.75 }
+      data: {
+        pctRecargo: pctRecargo,
+        valorDomingo: ctx.vh * 8 * rcFactor('diurnaFest', ctx.ahora || new Date())
+      }
     });
   }
 

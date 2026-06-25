@@ -1038,6 +1038,30 @@ group('aiBriefing: porcentaje vs salario clampeado');
   }
 })();
 
+// ── Tier 4: alerta proactiva de cumplimiento (festivo, date-aware) ──
+group('aiAlerts: alerta de cumplimiento festivo (Ley 2466/2025)');
+(function () {
+  if (typeof w.aiAlerts !== 'function') { truthy(false, 'aiAlerts existe'); return; }
+  var _base = {
+    diasTrab: 10, ahora: new Date(), pctSalario: 90, hrsSemanales: 20,
+    salario: 2000000, totalCOP: 1000000, vh: 10000, diasRestantes: 15,
+    prom: 100000, totalCOPMesPasado: 0
+  };
+  // Con 8h en festivo → debe disparar el aviso de cumplimiento con el % vigente.
+  var _cFest = Object.assign({}, _base, { festMins: 480 });
+  var _al = w.aiAlerts(_cFest);
+  truthy(_al && _al.indexOf('domingo/festivo este mes') >= 0,
+    'alerta: detecta horas trabajadas en domingo/festivo');
+  var _pctVig = Math.round(w.getRecargoFestivo(new Date()) * 100);
+  truthy(_al && _al.indexOf('del ' + _pctVig + '%') >= 0,
+    'alerta: cita el recargo dominical vigente (' + _pctVig + '%)');
+  // Sin horas festivas → no mete ese aviso.
+  var _cSin = Object.assign({}, _base, { festMins: 0 });
+  var _alSin = w.aiAlerts(_cSin);
+  truthy(!_alSin || _alSin.indexOf('domingo/festivo este mes') < 0,
+    'alerta: sin horas festivas NO mete el aviso de cumplimiento');
+})();
+
 group('ai-proactive: higiene de datos (v288)');
 (function () {
   if (typeof w.aiDataHygiene !== 'function') {
