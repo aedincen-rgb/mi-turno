@@ -1353,7 +1353,7 @@ group('ai: verificador de pago justo (v294)');
     truthy(false, 'aiAuditarPago existe');
     return;
   }
-  // Un domingo de 8h → dominical (+75%). vh 10000 → debido 140.000.
+  // Un domingo de 8h → dominical (date-aware, +80% en 2026). vh 10000.
   var dsP = [mkTurno(primerDomingo(_hoy.getFullYear(), _hoy.getMonth()), 8)];
   var calcP = w.doCalc(dsP, null, new Date(), 10000);
   var cP = { vh: 10000, totalCOP: calcP.totalCOP, bd: calcP.bd, diasTrab: 1 };
@@ -1783,8 +1783,9 @@ group('ai-advisor: optimizador para una meta extra (turnos necesarios)');
   // nocturno 8h = vh×1.35×8 = 108.000 → ceil(200k/108k)=2
   truthy(r.indexOf(w.fCOP(108000)) >= 0 && r.indexOf('2 turnos nocturnos') >= 0,
     'opción A: 2 turnos nocturnos de 108.000 c/u');
-  // dominical 8h = vh×1.75×8 = 140.000 → ceil(200k/140k)=2
-  truthy(r.indexOf(w.fCOP(140000)) >= 0, 'opción B: turno dominical/festivo a 140.000');
+  // dominical 8h = vh × factor festivo VIGENTE × 8 (date-aware, Ley 2466/2025)
+  var _vTd = Math.round(10000 * w.rcFactor('diurnaFest', new Date()) * 8);
+  truthy(r.indexOf(w.fCOP(_vTd)) >= 0, 'opción B: turno dominical/festivo al factor vigente');
   // extra diurna = vh×1.25 = 12.500 → ceil(200k/12500)=16
   truthy(r.indexOf('16 horas extra') >= 0, 'opción C: 16 horas extra diurnas (a 12.500/h)');
 

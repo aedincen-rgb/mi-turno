@@ -1,4 +1,4 @@
 {
-  "v": "v330",
-  "label": "Tier 1 — prestaciones (base = salario variable), verificador y fiscal date-aware + UVT 2026"
+  "v": "v331",
+  "label": "Cierre date-aware: simulador, optimizador y razonador legal del advisor (factores festivos vigentes)"
 }

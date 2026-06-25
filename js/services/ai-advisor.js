@@ -126,12 +126,23 @@ function aiAdvisorSimular(c, horas, tipo) {
   var s4 = { label: 'Extra nocturno (+75%)', cop: vh * horas * 1.75, factor: 1.75 };
   escenarios.push(s4);
 
-  // Escenario 5: Festivo diurno (75%)
-  var s5 = { label: 'Festivo diurno (+75%)', cop: vh * horas * 1.75, factor: 1.75 };
+  // Escenario 5: Festivo diurno (date-aware, Ley 2466/2025: 80% hoy)
+  var _Ds = c.ahora || new Date();
+  var _fFd = rcFactor('diurnaFest', _Ds);
+  var s5 = {
+    label: 'Festivo diurno (+' + Math.round((_fFd - 1) * 100) + '%)',
+    cop: vh * horas * _fFd,
+    factor: _fFd
+  };
   escenarios.push(s5);
 
-  // Escenario 6: Festivo nocturno (110%)
-  var s6 = { label: 'Extra festivo nocturno (+110%)', cop: vh * horas * 2.1, factor: 2.1 };
+  // Escenario 6: Festivo nocturno (date-aware: 115% hoy)
+  var _fFn = rcFactor('noctFest', _Ds);
+  var s6 = {
+    label: 'Festivo nocturno (+' + Math.round((_fFn - 1) * 100) + '%)',
+    cop: vh * horas * _fFn,
+    factor: _fFn
+  };
   escenarios.push(s6);
 
   var resp = '🔮 **Simulador avanzado**\n\n';
@@ -200,12 +211,15 @@ function aiAdvisorOptimizador(c, metaExtra) {
     fCOP(valorTurnoNocturno) +
     '.\n\n';
 
-  // Opción B: Domingos/Festivos diurnos (8h)
-  var valorTurnoDomingo = vh * 1.75 * 8;
+  // Opción B: Domingos/Festivos diurnos (8h) — factor date-aware (Ley 2466/2025)
+  var _fDom = rcFactor('diurnaFest', c.ahora || new Date());
+  var valorTurnoDomingo = vh * _fDom * 8;
   var turnosDomingos = Math.ceil(metaExtra / valorTurnoDomingo);
   resp += '⛪ **Opción B: ' + turnosDomingos + ' turnos dominicales/festivos**\n';
   resp +=
-    'Trabajando un domingo de día (recargo 75%), cada turno de 8h te paga ' +
+    'Trabajando un domingo de día (recargo ' +
+    Math.round((_fDom - 1) * 100) +
+    '%), cada turno de 8h te paga ' +
     fCOP(valorTurnoDomingo) +
     '.\n\n';
 
@@ -1066,9 +1080,9 @@ function aiOptimizarProximo(c) {
       '📅 Próximo festivo: **' +
         fLbl +
         '** — un turno ahí te deja ≈' +
-        fCOP(t8(1.75)) +
+        fCOP(t8(_fDiurFest)) +
         ' (≈' +
-        fCOP(t8(1.75) - t8(1)) +
+        fCOP(t8(_fDiurFest) - t8(1)) +
         ' más que un día normal).'
     );
   }
@@ -1192,7 +1206,9 @@ function aiMiniRazonamiento(c, intent) {
         'Tenés bastante trabajo nocturno; ahí está el +35% que más se pierde si no lo liquidan — vale revisarlo.';
     } else if (festPrem > vh && vh > 0) {
       razon =
-        'Trabajaste en domingo/festivo: ese +75% debe ir aparte en tu pago (CST Art. 179-180).';
+        'Trabajaste en domingo/festivo: ese +' +
+        Math.round(getRecargoFestivo(c.ahora || new Date()) * 100) +
+        '% debe ir aparte en tu pago (CST Art. 179-180 · Ley 2466/2025).';
     }
   }
 
