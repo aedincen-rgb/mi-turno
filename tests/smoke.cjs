@@ -322,6 +322,15 @@ if (typeof w.aiNextChips === 'function') {
   // saludo trae sus propios chips → el motor no lo toca
   truthy(w.aiNextChips('saludo', _cNx, _baseNx) === null,
     'saludo: el motor no pisa los chips de onboarding');
+  // #4 (prueba real): dedup defensivo — baseActions con duplicado → 1 solo
+  w.aiConvReset();
+  var _dupBase = [{ label: 'Ver detalle', query: 'ver detalle' }, { label: 'Ver detalle', query: 'ver detalle' }];
+  var _rDup = w.aiNextChips('total_ganado', { vh: 10000, totalCOP: 500000 }, _dupBase);
+  if (_rDup && _rDup.actions) {
+    var _labels = _rDup.actions.map(function (a) { return a.label; });
+    truthy(_labels.indexOf('Ver detalle') === _labels.lastIndexOf('Ver detalle'),
+      'dedup: no aparece "Ver detalle" dos veces en los chips');
+  }
   w.aiConvReset();
 }
 

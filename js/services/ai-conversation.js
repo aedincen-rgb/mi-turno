@@ -390,6 +390,18 @@ function aiNextChips(intent, c, baseActions) {
     if (deepen) out.push(deepen);
     if (open) out.push(open);
   }
+  // Dedup defensivo: nunca dos chips con el mismo label o query (evita el
+  // "Ver detalle" repetido visto en prueba real).
+  var _seenChip = {};
+  out = out.filter(function (a) {
+    if (!a) return false;
+    var key = ((a.label || '') + '|' + (a.query || '')).toLowerCase();
+    var lbl = (a.label || '').toLowerCase();
+    if (_seenChip[key] || _seenChip['l:' + lbl]) return false;
+    _seenChip[key] = true;
+    _seenChip['l:' + lbl] = true;
+    return true;
+  });
   if (!out.length) return null;
 
   if (open && out.indexOf(open) >= 0 && openEntry && typeof aiConvMarkSeen === 'function') {

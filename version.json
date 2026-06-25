@@ -1,4 +1,4 @@
 {
-  "v": "v336",
-  "label": "2ª tanda de fixes: conteo de turnos consistente (#3) + humanizador no rompe 'listo para' (#5)"
+  "v": "v337",
+  "label": "Fix chips: query ruteable en engage (#6, adiós 'No estoy seguro') + dedup en el motor (#4)"
 }

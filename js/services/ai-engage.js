@@ -15,6 +15,35 @@ var _ENG_NOC =
   typeof getInicioNocturno === 'function' && getInicioNocturno(new Date()) === 19 ? '7pm' : '9pm';
 var _ENG_FEST8 = (1 + (_ENG_FEST / 100 || 0.8)) * 8; // horas diurnas equivalentes a 8h festivas
 
+// Mapa intent→QUERY ruteable. Los chips muestran su `label`, pero al tocarlos
+// mandan una frase que el NLP SÍ entiende (antes mandaban la etiqueta cruda
+// como "Ver detalle", que no ruteaba y caía en "No estoy seguro de qué buscas",
+// bug detectado en prueba real 25-jun). Si el intent no está acá, cae al label.
+var _ENG_INTENT_QUERY = {
+  distribucion: 'cuánto llevo este mes con desglose',
+  distribución: 'cuánto llevo este mes con desglose',
+  comparativa_mes: '¿vs mes pasado?',
+  comparativa_semana: '¿vs semana pasada?',
+  mejor_dia: 'mi mejor día',
+  simulacion: 'simular 4 horas extra',
+  proyeccion: 'proyección al cierre',
+  ayer: '¿cuánto gané ayer?',
+  hoy: '¿cuánto gané hoy?',
+  ley: 'cuál es la tabla de recargos',
+  racha: 'cómo va mi racha',
+  bienestar: '¿cómo estoy de bienestar?',
+  valor_hora: '¿cuánto gano por hora?',
+  festivos: 'próximos festivos',
+  total_ganado: '¿cuánto llevo este mes?',
+  stats: 'mis estadísticas del mes',
+  email: 'enviame el reporte por correo'
+};
+// Construye un chip con query ruteable (por intent) y el label como display.
+function _engAct(label, intent) {
+  var q = intent && _ENG_INTENT_QUERY[intent] ? _ENG_INTENT_QUERY[intent] : label;
+  return { label: label, query: q, intent: intent };
+}
+
 // ─── BANCO DE PREGUNTAS DE ENGAGEMENT ─────────────────────────
 // Organizado por intent para máxima relevancia contextual.
 
@@ -676,10 +705,8 @@ function aiEngageQuestion(intent, userContext, convLevel, strategy) {
       _aiEngageUsados[stratKey + '_' + stratIdx] = true;
       var stratEntry = stratPool[stratIdx];
       var stratActions = [];
-      if (stratEntry.a1)
-        stratActions.push({ label: stratEntry.a1, query: stratEntry.a1, intent: stratEntry.i1 });
-      if (stratEntry.a2)
-        stratActions.push({ label: stratEntry.a2, query: stratEntry.a2, intent: stratEntry.i2 });
+      if (stratEntry.a1) stratActions.push(_engAct(stratEntry.a1, stratEntry.i1));
+      if (stratEntry.a2) stratActions.push(_engAct(stratEntry.a2, stratEntry.i2));
       return { q: stratEntry.q || null, actions: stratActions.slice(0, 2) };
     }
   }
@@ -687,14 +714,13 @@ function aiEngageQuestion(intent, userContext, convLevel, strategy) {
   var entry = _aiEngagePick(intent);
   var actions = [];
 
-  if (entry.a1) actions.push({ label: entry.a1, query: entry.a1, intent: entry.i1 });
-  if (entry.a2) actions.push({ label: entry.a2, query: entry.a2, intent: entry.i2 });
+  if (entry.a1) actions.push(_engAct(entry.a1, entry.i1));
+  if (entry.a2) actions.push(_engAct(entry.a2, entry.i2));
 
   if (actions.length < 2) {
     var defEntry = _aiEngagePick('default');
-    if (actions.length === 0 && defEntry.a1)
-      actions.push({ label: defEntry.a1, query: defEntry.a1 });
-    if (actions.length < 2 && defEntry.a2) actions.push({ label: defEntry.a2, query: defEntry.a2 });
+    if (actions.length === 0 && defEntry.a1) actions.push(_engAct(defEntry.a1, defEntry.i1));
+    if (actions.length < 2 && defEntry.a2) actions.push(_engAct(defEntry.a2, defEntry.i2));
   }
 
   return { q: entry.q || null, actions: actions.slice(0, 2) };
