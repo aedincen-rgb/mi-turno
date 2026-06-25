@@ -307,6 +307,7 @@ const projectGlobals = {
   aiConvAdvance: 'readonly',
   aiConvOrchestrate: 'readonly',
   aiConvNextStep: 'readonly',
+  aiNextChips: 'readonly',
   aiConvGetState: 'readonly',
   aiConvRestore: 'readonly',
   // services/ai-nlp.js

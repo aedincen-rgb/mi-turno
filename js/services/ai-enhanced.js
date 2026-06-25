@@ -438,6 +438,19 @@ function aiEnrichResponse(originalText, intent, userContext, entities, turnosAll
     }
   }
 
+  // Motor de continuidad (v334): refina los chips a "profundizar + abrir" con
+  // cobertura, anti-repetición y dosificación, para que el chat no muera ni
+  // sature. Toma los chips ya calculados como el "profundizar" y suma un "abrir"
+  // por cobertura. Si el chip que queda primero es de ABRIR (exploratorio), se
+  // marca como deliberación para NO registrarlo como oferta afirmable (fix v328).
+  if (typeof aiNextChips === 'function') {
+    var _nx = aiNextChips(intent, userContext, actions);
+    if (_nx && _nx.actions && _nx.actions.length) {
+      actions = _nx.actions;
+      if (_nx.openOnly) _fromDeliberate = true;
+    }
+  }
+
   if (actions && actions.length > 0 && !_aiMemory.lastSuggestion && !_fromDeliberate) {
     _aiMemory.lastSuggestion = {
       intent: actions[0].intent || intent,

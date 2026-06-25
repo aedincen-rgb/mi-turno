@@ -58,7 +58,9 @@ var FILES = [
   // sus deps externas solo se usan en runtime del agente, no acá.
   'js/services/ai-reasoning.js',
   // ai-psychology.js no toca DOM ni deps de carga; seguro en node.
-  'js/services/ai-psychology.js'
+  'js/services/ai-psychology.js',
+  // ai-conversation.js es autocontenido en carga (motor de continuidad v334).
+  'js/services/ai-conversation.js'
 ];
 
 // ── Stubs del entorno ────────────────────────────────────────────
@@ -279,6 +281,49 @@ eq(
   13500,
   '19:00–20:00 en ene 2026 es nocturna +35% (13.500)'
 );
+
+// ── Motor de continuidad (v334): deepen + open, cobertura, dosificación ──
+group('motor de continuidad: chips deepen+open, cobertura, dosificación');
+if (typeof w.aiNextChips === 'function') {
+  w.aiConvReset();
+  var _cNx = { vh: 10000, totalCOP: 500000, festMins: 480, nocturnasMins: 120, totalCOPMesPasado: 400000 };
+  var _baseNx = [{ label: 'A', query: 'deepen-a' }, { label: 'B', query: 'deepen-b' }];
+  var _everEmpty = false;
+  var _opensDistintos = {};
+  var _prevOpen = null;
+  var _consecutivoIgual = false;
+  for (var _ti = 0; _ti < 8; _ti++) {
+    var _rnx = w.aiNextChips('total_ganado', _cNx, _baseNx);
+    if (!_rnx || !_rnx.actions || !_rnx.actions.length) { _everEmpty = true; break; }
+    // dosificación equilibrada: el 4º y 8º turno (respiro) → 1 solo chip
+    if ((_ti + 1) % 4 === 0) {
+      truthy(_rnx.actions.length === 1, 'turno ' + (_ti + 1) + ' (respiro) ofrece 1 chip');
+    } else {
+      truthy(_rnx.actions.length <= 2, 'turno normal ofrece ≤2 chips');
+    }
+    // identificar el chip de ABRIR (no es deepen) y trackear cobertura/repetición
+    var _openQ = null;
+    _rnx.actions.forEach(function (a) {
+      if (a.query.indexOf('deepen-') < 0) { _openQ = a.query; _opensDistintos[a.query] = 1; }
+    });
+    if (_openQ && _prevOpen && _openQ === _prevOpen) _consecutivoIgual = true;
+    if (_openQ) _prevOpen = _openQ;
+  }
+  truthy(!_everEmpty, 'liveness: nunca devuelve vacío en 8 turnos (el chat no muere)');
+  truthy(Object.keys(_opensDistintos).length >= 3,
+    'cobertura: recorre ≥3 temas distintos, no el mismo siempre');
+  truthy(!_consecutivoIgual, 'anti-repetición: no ofrece el mismo "abrir" en turnos seguidos');
+  // openOnly: cuando el primer chip es de ABRIR, marca exploratorio (no oferta afirmable)
+  w.aiConvReset();
+  // sin baseActions (no hay "profundizar") → el 1er chip es de ABRIR → openOnly
+  var _rOpen = w.aiNextChips('total_ganado', _cNx, []);
+  truthy(_rOpen && _rOpen.openOnly === true,
+    'openOnly: chip de ABRIR sin deepen se marca exploratorio (protege fix v328)');
+  // saludo trae sus propios chips → el motor no lo toca
+  truthy(w.aiNextChips('saludo', _cNx, _baseNx) === null,
+    'saludo: el motor no pisa los chips de onboarding');
+  w.aiConvReset();
+}
 
 // ── Explicabilidad (Tier 2): "¿cómo lo calculaste?" ──────────────────
 // Traza grounded en doCalc: factor por franja derivado del COP real, base
