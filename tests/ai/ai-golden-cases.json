@@ -268,26 +268,22 @@
     },
     {
       "q": "muéstrame la tendencia",
-      "expectedIntent": [
-        "tendencia",
-        "proyeccion"
-      ],
+      "expectedIntent": null,
       "expectedRoute": "query",
       "shouldUseLegacy": false,
       "mustContain": [
         "tendencia"
-      ]
+      ],
+      "note": "Fixed v341: guard pre-NLP enruta a la tendencia real."
     },
     {
       "q": "voy subiendo o bajando",
-      "expectedIntent": [
-        "tendencia",
-        "hoy",
-        "proyeccion"
-      ],
+      "expectedIntent": null,
       "shouldUseLegacy": false,
-      "knownGap": true,
-      "note": "GAP: responde sobre 'hoy' en vez de tendencia."
+      "note": "Fixed v341: guard pre-NLP de tendencia (antes caía en hoy).",
+      "mustContain": [
+        "tendencia"
+      ]
     },
     {
       "q": "qué hice la semana pasada",
@@ -588,15 +584,13 @@
     },
     {
       "q": "por qué no sincroniza",
-      "expectedIntent": [
-        "diagnostico_red",
-        "ayuda_app",
-        "ayuda_navegacion"
-      ],
+      "expectedIntent": null,
       "expectedRoute": "help",
       "shouldUseLegacy": false,
-      "knownGap": true,
-      "note": "GAP: cae en disambiguación genérica."
+      "note": "Fixed v341: guard de diagnóstico de conexión.",
+      "mustContain": [
+        "conexión"
+      ]
     },
     {
       "q": "hazme un informe",

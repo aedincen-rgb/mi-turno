@@ -1888,30 +1888,7 @@ function _aiDispatchNLP(intent, c, state, q, t) {
         'funciona internet'
       )
     ) {
-      var _onlineStatus = typeof navigator !== 'undefined' && navigator.onLine;
-      var _cloudOK = typeof CLOUD_MODE !== 'undefined' && CLOUD_MODE;
-      var _rtStatus = typeof getRealtimeStatus === 'function' ? getRealtimeStatus() : null;
-      var _syncPending = 0;
-      try {
-        var _sq = leer('mt_sync_queue', {});
-        var _uid = state.session && state.session.uid;
-        if (_uid && _sq[_uid]) _syncPending = _sq[_uid].length;
-      } catch (_) {}
-      var _resp = '📡 **Estado de conexión**\n\n';
-      _resp += _onlineStatus ? '✅ **Internet:** Conectado\n' : '❌ **Internet:** Sin conexión\n';
-      _resp += _cloudOK
-        ? '☁️ **Supabase:** Conectado' + (_rtStatus ? ' (' + _rtStatus + ')' : '') + '\n'
-        : '⚠️ **Supabase:** No conectado\n';
-      if (_syncPending > 0)
-        _resp +=
-          '🔄 **Pendiente:** ' +
-          _syncPending +
-          ' cambio' +
-          (_syncPending !== 1 ? 's' : '') +
-          ' por sincronizar\n';
-      _resp +=
-        '\n💡 La app funciona 100% sin internet. Tus datos se guardan localmente y se sincronizan cuando vuelve la conexión.';
-      return _resp;
+      return _aiConexionEstado(state);
     }
 
     if (typeof aiHelpAnswer === 'function') {
@@ -2867,6 +2844,158 @@ function _aiTurnoActivoIntent(q, t, c) {
   return 'No, ahora mismo no tenés ningún servicio activo. Cuando arranques uno, te lo llevo. ✋';
 }
 
+// ¿La pregunta es de tendencia/evolución? Señales distintivas (no el "voy" suelto,
+// que es ambiguo con "en cuánto voy"). La usa el guard pre-NLP y el slash.
+function _aiTendenciaIntent(q, t) {
+  return (
+    /\b(tendencia|evolucion|historico)\b/.test(t) ||
+    /subiendo o bajando|bajando o subiendo|voy subiendo|voy bajando|mejor o peor que|como voy vs|voy vs antes/.test(
+      t
+    )
+  );
+}
+
+// Calcula la tendencia de los últimos 3 meses (texto). Extraído del handler del
+// slash /tendencia para reusarlo desde el guard pre-NLP (migración v341).
+function _aiTendenciaResponder(c, state) {
+  try {
+    var tvh = c.vh || 0;
+    var _ahora = c && c.ahora ? c.ahora : new Date();
+    var ahoraMes = _ahora.getMonth();
+    var ahoraAno = _ahora.getFullYear();
+    var mesesNombres = [
+      'Ene',
+      'Feb',
+      'Mar',
+      'Abr',
+      'May',
+      'Jun',
+      'Jul',
+      'Ago',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dic'
+    ];
+    var mesesData = [];
+    var allTurnos = state.turnosAll || state.turnos || [];
+    for (var mi = 0; mi < 3; mi++) {
+      var mIdx = ahoraMes - mi;
+      var aIdx = ahoraAno;
+      if (mIdx < 0) {
+        mIdx += 12;
+        aIdx--;
+      }
+      var iniM = new Date(aIdx, mIdx, 1);
+      var finM = new Date(aIdx, mIdx + 1, 0);
+      var turnosM = [];
+      for (var tj = 0; tj < allTurnos.length; tj++) {
+        var tt = allTurnos[tj];
+        if (!tt || !tt.inicio || !tt.fin) continue;
+        var d = new Date(tt.inicio);
+        if (d >= iniM && d <= finM) turnosM.push(tt);
+        if (turnosM.length > 500) break;
+      }
+      if (turnosM.length === 0 && mi > 0) continue;
+      var calcM, diasM;
+      if (mi === 0) {
+        calcM = { totalMins: c.totalMins || 0, totalCOP: c.totalCOP || 0 };
+        diasM = c.diasTrab || 0;
+      } else {
+        calcM = doCalc(turnosM, null, finM, tvh);
+        var diasArr = calcPorDia(turnosM, tvh);
+        diasM = diasArr && diasArr.length ? diasArr.length : 0;
+      }
+      mesesData.push({
+        label: mesesNombres[mIdx],
+        cop: Math.round(calcM.totalCOP || 0),
+        mins: Math.round(calcM.totalMins || 0),
+        dias: diasM
+      });
+    }
+    if (mesesData.length < 2) {
+      return '📊 Necesito al menos 2 meses de datos para mostrar una tendencia. ¡Seguí trabajando! 💪';
+    }
+    var respTen = '📈 **Tendencia**\n\n';
+    for (var ti = 0; ti < mesesData.length; ti++) {
+      var flecha =
+        ti === 0
+          ? '📍 '
+          : mesesData[ti].cop > (mesesData[ti - 1] || mesesData[ti]).cop
+            ? '📈 '
+            : '📉 ';
+      respTen +=
+        flecha +
+        mesesData[ti].label +
+        ': ' +
+        fCOP(mesesData[ti].cop) +
+        ' · ' +
+        fDur(mesesData[ti].mins) +
+        ' · ' +
+        mesesData[ti].dias +
+        ' días\n';
+    }
+    if (mesesData.length >= 2) {
+      var dif = mesesData[0].cop - mesesData[1].cop;
+      var pctCambio = mesesData[1].cop > 0 ? (dif / mesesData[1].cop) * 100 : 0;
+      respTen +=
+        '\n' +
+        (dif >= 0 ? '📈 ' : '📉 ') +
+        'vs mes pasado: ' +
+        (dif >= 0 ? '+' : '') +
+        fCOP(Math.abs(dif)) +
+        ' (' +
+        (pctCambio >= 0 ? '+' : '') +
+        pctCambio.toFixed(1) +
+        '%)';
+    }
+    return respTen;
+  } catch (err) {
+    console.error('[MT] tendencia error:', err);
+    return '⚠️ No se pudo calcular la tendencia en este momento. Intentá de nuevo más tarde.';
+  }
+}
+
+// ¿La pregunta es un problema/consulta de conexión o sincronización?
+function _aiDiagnosticoConexionIntent(q, t) {
+  if (
+    /no sincroniz|no se sincroniz|no sube|no carga la nube|no conecta|sin conexion|estado de conexion|hay conexion|estoy conectado|conexion a la nube/.test(
+      t
+    )
+  )
+    return true;
+  return /sincroniz/.test(t) && /(no|por que|porque|falla|problema|anda|funciona)/.test(t);
+}
+
+// Estado de conexión y sincronización (internet, Supabase, cola pendiente).
+// Extraído del handler de ayuda_navegacion para reusarlo desde el guard pre-NLP.
+function _aiConexionEstado(state) {
+  var _onlineStatus = typeof navigator !== 'undefined' && navigator.onLine;
+  var _cloudOK = typeof CLOUD_MODE !== 'undefined' && CLOUD_MODE;
+  var _rtStatus = typeof getRealtimeStatus === 'function' ? getRealtimeStatus() : null;
+  var _syncPending = 0;
+  try {
+    var _sq = leer('mt_sync_queue', {});
+    var _uid = state && state.session && state.session.uid;
+    if (_uid && _sq[_uid]) _syncPending = _sq[_uid].length;
+  } catch (_) {}
+  var _resp = '📡 **Estado de conexión**\n\n';
+  _resp += _onlineStatus ? '✅ **Internet:** Conectado\n' : '❌ **Internet:** Sin conexión\n';
+  _resp += _cloudOK
+    ? '☁️ **Supabase:** Conectado' + (_rtStatus ? ' (' + _rtStatus + ')' : '') + '\n'
+    : '⚠️ **Supabase:** No conectado\n';
+  if (_syncPending > 0)
+    _resp +=
+      '🔄 **Pendiente:** ' +
+      _syncPending +
+      ' cambio' +
+      (_syncPending !== 1 ? 's' : '') +
+      ' por sincronizar\n';
+  _resp +=
+    '\n💡 La app funciona 100% sin internet. Tus datos se guardan localmente y se sincronizan cuando vuelve la conexión.';
+  return _resp;
+}
+
 // ════════════════════════════════════════════════════════════════
 //  VERIFICADOR DE PAGO JUSTO · "¿me pagan bien?"
 //  Detecta la intención de auditar el pago y delega en aiAuditarPago,
@@ -3534,6 +3663,20 @@ function _aiAnswerCore(question, state) {
     if (_act) return _act;
   }
 
+  // ── TENDENCIA (datos, no NLP) ──
+  // "muéstrame la tendencia" caía en proyeccion y "voy subiendo o bajando" en hoy;
+  // el handler de tendencia vivía después del NLP y nunca se alcanzaba.
+  if (!_esSlash && _aiTendenciaIntent(q, t)) {
+    var _ten = _aiTendenciaResponder(c, state);
+    if (_ten) return _ten;
+  }
+
+  // ── DIAGNÓSTICO DE CONEXIÓN/SYNC (no NLP) ──
+  // "por qué no sincroniza" caía a fallback (conf baja); da el estado real.
+  if (!_esSlash && _aiDiagnosticoConexionIntent(q, t)) {
+    return _aiConexionEstado(state);
+  }
+
   // ── REFERENCIAS CONTEXTUALES: "¿y la quincena pasada?", "¿y eso por qué?" ──
   // Resuelve elipsis antes de clasificar, para que el NLP no las vea como
   // frases sin intent suficiente (confidence baja).
@@ -4025,103 +4168,8 @@ function _aiAnswerCore(question, state) {
   }
 
   // ── /TENDENCIA ──
-  if (q === '/tendencia' || _aiHas(t, 'tendencia', 'evolucion', 'como voy vs antes', 'historico')) {
-    try {
-      var tvh = c.vh || 0;
-      var _ahora = c && c.ahora ? c.ahora : new Date();
-      var ahoraMes = _ahora.getMonth();
-      var ahoraAno = _ahora.getFullYear();
-      var mesesNombres = [
-        'Ene',
-        'Feb',
-        'Mar',
-        'Abr',
-        'May',
-        'Jun',
-        'Jul',
-        'Ago',
-        'Sep',
-        'Oct',
-        'Nov',
-        'Dic'
-      ];
-      var mesesData = [];
-      var allTurnos = state.turnosAll || state.turnos || [];
-      for (var mi = 0; mi < 3; mi++) {
-        var mIdx = ahoraMes - mi;
-        var aIdx = ahoraAno;
-        if (mIdx < 0) {
-          mIdx += 12;
-          aIdx--;
-        }
-        var iniM = new Date(aIdx, mIdx, 1);
-        var finM = new Date(aIdx, mIdx + 1, 0);
-        var turnosM = [];
-        for (var tj = 0; tj < allTurnos.length; tj++) {
-          var t = allTurnos[tj];
-          if (!t || !t.inicio || !t.fin) continue;
-          var d = new Date(t.inicio);
-          if (d >= iniM && d <= finM) turnosM.push(t);
-          if (turnosM.length > 500) break;
-        }
-        if (turnosM.length === 0 && mi > 0) continue;
-        var calcM, diasM;
-        if (mi === 0) {
-          calcM = { totalMins: c.totalMins || 0, totalCOP: c.totalCOP || 0 };
-          diasM = c.diasTrab || 0;
-        } else {
-          calcM = doCalc(turnosM, null, finM, tvh);
-          var diasArr = calcPorDia(turnosM, tvh);
-          diasM = diasArr && diasArr.length ? diasArr.length : 0;
-        }
-        mesesData.push({
-          label: mesesNombres[mIdx],
-          cop: Math.round(calcM.totalCOP || 0),
-          mins: Math.round(calcM.totalMins || 0),
-          dias: diasM
-        });
-      }
-      if (mesesData.length < 2) {
-        return '📊 Necesito al menos 2 meses de datos para mostrar una tendencia. ¡Seguí trabajando! 💪';
-      }
-      var respTen = '📈 **Tendencia**\n\n';
-      for (var ti = 0; ti < mesesData.length; ti++) {
-        var flecha =
-          ti === 0
-            ? '📍 '
-            : mesesData[ti].cop > (mesesData[ti - 1] || mesesData[ti]).cop
-              ? '📈 '
-              : '📉 ';
-        respTen +=
-          flecha +
-          mesesData[ti].label +
-          ': ' +
-          fCOP(mesesData[ti].cop) +
-          ' · ' +
-          fDur(mesesData[ti].mins) +
-          ' · ' +
-          mesesData[ti].dias +
-          ' días\n';
-      }
-      if (mesesData.length >= 2) {
-        var dif = mesesData[0].cop - mesesData[1].cop;
-        var pctCambio = mesesData[1].cop > 0 ? (dif / mesesData[1].cop) * 100 : 0;
-        respTen +=
-          '\n' +
-          (dif >= 0 ? '📈 ' : '📉 ') +
-          'vs mes pasado: ' +
-          (dif >= 0 ? '+' : '') +
-          fCOP(Math.abs(dif)) +
-          ' (' +
-          (pctCambio >= 0 ? '+' : '') +
-          pctCambio.toFixed(1) +
-          '%)';
-      }
-      return respTen;
-    } catch (err) {
-      console.error('[MT] /tendencia error:', err);
-      return '⚠️ No se pudo calcular la tendencia en este momento. Intentá de nuevo más tarde.';
-    }
+  if (q === '/tendencia' || _aiTendenciaIntent(q, t)) {
+    return _aiTendenciaResponder(c, state);
   }
 
   // ── /SEMANA ──
