@@ -162,15 +162,19 @@
       ],
       "expectedRoute": "query",
       "shouldUseRealData": true,
-      "note": "quincena anclaje temporal"
+      "note": "quincena anclaje temporal",
+      "mustContain": [
+        "quincena"
+      ]
     },
     {
       "q": "cuánto va de quincena",
-      "expectedIntent": [
-        "celebracion"
+      "expectedIntent": null,
+      "note": "Fixed v341: guard de datos responde el total real de la quincena (antes celebracion sin cifras).",
+      "mustContain": [
+        "quincena"
       ],
-      "knownGap": true,
-      "note": "GAP: cae en celebracion sin datos; debería ir a query/quincena. Punch-list migración D1."
+      "shouldUseRealData": true
     },
     {
       "q": "cuánto gané el domingo",

@@ -133,6 +133,9 @@ try {
       turnos.push(mk(mo, 9, 6, 9));
       turnos.push(mk(mo, 12, 14, 8));
     }
+    // Turno en la 2ª quincena del mes actual: da datos reales a las consultas de
+    // quincena (los de arriba caen en la 1ª quincena). Día 20 = pasado y en q2 hoy.
+    turnos.push(mk(0, 20, 18, 6));
     var n = new Date();
     var mes = turnos.filter(function (t) {
       var d = new Date(t.inicio);

@@ -2804,6 +2804,46 @@ function _aiScopeQuincena(c, state, t) {
   return { c: cQ, label: label };
 }
 
+// Total de una quincena ("cuánto va de quincena", "cuánto llevo en la quincena").
+// Enruta a la capa de DATOS (migración D1, v341): el NLP la malinterpretaba como
+// celebración y respondía sin cifras. No reclama "quincena pasada/anterior" (eso
+// lo resuelve la referencia contextual) ni configuración de modo quincena, ni
+// simulación/auditoría (ya filtradas antes en la cascada).
+function _aiQuincenaTotalIntent(q, t, c, state) {
+  if (!/quincena/.test(t)) return null;
+  if (/pasada|anterior|antepasada/.test(t)) return null;
+  if (/modo quincena|configurar|ajuste|cambiar de quincena|cambio de quincena/.test(t)) return null;
+  if (/simul|ganaria|si trabajo|si trabajara/.test(t)) return null;
+  var dataWord =
+    /(cuanto|cuanta|cuantos|cuantas|llevo|llevamos|va de|voy|gane|ganado|ganancia|saque|hice|plata|dinero|acumul)/.test(
+      t
+    );
+  if (!dataWord) return null;
+  var scoped = _aiScopeQuincena(c, state, t);
+  if (!scoped) return null;
+  var cQ = scoped.c;
+  var total = Math.round(cQ.totalCOP || 0);
+  var dias = cQ.diasTrab || 0;
+  if (typeof aiUpdateConversation === 'function') aiUpdateConversation('total_ganado', 'dinero');
+  if (dias === 0) {
+    return (
+      'En ' +
+      scoped.label +
+      ' todavía no registrás servicios. Apenas cierres uno, te llevo la cuenta. 💪'
+    );
+  }
+  return (
+    'En ' +
+    scoped.label +
+    ' llevás **' +
+    fCOP(total) +
+    '** en ' +
+    dias +
+    (dias === 1 ? ' servicio' : ' servicios') +
+    '.'
+  );
+}
+
 // ════════════════════════════════════════════════════════════════
 //  VERIFICADOR DE PAGO JUSTO · "¿me pagan bien?"
 //  Detecta la intención de auditar el pago y delega en aiAuditarPago,
@@ -3454,6 +3494,14 @@ function _aiAnswerCore(question, state) {
         return _dqCard ? { text: _dqText, card: _dqCard } : _dqText;
       }
     }
+  }
+
+  // ── TOTAL DE QUINCENA (datos, no NLP) ──
+  // "cuánto va de quincena" debe dar el total real de la quincena (capa de
+  // datos), no caer en el NLP que la lee como celebración sin cifras.
+  if (!_esSlash) {
+    var _qTot = _aiQuincenaTotalIntent(q, t, c, state);
+    if (_qTot) return _qTot;
   }
 
   // ── REFERENCIAS CONTEXTUALES: "¿y la quincena pasada?", "¿y eso por qué?" ──
