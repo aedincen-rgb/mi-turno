@@ -240,14 +240,14 @@ function _aiAnalyzeCalcTrends(ctx) {
       text:
         'Vas ' +
         (ritmoEsperado - pctActual).toFixed(0) +
-        '% por debajo del ritmo. Necesitarías ' +
+        '% por debajo del ritmo. Al ritmo actual proyectás ' +
         fCOP(ctx.proy) +
-        ' al cierre, pero al ritmo actual proyectás ' +
-        fCOP(ctx.prom * ctx.diasMes || 0) +
+        ' al cierre, por debajo de tu meta de ' +
+        fCOP(ctx.salario || 0) +
         '.',
       source: 'calc.trend',
       priority: 7,
-      data: { actual: pctActual, esperado: ritmoEsperado }
+      data: { actual: pctActual, esperado: ritmoEsperado, proyeccion: ctx.proy, meta: ctx.salario }
     });
   }
 

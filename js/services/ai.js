@@ -2801,7 +2801,7 @@ function _aiScopeQuincena(c, state, t) {
 // ════════════════════════════════════════════════════════════════
 function _aiAuditIntent(q, t, c, state) {
   var trig =
-    /(pagan mal|pagaron mal|pagan poco|pagan menos|pagaron de menos|pago incomplet|pago incorrect|sueldo incomplet|me estan pagando mal|me estan robando|me roban|pago justo|me pagan lo justo|verificar.*pago|revisar.*pago|auditar.*pago|me deben)/.test(
+    /(pagan mal|pagaron mal|pagan poco|pagan menos|pagaron de menos|pago incomplet|pago incorrect|sueldo incomplet|me estan pagando mal|me estan robando|me roban|pago justo|me pagan lo justo|verificar.*pago|revisar.*pago|auditar.*pago|me deben|pagan bien|pagando bien|me pagan lo correcto|pago correcto|me pagan completo)/.test(
       t
     );
   var monto = _aiNum(t);

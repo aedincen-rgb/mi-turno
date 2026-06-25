@@ -1489,6 +1489,16 @@ group('ai: verificador de pago justo (v294)');
   truthy(w.aiAuditarPago({ vh: 0, totalCOP: 0 }, 500000).text.indexOf('salario') >= 0,
          'sin salario base pide configurarlo');
 
+  // REGRESIÓN: el chip "⚖️ ¿Me pagan bien?" manda "me están pagando bien".
+  // DEBE rutear al verificador, NO a "¿cómo estás? yo bien" (el "bien" no debe
+  // robarlo a estado_animo). Bug detectado en prueba real del 25-jun-2026.
+  if (typeof w._aiAuditIntent === 'function') {
+    var _cAud = { vh: 10000, totalCOP: calcP.totalCOP, bd: calcP.bd, diasTrab: 1, festMins: 480 };
+    var rBien = w._aiAuditIntent('¿me pagan bien?', 'me estan pagando bien', _cAud, {});
+    truthy(rBien && rBien.text && rBien.text.indexOf('Verificador') >= 0,
+      '"me están pagando bien" dispara el verificador (no estado de ánimo)');
+  }
+
   // Sin turnos este mes
   truthy(w.aiAuditarPago({ vh: 10000, totalCOP: 0, diasTrab: 0 }, 500000).text.indexOf('turnos') >= 0,
          'sin turnos no inventa una auditoría');
@@ -2288,6 +2298,32 @@ group('ai-reasoning: comparación mensual calibrada (no se pega siempre)');
     'intent "total_ganado" SÍ incluye la comparación (viene al caso)');
   truthy(tieneComparacion(w.aiReason(bag, ctx, [], 'comparativa_mes')),
     'intent "comparativa_mes" SÍ incluye la comparación');
+})();
+
+// REGRESIÓN: el hallazgo de "ritmo" debe ser coherente — proyectás = proyección
+// real, comparada con la META (salario). El bug (prueba real 25-jun) mostraba
+// dos cifras contradictorias: usaba prom×30 (promedio POR TURNO × 30 días) como
+// "proyección", dando un número absurdo ($3.5M) que contradecía la proyección.
+group('ai-reasoning: ritmo coherente (proyección vs meta, no número absurdo)');
+(function () {
+  if (typeof w._aiAnalyzeCalcTrends !== 'function') { truthy(false, '_aiAnalyzeCalcTrends existe'); return; }
+  var ctxR = {
+    diaActual: 23, diasMes: 30, pctSalario: 53.9, diasTrab: 8,
+    proy: 1131621, salario: 1750905, prom: 117877,
+    totalCOP: 943018, totalMins: 5000, vh: 7295
+  };
+  var findingsR = w._aiAnalyzeCalcTrends(ctxR);
+  var trend = null;
+  (findingsR || []).forEach(function (f) {
+    if (f.text && f.text.indexOf('por debajo del ritmo') >= 0) trend = f;
+  });
+  truthy(trend, 'genera el hallazgo de ritmo cuando vas por debajo');
+  if (trend) {
+    truthy(trend.text.indexOf(w.fCOP(1131621)) >= 0, 'ritmo: proyectás usa la proyección real');
+    truthy(trend.text.indexOf(w.fCOP(1750905)) >= 0, 'ritmo: compara contra tu META (salario)');
+    truthy(trend.text.indexOf(w.fCOP(117877 * 30)) < 0,
+      'ritmo: NO aparece el número absurdo (prom×30 turnos) del bug');
+  }
 })();
 
 group('ai: detección Out-of-Scope (CLINC150) — declina sin fabricar');

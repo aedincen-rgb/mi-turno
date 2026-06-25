@@ -164,6 +164,7 @@ try {
       ['Optimizador predictivo', 'qué turno me conviene tomar', ['rinde más', 'conviene']],
       ['Comparador de ofertas', 'tengo una oferta de 3 millones', ['comparador', 'oferta']],
       ['Verificador de pago', 'me pagaron 70 mil este mes y creo que me pagan mal', ['de menos', 'verificador', 'bien']],
+      ['Verificador (¿me pagan bien?)', 'me están pagando bien', ['verificador', 'corresponden', 'de menos']],
       ['Informe financiero', 'dame un informe financiero completo', ['informe financiero']],
       ['Simulación de turno', 'simular 4 horas nocturnas', ['simul', 'nocturn']],
       ['Tabla de recargos (ley)', 'cuál es la tabla de recargos', ['recargo', 'nocturn']],
