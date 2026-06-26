@@ -1883,10 +1883,8 @@ function _aiDispatchNLP(intent, c, state, q, t) {
       return _aiConexionEstado(state);
     }
 
-    if (typeof aiHelpAnswer === 'function') {
-      var helpResp = aiHelpAnswer(q);
-      if (helpResp) return helpResp;
-    }
+    var helpResp = _aiHelpLookup(q);
+    if (helpResp) return helpResp;
     return '🤔 Contame qué querés hacer y te guío paso a paso. Por ejemplo:\n\n• "¿Cómo exporto mis turnos?"\n• "¿Cómo cambio mi foto?"\n• "¿Cómo configuro el PIN?"\n• "¿Cómo respaldo mis datos?"';
   }
 
@@ -2998,6 +2996,18 @@ function _aiKnowledgeLookup(q) {
   return null;
 }
 
+// Punto ÚNICO de búsqueda de ayuda/guías (D3). aiHelpAnswer devuelve un fallback
+// genérico ("No encontré una guía...") cuando no hay guía real; ese texto NO debe
+// bloquear rutas mejores (ej. el atajo "cómo" pisaba a email). Devuelve la guía
+// REAL o null para que el llamador caiga a una ruta más útil.
+function _aiHelpLookup(q) {
+  if (typeof aiHelpAnswer !== 'function') return null;
+  var r = aiHelpAnswer(q);
+  if (!r) return null;
+  if (r.indexOf('No encontré una guía') >= 0) return null;
+  return r;
+}
+
 // ════════════════════════════════════════════════════════════════
 //  VERIFICADOR DE PAGO JUSTO · "¿me pagan bien?"
 //  Detecta la intención de auditar el pago y delega en aiAuditarPago,
@@ -3437,11 +3447,10 @@ function _aiAnswerCore(question, state) {
   // ═══ ATAJO AYUDA: preguntas con "cómo" → aiHelpAnswer directo ═══
   // Quitar "¿" inicial antes de comparar para que "¿Cómo..." también dispare
   var _qSinInterro = q.replace(/^[¿¡]+/, '');
-  if (
-    (_qSinInterro.indexOf('cómo ') === 0 || _qSinInterro.indexOf('como ') === 0) &&
-    typeof aiHelpAnswer === 'function'
-  ) {
-    var ayudaDirecta = aiHelpAnswer(q);
+  if (_qSinInterro.indexOf('cómo ') === 0 || _qSinInterro.indexOf('como ') === 0) {
+    // Solo una guía REAL corta acá; si no hay, dejar pasar a la mejor ruta
+    // (ej. "cómo mando el reporte" → email, no el fallback genérico de ayuda).
+    var ayudaDirecta = _aiHelpLookup(q);
     if (ayudaDirecta) return ayudaDirecta;
   }
   var isAdmin = state.session && state.session.isAdmin;
@@ -5379,7 +5388,7 @@ function _aiAnswerCore(question, state) {
   if (!_esSlash) {
     var _sig = _aiSignalRoute(t, _entities);
     if (_sig === 'HELP') {
-      var _helpResp = typeof aiHelpAnswer === 'function' ? aiHelpAnswer(q) : null;
+      var _helpResp = _aiHelpLookup(q);
       if (_helpResp) return _helpResp;
       _sig = 'capacidades';
     }

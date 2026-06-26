@@ -1022,6 +1022,17 @@
         "ganaste $"
       ],
       "note": "Fixed v344: OOS"
+    },
+    {
+      "q": "como mando el reporte",
+      "expectedIntent": [
+        "email",
+        "correo_formal"
+      ],
+      "mustNotContain": [
+        "No encontré una guía"
+      ],
+      "note": "Fixed D3 v345: el atajo \"cómo\" ya no bloquea con el fallback; llega a email"
     }
   ]
 }
