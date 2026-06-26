@@ -198,6 +198,31 @@ try {
     }
   });
 
+  // Regresiones dedicadas (no encajan en un caso golden: el runner resetea cada
+  // vez, y el humanizador es aleatorio). Cazan BUG1 (reset deja memoria) y BUG3
+  // (humanizador rompe gramática "es un placer armamos").
+  var bugChecks = await page.evaluate(async function () {
+    var out = { resetHygiene: null, humanizerGrammar: null };
+    try {
+      var vh = Math.round(2000000 / 240);
+      var st = { turnos: [], turnosAll: [], activo: null, calc: window.doCalc([], null, new Date(), vh), vh: vh, salario: 2000000, session: { uid: 'g', email: 'i@l' } };
+      async function ans(q) { if (window.aiResetConv) window.aiResetConv(); var r = await Promise.resolve(window.aiAnswer(q, st)); return r && typeof r === 'object' ? r.text || '' : r || ''; }
+      // BUG1: tras reset, repetir la misma pregunta NO debe traer "te repito"
+      await ans('cuánto llevo este mes');
+      var r2 = await ans('cuánto llevo este mes');
+      out.resetHygiene = !/te repito|lo mismo que te dije|como te coment|sigue igual que antes/i.test(r2);
+      // BUG3: el humanizador nunca debe producir "es un placer armamos"
+      var bad = false;
+      if (window.aiHumanizar) {
+        for (var i = 0; i < 60; i++) {
+          if (/es un placer\s+armamos/i.test(window.aiHumanizar('Con gusto armamos tu plan de ahorro.'))) { bad = true; break; }
+        }
+      }
+      out.humanizerGrammar = !bad;
+    } catch (e) { out.error = String(e); }
+    return out;
+  });
+
   // Artefacto de la corrida (útil para calibrar y depurar).
   try {
     fs.writeFileSync(
@@ -269,6 +294,14 @@ try {
     if (registryCheck.error) console.log('  ✗ ' + registryCheck.error);
   }
 
+  // Regresiones dedicadas (BUG1 reset, BUG3 humanizador)
+  var bugFail = false;
+  console.log('\n═══ REGRESIONES · bugs ═══');
+  if (bugChecks.resetHygiene === false) { bugFail = true; console.log('  ✗ BUG1: aiResetConv NO limpia anti-repetición (repite tras reset)'); }
+  else console.log('  ✓ BUG1: reset limpia la memoria anti-repetición');
+  if (bugChecks.humanizerGrammar === false) { bugFail = true; console.log('  ✗ BUG3: humanizador produce "es un placer armamos" (gramática rota)'); }
+  else console.log('  ✓ BUG3: humanizador no rompe la gramática de "con gusto"');
+
   console.log('\n═══ GOLDEN · ' + CASES.length + ' casos ═══');
   console.log('  ✓ ' + pass + ' OK · ✗ ' + hardFails.length + ' fallos duros');
   if (hardFails.length) {
@@ -288,7 +321,7 @@ try {
     if (softWarns.length > 30) console.log('  … (' + (softWarns.length - 30) + ' más)');
   }
   console.log('');
-  exitCode = hardFails.length || registryFail ? 1 : 0;
+  exitCode = hardFails.length || registryFail || bugFail ? 1 : 0;
 } catch (e) {
   console.error('Error en golden runner:', e && e.message ? e.message : e);
   exitCode = 1;

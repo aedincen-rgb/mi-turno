@@ -262,6 +262,7 @@ const projectGlobals = {
   aiGetConversation: 'readonly',
   aiUpdateConversation: 'readonly',
   aiResetConv: 'readonly',
+  aiMemoryReset: 'readonly',
   aiAnalyzeMood: 'readonly',
   aiEmpatheticPrefix: 'readonly',
   aiEmpatheticSuffix: 'readonly',

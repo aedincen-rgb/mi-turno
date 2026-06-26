@@ -1033,6 +1033,58 @@
         "No encontré una guía"
       ],
       "note": "Fixed D3 v345: el atajo \"cómo\" ya no bloquea con el fallback; llega a email"
+    },
+    {
+      "q": "qué día es mejor para trabajar",
+      "expectedIntent": null,
+      "mustNotContain": [
+        "se me escapa"
+      ],
+      "note": "BUG2 fix: OOS no debe declinar esta in-scope (substring que dia es)"
+    },
+    {
+      "q": "qué día es el que más gano",
+      "expectedIntent": null,
+      "mustNotContain": [
+        "se me escapa"
+      ],
+      "note": "BUG2 fix: in-scope"
+    },
+    {
+      "q": "meta -5000000",
+      "expectedIntent": null,
+      "mustContain": [
+        "positivo"
+      ],
+      "mustNotContain": [
+        "5.000.000"
+      ],
+      "note": "BUG4 fix: meta negativa rechazada, no abs a +5M"
+    },
+    {
+      "q": "simulá 100000 horas nocturnas",
+      "expectedIntent": [
+        "simulacion",
+        "simular"
+      ],
+      "mustContain": [
+        "no caben"
+      ],
+      "mustNotContain": [
+        "100000h"
+      ],
+      "note": "BUG5 fix: tope de magnitud"
+    },
+    {
+      "q": "simulá -4 horas nocturnas",
+      "expectedIntent": [
+        "simulacion",
+        "simular"
+      ],
+      "mustContain": [
+        "positivo"
+      ],
+      "note": "BUG5 fix: simulación negativa rechazada"
     }
   ]
 }

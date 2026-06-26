@@ -1766,6 +1766,10 @@ function aiResetConv() {
   _aiConv.contextHints = [];
   _aiConv.askedFollowUp = false;
   _aiConv.stateMachine = { active: false, flow: null, step: 0, data: {} };
+  // Resetear TAMBIÉN la memoria conversacional (otro módulo, ai-enhanced.js):
+  // ring anti-repetición + historial. Sin esto /limpiar dejaba a la IA diciendo
+  // "te repito lo de recién" sobre preguntas nuevas.
+  if (typeof aiMemoryReset === 'function') aiMemoryReset();
 }
 
 // ─── CLASIFICADOR DE INTENCIONES ─────────────────────────────

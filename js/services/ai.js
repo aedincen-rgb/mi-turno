@@ -29,6 +29,14 @@ function _aiAll(t, arr) {
   return true;
 }
 
+// ¿El texto trae un número EXPLÍCITAMENTE negativo? _aiNum() lee solo dígitos
+// (ignora el signo), así que "-5000000" se interpretaba como +5.000.000. Para
+// validar entradas (meta, simulación) hay que mirar el signo en el texto crudo.
+// El minus debe ir tras inicio o espacio para no confundir rangos ("10-15").
+function _aiEsNegativo(s) {
+  return /(^|\s)-\s*\d/.test(s || '');
+}
+
 // Extrae primer número en texto. Soporta dígitos y palabras (uno..diez)
 function _aiNum(t) {
   // Limpiar formato de moneda común en Colombia (puntos de miles)
@@ -1385,6 +1393,16 @@ function _aiDispatchNLP(intent, c, state, q, t) {
   if (intent === 'simulacion') {
     var hrs = _aiNum(t);
     if (hrs === null) hrs = 4;
+    // Validación de magnitud: sin tope, "simulá 100000 horas" proyectaba una
+    // fantasía de miles de millones; un negativo se leía como positivo.
+    if (_aiEsNegativo(q) || hrs <= 0)
+      return 'Para simular necesito un número de horas positivo. Probá "simulá 4 horas nocturnas". 🙂';
+    if (hrs > 400)
+      return (
+        'Uf, ' +
+        Math.round(hrs) +
+        ' horas no caben ni en el mes 😅 (un mes tiene ~730h). Probá un número realista — hasta ~400 — y te lo calculo.'
+      );
     // Detectar tipo específico para dar respuesta focalizada
     var _simTipo = _aiDetectarTipoHora(t);
     if (_simTipo) {
@@ -3366,10 +3384,12 @@ function _aiIsOutOfScope(t) {
     'que horas son',
     'la hora exacta',
     'que dia es hoy',
-    'que dia es',
-    'que fecha es',
-    'dolar',
-    'euro',
+    'que dia es manana',
+    'que fecha es hoy',
+    'cuanto cuesta un dolar',
+    'cuanto vale el dolar',
+    'precio del dolar',
+    'cotizacion del dolar',
     'bitcoin',
     'quien gano',
     'quien es ',
@@ -3979,6 +3999,9 @@ function _aiAnswerCore(question, state) {
   // Los comandos "/meta N" siguen de largo hacia su handler dedicado
   // (que guarda la meta con aiSetGoal y registra el episodio).
   if (q.charAt(0) !== '/' && _aiHas(t, 'ahorro', 'meta', 'quiero ganar', 'para llegar a')) {
+    // Validación: una meta negativa no tiene sentido (antes "-5M" se leía como +5M).
+    if (_aiEsNegativo(q))
+      return 'Una meta tiene que ser un número positivo 🙂. Probá algo como "meta 3 millones".';
     var meta = _aiNum(t);
     var metaExplicita = !!(meta && meta >= 1000);
     if (!metaExplicita) meta = c.salario;

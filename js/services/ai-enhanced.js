@@ -93,6 +93,21 @@ function aiRemember(role, text, intent, topic, userContext) {
 // retome el hilo (follow-ups, aiThink, contexto conversacional).
 var _aiMsgSeeded = false;
 
+// Reset de la memoria conversacional. Lo invoca aiResetConv() al limpiar el chat.
+// BUGFIX: el ring anti-repetición (_aiMemory.recentCores) y el historial
+// sobrevivían a /limpiar, así que la IA decía "te repito lo de recién" sobre
+// preguntas NUEVAS y arrastraba el contexto de la sesión anterior. aiResetConv
+// vivía en ai-nlp.js y solo reseteaba _aiConv, nunca _aiMemory (otro módulo).
+function aiMemoryReset() {
+  _aiMemory.history = [];
+  _aiMemory.recentCores = [];
+  _aiMemory.lastLeadIn = -1;
+  _aiMemory.lastSuggestion = null;
+  _aiMemory.proactiveCount = 0;
+  _aiMsgSeeded = false;
+}
+if (typeof window !== 'undefined') window.aiMemoryReset = aiMemoryReset;
+
 function aiGetRecentMessages(n) {
   var lim = n || 3;
   var h = _aiMemory.history;
@@ -1726,7 +1741,9 @@ var _AI_HUM_FRASES = [
     alts: ['Para eso estoy acá.', 'Es un gusto.', 'Cuando quieras.']
   },
   { re: /buena pregunta/gi, alts: ['Buena esa', 'Qué buena pregunta', 'Me gusta la pregunta'] },
-  { re: /con gusto/gi, alts: ['con mucho gusto', 'es un placer', 'de una'] },
+  // 'es un placer' rompe la gramática antes de verbo conjugado ("con gusto
+  // armamos" → "es un placer armamos" ✗). Solo alts de la misma clase.
+  { re: /con gusto/gi, alts: ['con mucho gusto', 'con todo gusto'] },
   { re: /acá estoy/gi, alts: ['acá ando', 'por acá estoy', 'acá estoy'] }
 ];
 
