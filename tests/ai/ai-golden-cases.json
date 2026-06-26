@@ -470,12 +470,13 @@
     },
     {
       "q": "cuánto ganaría con 3 festivos",
-      "expectedIntent": [
-        "simulacion",
-        "simular"
-      ],
+      "expectedIntent": null,
       "expectedRoute": "advisor",
-      "shouldUseLegacy": false
+      "shouldUseLegacy": false,
+      "mustContain": [
+        "Simulación"
+      ],
+      "note": "fix: hipotético \"ganaría con N festivos\" → simulación (antes festivos al destapar el leak de memoria)"
     },
     {
       "q": "si meto 4 noches cuánto saco",
@@ -1085,6 +1086,67 @@
         "positivo"
       ],
       "note": "BUG5 fix: simulación negativa rechazada"
+    },
+    {
+      "q": "meta 0",
+      "expectedIntent": null,
+      "mustContain": [
+        "sentido"
+      ],
+      "mustNotContain": [
+        "2.000.000"
+      ],
+      "note": "fix: meta 0 no defaultea a salario"
+    },
+    {
+      "q": "cuánto me falta para 0",
+      "expectedIntent": null,
+      "mustContain": [
+        "sentido"
+      ],
+      "mustNotContain": [
+        "2.000.000"
+      ],
+      "note": "fix: meta 0 (handler ahorro)"
+    },
+    {
+      "q": "simulá 0 horas",
+      "expectedIntent": null,
+      "mustContain": [
+        "positivo"
+      ],
+      "note": "fix: simulá 0 → simulador (antes horas_trabajadas)"
+    },
+    {
+      "q": "que tal si trabajo el domingo",
+      "expectedIntent": null,
+      "mustContain": [
+        "Simulación"
+      ],
+      "mustNotContain": [
+        "llevás $"
+      ],
+      "note": "fix: hipotético dominical → simulación"
+    },
+    {
+      "q": "cuanto saco si trabajo el domingo",
+      "expectedIntent": null,
+      "mustContain": [
+        "Simulación"
+      ],
+      "note": "fix: hipotético → simulación personalizada"
+    },
+    {
+      "q": "uy que pereza",
+      "expectedIntent": [
+        "estado_animo",
+        "queja_fatiga",
+        "bienestar"
+      ],
+      "mustNotContain": [
+        "no estoy seguro"
+      ],
+      "note": "fix: pereza → estado de ánimo"
     }
   ]
 }

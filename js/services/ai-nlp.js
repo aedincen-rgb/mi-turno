@@ -1644,7 +1644,13 @@ var AI_INTENTS = [
       ['sos inteligente', 2],
       ['te gusta trabajar', 2],
       ['como te sientes', 3],
-      ['cómo te sentís', 3]
+      ['cómo te sentís', 3],
+      ['pereza', 3],
+      ['que pereza', 3],
+      ['me da pereza', 3],
+      ['sin ganas', 3],
+      ['sin animo', 3],
+      ['desganado', 3]
     ]
   },
 

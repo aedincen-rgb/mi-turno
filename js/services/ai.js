@@ -1710,7 +1710,11 @@ function _aiDispatchNLP(intent, c, state, q, t) {
 
   // ── Ahorro ──
   if (intent === 'ahorro') {
+    if (_aiEsNegativo(q))
+      return 'Una meta tiene que ser un número positivo 🙂. Probá algo como "meta 3 millones".';
     var meta = _aiNum(t);
+    if (meta === 0)
+      return 'Una meta de $0 no tiene mucho sentido 🙂. Decime a cuánto querés llegar, ej. "meta 3 millones".';
     if (!meta || meta < 1000) meta = c.salario;
     var faltaMeta = Math.max(0, meta - c.totalCOP);
     if (faltaMeta === 0)
@@ -3714,6 +3718,22 @@ function _aiAnswerCore(question, state) {
     return _aiConexionEstado(state);
   }
 
+  // ── SIMULACIÓN / HIPOTÉTICOS (no NLP) ──
+  // "simulá X horas" caía en horas_trabajadas (por la palabra "horas") y
+  // "si trabajo el domingo" en la tarifa legal genérica. Ambos son hipotéticos
+  // → al simulador, que personaliza con _aiDetectarTipoHora (domingo/noche/extra).
+  if (!_esSlash) {
+    var _esSimul = /(^|\s)simul[aá]\b|(^|\s)simular\b|(^|\s)simulemos\b/.test(t);
+    var _esHipo =
+      (/\bsi (trabaj|met|hag|sac|pong|echo|hicier|hiciera|agarr|tomo)/.test(t) ||
+        /\bganaria\b|\bcuanto saco con\b|\bcuanto seria con\b/.test(t)) &&
+      /(domingo|dominical|festiv|noche|nocturn|madrugad|extra|hora|turno|jornada)/.test(t);
+    if (_esSimul || _esHipo) {
+      var _simResp = _aiDispatchNLP('simulacion', c, state, q, t);
+      if (_simResp) return _simResp;
+    }
+  }
+
   // ── REFERENCIAS CONTEXTUALES: "¿y la quincena pasada?", "¿y eso por qué?" ──
   // Resuelve elipsis antes de clasificar, para que el NLP no las vea como
   // frases sin intent suficiente (confidence baja).
@@ -4003,6 +4023,10 @@ function _aiAnswerCore(question, state) {
     if (_aiEsNegativo(q))
       return 'Una meta tiene que ser un número positivo 🙂. Probá algo como "meta 3 millones".';
     var meta = _aiNum(t);
+    // "meta 0" / "para 0": _aiNum devuelve 0 (válido), pero metaExplicita lo
+    // trataba como falsy y caía al salario base. Una meta de $0 no tiene sentido.
+    if (meta === 0)
+      return 'Una meta de $0 no tiene mucho sentido 🙂. Decime a cuánto querés llegar, ej. "meta 3 millones".';
     var metaExplicita = !!(meta && meta >= 1000);
     if (!metaExplicita) meta = c.salario;
     var faltaMeta = Math.max(0, meta - c.totalCOP);
