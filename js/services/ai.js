@@ -1396,7 +1396,7 @@ function _aiDispatchNLP(intent, c, state, q, t) {
     // Validación de magnitud: sin tope, "simulá 100000 horas" proyectaba una
     // fantasía de miles de millones; un negativo se leía como positivo.
     if (_aiEsNegativo(q) || hrs <= 0)
-      return 'Para simular necesito un número de horas positivo. Probá "simulá 4 horas nocturnas". 🙂';
+      return 'Sigamos con la simulación 🔮. ¿Cuántas **horas** querés probar? Por ejemplo: "simulá 4 horas nocturnas".';
     if (hrs > 400)
       return (
         'Uf, ' +
@@ -1710,11 +1710,11 @@ function _aiDispatchNLP(intent, c, state, q, t) {
 
   // ── Ahorro ──
   if (intent === 'ahorro') {
-    if (_aiEsNegativo(q))
-      return 'Una meta tiene que ser un número positivo 🙂. Probá algo como "meta 3 millones".';
     var meta = _aiNum(t);
-    if (meta === 0)
-      return 'Una meta de $0 no tiene mucho sentido 🙂. Decime a cuánto querés llegar, ej. "meta 3 millones".';
+    // Entrada inválida (negativa o $0): nos quedamos en el plan de ahorro y
+    // pedimos monto + plazo, en vez de cortar con un error.
+    if (_aiEsNegativo(q) || meta === 0)
+      return 'Sigamos con tu plan de ahorro 🐷. Necesito un monto **positivo en pesos**: ¿cuánto querés juntar y en cuánto tiempo? Por ejemplo: "ahorrar 5 millones en 12 meses".';
     if (!meta || meta < 1000) meta = c.salario;
     var faltaMeta = Math.max(0, meta - c.totalCOP);
     if (faltaMeta === 0)
@@ -3379,6 +3379,18 @@ function _aiSignalRoute(t, ent) {
 // fuera del dominio (no nómina/turnos/app). Sin un umbral neuronal, un
 // blocklist preciso es la forma robusta de evitar que el clasificador (o el
 // salvataje) fabrique una respuesta de plata para "quién ganó el mundial".
+// ¿Pide convertir SU plata a otra moneda? ("mi sueldo en euros", "cuánto gano
+// en dólares"). Distinto de la cotización ("cuánto cuesta el dólar" → OOS). No
+// convertimos: requeriría tasas en vivo (rompe el 100% local y queda viejo).
+// Redirige con gracia a lo que sí hacemos, en pesos.
+function _aiMonedaConversionIntent(t) {
+  if (!/\b(dolar|dolares|dólar|euro|euros|usd|eur)\b/.test(t || '')) return false;
+  // Cotización (precio de la divisa) → eso es OOS, no conversión de su pago.
+  if (/cuanto (cuesta|vale|esta) (un |el )?(dolar|euro)|precio del|cotizacion/.test(t))
+    return false;
+  return true;
+}
+
 function _aiIsOutOfScope(t) {
   if (!t) return false;
   return _aiHas(
@@ -3764,6 +3776,20 @@ function _aiAnswerCore(question, state) {
     }
   }
 
+  // ── CONVERSIÓN DE MONEDA: redirect honesto (no convertimos, no es OOS) ──
+  // "mi sueldo en euros" no es fuera de dominio (habla de SU plata) ni lo
+  // fabricamos con una tasa que quedaría vieja. Lo decimos claro y ofrecemos
+  // lo que sí hacemos, en pesos.
+  if (!_esSlash && _aiMonedaConversionIntent(t)) {
+    return {
+      text: 'Por ahora manejo todo en **pesos colombianos** 🇨🇴. No hago conversión a otras monedas porque el cambio se mueve a diario y no quiero darte un número que quede viejo. Pero sí te digo tu sueldo, tu valor hora y cuánto llevás este mes. ¿Cuál querés?',
+      actions: [
+        { label: '💵 Mi valor hora', query: 'cuánto gano por hora' },
+        { label: '📅 Cuánto llevo este mes', query: 'cuánto llevo este mes' }
+      ]
+    };
+  }
+
   // ── OUT-OF-SCOPE: declinar con gracia (no fabricar) ──
   // Va ANTES del NLP para que "qué hora es" no se cuele como horas_trabajadas
   // ni "quién ganó el mundial" como total ganado. Redirige a lo que SÍ sabe.
@@ -4020,13 +4046,12 @@ function _aiAnswerCore(question, state) {
   // (que guarda la meta con aiSetGoal y registra el episodio).
   if (q.charAt(0) !== '/' && _aiHas(t, 'ahorro', 'meta', 'quiero ganar', 'para llegar a')) {
     // Validación: una meta negativa no tiene sentido (antes "-5M" se leía como +5M).
-    if (_aiEsNegativo(q))
-      return 'Una meta tiene que ser un número positivo 🙂. Probá algo como "meta 3 millones".';
     var meta = _aiNum(t);
-    // "meta 0" / "para 0": _aiNum devuelve 0 (válido), pero metaExplicita lo
-    // trataba como falsy y caía al salario base. Una meta de $0 no tiene sentido.
-    if (meta === 0)
-      return 'Una meta de $0 no tiene mucho sentido 🙂. Decime a cuánto querés llegar, ej. "meta 3 millones".';
+    // Entrada inválida (negativa o $0): seguimos en el tema (meta) y pedimos el
+    // dato concreto, en vez de un rechazo seco. _aiNum ignora el signo, así que
+    // el negativo se detecta en el texto crudo (q).
+    if (_aiEsNegativo(q) || meta === 0)
+      return 'Sigamos con tu meta 🎯. Necesito un monto **positivo en pesos**: ¿a cuánto querés llegar? Por ejemplo: "meta 3 millones".';
     var metaExplicita = !!(meta && meta >= 1000);
     if (!metaExplicita) meta = c.salario;
     var faltaMeta = Math.max(0, meta - c.totalCOP);

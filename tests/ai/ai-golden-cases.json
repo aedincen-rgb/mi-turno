@@ -1083,15 +1083,18 @@
         "simular"
       ],
       "mustContain": [
-        "positivo"
+        "horas"
       ],
-      "note": "BUG5 fix: simulación negativa rechazada"
+      "note": "BUG5 fix: simulación negativa rechazada",
+      "mustNotContain": [
+        "llevás $"
+      ]
     },
     {
       "q": "meta 0",
       "expectedIntent": null,
       "mustContain": [
-        "sentido"
+        "meta"
       ],
       "mustNotContain": [
         "2.000.000"
@@ -1102,7 +1105,7 @@
       "q": "cuánto me falta para 0",
       "expectedIntent": null,
       "mustContain": [
-        "sentido"
+        "ahorro"
       ],
       "mustNotContain": [
         "2.000.000"
@@ -1113,9 +1116,12 @@
       "q": "simulá 0 horas",
       "expectedIntent": null,
       "mustContain": [
-        "positivo"
+        "horas"
       ],
-      "note": "fix: simulá 0 → simulador (antes horas_trabajadas)"
+      "note": "fix: simulá 0 → simulador (antes horas_trabajadas)",
+      "mustNotContain": [
+        "39h 00m"
+      ]
     },
     {
       "q": "que tal si trabajo el domingo",
@@ -1147,6 +1153,37 @@
         "no estoy seguro"
       ],
       "note": "fix: pereza → estado de ánimo"
+    },
+    {
+      "q": "mi sueldo en euros cuánto es",
+      "expectedIntent": null,
+      "mustContain": [
+        "pesos"
+      ],
+      "mustNotContain": [
+        "se me escapa"
+      ],
+      "note": "moneda: redirect honesto, no convierte ni declina como OOS"
+    },
+    {
+      "q": "cuántos dólares gano",
+      "expectedIntent": null,
+      "mustContain": [
+        "pesos"
+      ],
+      "mustNotContain": [
+        "se me escapa"
+      ],
+      "note": "moneda: redirect"
+    },
+    {
+      "q": "quiero ahorrar -100 en un año",
+      "expectedIntent": null,
+      "mustNotContain": [
+        "llevás $",
+        "-100"
+      ],
+      "note": "entrada inválida: queda en el tema de ahorro"
     }
   ]
 }
