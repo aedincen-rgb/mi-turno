@@ -869,6 +869,159 @@
         "no estoy seguro",
         "llevás $"
       ]
+    },
+    {
+      "q": "cuanto me embolse este mes",
+      "expectedIntent": [
+        "total_ganado"
+      ],
+      "shouldUseRealData": true,
+      "note": "jerga: embolsar=ganar"
+    },
+    {
+      "q": "cuanto me hice ayer",
+      "expectedIntent": [
+        "ayer"
+      ],
+      "note": "jerga"
+    },
+    {
+      "q": "q tanto llevo este mes",
+      "expectedIntent": [
+        "total_ganado"
+      ],
+      "shouldUseRealData": true
+    },
+    {
+      "q": "cuanto saque el finde",
+      "expectedIntent": null,
+      "shouldUseRealData": true,
+      "note": "finde=fin de semana; aiQuery lo agarra"
+    },
+    {
+      "q": "a cuanto voy",
+      "expectedIntent": [
+        "total_ganado"
+      ],
+      "shouldUseRealData": true,
+      "note": "Fixed v344: antes caía en hoy por fuzzy voy->hoy"
+    },
+    {
+      "q": "en cuanto voy",
+      "expectedIntent": [
+        "total_ganado",
+        "proyeccion"
+      ],
+      "shouldUseRealData": true
+    },
+    {
+      "q": "cuanto llevo acumulado",
+      "expectedIntent": [
+        "total_ganado"
+      ],
+      "shouldUseRealData": true
+    },
+    {
+      "q": "el recargo dominical de cuanto es",
+      "expectedIntent": [
+        "ley",
+        "laboral"
+      ],
+      "mustNotContain": [
+        "llevás $"
+      ],
+      "note": "concepto legal"
+    },
+    {
+      "q": "el nocturno desde que hora arranca",
+      "expectedIntent": [
+        "ley",
+        "laboral"
+      ],
+      "mustNotContain": [
+        "llevás $"
+      ]
+    },
+    {
+      "q": "estoy mamado",
+      "expectedIntent": [
+        "bienestar",
+        "queja_fatiga",
+        "estado_animo"
+      ],
+      "note": "jerga CO: mamado=cansado"
+    },
+    {
+      "q": "ando jarto",
+      "expectedIntent": [
+        "queja_fatiga",
+        "bienestar",
+        "estado_animo"
+      ],
+      "note": "jerga CO: jarto=harto"
+    },
+    {
+      "q": "toy reventado",
+      "expectedIntent": [
+        "queja_fatiga",
+        "bienestar",
+        "estado_animo"
+      ],
+      "note": "Fixed v344: toy fuzzy->hoy; frase explícita"
+    },
+    {
+      "q": "cuanto saco si meto 5 noches",
+      "expectedIntent": [
+        "simulacion",
+        "simular"
+      ],
+      "note": "hipotético->simulador"
+    },
+    {
+      "q": "cuanto gane aller",
+      "expectedIntent": [
+        "total_ganado",
+        "ayer"
+      ],
+      "shouldUseRealData": true,
+      "note": "typo aller=ayer"
+    },
+    {
+      "q": "recargo noctuno",
+      "expectedIntent": [
+        "ley",
+        "laboral"
+      ],
+      "mustNotContain": [
+        "llevás $"
+      ],
+      "note": "typo noctuno"
+    },
+    {
+      "q": "buenas parce",
+      "expectedIntent": [
+        "saludo"
+      ],
+      "note": "jerga CO"
+    },
+    {
+      "q": "que dia es hoy",
+      "expectedIntent": null,
+      "mustNotContain": [
+        "llevás $",
+        "registraste",
+        "ganaste $"
+      ],
+      "note": "Fixed v344: OOS (pregunta la fecha)"
+    },
+    {
+      "q": "cuanto cuesta un dolar",
+      "expectedIntent": null,
+      "mustNotContain": [
+        "llevás $",
+        "ganaste $"
+      ],
+      "note": "Fixed v344: OOS"
     }
   ]
 }

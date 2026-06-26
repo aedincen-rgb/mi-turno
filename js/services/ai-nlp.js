@@ -890,7 +890,10 @@ var AI_INTENTS = [
       ['cuanto llevo ayer', 3],
       ['cuanto llevo hoy', 3],
       ['como voy hoy', 2],
-      ['como voy ayer', 2]
+      ['como voy ayer', 2],
+      ['a cuanto voy', 3],
+      ['cuanto voy', 3],
+      ['en cuanto voy', 3]
     ]
   },
   {
@@ -1293,7 +1296,12 @@ var AI_INTENTS = [
       ['admin', 2],
       ['envia', 3],
       ['envia mi', 3],
-      ['enviame', 3]
+      ['enviame', 3],
+      ['mando el reporte', 3],
+      ['manda el reporte', 3],
+      ['mandar el reporte', 3],
+      ['mando el informe', 3],
+      ['pasame el reporte', 3]
     ]
   },
   {
@@ -1599,7 +1607,21 @@ var AI_INTENTS = [
       ['día horrible', 2],
       ['jornada larga', 2],
       ['no descanse', 2],
-      ['no descanso', 2]
+      ['no descanso', 2],
+      ['reventado', 3],
+      ['reventada', 3],
+      ['toy reventado', 4],
+      ['toy mamado', 4],
+      ['toy molido', 4],
+      ['toy jarto', 4],
+      ['mamado', 3],
+      ['mamada', 3],
+      ['jarto', 3],
+      ['jarta', 3],
+      ['jartera', 3],
+      ['rendido', 2],
+      ['molido', 3],
+      ['molida', 3]
     ]
   },
 
