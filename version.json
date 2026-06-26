@@ -1,4 +1,4 @@
 {
-  "v": "v347",
-  "label": "fix 5 edge-cases de IA: meta 0, simulá 0, hipotético dominical, ganaría festivos, pereza"
+  "v": "v348",
+  "label": "moneda → redirect honesto en pesos + validaciones topic-aware (meta/ahorro/simulación)"
 }
