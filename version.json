@@ -1,4 +1,4 @@
 {
-  "v": "v344",
-  "label": "cobertura IA: jerga/typos colombianos + 4 misroutes (a cuanto voy, toy reventado, OOS fecha/dolar)"
+  "v": "v345",
+  "label": "dedup D3: punto único de ayuda; el fallback genérico ya no bloquea rutas mejores"
 }
