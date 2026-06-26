@@ -1,4 +1,4 @@
 {
-  "v": "v345",
-  "label": "dedup D3: punto único de ayuda; el fallback genérico ya no bloquea rutas mejores"
+  "v": "v346",
+  "label": "fix 5 bugs de IA: reset de memoria, OOS goloso, gramática humanizador, validación numérica"
 }
