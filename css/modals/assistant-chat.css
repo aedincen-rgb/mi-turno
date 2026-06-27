@@ -3275,3 +3275,89 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   MEJORAS VISUALES v351
+   1. Burbuja usuario → gradiente acento
+   2. Chips vacíos → glow secuencial de borde
+   3. Typing dots → ola con gradiente
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── 1. Burbuja usuario: gradiente acento en lugar de negro sólido ── */
+.asistente-bubble.user {
+  background: linear-gradient(135deg, var(--accent2, #6d9cf8), var(--accent, #5b86e5));
+  color: #fff;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 4px 16px color-mix(in srgb, var(--accent) 24%, transparent);
+}
+[data-theme='dark'] .asistente-bubble.user {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, #fff 10%, transparent), transparent 58%),
+    color-mix(in srgb, var(--accent-deep, var(--accent)) 44%, var(--surface2));
+  color: var(--text);
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, transparent);
+  box-shadow: 0 4px 14px rgba(91, 134, 229, 0.18);
+}
+
+/* ── 2. Chips de sugerencia: glow secuencial cuando la pantalla está vacía ── */
+@keyframes chipGlow {
+  0%,
+  100% {
+    border-color: color-mix(in srgb, var(--text) 10%, transparent);
+    box-shadow: none;
+  }
+  50% {
+    border-color: color-mix(in srgb, var(--accent) 38%, transparent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 8%, transparent);
+  }
+}
+.asistente-wrap:not(.has-chat) .asistente-chip {
+  animation: chipGlow 4.5s ease-in-out infinite;
+}
+.asistente-wrap:not(.has-chat) .asistente-chip:nth-child(2) {
+  animation-delay: 0.7s;
+}
+.asistente-wrap:not(.has-chat) .asistente-chip:nth-child(3) {
+  animation-delay: 1.4s;
+}
+.asistente-wrap:not(.has-chat) .asistente-chip:nth-child(4) {
+  animation-delay: 2.1s;
+}
+.asistente-wrap:not(.has-chat) .asistente-chip:nth-child(5) {
+  animation-delay: 2.8s;
+}
+
+/* ── 3. Typing dots: ola más viva con scale ── */
+@keyframes asistenteWave {
+  0%,
+  100% {
+    transform: translateY(0) scale(0.82);
+    opacity: 0.28;
+  }
+  40% {
+    transform: translateY(-5px) scale(1.15);
+    opacity: 1;
+  }
+  70% {
+    transform: translateY(-1px) scale(0.95);
+    opacity: 0.62;
+  }
+}
+.asistente-dot {
+  animation: asistenteWave 1.5s ease-in-out infinite;
+}
+.asistente-dot:nth-child(2) {
+  animation-delay: 0.18s;
+}
+.asistente-dot:nth-child(3) {
+  animation-delay: 0.36s;
+}
+
+/* Reduced motion: apagar las 3 animaciones nuevas */
+@media (prefers-reduced-motion: reduce) {
+  .asistente-wrap:not(.has-chat) .asistente-chip,
+  .asistente-dot {
+    animation: none !important;
+  }
+}
