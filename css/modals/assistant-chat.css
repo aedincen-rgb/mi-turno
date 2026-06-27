@@ -3589,3 +3589,185 @@
     animation: none !important;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   COMPOSER ESTILO CLAUDE (v354)
+   Tarjeta en columna: texto arriba, toolbar abajo (voz a la izquierda,
+   enviar a la derecha). Sin barra de scroll visible en Android. Integra
+   Leer / Manos libres en un bottom sheet "Modo de voz".
+   ═══════════════════════════════════════════════════════════════ */
+.scr--assistant .asistente-composer {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+  padding: 6px 8px 8px;
+}
+
+/* Textarea: ancho completo, SIN scrollbar visible (clave en Android) */
+.asistente-input {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.asistente-input::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+.scr--assistant .asistente-input {
+  padding: 10px 12px 2px;
+  min-height: 40px;
+  max-height: 132px;
+}
+
+/* Toolbar inferior */
+.asistente-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 2px 0 4px;
+}
+.asistente-toolbar .asistente-smart-btn {
+  margin-left: auto;
+}
+
+/* Chip de voz: pill con nuestros colores; refleja el estado activo */
+.asistente-voice-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 36px;
+  padding: 0 13px 0 11px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--text) 9%, transparent);
+  background: color-mix(in srgb, var(--surface) 55%, transparent);
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition:
+    background 0.18s var(--ease),
+    color 0.18s var(--ease),
+    border-color 0.18s var(--ease),
+    transform 0.14s var(--spring);
+}
+.asistente-voice-chip:active {
+  transform: scale(0.96);
+}
+.asistente-voice-chip-ic {
+  font-size: 15px;
+  line-height: 1;
+}
+.asistente-voice-chip-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent-glow);
+}
+/* Estado "Leyendo" (autoRead): tinte de acento */
+.asistente-voice-chip.read {
+  color: var(--accent-deep, var(--accent));
+  border-color: color-mix(in srgb, var(--accent) 38%, transparent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+/* Estado "Manos libres": acento pleno + dot pulsante */
+.asistente-voice-chip.hf {
+  color: #fff;
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--accent2), var(--accent));
+  box-shadow: 0 6px 16px var(--accent-glow);
+}
+.asistente-voice-chip.hf .asistente-voice-chip-dot {
+  background: #fff;
+  animation: handsfreePulse 1.2s ease-in-out infinite;
+}
+
+/* ── Bottom sheet "Modo de voz" ── */
+.asistente-voice-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.22);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: asistenteMenuFade 0.18s var(--ease);
+}
+.asistente-voice-sheet {
+  width: 100%;
+  max-width: 480px;
+  margin: 0 10px calc(var(--sab) + 10px);
+  padding: 14px 16px 16px;
+  border-radius: 26px;
+  border: 1px solid color-mix(in srgb, var(--text) 9%, transparent);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, #fff 30%, transparent), transparent 50%),
+    color-mix(in srgb, var(--surface) 94%, transparent);
+  box-shadow: 0 -10px 50px rgba(20, 30, 80, 0.22);
+  backdrop-filter: blur(38px) saturate(180%);
+  -webkit-backdrop-filter: blur(38px) saturate(180%);
+  animation: voiceSheetUp 0.28s var(--spring);
+}
+@keyframes voiceSheetUp {
+  from {
+    transform: translateY(18px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+.asistente-voice-sheet-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+.asistente-voice-sheet-title {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+.asistente-voice-sheet-sub {
+  margin-top: 1px;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.asistente-voice-sheet-close {
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--text) 9%, transparent);
+  background: color-mix(in srgb, var(--surface) 60%, transparent);
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Dark mode */
+[data-theme='dark'] .asistente-voice-chip {
+  background: color-mix(in srgb, #fff 7%, transparent);
+  border-color: color-mix(in srgb, #fff 10%, transparent);
+}
+[data-theme='dark'] .asistente-voice-sheet {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, #fff 6%, transparent), transparent 50%),
+    color-mix(in srgb, var(--surface2) 94%, transparent);
+  border-color: color-mix(in srgb, #fff 10%, transparent);
+}
+[data-theme='dark'] .asistente-voice-sheet-close {
+  background: color-mix(in srgb, #fff 7%, transparent);
+  border-color: color-mix(in srgb, #fff 10%, transparent);
+}

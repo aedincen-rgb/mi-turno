@@ -648,6 +648,11 @@ function AsistenteTab(props) {
   var handsFree = hf[0],
     setHandsFree = hf[1];
 
+  // Sheet de "Modo de voz" (leer / manos libres) anclado al composer (estilo Claude)
+  var vss = useState(false);
+  var voiceSheetOpen = vss[0],
+    setVoiceSheetOpen = vss[1];
+
   // Nivel de audio (para visualización mientras graba)
   var al = useState(0);
   var audioLevel = al[0],
@@ -1882,7 +1887,6 @@ function AsistenteTab(props) {
         }
       ]
     },
-    { id: 'voz', label: 'Configuración voz', hint: 'Lectura y manos libres', icon: '◉' },
     {
       id: 'logros',
       label: 'Logros',
@@ -2092,6 +2096,12 @@ function AsistenteTab(props) {
     if (briefing) phrases = [briefing].concat(phrases);
   }
   var personalNote = phrases && phrases.length ? phrases[heroIdx % phrases.length] : '';
+
+  // ¿Hay APIs de voz? Gobierna el chip de voz del composer y el sheet.
+  var _hasSpeech =
+    typeof speechSynthesis !== 'undefined' ||
+    typeof SpeechRecognition !== 'undefined' ||
+    typeof webkitSpeechRecognition !== 'undefined';
 
   return h(
     'section',
@@ -2653,6 +2663,57 @@ function AsistenteTab(props) {
         _aiIcon('down')
       ),
 
+    // ═══ SHEET DE VOZ (Leer / Manos libres) — anclado al composer, estilo Claude ═══
+    voiceSheetOpen
+      ? h(
+          'div',
+          {
+            className: 'asistente-voice-layer',
+            role: 'presentation',
+            onClick: function (ev) {
+              if (ev.target === ev.currentTarget) setVoiceSheetOpen(false);
+            }
+          },
+          h(
+            'div',
+            {
+              className: 'asistente-voice-sheet',
+              role: 'dialog',
+              'aria-modal': 'true',
+              'aria-label': 'Modo de voz'
+            },
+            h(
+              'div',
+              { className: 'asistente-voice-sheet-head' },
+              h(
+                'div',
+                null,
+                h('div', { className: 'asistente-voice-sheet-title' }, 'Modo de voz'),
+                h(
+                  'div',
+                  { className: 'asistente-voice-sheet-sub' },
+                  'Cómo te responde el asistente'
+                )
+              ),
+              h(
+                'button',
+                {
+                  className: 'asistente-voice-sheet-close',
+                  type: 'button',
+                  'aria-label': 'Cerrar opciones de voz',
+                  onClick: function () {
+                    haptic();
+                    setVoiceSheetOpen(false);
+                  }
+                },
+                '✕'
+              )
+            ),
+            renderVoiceControls('sheet')
+          )
+        )
+      : null,
+
     // ═══ COMPOSER ═══
     h(
       'div',
@@ -2676,87 +2737,136 @@ function AsistenteTab(props) {
         rows: 1
       }),
 
-      // Botón inteligente: tap = enviar (si hay texto) / tap = alternar mic (sin texto)
-      //                    mantener pulsado = grabar voz
+      // ── Toolbar inferior (estilo Claude): voz a la izquierda, enviar a la derecha ──
       h(
-        'button',
-        {
-          className:
-            'asistente-smart-btn' +
-            (listening ? ' recording' : '') +
-            (busy ? ' sending' : '') +
-            (input.trim() && !listening && !busy ? ' has-text' : ''),
-          'aria-label': listening
-            ? 'Grabando, suelta para detener'
-            : input.trim()
-              ? 'Enviar mensaje'
-              : 'Mantené pulsado para hablar o escribí tu mensaje',
-          // — Tap: enviar si hay texto, sino alternar mic
-          onClick: function () {
-            if (isLongPressRef.current) return; // el pointerUp ya actuó
-            if (busy) return;
-            haptic();
-            if (input.trim()) {
-              send();
-            } else if (!listening) {
-              startListening();
-            } else {
-              stopListening();
-            }
-          },
-          // — Mantener: grabar por voz (hold to talk)
-          onPointerDown: function () {
-            isLongPressRef.current = false;
-            pressTimerRef.current = setTimeout(function () {
-              isLongPressRef.current = true;
+        'div',
+        { className: 'asistente-toolbar' },
+
+        // Chip de voz: refleja el estado y abre el sheet con Leer / Manos libres.
+        _hasSpeech
+          ? h(
+              'button',
+              {
+                className: 'asistente-voice-chip' + (handsFree ? ' hf' : autoRead ? ' read' : ''),
+                type: 'button',
+                'aria-haspopup': 'dialog',
+                'aria-expanded': voiceSheetOpen,
+                'aria-label':
+                  'Opciones de voz: ' +
+                  (handsFree
+                    ? 'manos libres activado'
+                    : autoRead
+                      ? 'lectura en voz alta activada'
+                      : 'desactivado'),
+                onClick: function () {
+                  haptic();
+                  setVoiceSheetOpen(true);
+                }
+              },
+              h(
+                'span',
+                { className: 'asistente-voice-chip-ic', 'aria-hidden': 'true' },
+                handsFree ? '🎙' : '🔊'
+              ),
+              h(
+                'span',
+                { className: 'asistente-voice-chip-tx' },
+                handsFree ? 'Manos libres' : autoRead ? 'Leyendo' : 'Voz'
+              ),
+              handsFree || autoRead
+                ? h('span', { className: 'asistente-voice-chip-dot', 'aria-hidden': 'true' })
+                : null
+            )
+          : null,
+
+        // Botón inteligente: tap = enviar (si hay texto) / tap = alternar mic (sin texto)
+        //                    mantener pulsado = grabar voz
+        h(
+          'button',
+          {
+            className:
+              'asistente-smart-btn' +
+              (listening ? ' recording' : '') +
+              (busy ? ' sending' : '') +
+              (input.trim() && !listening && !busy ? ' has-text' : ''),
+            'aria-label': listening
+              ? 'Grabando, suelta para detener'
+              : input.trim()
+                ? 'Enviar mensaje'
+                : 'Mantené pulsado para hablar o escribí tu mensaje',
+            // — Tap: enviar si hay texto, sino alternar mic
+            onClick: function () {
+              if (isLongPressRef.current) return; // el pointerUp ya actuó
+              if (busy) return;
               haptic();
-              if (!listening) startListening();
-            }, 350);
-          },
-          onPointerUp: function () {
-            clearTimeout(pressTimerRef.current);
-            if (isLongPressRef.current) {
-              // Soltar tras hold: detener grabación
-              if (listening) stopListening();
+              if (input.trim()) {
+                send();
+              } else if (!listening) {
+                startListening();
+              } else {
+                stopListening();
+              }
+            },
+            // — Mantener: grabar por voz (hold to talk)
+            onPointerDown: function () {
+              isLongPressRef.current = false;
+              pressTimerRef.current = setTimeout(function () {
+                isLongPressRef.current = true;
+                haptic();
+                if (!listening) startListening();
+              }, 350);
+            },
+            onPointerUp: function () {
+              clearTimeout(pressTimerRef.current);
+              if (isLongPressRef.current) {
+                // Soltar tras hold: detener grabación
+                if (listening) stopListening();
+                isLongPressRef.current = false;
+              }
+            },
+            onPointerCancel: function () {
+              clearTimeout(pressTimerRef.current);
+              if (isLongPressRef.current && listening) stopListening();
               isLongPressRef.current = false;
             }
           },
-          onPointerCancel: function () {
-            clearTimeout(pressTimerRef.current);
-            if (isLongPressRef.current && listening) stopListening();
-            isLongPressRef.current = false;
-          }
-        },
-        // Anillo de nivel de audio mientras graba
-        listening
-          ? h('div', {
-              className: 'asistente-mic-pulse',
-              style: { transform: 'scale(' + (1 + audioLevel * 0.5) + ')' }
-            })
-          : null,
-        // Icono dinámico — muestra ondas de audio cuando escucha
-        listening
-          ? h(
-              'div',
-              { className: 'asistente-audio-bars' },
-              h('span', {
-                className: 'asistente-audio-bar',
-                style: { height: 8 + audioLevel * 24 + 'px' }
-              }),
-              h('span', {
-                className: 'asistente-audio-bar',
-                style: { height: 8 + (audioLevel * 0.7 + 0.3) * 24 + 'px', animationDelay: '0.1s' }
-              }),
-              h('span', {
-                className: 'asistente-audio-bar',
-                style: { height: 8 + (audioLevel * 0.5 + 0.5) * 24 + 'px', animationDelay: '0.2s' }
+          // Anillo de nivel de audio mientras graba
+          listening
+            ? h('div', {
+                className: 'asistente-mic-pulse',
+                style: { transform: 'scale(' + (1 + audioLevel * 0.5) + ')' }
               })
-            )
-          : busy
-            ? h('span', { className: 'sp-in' })
-            : input.trim()
-              ? _aiIcon('send')
-              : _aiIcon('mic')
+            : null,
+          // Icono dinámico — muestra ondas de audio cuando escucha
+          listening
+            ? h(
+                'div',
+                { className: 'asistente-audio-bars' },
+                h('span', {
+                  className: 'asistente-audio-bar',
+                  style: { height: 8 + audioLevel * 24 + 'px' }
+                }),
+                h('span', {
+                  className: 'asistente-audio-bar',
+                  style: {
+                    height: 8 + (audioLevel * 0.7 + 0.3) * 24 + 'px',
+                    animationDelay: '0.1s'
+                  }
+                }),
+                h('span', {
+                  className: 'asistente-audio-bar',
+                  style: {
+                    height: 8 + (audioLevel * 0.5 + 0.5) * 24 + 'px',
+                    animationDelay: '0.2s'
+                  }
+                })
+              )
+            : busy
+              ? h('span', { className: 'sp-in' })
+              : input.trim()
+                ? _aiIcon('send')
+                : _aiIcon('mic')
+        )
       )
     ),
 
