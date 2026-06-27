@@ -19,6 +19,29 @@
   }
 }
 
+/* Flotación suave del medallón de empty-state */
+@keyframes emptyFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+/* Entrada escalonada de tarjetas (KPIs / desglose) */
+@keyframes kpiIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 @keyframes pulse {
   0% {
     transform: scale(1);

@@ -252,7 +252,11 @@ function HomeTab(props) {
         h(
           'div',
           { className: 'num-glass-card' + (activo && aplicaLive ? ' hero-amount-live' : '') },
-          h('div', { className: 'hero-amount' }, fCOP(displayAmount))
+          // Mientras un turno corre en vivo el monto cambia cada tick → texto
+          // plano (sin count-up, evita jitter). En reposo, cuenta hasta el valor.
+          activo && aplicaLive
+            ? h('div', { className: 'hero-amount' }, fCOP(displayAmount))
+            : h(AnimatedCOP, { value: displayAmount, tag: 'div', className: 'hero-amount' })
         )
       ),
       h(

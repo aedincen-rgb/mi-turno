@@ -140,6 +140,9 @@ const projectGlobals = {
   fDur: 'readonly',
   fDurShort: 'readonly',
 
+  // utils/animated-amount.js
+  AnimatedCOP: 'readonly',
+
   // utils/time.js
   semLun: 'readonly',
   esNoct: 'readonly',
@@ -376,6 +379,12 @@ const projectGlobals = {
   aiPsychRespond: 'readonly',
   // services/ai-auditor.js
   aiAuditShifts: 'readonly',
+  // services/ai-agent-cards.js
+  aiBuildGoalCard: 'readonly',
+  aiBuildSimData: 'readonly',
+  aiBuildWatchdog: 'readonly',
+  aiParseMonto: 'readonly',
+  aiAgentRoute: 'readonly',
   // services/ai-router.js
   aiRouteTools: 'readonly',
   aiCacheToolResult: 'readonly',

@@ -352,7 +352,186 @@ function _aiDataCard(card) {
         : null
     );
   }
+
+  // Agente de Meta: anillo de progreso (conic-gradient) + filas de avance.
+  // aria-hidden: el bubble lleva el texto accesible/TTS.
+  if (card.kind === 'goal') {
+    var deg = Math.round((card.pct || 0) * 360);
+    var ringStyle = {
+      background:
+        'conic-gradient(var(--accent) ' +
+        deg +
+        'deg, color-mix(in srgb, var(--text) 9%, transparent) 0deg)'
+    };
+    function goalRow(key, label, val, win) {
+      return h(
+        'div',
+        { key: key, className: 'asistente-card-cmp-row' + (win ? ' win' : '') },
+        h('span', { className: 'asistente-card-cmp-label' }, label),
+        h('span', { className: 'asistente-card-cmp-val' }, val)
+      );
+    }
+    return h(
+      'div',
+      { className: 'asistente-card asistente-card--goal', 'aria-hidden': 'true' },
+      h(
+        'div',
+        { className: 'asistente-goal-top' },
+        h(
+          'div',
+          { className: 'asistente-goal-ring', style: ringStyle },
+          h(
+            'div',
+            { className: 'asistente-goal-hole' },
+            h('div', { className: 'asistente-goal-pct' }, card.pctLabel)
+          )
+        ),
+        h(
+          'div',
+          { className: 'asistente-goal-side' },
+          h('div', { className: 'asistente-card-label' }, 'Meta'),
+          h('div', { className: 'asistente-goal-meta' }, card.metaLabel)
+        )
+      ),
+      h(
+        'div',
+        { className: 'asistente-goal-rows' },
+        goalRow('a', 'Llevás', card.actualLabel, card.reached),
+        card.reached ? null : goalRow('b', 'Te falta', card.faltaLabel, false),
+        goalRow('c', 'Proyección', card.proyLabel, card.proyReached)
+      )
+    );
+  }
+
+  // Agente vigía: lista de hallazgos con franja de severidad, o "todo en orden".
+  if (card.kind === 'watchdog') {
+    if (card.ok && (!card.findings || !card.findings.length)) {
+      return h(
+        'div',
+        { className: 'asistente-card asistente-card--watch watch-ok', 'aria-hidden': 'true' },
+        h('div', { className: 'asistente-watch-ok-icon' }, '✓'),
+        h('div', { className: 'asistente-watch-ok-txt' }, 'Todo en orden')
+      );
+    }
+    var wRows = (card.findings || []).map(function (f, wi) {
+      return h(
+        'div',
+        { key: wi, className: 'asistente-watch-row watch-sev-' + f.sev },
+        h('div', { className: 'asistente-watch-icon' }, f.icon),
+        h(
+          'div',
+          { className: 'asistente-watch-body' },
+          h('div', { className: 'asistente-watch-title' }, f.title),
+          h('div', { className: 'asistente-watch-detail' }, f.detail)
+        )
+      );
+    });
+    return h(
+      'div',
+      { className: 'asistente-card asistente-card--watch', 'aria-hidden': 'true' },
+      wRows
+    );
+  }
   return null;
+}
+
+// Widget interactivo del Simulador: steppers +/− que recalculan el total al
+// cierre en vivo (sin volver a llamar a la IA). Recibe valores unitarios ya
+// resueltos por fecha desde aiBuildSimData. role="group" para accesibilidad.
+function SimuladorCard(props) {
+  var d = props.data || {};
+  var ns = useState(0);
+  var noches = ns[0],
+    setNoches = ns[1];
+  var fs = useState(0);
+  var fest = fs[0],
+    setFest = fs[1];
+  var hs = useState(0);
+  var horas = hs[0],
+    setHoras = hs[1];
+
+  var fcop =
+    typeof fCOP === 'function'
+      ? fCOP
+      : function (n) {
+          return '$' + n;
+        };
+
+  var extra = noches * (d.unitNoche || 0) + fest * (d.unitFest || 0) + horas * (d.unitHora || 0);
+  var total = (d.base || 0) + extra;
+  var pctSal = d.salario > 0 ? ((total / d.salario) * 100).toFixed(0) : null;
+
+  function step(setter, val, delta, max) {
+    return function () {
+      var nv = val + delta;
+      if (nv < 0) nv = 0;
+      if (max != null && nv > max) nv = max;
+      if (nv !== val && typeof haptic === 'function') haptic();
+      setter(nv);
+    };
+  }
+
+  function row(label, unit, val, setter, max) {
+    return h(
+      'div',
+      { className: 'asistente-sim-row' },
+      h(
+        'div',
+        { className: 'asistente-sim-meta' },
+        h('span', { className: 'asistente-sim-label' }, label),
+        h('span', { className: 'asistente-sim-unit' }, '+' + fcop(unit) + ' c/u')
+      ),
+      h(
+        'div',
+        { className: 'asistente-sim-stepper' },
+        h(
+          'button',
+          {
+            className: 'asistente-sim-btn',
+            onClick: step(setter, val, -1, max),
+            disabled: val <= 0,
+            'aria-label': 'Quitar uno a ' + label
+          },
+          '−'
+        ),
+        h('span', { className: 'asistente-sim-count' }, val),
+        h(
+          'button',
+          {
+            className: 'asistente-sim-btn',
+            onClick: step(setter, val, 1, max),
+            'aria-label': 'Agregar uno a ' + label
+          },
+          '+'
+        )
+      )
+    );
+  }
+
+  return h(
+    'div',
+    {
+      className: 'asistente-card asistente-card--sim',
+      role: 'group',
+      'aria-label': 'Simulador de ingresos interactivo'
+    },
+    row('🌙 Noches', d.unitNoche || 0, noches, setNoches, 31),
+    row('🎉 Festivos', d.unitFest || 0, fest, setFest, 12),
+    row('⏱ Horas extra', d.unitHora || 0, horas, setHoras, 60),
+    h(
+      'div',
+      { className: 'asistente-sim-total' },
+      h('span', { className: 'asistente-sim-total-label' }, 'Total proyectado'),
+      h('span', { className: 'asistente-sim-total-val' }, fcop(total))
+    ),
+    h(
+      'div',
+      { className: 'asistente-sim-delta' },
+      extra > 0
+        ? '↗ +' + fcop(extra) + (pctSal ? '  ·  ' + pctSal + '% del salario' : '')
+        : 'Tocá los + para sumar turnos al escenario'
+    )
+  );
 }
 
 function TypingBubble(props) {
@@ -2409,6 +2588,10 @@ function AsistenteTab(props) {
                           })
                         )
                       )
+                    : null,
+                  // Simulador interactivo (widget en vivo)
+                  m.action && m.action.type === 'sim'
+                    ? h(SimuladorCard, { data: m.action.data })
                     : null,
                   // Tarjeta de correo (si aplica)
                   m.action && m.action.type === 'email_compose'

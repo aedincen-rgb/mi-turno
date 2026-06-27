@@ -3533,6 +3533,14 @@ function _aiAnswerCore(question, state) {
   var _finResp = _aiFinancieroIntent(q, t, c);
   if (_finResp) return _finResp;
 
+  // ═══ FEATURES AGÉNTICAS VISUALES (simulador / vigía / meta-NL) ═══
+  // Corre PRE-NLP: el clasificador mandaría "revisá mis turnos" a navegar.
+  // Devuelve tarjeta/acción lista, o null para seguir el flujo normal.
+  if (typeof aiAgentRoute === 'function') {
+    var _agResp = aiAgentRoute(q, t, c, state);
+    if (_agResp) return _agResp;
+  }
+
   // ═══ ATAJO AYUDA: preguntas con "cómo" → aiHelpAnswer directo ═══
   // Quitar "¿" inicial antes de comparar para que "¿Cómo..." también dispare
   var _qSinInterro = q.replace(/^[¿¡]+/, '');
@@ -4255,7 +4263,7 @@ function _aiAnswerCore(question, state) {
         fCOP(diarioNecesario) +
         '/día para llegar\n';
     }
-    resp += '\n💡 Escribí **/simular** para probar escenarios distintos.';
+    resp += '\n💡 Tocá **Simular el plan** abajo para probar escenarios.';
     // Guardar meta para seguimiento
     if (metaVal > 0) {
       try {
@@ -4272,6 +4280,11 @@ function _aiAnswerCore(question, state) {
         resp += '\n📌 Meta guardada. Escribí **/metas** para ver tu progreso.';
       }
     }
+    // Anillo de progreso + chips (Agente de Meta). El texto queda como
+    // respaldo accesible; la tarjeta lo muestra visual. Degrada a string si
+    // el builder no está cargado (smoke / vm parcial).
+    var _goal = typeof aiBuildGoalCard === 'function' ? aiBuildGoalCard(metaVal, c) : null;
+    if (_goal) return { text: resp, card: _goal.card, actions: _goal.actions };
     return resp;
   }
 

@@ -512,7 +512,7 @@ function DashboardTab(props) {
         'aria-label': 'Proyección: ' + fCOP(ctx.proy) + ' al cierre del mes'
       },
       h('div', { className: 'dash-hero-label' }, 'Proyección al cierre del mes'),
-      h('div', { className: 'dash-hero-amount' }, fCOP(ctx.proy)),
+      h(AnimatedCOP, { value: ctx.proy, tag: 'div', className: 'dash-hero-amount' }),
       h(
         'div',
         { className: 'dash-hero-sub' },

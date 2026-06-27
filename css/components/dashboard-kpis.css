@@ -25,6 +25,21 @@
   transition:
     transform 0.3s var(--ease),
     box-shadow 0.3s var(--ease);
+  /* Revelado escalonado: las tarjetas entran en secuencia, no de golpe. */
+  animation: kpiIn 0.5s var(--spring) both;
+}
+
+.dash-kpi-grid .kpi-card:nth-child(1) {
+  animation-delay: 0.04s;
+}
+.dash-kpi-grid .kpi-card:nth-child(2) {
+  animation-delay: 0.1s;
+}
+.dash-kpi-grid .kpi-card:nth-child(3) {
+  animation-delay: 0.16s;
+}
+.dash-kpi-grid .kpi-card:nth-child(4) {
+  animation-delay: 0.22s;
 }
 
 .kpi-label {

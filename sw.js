@@ -2,7 +2,7 @@
 //  MI TURNO · SERVICE WORKER
 //  Split cache: SHELL_CACHE (archivos de la app, se invalida en cada release)
 //               CDN_CACHE   (librerías externas, sobrevive entre releases)
-const SHELL_CACHE = 'mt-shell-v352'; // bump con scripts/bump.sh
+const SHELL_CACHE = 'mt-shell-v353'; // bump con scripts/bump.sh
 const CDN_CACHE = 'mt-cdn-v2'; // solo bump cuando cambien URLs de CDN
 
 // Supabase SDK y Chart.js son self-hosted → van en appResources (SHELL_CACHE).
@@ -86,6 +86,7 @@ const appResources = [
   './js/config/globals.js',
   './js/utils/storage.js',
   './js/utils/format.js',
+  './js/utils/animated-amount.js',
   './js/utils/haptic.js',
   './js/utils/error-logger.js',
   './js/utils/network.js',
@@ -130,6 +131,7 @@ const appResources = [
   './js/services/ai-psychology.js',
   './js/services/ai-knowledge.js',
   './js/services/ai-auditor.js',
+  './js/services/ai-agent-cards.js',
   './js/services/ai-conversation.js',
   './js/services/ai-advisor.js',
   './js/services/ai-router.js',
