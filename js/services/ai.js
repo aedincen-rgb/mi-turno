@@ -1552,7 +1552,23 @@ function _aiDispatchNLP(intent, c, state, q, t) {
 
   // ── Liquidación ──
   if (intent === 'liquidacion') {
+    // Foco si preguntó por un componente puntual ("cuánto de prima/cesantías/
+    // vacaciones"): lo destacamos arriba y abajo va la liquidación completa.
+    var _liqFoco = /\bprima\b/.test(t)
+      ? '💰 Tu **prima** proporcional va en **' +
+        fCOP(c.estPrima) +
+        '** (1 mes de salario al año: mitad en junio, mitad en diciembre).\n\nAcá el panorama completo:\n\n'
+      : /cesantia/.test(t)
+        ? '💰 Tus **cesantías** proporcionales van en **' +
+          fCOP(c.estCesantias) +
+          '** (1 mes de salario al año, se consignan antes del 15 de febrero).\n\nAcá el panorama completo:\n\n'
+        : /vacacion/.test(t)
+          ? '💰 Tus **vacaciones** proporcionales valen **' +
+            fCOP(c.estVacaciones) +
+            '** (15 días hábiles al año).\n\nAcá el panorama completo:\n\n'
+          : '';
     return (
+      _liqFoco +
       '💰 **Tu liquidación estimada (día ' +
       c.diaActual +
       '):**\n\n' +
@@ -3153,6 +3169,16 @@ function _aiExplainIntent(q, t, c) {
     /(como lo calculaste|como calculaste|como (lo )?sacaste|de donde (sale|salen|sacaste)|como llegaste|paso a paso|explica(me|s)? (la cuenta|el calculo|como|de donde|el total)|muestrame la cuenta|desglosa el total|como sale ese|por que me da ese|de donde sale ese)/.test(
       t
     );
+  // Elípticos cortos de seguimiento: "¿por qué?", "y eso por qué?", "cómo así?",
+  // "y de dónde sale?" — piden explicar el último cálculo. Anclados a ^...$ para
+  // no atrapar "por qué me pagan poco" (legal) ni frases largas.
+  if (!trig) {
+    var _qe = (q || '').trim();
+    trig =
+      /^[¿¡\s]*(y\s+)?(eso\s+)?por\s*qu[eé]\s*\??[¿¡!.\s]*$/.test(_qe) ||
+      /^[¿¡\s]*(y\s+)?(de\s+d[oó]nde\s+(sale|salen|sali[oó]))\s*\??[¿¡!.\s]*$/.test(_qe) ||
+      /^[¿¡\s]*c[oó]mo\s+as[ií]\s*\??[¿¡!.\s]*$/.test(_qe);
+  }
   if (!trig) return null;
   // No interceptar preguntas de concepto general (tarifas/definiciones).
   if (/\b(que es|una hora|la tarifa|el recargo nocturno|el recargo dominical)\b/.test(t)) {

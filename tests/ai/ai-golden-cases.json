@@ -1216,7 +1216,7 @@
         "liquidacion"
       ],
       "mustContain": [
-        "liquidación"
+        "vacaciones"
       ],
       "mustNotContain": [
         "WhatsApp"
@@ -1229,9 +1229,45 @@
         "liquidacion"
       ],
       "mustContain": [
-        "liquidación"
+        "vacaciones"
       ],
       "note": "vacaciones → liquidación"
+    },
+    {
+      "q": "cuánto me darían de prima",
+      "expectedIntent": [
+        "liquidacion"
+      ],
+      "mustContain": [
+        "prima"
+      ],
+      "note": "foco: prima destacada arriba"
+    },
+    {
+      "q": "cuánto de cesantías",
+      "expectedIntent": [
+        "liquidacion"
+      ],
+      "mustContain": [
+        "cesantías"
+      ],
+      "note": "foco: cesantías"
+    },
+    {
+      "q": "y eso por qué?",
+      "expectedIntent": null,
+      "mustContain": [
+        "calculé"
+      ],
+      "note": "elíptico → explicabilidad del último cálculo"
+    },
+    {
+      "q": "por qué?",
+      "expectedIntent": null,
+      "mustContain": [
+        "calculé"
+      ],
+      "note": "elíptico corto → explicabilidad"
     }
   ]
 }

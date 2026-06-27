@@ -10,7 +10,7 @@
 // 1. CALCULADORA DE PRESTACIONES COMPLETA
 // ═══════════════════════════════════════════════════════════════
 
-function aiAdvisorLiquidacion(c) {
+function aiAdvisorLiquidacion(c, focus) {
   if (!c || !c.salario) {
     return 'Para calcular tu liquidación y prestaciones, necesito saber tu salario base. Podés configurarlo en **Ajustes > Preferencias de pago** o decirme "mi salario es de X".';
   }
@@ -59,7 +59,28 @@ function aiAdvisorLiquidacion(c) {
   // El neto a pagar suma el auxilio de transporte DESPUÉS de las deducciones
   var netoPagar = baseSeguridadSocial - totalDeducciones + auxTransporte;
 
-  var resp = '💰 **Liquidación y prestaciones**\n\n';
+  // Foco: si el usuario preguntó por un componente puntual ("cuánto de prima"),
+  // lo destacamos arriba y abajo va el cuadro completo.
+  var focoPref = '';
+  if (focus === 'prima')
+    focoPref =
+      '💰 Tu **prima** proporcional va en **' +
+      fCOP(primaProporcional) +
+      '** (1 mes de salario al año, se paga mitad en junio y mitad en diciembre).\n\nAcá el cuadro completo:\n\n';
+  else if (focus === 'cesantias')
+    focoPref =
+      '💰 Tus **cesantías** proporcionales van en **' +
+      fCOP(cesantiasProporcional) +
+      '** (+ ' +
+      fCOP(intCesantias) +
+      ' de intereses del 12%).\n\nAcá el cuadro completo:\n\n';
+  else if (focus === 'vacaciones')
+    focoPref =
+      '💰 Tus **vacaciones** proporcionales valen **' +
+      fCOP(vacacionesProporcional) +
+      '** (15 días hábiles al año).\n\nAcá el cuadro completo:\n\n';
+
+  var resp = focoPref + '💰 **Liquidación y prestaciones**\n\n';
 
   resp += '**Devengado del mes**\n\n';
   resp += '| Concepto | Valor |\n|---|---|\n';
