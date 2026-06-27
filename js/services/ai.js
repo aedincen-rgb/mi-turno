@@ -37,6 +37,33 @@ function _aiEsNegativo(s) {
   return /(^|\s)-\s*\d/.test(s || '');
 }
 
+// ¿La pregunta menciona una fecha que NO existe? ("31 de febrero", "31 de abril").
+// Sin esto el parser hacía rollover en silencio (31-feb → 3-mar) y respondía por
+// la fecha equivocada. febrero tope 29 (permite bisiesto).
+function _aiFechaImposible(s) {
+  var max = {
+    enero: 31,
+    febrero: 29,
+    marzo: 31,
+    abril: 30,
+    mayo: 31,
+    junio: 30,
+    julio: 31,
+    agosto: 31,
+    septiembre: 30,
+    setiembre: 30,
+    octubre: 31,
+    noviembre: 30,
+    diciembre: 31
+  };
+  var m = (s || '').match(
+    /\b(\d{1,2})\s+(?:de\s+)?(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|setiembre|octubre|noviembre|diciembre)\b/
+  );
+  if (!m) return false;
+  var d = parseInt(m[1], 10);
+  return d < 1 || d > max[m[2]];
+}
+
 // Extrae primer número en texto. Soporta dígitos y palabras (uno..diez)
 function _aiNum(t) {
   // Limpiar formato de moneda común en Colombia (puntos de miles)
@@ -3660,6 +3687,12 @@ function _aiAnswerCore(question, state) {
       }
       return _cmpCard ? { text: _cmp, card: _cmpCard } : _cmp;
     }
+  }
+
+  // ── FECHA IMPOSIBLE: "31 de febrero" no existe ──
+  // Antes del parser de datos: si no, hacía rollover y respondía por otra fecha.
+  if (!_esSlash && _aiFechaImposible(t)) {
+    return 'Esa fecha no existe 🙂. Revisá el día del mes y te lo calculo.';
   }
 
   // ── CONSULTA ESTRUCTURADA A TUS DATOS ──

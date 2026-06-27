@@ -183,7 +183,11 @@ function _aiqParseSpecificDate(t, ahora) {
       y = ahora.getFullYear();
       if (new Date(y, mo, day) > hoy0) y = y - 1;
     }
-    return new Date(y, mo, day);
+    var d = new Date(y, mo, day);
+    // Validar que no haya rollover: "31 de febrero" se volvía 3 de marzo en
+    // silencio. Si el mes/día construido no coincide, la fecha no existe.
+    if (d.getMonth() !== mo || d.getDate() !== day) return null;
+    return d;
   }
 
   // 1) Día + mes por nombre: "14 de junio", "14 junio", "3 de mayo de 2025"

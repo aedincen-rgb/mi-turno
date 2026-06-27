@@ -1184,6 +1184,54 @@
         "-100"
       ],
       "note": "entrada inválida: queda en el tema de ahorro"
+    },
+    {
+      "q": "cuánto gané el 31 de febrero",
+      "expectedIntent": null,
+      "mustContain": [
+        "no existe"
+      ],
+      "note": "BUG: 31-feb hacía rollover a 3-mar; ahora avisa"
+    },
+    {
+      "q": "cuánto gané el 31 de abril",
+      "expectedIntent": null,
+      "mustContain": [
+        "no existe"
+      ],
+      "note": "fecha imposible"
+    },
+    {
+      "q": "cuánto gané el 6 de junio",
+      "expectedIntent": null,
+      "mustContain": [
+        "$"
+      ],
+      "shouldUseRealData": true,
+      "note": "regresión: fecha válida sigue calculando"
+    },
+    {
+      "q": "cuánto de vacaciones",
+      "expectedIntent": [
+        "liquidacion"
+      ],
+      "mustContain": [
+        "liquidación"
+      ],
+      "mustNotContain": [
+        "WhatsApp"
+      ],
+      "note": "BUG: caía en tip de WhatsApp; ahora liquidación"
+    },
+    {
+      "q": "pago de vacaciones",
+      "expectedIntent": [
+        "liquidacion"
+      ],
+      "mustContain": [
+        "liquidación"
+      ],
+      "note": "vacaciones → liquidación"
     }
   ]
 }
