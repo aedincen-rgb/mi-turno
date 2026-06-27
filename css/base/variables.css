@@ -33,6 +33,16 @@
   --success-dim: rgba(91, 168, 142, 0.09);
   --info: #5b83c9;
   --night: #4f6bbf;
+  /* Recargo nocturno (morado) y extra festivo (ámbar) — familias cromáticas
+     del desglose. Definían RC.bg/RC.bd en globals.js pero faltaban acá, así
+     que los chips de "Nocturna ordinaria" y "Extra festiva" salían sin fondo. */
+  --purple: #7c52cc;
+  --purple-dim: rgba(124, 82, 204, 0.1);
+  /* Ámbar profundo (no el ámbar claro): se usa como fondo sólido del botón
+     "Ajustar" con texto blanco (home.js) → necesita ≥4.5:1 (acá 5.3:1). El
+     tint claro va aparte en --warn-dim. */
+  --warn: #946012;
+  --warn-dim: rgba(201, 138, 46, 0.12);
 
   /* ── Geometry ── */
   --radius: 24px; /* Múltiplo de 8 */

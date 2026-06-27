@@ -249,6 +249,7 @@
 }
 
 .brk-row {
+  position: relative;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -260,6 +261,20 @@
     inset 0 1px 0 var(--spec-top),
     var(--sh-1);
   transition: all 0.2s var(--spring);
+}
+
+/* Barra de acento lateral con el color del recargo: lectura cromática al vuelo
+   (noche=morado, festivo=rojo, extra=verde…) sin riesgo de contraste — no es
+   texto. Una sola fuente de verdad: --brk-color (hex por categoría desde RC). */
+.brk-row::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 10px;
+  bottom: 10px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--brk-color, var(--accent));
 }
 
 .brk-row:active {
@@ -282,8 +297,12 @@
   justify-content: center;
   font-size: 14px;
   flex-shrink: 0;
-  background: var(--chip-bg);
-  border: 1px solid var(--chip-bd);
+  /* Fondo/borde derivados del mismo color de categoría (color-mix ya usado en
+     el repo). Antes dependían de --chip-bg/--chip-bd (tokens inexistentes para
+     morado/ámbar → chips transparentes). Ahora coherentes para las 8 categorías. */
+  background: color-mix(in srgb, var(--brk-color, var(--accent)) 13%, transparent);
+  border: 1px solid color-mix(in srgb, var(--brk-color, var(--accent)) 26%, transparent);
+  color: var(--brk-color, var(--accent));
 }
 
 .brk-meta {
@@ -323,7 +342,10 @@
   font-weight: 700;
   letter-spacing: -0.35px;
   font-variant-numeric: tabular-nums;
-  color: var(--brk-color, var(--text));
+  /* Tinte de categoría pero anclado a --text (≈30% hue + 70% texto) para
+     conservar contraste AA: el color vivo vive en el chip y la barra, no en
+     el número. Antes el hex puro (ej. verde #52CC7C) reprobaba contraste. */
+  color: color-mix(in srgb, var(--brk-color, var(--text)) 30%, var(--text));
 }
 
 .hist-cur {

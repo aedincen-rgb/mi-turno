@@ -500,8 +500,7 @@ function HomeTab(props) {
               h(
                 'div',
                 {
-                  className: 'brk-chip',
-                  style: { '--chip-bg': r.bg, '--chip-bd': r.bd, color: r.color }
+                  className: 'brk-chip'
                 },
                 r.icon
               ),
