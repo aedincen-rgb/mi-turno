@@ -169,7 +169,7 @@ function aiBuildWatchdog(c, turnosAll) {
   }
   if (peor) {
     findings.push({
-      icon: '⏱',
+      icon: 'clock',
       sev: 'high',
       title: 'Turno de ' + peor.hrs.toFixed(1) + 'h',
       detail:
@@ -190,7 +190,7 @@ function aiBuildWatchdog(c, turnosAll) {
   }
   if (solape) {
     findings.push({
-      icon: '⚠️',
+      icon: 'layers',
       sev: 'high',
       title: 'Turnos encimados',
       detail:
@@ -212,7 +212,7 @@ function aiBuildWatchdog(c, turnosAll) {
   }
   if (corto) {
     findings.push({
-      icon: '🔍',
+      icon: 'search',
       sev: 'low',
       title: 'Turno muy corto',
       detail:
@@ -227,7 +227,7 @@ function aiBuildWatchdog(c, turnosAll) {
   var extraSem = typeof c.extraMinsSemana === 'number' ? c.extraMinsSemana : 0;
   if (extraSem > 12 * 60) {
     findings.push({
-      icon: '⚖️',
+      icon: 'alert',
       sev: 'med',
       title: (extraSem / 60).toFixed(1) + 'h extra esta semana',
       detail: 'El tope legal en Colombia es 12h/semana. Ya lo pasaste.',
@@ -238,7 +238,7 @@ function aiBuildWatchdog(c, turnosAll) {
   // (e) Racha sin descanso (≥14 días): salud + derecho a compensatorio.
   if (c.rachaActual >= 14) {
     findings.push({
-      icon: '🧘',
+      icon: 'heart',
       sev: 'med',
       title: c.rachaActual + ' días sin parar',
       detail: 'Tenés derecho a un descanso compensatorio remunerado. Cuidate.',

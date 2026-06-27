@@ -671,8 +671,16 @@
 }
 .asistente-watch-icon {
   flex: 0 0 auto;
-  font-size: 17px;
-  line-height: 1.3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 22px;
+  color: var(--muted);
+}
+.asistente-watch-icon .asistente-ico {
+  width: 18px;
+  height: 18px;
 }
 .asistente-watch-body {
   min-width: 0;
@@ -732,10 +740,18 @@
   min-width: 0;
 }
 .asistente-sim-label {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 7px;
   font-size: 13.5px;
   font-weight: 700;
   color: var(--text);
+}
+.asistente-sim-ic {
+  flex: 0 0 auto;
+  width: 17px;
+  height: 17px;
+  color: var(--muted);
 }
 .asistente-sim-unit {
   display: block;
@@ -1461,6 +1477,10 @@
 
 .asistente-speak-icon {
   position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 13px;
   pointer-events: none;
 }
@@ -3020,7 +3040,13 @@
 }
 
 .scr--assistant .asistente-wrap {
-  padding: calc(var(--safe-top) + 158px) 0 calc(114px + var(--sab));
+  padding: calc(var(--safe-top) + 158px) 0 calc(170px + var(--sab));
+}
+
+/* El auto-scroll (scrollIntoView) deja el último mensaje despejado por encima
+   de la barra flotante (flecha + nueva conversación) y del composer. */
+.scr--assistant {
+  scroll-padding-bottom: calc(var(--sab) + 178px);
 }
 
 .scr--assistant .asistente-wrap.has-chat {
@@ -3373,22 +3399,35 @@
     0 10px 26px var(--accent-glow);
 }
 
+/* Barra flotante sobre el composer: flecha (der) + "Nueva conversación"
+   (centro). Ambas fijas, justo encima del cajón de 2 filas — nunca tapadas. */
 .scr--assistant .asistente-scroll-btn {
   position: fixed;
-  right: max(24px, calc((100vw - 680px) / 2 + 24px));
-  bottom: calc(var(--sab) + 88px);
+  right: max(20px, calc((100vw - 680px) / 2 + 20px));
+  bottom: calc(var(--sab) + 118px);
   width: 38px;
   height: 38px;
   margin: 0;
   color: var(--text);
-  opacity: 0.76;
+  opacity: 0.82;
+  z-index: 34;
 }
 
 .scr--assistant .asistente-reset {
-  margin: 4px auto 6px;
-  padding: 8px 14px;
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--sab) + 120px);
+  width: fit-content;
+  margin: 0 auto;
+  padding: 7px 16px;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--surface) 56%, transparent);
+  border: 1px solid color-mix(in srgb, var(--text) 9%, transparent);
+  background: color-mix(in srgb, var(--surface) 78%, transparent);
+  box-shadow: 0 6px 18px rgba(20, 30, 80, 0.1);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  z-index: 34;
 }
 
 .scr--assistant .asistente-side-menu {
@@ -3658,8 +3697,25 @@
   transform: scale(0.96);
 }
 .asistente-voice-chip-ic {
-  font-size: 15px;
-  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+/* Íconos silueta (currentColor) en vez de emojis — estilo barra inferior */
+.asistente-voice-chip-ic .asistente-ico {
+  width: 18px;
+  height: 18px;
+}
+.asistente-voice-sheet .asistente-ctrl-icon {
+  color: var(--muted);
+}
+.asistente-voice-sheet .asistente-ctrl-icon .asistente-ico {
+  width: 19px;
+  height: 19px;
+}
+.asistente-speak-icon .asistente-ico {
+  width: 17px;
+  height: 17px;
 }
 .asistente-voice-chip-dot {
   width: 7px;

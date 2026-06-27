@@ -174,6 +174,45 @@ function _aiIcon(name, extraClass) {
       h('path', { key: 'b', d: 'M19 11v1a7 7 0 0 1-14 0v-1' }),
       h('path', { key: 'c', d: 'M12 19v3' })
     ],
+    volume: [
+      h('path', { key: 'a', d: 'M11 5 6 9H2v6h4l5 4V5z' }),
+      h('path', { key: 'b', d: 'M15.54 8.46a5 5 0 0 1 0 7.07' }),
+      h('path', { key: 'c', d: 'M19.07 4.93a10 10 0 0 1 0 14.14' })
+    ],
+    clock: [
+      h('circle', { key: 'a', cx: 12, cy: 12, r: 9 }),
+      h('path', { key: 'b', d: 'M12 8v4l2.5 2' })
+    ],
+    moon: [h('path', { key: 'a', d: 'M21 12.8A8.5 8.5 0 1 1 11.2 3 6.6 6.6 0 0 0 21 12.8z' })],
+    star: [
+      h('path', {
+        key: 'a',
+        d: 'M12 17.3 18.2 21l-1.7-7 5.5-4.7-7.2-.6L12 2 9.2 8.7 2 9.3l5.5 4.7-1.7 7z'
+      })
+    ],
+    search: [
+      h('circle', { key: 'a', cx: 11, cy: 11, r: 7 }),
+      h('path', { key: 'b', d: 'm21 21-4.3-4.3' })
+    ],
+    layers: [
+      h('path', { key: 'a', d: 'M12 2 2 7l10 5 10-5-10-5z' }),
+      h('path', { key: 'b', d: 'm2 17 10 5 10-5' }),
+      h('path', { key: 'c', d: 'm2 12 10 5 10-5' })
+    ],
+    alert: [
+      h('path', {
+        key: 'a',
+        d: 'M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z'
+      }),
+      h('path', { key: 'b', d: 'M12 9v4' }),
+      h('path', { key: 'c', d: 'M12 17h.01' })
+    ],
+    heart: [
+      h('path', {
+        key: 'a',
+        d: 'M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21.2l7.8-7.8 1-1.1a5.5 5.5 0 0 0 0-7.8z'
+      })
+    ],
     down: [h('path', { key: 'a', d: 'M12 5v14' }), h('path', { key: 'b', d: 'm19 12-7 7-7-7' })]
   };
   return h(
@@ -417,7 +456,7 @@ function _aiDataCard(card) {
       return h(
         'div',
         { key: wi, className: 'asistente-watch-row watch-sev-' + f.sev },
-        h('div', { className: 'asistente-watch-icon' }, f.icon),
+        h('div', { className: 'asistente-watch-icon', 'aria-hidden': 'true' }, _aiIcon(f.icon)),
         h(
           'div',
           { className: 'asistente-watch-body' },
@@ -471,14 +510,19 @@ function SimuladorCard(props) {
     };
   }
 
-  function row(label, unit, val, setter, max) {
+  function row(icon, label, unit, val, setter, max) {
     return h(
       'div',
       { className: 'asistente-sim-row' },
       h(
         'div',
         { className: 'asistente-sim-meta' },
-        h('span', { className: 'asistente-sim-label' }, label),
+        h(
+          'span',
+          { className: 'asistente-sim-label' },
+          _aiIcon(icon, 'asistente-sim-ic'),
+          h('span', { className: 'asistente-sim-label-tx' }, label)
+        ),
         h('span', { className: 'asistente-sim-unit' }, '+' + fcop(unit) + ' c/u')
       ),
       h(
@@ -515,9 +559,9 @@ function SimuladorCard(props) {
       role: 'group',
       'aria-label': 'Simulador de ingresos interactivo'
     },
-    row('🌙 Noches', d.unitNoche || 0, noches, setNoches, 31),
-    row('🎉 Festivos', d.unitFest || 0, fest, setFest, 12),
-    row('⏱ Horas extra', d.unitHora || 0, horas, setHoras, 60),
+    row('moon', 'Noches', d.unitNoche || 0, noches, setNoches, 31),
+    row('star', 'Festivos', d.unitFest || 0, fest, setFest, 12),
+    row('clock', 'Horas extra', d.unitHora || 0, horas, setHoras, 60),
     h(
       'div',
       { className: 'asistente-sim-total' },
@@ -1991,7 +2035,11 @@ function AsistenteTab(props) {
             h(
               'div',
               { className: 'asistente-ctrl-info' },
-              h('span', { className: 'asistente-ctrl-icon', 'aria-hidden': 'true' }, '🔊'),
+              h(
+                'span',
+                { className: 'asistente-ctrl-icon', 'aria-hidden': 'true' },
+                _aiIcon('volume')
+              ),
               h(
                 'div',
                 null,
@@ -2037,7 +2085,11 @@ function AsistenteTab(props) {
             h(
               'div',
               { className: 'asistente-ctrl-info' },
-              h('span', { className: 'asistente-ctrl-icon', 'aria-hidden': 'true' }, '🎙'),
+              h(
+                'span',
+                { className: 'asistente-ctrl-icon', 'aria-hidden': 'true' },
+                _aiIcon('mic')
+              ),
               h(
                 'div',
                 null,
@@ -2476,7 +2528,7 @@ function AsistenteTab(props) {
                         speakUI.idx === i && speakUI.status === 'paused'
                           ? h('span', { className: 'asistente-speak-icon' }, '▶')
                           : speakUI.idx !== i || speakUI.status === 'idle'
-                            ? h('span', { className: 'asistente-speak-icon' }, '🔊')
+                            ? h('span', { className: 'asistente-speak-icon' }, _aiIcon('volume'))
                             : null
                       )
                     : null,
@@ -2766,7 +2818,7 @@ function AsistenteTab(props) {
               h(
                 'span',
                 { className: 'asistente-voice-chip-ic', 'aria-hidden': 'true' },
-                handsFree ? '🎙' : '🔊'
+                _aiIcon(handsFree ? 'mic' : 'volume')
               ),
               h(
                 'span',
