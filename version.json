@@ -1,4 +1,4 @@
 {
-  "v": "v348",
-  "label": "moneda → redirect honesto en pesos + validaciones topic-aware (meta/ahorro/simulación)"
+  "v": "v349",
+  "label": "fix fecha imposible (31-feb) + cuánto de vacaciones → liquidación"
 }
