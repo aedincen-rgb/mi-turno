@@ -1,0 +1,103 @@
+/* ════════════════════════════════════════════════════════════════
+   MI TURNO · modals/whats-new.css
+   Modal "Novedades" — tarjeta centrada, calma editorial.
+   ════════════════════════════════════════════════════════════════ */
+
+.wn-ovl {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.wn-card {
+  width: 100%;
+  max-width: 380px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 26px 22px 22px;
+  box-shadow: 0 24px 60px rgba(20, 30, 60, 0.22);
+  animation: wn-pop 0.34s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+
+@keyframes wn-pop {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.wn-head {
+  text-align: center;
+  margin-bottom: 20px;
+}
+.wn-spark {
+  font-size: 34px;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+.wn-ttl {
+  font-size: 21px;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -0.02em;
+}
+.wn-ver {
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-top: 3px;
+}
+
+.wn-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+.wn-item {
+  display: flex;
+  gap: 13px;
+  align-items: flex-start;
+}
+.wn-item-ico {
+  font-size: 22px;
+  line-height: 1.2;
+  flex-shrink: 0;
+  width: 30px;
+  text-align: center;
+}
+.wn-item-ttl {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+.wn-item-sub {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.wn-btn {
+  width: 100%;
+  border: none;
+  border-radius: 14px;
+  padding: 14px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--accent);
+  cursor: pointer;
+  transition:
+    filter 0.15s ease,
+    transform 0.1s ease;
+}
+.wn-btn:active {
+  transform: scale(0.98);
+  filter: brightness(0.95);
+}

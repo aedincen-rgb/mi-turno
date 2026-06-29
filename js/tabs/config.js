@@ -126,6 +126,9 @@ function ConfigTabInner(props) {
   var si = useState(false);
   var showInstall = si[0],
     setShowInstall = si[1];
+  var sda = useState(false);
+  var showDelAcct = sda[0],
+    setShowDelAcct = sda[1];
 
   // Estado del acordeón del modo quincenal
   var oq = useState(false);
@@ -1141,6 +1144,25 @@ function ConfigTabInner(props) {
             h('div', { className: 'ajustes-row-sub' }, 'Volverás a la pantalla de entrada')
           ),
           h('div', { className: 'ajustes-row-chev' }, '›')
+        ),
+        h(
+          'button',
+          {
+            className: 'ajustes-row ajustes-row-tap danger',
+            onClick: function () {
+              haptic();
+              setShowDelAcct(true);
+            },
+            'aria-label': 'Eliminar mi cuenta y todos mis datos'
+          },
+          h('div', { className: 'ajustes-row-ico danger' }, '🗑'),
+          h(
+            'div',
+            { className: 'ajustes-row-mid' },
+            h('div', { className: 'ajustes-row-ttl danger' }, 'Eliminar mi cuenta'),
+            h('div', { className: 'ajustes-row-sub' }, 'Borra todos tus datos · permanente')
+          ),
+          h('div', { className: 'ajustes-row-chev' }, '›')
         )
       )
     ),
@@ -1763,6 +1785,19 @@ function ConfigTabInner(props) {
           }
         })
       ),
+
+    // Modal Eliminar cuenta (GDPR)
+    showDelAcct &&
+      typeof DeleteAccountModal !== 'undefined' &&
+      h(DeleteAccountModal, {
+        session: session,
+        onClose: function () {
+          setShowDelAcct(false);
+        },
+        onDeleted: function () {
+          setShowDelAcct(false);
+        }
+      }),
 
     // Modales admin
     showUsuarios &&

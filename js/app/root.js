@@ -23,7 +23,16 @@ function Root() {
   var ob = useState(function () {
     return !onboardingDone();
   });
-  var showOnboarding = ob[0], setShowOnboarding = ob[1];
+  var showOnboarding = ob[0],
+    setShowOnboarding = ob[1];
+
+  // ── Novedades: solo para usuarios que vienen de una versión anterior ──
+  // (whatsNewShouldShow marca silenciosamente la versión en primer install)
+  var wn = useState(function () {
+    return typeof whatsNewShouldShow === 'function' ? whatsNewShouldShow() : false;
+  });
+  var showWhatsNew = wn[0],
+    setShowWhatsNew = wn[1];
 
   function patchSession(p) {
     setSession(function (s) {
@@ -407,7 +416,17 @@ function Root() {
     }),
     showOnboarding && typeof OnboardingModal === 'function'
       ? h(OnboardingModal, {
-          onDone: function () { setShowOnboarding(false); }
+          onDone: function () {
+            setShowOnboarding(false);
+          }
+        })
+      : null,
+    // Novedades: nunca a la vez que el onboarding (usuario nuevo).
+    !showOnboarding && showWhatsNew && typeof WhatsNewModal === 'function'
+      ? h(WhatsNewModal, {
+          onClose: function () {
+            setShowWhatsNew(false);
+          }
         })
       : null
   );

@@ -16,13 +16,20 @@ try {
   console.table(deps);
 
   if (window.React && window.ReactDOM && typeof Root !== 'undefined') {
-    ReactDOM.createRoot(document.getElementById('root')).render(
-      React.createElement(Root, null)
-    );
+    // Envolver en ErrorBoundary: un crash de render muestra la pantalla de
+    // recuperación en vez de quedar en blanco. Fallback a Root pelado si el
+    // boundary no estuviera cargado.
+    var tree =
+      typeof ErrorBoundary !== 'undefined'
+        ? React.createElement(ErrorBoundary, null, React.createElement(Root, null))
+        : React.createElement(Root, null);
+    ReactDOM.createRoot(document.getElementById('root')).render(tree);
     console.log('[MT] App montada con éxito.');
   } else {
     var missing = Object.keys(deps)
-      .filter(function (k) { return !deps[k]; })
+      .filter(function (k) {
+        return !deps[k];
+      })
       .join(', ');
     throw new Error('Faltan dependencias críticas: ' + (missing || 'React/Root'));
   }
@@ -34,5 +41,7 @@ try {
     '<div style="color:#b91c1c;padding:40px;font-family:-apple-system,sans-serif;text-align:center">' +
     '<div style="font-size:44px;margin-bottom:14px">⚠</div>' +
     '<div style="font-size:17px;font-weight:700;margin-bottom:6px">Error al iniciar</div>' +
-    '<div style="font-size:12.5px;opacity:0.6">' + e.message + '</div></div>';
+    '<div style="font-size:12.5px;opacity:0.6">' +
+    e.message +
+    '</div></div>';
 }

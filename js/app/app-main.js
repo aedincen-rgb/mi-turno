@@ -1159,7 +1159,15 @@ function App(props) {
     setExportMode('xlsx');
   }
 
-  if (loading) return h(SplashScreen, { exit: splashExit, plain: props.introPlayed });
+  if (loading) {
+    // El splash de marca ya se mostró en Root (intro). Durante la carga de
+    // datos mostramos un skeleton que preserva el layout (sensación de
+    // velocidad). Fallback al splash si el componente no estuviera cargado.
+    if (props.introPlayed && typeof SkeletonScreen === 'function') {
+      return h(SkeletonScreen, { compact: compact });
+    }
+    return h(SplashScreen, { exit: splashExit, plain: props.introPlayed });
+  }
 
   var tStr = ahoraDate.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
 

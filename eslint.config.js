@@ -199,6 +199,7 @@ const projectGlobals = {
   ForgotPinModal: 'readonly',
 
   // utils/error-logger.js
+  logError: 'readonly',
   getErrors: 'readonly',
   addErrorListener: 'readonly',
   removeErrorListener: 'readonly',
@@ -255,6 +256,17 @@ const projectGlobals = {
   // modals/onboarding.js (v98)
   OnboardingModal: 'readonly',
   onboardingDone: 'readonly',
+
+  // v362: error boundary, skeleton, novedades, borrado de cuenta (GDPR)
+  ErrorBoundary: 'readonly',
+  SkeletonScreen: 'readonly',
+  WhatsNewModal: 'readonly',
+  WHATS_NEW: 'readonly',
+  whatsNewShouldShow: 'readonly',
+  whatsNewMarkSeen: 'readonly',
+  DeleteAccountModal: 'readonly',
+  wipeLocalAccount: 'readonly',
+  supaDeleteAccount: 'readonly',
 
   // app-main.js (toast global de UI)
   showToast: 'readonly',

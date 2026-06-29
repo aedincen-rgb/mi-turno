@@ -1,0 +1,85 @@
+/* ════════════════════════════════════════════════════════════════
+   MI TURNO · components/error-boundary.css
+   Pantalla de recuperación cuando React crashea (no pantalla blanca).
+   ════════════════════════════════════════════════════════════════ */
+
+.eb-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 28px;
+  background: var(--bg, #f5f7fb);
+}
+
+.eb-card {
+  width: 100%;
+  max-width: 360px;
+  text-align: center;
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #e3e8f1);
+  border-radius: var(--radius, 24px);
+  padding: 30px 24px 24px;
+  box-shadow: 0 24px 60px rgba(20, 30, 60, 0.18);
+}
+
+.eb-ico {
+  font-size: 44px;
+  line-height: 1;
+  margin-bottom: 12px;
+}
+.eb-ttl {
+  font-size: 19px;
+  font-weight: 800;
+  color: var(--text, #1c1f27);
+  margin-bottom: 8px;
+}
+.eb-sub {
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--muted, #646b7d);
+  margin-bottom: 22px;
+}
+
+.eb-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.eb-btn {
+  width: 100%;
+  border-radius: 14px;
+  padding: 13px;
+  font-size: 14.5px;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition:
+    filter 0.15s ease,
+    transform 0.1s ease;
+}
+.eb-btn:active {
+  transform: scale(0.98);
+}
+.eb-btn-primary {
+  color: #fff;
+  background: var(--accent, #5b86e5);
+}
+.eb-btn-primary:active {
+  filter: brightness(0.95);
+}
+.eb-btn-ghost {
+  color: var(--text, #1c1f27);
+  background: transparent;
+  border-color: var(--border2, #ccd4e1);
+}
+
+.eb-detail {
+  margin-top: 16px;
+  font-size: 11px;
+  color: var(--muted, #646b7d);
+  opacity: 0.7;
+  word-break: break-word;
+}

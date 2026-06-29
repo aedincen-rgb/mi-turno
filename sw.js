@@ -2,7 +2,7 @@
 //  MI TURNO · SERVICE WORKER
 //  Split cache: SHELL_CACHE (archivos de la app, se invalida en cada release)
 //               CDN_CACHE   (librerías externas, sobrevive entre releases)
-const SHELL_CACHE = 'mt-shell-v361'; // bump con scripts/bump.sh
+const SHELL_CACHE = 'mt-shell-v362'; // bump con scripts/bump.sh
 const CDN_CACHE = 'mt-cdn-v2'; // solo bump cuando cambien URLs de CDN
 
 // Supabase SDK y Chart.js son self-hosted → van en appResources (SHELL_CACHE).
@@ -64,6 +64,8 @@ const appResources = [
   './css/components/fast-pin.css',
   './css/components/auth-screen.css',
   './css/components/misc.css',
+  './css/components/skeleton.css',
+  './css/components/error-boundary.css',
   './css/components/dark-mode-overrides.css',
   './css/modals/overlay.css',
   './css/modals/modal-card.css',
@@ -75,6 +77,8 @@ const appResources = [
   './css/modals/misc.css',
   './css/modals/manage-account.css',
   './css/modals/onboarding.css',
+  './css/modals/whats-new.css',
+  './css/modals/delete-account.css',
   './css/modals/dark-overrides.css',
   './css/animations/keyframes.css',
   // JS (39 archivos)
@@ -156,10 +160,14 @@ const appResources = [
   './js/modals/usuarios.js',
   './js/modals/export-report.js',
   './js/modals/onboarding.js',
+  './js/modals/whats-new.js',
+  './js/modals/delete-account.js',
   './js/app/auth-screen.js',
   './js/app/fast-pin-screen.js',
+  './js/app/skeleton.js',
   './js/app/app-main.js',
   './js/app/root.js',
+  './js/app/error-boundary.js',
   './js/app/sw-register.js',
   './js/app/init.js',
   './js/app/install-prompt.js'

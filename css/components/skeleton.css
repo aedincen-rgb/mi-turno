@@ -1,0 +1,114 @@
+/* ════════════════════════════════════════════════════════════════
+   MI TURNO · components/skeleton.css
+   Placeholders de carga con efecto shimmer. Preservan el layout.
+   ════════════════════════════════════════════════════════════════ */
+
+.sk-screen {
+  background: var(--bg);
+}
+
+.sk-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px 16px calc(var(--sab) + 100px);
+  overflow: hidden;
+}
+
+/* Pieza base con shimmer */
+.sk {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  background: var(--surface2);
+}
+
+.sk::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.55) 50%,
+    transparent 100%
+  );
+  animation: sk-shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes sk-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Header fantasma */
+.sk-led {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.sk-logo {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+.sk-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.sk-line {
+  height: 11px;
+  border-radius: 6px;
+}
+.sk-w90 {
+  width: 90px;
+}
+.sk-w60 {
+  width: 60px;
+}
+
+/* Cuerpo */
+.sk-hero {
+  height: 180px;
+  border-radius: var(--radius);
+}
+.sk-action {
+  height: 64px;
+  border-radius: 20px;
+}
+.sk-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.sk-row {
+  height: 58px;
+  border-radius: var(--radius-sm);
+}
+
+/* Modo oscuro: superficies más sutiles */
+[data-theme='dark'] .sk {
+  background: rgba(255, 255, 255, 0.06);
+}
+[data-theme='dark'] .sk::after {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.09) 50%,
+    transparent 100%
+  );
+}
+
+/* Respeta usuarios que prefieren menos movimiento */
+@media (prefers-reduced-motion: reduce) {
+  .sk::after {
+    animation: none;
+  }
+}

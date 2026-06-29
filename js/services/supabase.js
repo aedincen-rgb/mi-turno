@@ -146,6 +146,21 @@ function supaDeleteAllTurnos(uid) {
     });
 }
 
+// GDPR: borra la cuenta del usuario autenticado y TODOS sus datos en la
+// nube (turnos, turno_activo, pin_lookup, perfiles, logs, y la fila de
+// auth.users). Usa la RPC delete_my_account (SECURITY DEFINER, opera sobre
+// auth.uid() — el cliente nunca pasa el uid, lo resuelve el servidor).
+function supaDeleteAccount() {
+  if (!SUPA) return Promise.resolve({ success: false, error: 'Supabase no inicializado' });
+  return SUPA.rpc('delete_my_account')
+    .then(function (res) {
+      return { success: !res.error, error: res.error };
+    })
+    .catch(function (e) {
+      return { success: false, error: e };
+    });
+}
+
 function supaSetSalario(uid, salario) {
   if (!SUPA) return Promise.resolve({ success: false, error: 'Supabase no inicializado' });
   // UPSERT (no UPDATE): si la fila no existe la crea, si existe la actualiza.

@@ -1,0 +1,116 @@
+/* ════════════════════════════════════════════════════════════════
+   MI TURNO · modals/delete-account.css
+   Confirmación destructiva de borrado de cuenta (GDPR).
+   ════════════════════════════════════════════════════════════════ */
+
+.da-ovl {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.da-card {
+  width: 100%;
+  max-width: 380px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 26px 22px 20px;
+  box-shadow: 0 24px 60px rgba(60, 20, 20, 0.22);
+  animation: wn-pop 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.1);
+}
+
+.da-ico {
+  font-size: 38px;
+  line-height: 1;
+  text-align: center;
+  color: var(--danger, #ff3b30);
+  margin-bottom: 10px;
+}
+.da-ttl {
+  font-size: 20px;
+  font-weight: 800;
+  text-align: center;
+  color: var(--text);
+  margin-bottom: 10px;
+}
+.da-sub {
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--text);
+  text-align: center;
+  margin-bottom: 14px;
+}
+.da-warn {
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--muted);
+  background: var(--warn-dim, rgba(255, 149, 0, 0.1));
+  border-radius: 12px;
+  padding: 11px 13px;
+  margin-bottom: 18px;
+}
+
+.da-field {
+  display: block;
+  margin-bottom: 16px;
+}
+.da-field-lbl {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 7px;
+}
+.da-input {
+  width: 100%;
+  text-align: center;
+  letter-spacing: 0.12em;
+  font-weight: 700;
+}
+
+.da-err {
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--danger, #ff3b30);
+  text-align: center;
+  margin-bottom: 14px;
+}
+
+.da-actions {
+  display: flex;
+  gap: 10px;
+}
+.da-btn {
+  flex: 1;
+  border-radius: 14px;
+  padding: 13px;
+  font-size: 14.5px;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition:
+    filter 0.15s ease,
+    transform 0.1s ease,
+    opacity 0.15s ease;
+}
+.da-btn:active {
+  transform: scale(0.98);
+}
+.da-btn-cancel {
+  color: var(--text);
+  background: transparent;
+  border-color: var(--border2, #ccd4e1);
+}
+.da-btn-danger {
+  color: #fff;
+  background: var(--danger, #ff3b30);
+}
+.da-btn-danger:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.da-btn:disabled {
+  cursor: not-allowed;
+}
