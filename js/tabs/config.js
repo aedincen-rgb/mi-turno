@@ -5,7 +5,7 @@
 //   props = { salario, valorHora, session, onSalario, onSignOut,
 //             theme, onThemeChange }
 // Usa globales existentes: useState, h, haptic, fCOP, SMIN, RC,
-// CLOUD_MODE, ManageAccountModal.
+// CLOUD_MODE, ManageAccountModal, notifEstado, notifPedir.
 // ═══════════════════════════════════════════════════════════════
 
 // Wrapper a prueba de fallos: si ConfigTabInner crashea por cualquier
@@ -267,6 +267,11 @@ function ConfigTabInner(props) {
   var q2t = useState('');
   var q2Text = q2t[0],
     setQ2Text = q2t[1];
+
+  // Estado del permiso de notificaciones
+  var nps = useState(typeof notifEstado === 'function' ? notifEstado() : 'unsupported');
+  var notifPerm = nps[0],
+    setNotifPerm = nps[1];
 
   // Estado del chequeo manual de actualización
   // updStatus: 'idle' | 'checking' | 'uptodate' | 'available' | 'error'
@@ -868,6 +873,64 @@ function ConfigTabInner(props) {
         'p',
         { className: 'ajustes-legal', style: { padding: '0 4px' } },
         'Son valores estimados. Pueden variar según tu empleador y las deducciones legales.'
+      )
+    ),
+
+    // ══════ RECORDATORIOS ══════
+    h(
+      'div',
+      { className: 'ajustes-section' },
+      h('div', { className: 'ajustes-section-ttl' }, 'Recordatorios'),
+      h(
+        'div',
+        { className: 'ajustes-list' },
+        h(
+          'div',
+          {
+            className: 'ajustes-row' + (notifPerm === 'default' ? ' ajustes-row-tap' : ''),
+            role: notifPerm === 'default' ? 'button' : undefined,
+            onClick:
+              notifPerm === 'default'
+                ? function () {
+                    haptic();
+                    if (typeof notifPedir === 'function') {
+                      notifPedir(function (p) {
+                        setNotifPerm(p);
+                      });
+                    }
+                  }
+                : undefined
+          },
+          h('div', { className: 'ajustes-row-ico' }, '🔔'),
+          h(
+            'div',
+            { className: 'ajustes-row-mid' },
+            h('div', { className: 'ajustes-row-ttl' }, 'Recordatorios inteligentes'),
+            h(
+              'div',
+              { className: 'ajustes-row-sub' },
+              notifPerm === 'granted'
+                ? 'Turno activo > 8h · resumen los domingos'
+                : notifPerm === 'denied'
+                  ? 'Permiso denegado — activá en la config del navegador'
+                  : notifPerm === 'unsupported'
+                    ? 'No disponible en este dispositivo'
+                    : 'Avisá cuando el turno supere 8h y al final de la semana'
+            )
+          ),
+          notifPerm === 'granted'
+            ? h(
+                'span',
+                {
+                  className: 'ajustes-notif-ok',
+                  'aria-label': 'Recordatorios activados'
+                },
+                '✓'
+              )
+            : notifPerm === 'default'
+              ? h('div', { className: 'ajustes-row-chev' }, '›')
+              : null
+        )
       )
     ),
 

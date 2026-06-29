@@ -59,6 +59,8 @@ const externalGlobals = {
   webkitSpeechRecognition: 'readonly',
   SpeechSynthesisUtterance: 'readonly',
   speechSynthesis: 'readonly',
+  // Browser Notifications API
+  Notification: 'readonly',
 };
 
 // All project-defined globals available across script tags
@@ -239,6 +241,12 @@ const projectGlobals = {
   backupExport: 'readonly',
   backupImport: 'readonly',
   backupMarkExported: 'readonly',
+
+  // services/push-notifications.js (v352)
+  notifEstado: 'readonly',
+  notifPedir: 'readonly',
+  notifEnviar: 'readonly',
+  notifOnVisible: 'readonly',
 
   // services/ai-help.js (v107)
   aiHelpAnswer: 'readonly',

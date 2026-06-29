@@ -382,3 +382,197 @@
   min-width: 78px;
   text-align: right;
 }
+
+/* ── Agrupado por semana ── */
+.hist-sem-group {
+  display: flex;
+  flex-direction: column;
+}
+.hist-sem-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 0 8px;
+  gap: 12px;
+}
+.hist-sem-group:first-child .hist-sem-head {
+  padding-top: 8px;
+}
+.hist-sem-rng {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+}
+.hist-sem-meta {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Dot de tipo de turno ── */
+.hist-tipo-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.hist-tipo-dot--fest {
+  background: #22c55e;
+}
+.hist-tipo-dot--noct {
+  background: #f59e0b;
+}
+.hist-tipo-dot--diurno {
+  background: var(--muted);
+  opacity: 0.45;
+}
+
+/* ── CTA verificador de nómina ── */
+.hist-verif-cta {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 15px 16px;
+  margin: 16px 0 4px;
+  background: var(--glass-mid);
+  -webkit-backdrop-filter: var(--blur-md);
+  backdrop-filter: var(--blur-md);
+  border: 1px solid color-mix(in srgb, var(--accent) 18%, transparent);
+  border-radius: var(--radius);
+  box-shadow:
+    inset 0 1px 0 var(--spec-top),
+    0 4px 14px rgba(91, 134, 229, 0.08);
+  cursor: pointer;
+  transition:
+    transform 0.16s var(--spring),
+    box-shadow 0.2s var(--ease);
+  font-family: inherit;
+}
+.hist-verif-cta:active {
+  transform: scale(0.985);
+  box-shadow: 0 2px 8px rgba(91, 134, 229, 0.1);
+}
+.hist-verif-cta-ico {
+  font-size: 22px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.hist-verif-cta-body {
+  flex: 1;
+  text-align: left;
+}
+.hist-verif-cta-ttl {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.2px;
+}
+.hist-verif-cta-sub {
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.hist-verif-cta-chev {
+  font-size: 20px;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+/* ── Verificador: bottom sheet interno ── */
+.hist-verif-ttl {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -0.5px;
+  margin-bottom: 4px;
+}
+.hist-verif-sub {
+  font-size: 13.5px;
+  color: var(--muted);
+  margin-bottom: 18px;
+}
+.hist-verif-inp-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface2);
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  padding: 0 14px;
+  margin-bottom: 16px;
+  transition: border-color 0.18s var(--ease);
+}
+.hist-verif-inp-wrap:focus-within {
+  border-color: var(--accent);
+}
+.hist-verif-inp-pfx {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+.hist-verif-inp {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: inherit;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+  padding: 14px 0;
+  font-variant-numeric: tabular-nums;
+}
+.hist-verif-result {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-bottom: 4px;
+}
+.hist-verif-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+}
+.hist-verif-row-lbl {
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 500;
+}
+.hist-verif-row-val {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.hist-verif-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 6px 0;
+}
+.hist-verif-ok .hist-verif-row-lbl,
+.hist-verif-ok .hist-verif-row-val {
+  color: #22c55e;
+}
+.hist-verif-warn .hist-verif-row-lbl,
+.hist-verif-warn .hist-verif-row-val {
+  color: #f59e0b;
+  font-weight: 800;
+}
+.hist-verif-hint {
+  font-size: 12px;
+  color: var(--muted);
+  text-align: center;
+  margin-top: 10px;
+  font-style: italic;
+}
+[data-theme='dark'] .hist-verif-cta {
+  background: var(--glass-thin);
+  border-color: color-mix(in srgb, var(--accent) 22%, transparent);
+}

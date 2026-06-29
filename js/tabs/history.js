@@ -2,7 +2,7 @@
 //  MI TURNO · tabs/history.js
 //  Tab Historial
 // ════════════════════════════════════════════════════════════════
-/* global h, useState, useMemo, haptic, esFest, fDur, fCOP, doCalcPerTurno, RC, _saludoHora, _aiNombrePersonal */
+/* global h, useState, useMemo, haptic, esFest, esNoct, semLun, fDur, fCOP, doCalc, doCalcPerTurno, RC, _saludoHora, _aiNombrePersonal */
 
 function HistoryTab(props) {
   var activo = props.activo,
@@ -25,6 +25,14 @@ function HistoryTab(props) {
   var ff = useState('pdf');
   var fmt = ff[0],
     setFmt = ff[1];
+
+  // Verificador de nómina
+  var vvs = useState(false);
+  var showVerif = vvs[0],
+    setShowVerif = vvs[1];
+  var vms = useState('');
+  var verifInput = vms[0],
+    setVerifInput = vms[1];
 
   function doDel() {
     if (delId !== null) {
@@ -54,6 +62,7 @@ function HistoryTab(props) {
   var minsMes = 0;
   var turnosMes = 0;
   var diasSetMes = {};
+  var turnosMesArr = [];
   turnos.forEach(function (t) {
     if (!t.fin) return;
     var ini = new Date(t.inicio);
@@ -62,6 +71,7 @@ function HistoryTab(props) {
       minsMes += (fin - ini) / 60000;
       turnosMes++;
       diasSetMes[ini.getDate()] = true;
+      turnosMesArr.push(t);
     }
   });
   var diasMes = Object.keys(diasSetMes).length;
@@ -103,6 +113,15 @@ function HistoryTab(props) {
     },
     [perTurno, turnos]
   );
+
+  var verifMonto = parseInt((verifInput || '').replace(/[^0-9]/g, ''), 10);
+  var verifResult = null;
+  if (!isNaN(verifMonto) && verifMonto > 0 && vh > 0 && turnosMesArr.length > 0) {
+    var verifCalc = doCalc(turnosMesArr, null, ahora, vh);
+    var verifEsp = Math.round(verifCalc.totalCOP);
+    var verifDif = verifMonto - verifEsp;
+    verifResult = { esperado: verifEsp, pagado: verifMonto, dif: verifDif };
+  }
 
   return h(
     'section',
@@ -299,6 +318,136 @@ function HistoryTab(props) {
         })()
       : null,
 
+    // ═══ Bottom sheet verificador de nómina ═══
+    showVerif
+      ? (function () {
+          function cerrarVerif() {
+            setShowVerif(false);
+            setVerifInput('');
+          }
+          return h(
+            'div',
+            {
+              className: 'mol-ov',
+              onClick: function (ev) {
+                if (ev.target === ev.currentTarget) cerrarVerif();
+              }
+            },
+            h(
+              'div',
+              {
+                className: 'mol-sh',
+                role: 'dialog',
+                'aria-modal': 'true',
+                'aria-label': 'Verificador de nómina'
+              },
+              h('div', { className: 'mol-hdl' }),
+              h('div', { className: 'hist-verif-ttl' }, '¿Te pagaron bien?'),
+              h('div', { className: 'hist-verif-sub' }, 'Ingresá el monto que recibiste este mes'),
+              h(
+                'div',
+                { className: 'hist-verif-inp-wrap' },
+                h('span', { className: 'hist-verif-inp-pfx' }, '$'),
+                h('input', {
+                  className: 'hist-verif-inp',
+                  type: 'tel',
+                  inputMode: 'numeric',
+                  placeholder: '1.200.000',
+                  value: verifInput,
+                  'aria-label': 'Monto recibido en pesos',
+                  onChange: function (ev) {
+                    setVerifInput(ev.target.value);
+                  }
+                })
+              ),
+              verifResult
+                ? h(
+                    'div',
+                    { className: 'hist-verif-result' },
+                    h(
+                      'div',
+                      { className: 'hist-verif-row' },
+                      h('span', { className: 'hist-verif-row-lbl' }, 'Lo que debiste recibir'),
+                      h('span', { className: 'hist-verif-row-val' }, fCOP(verifResult.esperado))
+                    ),
+                    h(
+                      'div',
+                      { className: 'hist-verif-row' },
+                      h('span', { className: 'hist-verif-row-lbl' }, 'Lo que recibiste'),
+                      h('span', { className: 'hist-verif-row-val' }, fCOP(verifResult.pagado))
+                    ),
+                    h('div', { className: 'hist-verif-divider' }),
+                    h(
+                      'div',
+                      {
+                        className:
+                          'hist-verif-row ' +
+                          (verifResult.dif < -(verifResult.esperado * 0.02)
+                            ? 'hist-verif-warn'
+                            : 'hist-verif-ok')
+                      },
+                      h(
+                        'span',
+                        { className: 'hist-verif-row-lbl' },
+                        verifResult.dif >= 0 ? 'Diferencia a tu favor' : 'Te deben'
+                      ),
+                      h(
+                        'span',
+                        { className: 'hist-verif-row-val' },
+                        fCOP(Math.abs(verifResult.dif))
+                      )
+                    ),
+                    h(
+                      'div',
+                      { className: 'hist-verif-hint' },
+                      verifResult.dif < -(verifResult.esperado * 0.02)
+                        ? 'Hay una diferencia. Revisá los recargos con tu empleador.'
+                        : 'El pago está dentro del rango estimado.'
+                    ),
+                    verifResult.dif < -(verifResult.esperado * 0.02)
+                      ? h(
+                          'button',
+                          {
+                            className: 'btn btn-primary btn-block',
+                            style: { marginTop: 12 },
+                            onClick: function () {
+                              haptic();
+                              var txt = encodeURIComponent(
+                                'Hola, revisé mi nómina con Mi Turno y hay una diferencia.\n' +
+                                  'Estimado: ' +
+                                  fCOP(verifResult.esperado) +
+                                  '\nRecibido: ' +
+                                  fCOP(verifResult.pagado) +
+                                  '\nDiferencia: ' +
+                                  fCOP(Math.abs(verifResult.dif))
+                              );
+                              window.open('https://api.whatsapp.com/send?text=' + txt, '_blank');
+                            },
+                            'aria-label': 'Compartir diferencia por WhatsApp'
+                          },
+                          'Reclamar por WhatsApp'
+                        )
+                      : null
+                  )
+                : null,
+              h(
+                'button',
+                {
+                  className: 'btn btn-ghost btn-block',
+                  style: { marginTop: 16 },
+                  onClick: function () {
+                    haptic();
+                    cerrarVerif();
+                  },
+                  'aria-label': 'Cerrar verificador de nómina'
+                },
+                'Cerrar'
+              )
+            )
+          );
+        })()
+      : null,
+
     // ═══ HERO con peso visual (estilo IA) ═══
     h(
       'div',
@@ -403,6 +552,28 @@ function HistoryTab(props) {
         )
       : null,
 
+    turnosMesArr.length > 0
+      ? h(
+          'button',
+          {
+            className: 'hist-verif-cta',
+            onClick: function () {
+              haptic();
+              setShowVerif(true);
+            },
+            'aria-label': 'Verificar si te pagaron bien este mes'
+          },
+          h('span', { className: 'hist-verif-cta-ico' }, '🔍'),
+          h(
+            'div',
+            { className: 'hist-verif-cta-body' },
+            h('div', { className: 'hist-verif-cta-ttl' }, '¿Te pagaron bien?'),
+            h('div', { className: 'hist-verif-cta-sub' }, 'Verificá tu nómina de ' + nombreMes)
+          ),
+          h('span', { className: 'hist-verif-cta-chev' }, '›')
+        )
+      : null,
+
     turnos.length > 0
       ? h(
           'div',
@@ -459,87 +630,152 @@ function HistoryTab(props) {
         )
       : null,
 
-    visibles.map(function (t, i) {
-      var ini = new Date(t.inicio),
-        fin = new Date(t.fin);
-      if (isNaN(ini.getTime()) || isNaN(fin.getTime())) return null;
-      var mins = Math.round((fin - ini) / 60000),
-        fest = esFest(ini);
-      var cop = copDe(t, i);
-      var pct = cop > 0 ? Math.max(Math.round((cop / maxCop) * 100), 6) : 0;
-      var barCls = fest ? 'hist-bar-fill bf-fest' : 'hist-bar-fill';
-      var fechaRow = ini.toLocaleDateString('es-CO', {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long'
+    (function () {
+      var grupos = [];
+      visibles.forEach(function (t, i) {
+        var ini = new Date(t.inicio);
+        if (!t.fin || isNaN(ini.getTime())) return;
+        var lun = semLun(ini);
+        var semKey = lun.getTime();
+        var last = grupos[grupos.length - 1];
+        if (!last || last.key !== semKey) {
+          grupos.push({ key: semKey, lun: lun, items: [] });
+        }
+        grupos[grupos.length - 1].items.push({ t: t, i: i });
       });
-      var rowLabel =
-        'Turno del ' +
-        fechaRow +
-        (fest ? ', festivo' : '') +
-        '. Duración ' +
-        fDur(mins) +
-        (cop > 0 ? '. Ingreso ' + fCOP(cop) : '') +
-        '. Toca para ver el detalle.';
-      return h(
-        'div',
-        {
-          key: t.id || i,
-          className: 'hist-row hist-row--tap',
-          role: 'button',
-          'aria-label': rowLabel,
-          onClick: function () {
-            haptic();
-            setDetail({ t: t, cop: cop, idx: i });
-          }
-        },
-        h(
+      return grupos.map(function (grupo) {
+        var lun = grupo.lun;
+        var dom = new Date(lun.getTime());
+        dom.setDate(dom.getDate() + 6);
+        var lunStr = lun.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' });
+        var domStr = dom.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' });
+        var semCop = grupo.items.reduce(function (acc, item) {
+          return acc + copDe(item.t, item.i);
+        }, 0);
+        var semCnt = grupo.items.length;
+        return h(
           'div',
-          { className: 'hist-head' },
+          { key: grupo.key, className: 'hist-sem-group' },
           h(
             'div',
-            { className: 'hist-date' },
-            ini.toLocaleDateString('es-CO', { weekday: 'short', day: 'numeric', month: 'short' }),
-            fest ? h('span', { className: 'bdg-fest' }, 'Fest') : null
-          ),
-          h(
-            'div',
-            { className: 'hist-right' },
-            cop > 0 ? h('div', { className: 'hist-cop' }, fCOP(cop)) : null,
-            h('div', { className: 'hist-dur' }, fDur(mins)),
+            { className: 'hist-sem-head', 'aria-hidden': 'true' },
+            h('span', { className: 'hist-sem-rng' }, lunStr + ' – ' + domStr),
             h(
-              'button',
+              'span',
+              { className: 'hist-sem-meta' },
+              semCnt +
+                (semCnt === 1 ? ' turno' : ' turnos') +
+                (semCop > 0 ? ' · ' + fCOP(semCop) : '')
+            )
+          ),
+          grupo.items.map(function (item) {
+            var t = item.t;
+            var i = item.i;
+            var ini = new Date(t.inicio);
+            var fin = new Date(t.fin);
+            if (isNaN(fin.getTime())) return null;
+            var mins = Math.round((fin - ini) / 60000);
+            var fest = esFest(ini);
+            var entryKey = t.id != null ? t.id : 'idx_' + i;
+            var entry = perTurno.byId[entryKey] || { bd: {} };
+            var bd = entry.bd || {};
+            var cop = copDe(t, i);
+            var pct = cop > 0 ? Math.max(Math.round((cop / maxCop) * 100), 6) : 0;
+            var barCls = fest ? 'hist-bar-fill bf-fest' : 'hist-bar-fill';
+            var noct =
+              esNoct(ini) ||
+              (bd.noctOrd && bd.noctOrd.mins > 0) ||
+              (bd.extraNoct && bd.extraNoct.mins > 0);
+            var tipoCls = fest
+              ? 'hist-tipo-dot--fest'
+              : noct
+                ? 'hist-tipo-dot--noct'
+                : 'hist-tipo-dot--diurno';
+            var tipoLabel = fest ? 'festivo' : noct ? 'nocturno' : 'diurno';
+            var fechaRow = ini.toLocaleDateString('es-CO', {
+              weekday: 'long',
+              day: 'numeric',
+              month: 'long'
+            });
+            var rowLabel =
+              'Turno ' +
+              tipoLabel +
+              ' del ' +
+              fechaRow +
+              '. Duración ' +
+              fDur(mins) +
+              (cop > 0 ? '. Ingreso ' + fCOP(cop) : '') +
+              '. Toca para ver el detalle.';
+            return h(
+              'div',
               {
-                className: 'hist-del',
-                'aria-label':
-                  'Borrar turno del ' +
-                  ini.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' }),
-                onClick: function (ev) {
-                  ev.stopPropagation();
+                key: t.id || i,
+                className: 'hist-row hist-row--tap',
+                role: 'button',
+                'aria-label': rowLabel,
+                onClick: function () {
                   haptic();
-                  setDelId(t.id || i);
+                  setDetail({ t: t, cop: cop, idx: i });
                 }
               },
-              '✕'
-            )
-          )
-        ),
-        h(
-          'div',
-          { className: 'hist-detail' },
-          ini.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }) +
-            ' → ' +
-            fin.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
-        ),
-        cop > 0
-          ? h(
-              'div',
-              { className: 'hist-bar-track' },
-              h('div', { className: barCls, style: { width: pct + '%' } })
-            )
-          : null
-      );
-    }),
+              h(
+                'div',
+                { className: 'hist-head' },
+                h(
+                  'div',
+                  { className: 'hist-date' },
+                  h('span', {
+                    className: 'hist-tipo-dot ' + tipoCls,
+                    'aria-hidden': 'true'
+                  }),
+                  ini.toLocaleDateString('es-CO', {
+                    weekday: 'short',
+                    day: 'numeric',
+                    month: 'short'
+                  }),
+                  fest ? h('span', { className: 'bdg-fest' }, 'Fest') : null
+                ),
+                h(
+                  'div',
+                  { className: 'hist-right' },
+                  cop > 0 ? h('div', { className: 'hist-cop' }, fCOP(cop)) : null,
+                  h('div', { className: 'hist-dur' }, fDur(mins)),
+                  h(
+                    'button',
+                    {
+                      className: 'hist-del',
+                      'aria-label':
+                        'Borrar turno del ' +
+                        ini.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' }),
+                      onClick: function (ev) {
+                        ev.stopPropagation();
+                        haptic();
+                        setDelId(t.id || i);
+                      }
+                    },
+                    '✕'
+                  )
+                )
+              ),
+              h(
+                'div',
+                { className: 'hist-detail' },
+                ini.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }) +
+                  ' → ' +
+                  fin.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
+              ),
+              cop > 0
+                ? h(
+                    'div',
+                    { className: 'hist-bar-track' },
+                    h('div', { className: barCls, style: { width: pct + '%' } })
+                  )
+                : null
+            );
+          })
+        );
+      });
+    })(),
 
     turnos.length > 0
       ? !conf

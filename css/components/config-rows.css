@@ -836,3 +836,11 @@
 [data-theme='dark'] .ajustes-row-group.open {
   background: var(--surface2);
 }
+
+/* ─── Notificaciones: indicador OK ─── */
+.ajustes-notif-ok {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--success, #22c55e);
+  flex-shrink: 0;
+}
