@@ -4,17 +4,20 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Mi Turno · Nómina inteligente para trabajadores colombianos</title>
-<meta name="description" content="Calculá tu salario real turno a turno. Recargos nocturnos, festivos, horas extra según la Ley 2101. Gratis, offline y accesible.">
+<meta name="description" content="Calculá tu salario real turno a turno con IA local-first. Recargos nocturnos, festivos y horas extra según Ley 2101/2021 y Ley 2466/2025. Gratis, offline y accesible.">
 <meta name="keywords" content="calculadora nómina Colombia, recargos nocturnos, horas extra, ley 2101, salario mínimo, dominicales, festivos, nómina turnos, trabajadores Colombia">
 <meta name="author" content="Mi Turno">
 <meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="color-scheme" content="light dark">
+<meta name="format-detection" content="telephone=no">
 <link rel="canonical" href="https://miturno.one/">
+<link rel="preload" as="image" href="img/logo-mark.svg" type="image/svg+xml">
 
 <!-- Open Graph / WhatsApp / Facebook -->
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://miturno.one/">
 <meta property="og:title" content="Mi Turno · Nómina inteligente colombiana">
-<meta property="og:description" content="Calculá tu salario real turno a turno. Recargos nocturnos, festivos y horas extra. Gratis y funciona sin internet.">
+<meta property="og:description" content="Calculá tu salario real turno a turno con IA local-first. Recargos nocturnos, festivos y horas extra. Gratis y funciona sin internet.">
 <meta property="og:image" content="https://miturno.one/icon-512.png">
 <meta property="og:image:width" content="512">
 <meta property="og:image:height" content="512">
@@ -25,17 +28,17 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:url" content="https://miturno.one/">
 <meta name="twitter:title" content="Mi Turno · Nómina inteligente colombiana">
-<meta name="twitter:description" content="Calculá tu salario real turno a turno. Recargos nocturnos, festivos y horas extra. Gratis y offline.">
+<meta name="twitter:description" content="Calculá tu salario real turno a turno con IA local-first. Recargos nocturnos, festivos y horas extra. Gratis y offline.">
 <meta name="twitter:image" content="https://miturno.one/icon-512.png">
 
-<!-- JSON-LD: Software Application + FAQ para Rich Snippets de Google -->
+<!-- JSON-LD: Software Application + FAQ semántica -->
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
   "name": "Mi Turno",
   "alternateName": "Mi Turno Colombia",
-  "description": "Calculadora de nómina colombiana para trabajadores por turnos. Calcula automáticamente recargos nocturnos, festivos, dominicales y horas extra según la Ley 2101 de 2021.",
+  "description": "Calculadora de nómina colombiana para trabajadores por turnos. Calcula automáticamente recargos nocturnos, festivos, dominicales y horas extra con reglas date-aware de la Ley 2101 de 2021 y la Ley 2466 de 2025.",
   "applicationCategory": "FinanceApplication",
   "operatingSystem": "Android, iOS, Web",
   "url": "https://miturno.one/",
@@ -43,13 +46,14 @@
     "https://github.com/aedincen-rgb/mi-turno-BETA"
   ],
   "inLanguage": "es-CO",
+  "isAccessibleForFree": true,
   "offers": {
     "@type": "Offer",
     "price": "0",
     "priceCurrency": "COP"
   },
   "featureList": [
-    "Cálculo de recargos nocturnos según Ley 2101/2021",
+    "Cálculo de recargos nocturnos y dominicales/festivos por fecha",
     "Horas extra diurnas y nocturnas",
     "Festivos y dominicales",
     "Funciona sin internet (offline)",
@@ -86,7 +90,7 @@
       "name": "¿Qué leyes aplica Mi Turno para los cálculos de nómina?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Aplica el Código Sustantivo del Trabajo (Art. 168-171) para recargos y la Ley 2101 de 2021 para la reducción gradual de la jornada semanal colombiana (de 48h a 42h)."
+        "text": "Aplica el Código Sustantivo del Trabajo para recargos, la Ley 2101 de 2021 para la reducción gradual de la jornada semanal y la Ley 2466 de 2025 para cambios de recargo dominical/festivo y jornada nocturna."
       }
     },
     {
@@ -126,6 +130,12 @@
     --accent: #5b86e5;
     --accent-strong: #3a5cb5;
     --accent-light: #7da8ff;
+    --ai: #7c5cff;
+    --legal: #08745d;
+    --warn: #b97813;
+    --danger: #b34343;
+    --success: #158f54;
+    --border: rgba(0,0,0,0.08);
     --gradient: linear-gradient(135deg, #5b86e5, #7da8ff, #5b6ce5);
     --shadow: 0 6px 24px rgba(91,134,229,0.18);
     --shadow-lg: 0 12px 40px rgba(91,134,229,0.25);
@@ -140,6 +150,11 @@
       --text: #e5e5ea;
       --text-dim: #aeaeb2;
       --accent-strong: #8fb3ff;
+      --legal: #50d5ad;
+      --warn: #ffca6f;
+      --danger: #ff8a8a;
+      --success: #62d990;
+      --border: rgba(255,255,255,0.09);
       --shadow: 0 6px 24px rgba(0,0,0,0.35);
       --shadow-lg: 0 12px 40px rgba(0,0,0,0.45);
     }
@@ -155,6 +170,31 @@
     line-height: 1.6;
     overflow-x: hidden;
     max-width: 100vw;
+  }
+
+  .skip-link {
+    position: fixed;
+    left: 12px;
+    top: 12px;
+    z-index: 20;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: var(--text);
+    color: var(--bg);
+    font-weight: 700;
+    text-decoration: none;
+    transform: translateY(-140%);
+    transition: transform 0.2s;
+  }
+  .skip-link:focus { transform: translateY(0); }
+
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  summary:focus-visible {
+    outline: 3px solid rgba(91,134,229,0.45);
+    outline-offset: 3px;
   }
 
   /* ─── HERO SECTION ─────────────────────────────────────────── */
@@ -212,30 +252,40 @@
   }
   .hero-logo img { width: 48px; height: 48px; }
 
-  .hero h1 {
+  .hero-content h1 {
     font-size: clamp(32px, 6vw, 42px);
     font-weight: 800;
-    letter-spacing: -1.2px;
+    letter-spacing: 0;
     margin-bottom: 6px;
     color: var(--text);
     line-height: 1.15;
   }
-  .hero .tagline {
+  .hero-content .tagline {
     font-size: 17px;
     color: var(--accent-strong);
     font-weight: 600;
     margin-bottom: 8px;
   }
-  .hero .sub {
+  .hero-content .sub {
     font-size: 15px;
     color: var(--text-dim);
     max-width: 420px;
     margin: 0 auto 32px;
   }
 
+  .hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+
   /* CTA principal con glow pulsante */
   .btn-enter {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     padding: 17px 48px;
     border-radius: 30px;
     background: var(--gradient);
@@ -246,6 +296,8 @@
     box-shadow: 0 6px 28px rgba(91,134,229,0.38);
     transition: transform 0.2s, box-shadow 0.3s;
     position: relative;
+    min-height: 54px;
+    touch-action: manipulation;
   }
   .btn-enter::after {
     content: '';
@@ -262,12 +314,56 @@
   .btn-enter:hover::after { opacity: 0.6; }
   .btn-enter:active { transform: scale(0.96); }
 
+  .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 54px;
+    padding: 15px 22px;
+    border-radius: 30px;
+    background: rgba(255,255,255,0.68);
+    color: var(--accent-strong);
+    font-size: 15px;
+    font-weight: 700;
+    text-decoration: none;
+    border: 1px solid rgba(91,134,229,0.18);
+    box-shadow: 0 4px 18px rgba(91,134,229,0.1);
+  }
+  @media (prefers-color-scheme: dark) {
+    .btn-secondary {
+      background: rgba(255,255,255,0.06);
+      border-color: rgba(255,255,255,0.1);
+    }
+  }
+
+  .hero-proof-strip {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    max-width: 520px;
+    margin: 0 auto;
+  }
+  .hero-proof-strip span {
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.62);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    font-size: 11.5px;
+    font-weight: 700;
+  }
+  @media (prefers-color-scheme: dark) {
+    .hero-proof-strip span { background: rgba(255,255,255,0.06); }
+  }
+
   /* ─── VIDEO SHOWCASE ────────────────────────────────────────── */
   .video-section {
     max-width: 560px;
     margin: 0 auto;
     padding: 6px 24px 44px;
     text-align: center;
+    overflow: hidden;
   }
   .video-eyebrow {
     font-size: 12px;
@@ -283,7 +379,7 @@
   .video-section h2 {
     font-size: clamp(22px, 5vw, 28px);
     font-weight: 800;
-    letter-spacing: -0.8px;
+    letter-spacing: 0;
     margin-bottom: 22px;
     line-height: 1.2;
     opacity: 0;
@@ -381,7 +477,6 @@
     font-size: 12.5px;
     color: var(--text-dim);
     margin-top: 16px;
-    opacity: 0.8;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -476,7 +571,7 @@
     font-size: 32px;
     font-weight: 800;
     color: #cc5252;
-    letter-spacing: -0.5px;
+    letter-spacing: 0;
   }
   .calc-result .loss-label {
     font-size: 13px;
@@ -494,7 +589,6 @@
     color: var(--text-dim);
     text-align: center;
     margin-top: 10px;
-    opacity: 0.65;
   }
 
   /* ─── STATS ─────────────────────────────────────────────────── */
@@ -535,8 +629,8 @@
     align-items: flex-start;
     gap: 14px;
     transition: transform 0.2s, box-shadow 0.2s;
-    opacity: 0;
-    transform: translateY(20px);
+    opacity: 1;
+    transform: none;
     transition: opacity 0.5s, transform 0.5s, box-shadow 0.2s;
   }
   @media (prefers-color-scheme: dark) {
@@ -557,6 +651,200 @@
   }
   .feat h3 { font-size: 15px; font-weight: 700; margin-bottom: 3px; }
   .feat p { font-size: 13px; color: var(--text-dim); line-height: 1.5; }
+
+  /* ─── AI PROOF ──────────────────────────────────────────────── */
+  .ai-section,
+  .legal-section {
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 0 20px 34px;
+  }
+  .section-kicker {
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 1.8px;
+    text-transform: uppercase;
+    color: var(--legal);
+    text-align: center;
+    margin-bottom: 8px;
+  }
+  .ai-section h2,
+  .legal-section h2 {
+    font-size: clamp(22px, 5vw, 30px);
+    font-weight: 800;
+    letter-spacing: 0;
+    line-height: 1.17;
+    text-align: center;
+    margin-bottom: 18px;
+  }
+  .ai-showcase {
+    background: linear-gradient(145deg, rgba(255,255,255,0.78), rgba(255,255,255,0.52));
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    box-shadow: var(--shadow);
+  }
+  @media (prefers-color-scheme: dark) {
+    .ai-showcase {
+      background: linear-gradient(145deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04));
+    }
+  }
+  .ai-terminal {
+    background: #10131b;
+    border-radius: 14px;
+    padding: 14px;
+    color: #f4f7fb;
+    text-align: left;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
+  }
+  .ai-terminal-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .ai-terminal-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.4px;
+    color: #b9c6ff;
+  }
+  .ai-status {
+    font-size: 10.5px;
+    color: #78dba8;
+    font-weight: 800;
+  }
+  .ai-chat {
+    display: grid;
+    gap: 9px;
+  }
+  .ai-bubble {
+    max-width: 92%;
+    padding: 10px 12px;
+    border-radius: 14px;
+    font-size: 12.5px;
+    line-height: 1.45;
+  }
+  .ai-bubble.user {
+    justify-self: end;
+    background: #365de8;
+    color: #fff;
+    border-bottom-right-radius: 5px;
+  }
+  .ai-bubble.bot {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.92);
+    border-bottom-left-radius: 5px;
+  }
+  .ai-evidence {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .ai-evidence span {
+    min-height: 54px;
+    padding: 9px 10px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.07);
+    color: rgba(255,255,255,0.78);
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.35;
+  }
+  .ai-proof-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .ai-proof {
+    min-height: 104px;
+    border-radius: 14px;
+    background: rgba(255,255,255,0.64);
+    border: 1px solid var(--border);
+    padding: 12px 10px;
+    text-align: center;
+  }
+  @media (prefers-color-scheme: dark) {
+    .ai-proof { background: rgba(255,255,255,0.06); }
+  }
+  .ai-proof strong {
+    display: block;
+    font-size: 21px;
+    color: var(--accent-strong);
+    line-height: 1.1;
+    margin-bottom: 5px;
+  }
+  .ai-proof span {
+    display: block;
+    font-size: 11px;
+    color: var(--text-dim);
+    line-height: 1.35;
+    font-weight: 650;
+  }
+
+  /* ─── LEGAL ENGINE ─────────────────────────────────────────── */
+  .legal-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+  .legal-card {
+    background: var(--bg-card);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 15px 12px;
+    min-height: 130px;
+  }
+  .legal-card small {
+    display: block;
+    font-size: 10.5px;
+    color: var(--text-dim);
+    font-weight: 800;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .legal-card strong {
+    display: block;
+    font-size: 23px;
+    color: var(--legal);
+    letter-spacing: 0;
+    line-height: 1.05;
+    margin-bottom: 6px;
+  }
+  .legal-card span {
+    display: block;
+    font-size: 11.5px;
+    color: var(--text-dim);
+    line-height: 1.35;
+  }
+  .legal-note {
+    margin-top: 10px;
+    font-size: 11px;
+    color: var(--text-dim);
+    text-align: center;
+  }
+
+  .calc-ai-note {
+    margin-top: 12px;
+    padding: 11px 12px;
+    border-radius: 12px;
+    background: rgba(16,140,110,0.08);
+    color: var(--legal);
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.45;
+    text-align: left;
+  }
 
   /* ─── FAQ ACCORDION ─────────────────────────────────────────── */
   .faq-section {
@@ -664,6 +952,18 @@
   .footer a { color: var(--accent-strong); text-decoration: none; font-weight: 500; }
   .footer a:hover { text-decoration: underline; }
 
+  @media (max-width: 520px) {
+    .hero-wrapper { padding-top: 56px; }
+    .hero-actions { flex-direction: column; align-items: stretch; max-width: 320px; margin-left: auto; margin-right: auto; }
+    .btn-enter,
+    .btn-secondary { width: 100%; padding-left: 18px; padding-right: 18px; }
+    .ai-proof-grid,
+    .legal-grid { grid-template-columns: 1fr; }
+    .ai-proof { min-height: auto; text-align: left; display: grid; grid-template-columns: 58px 1fr; align-items: center; column-gap: 10px; }
+    .ai-proof strong { margin-bottom: 0; }
+    .legal-card { min-height: auto; }
+  }
+
   /* ─── REDUCED MOTION ────────────────────────────────────────── */
   @media (prefers-reduced-motion: reduce) {
     .particle { animation: none; display: none; }
@@ -672,10 +972,12 @@
     .feat:hover { transform: none; }
     .btn-enter::after { display: none; }
     .video-eyebrow, .video-section h2, .video-frame { opacity: 1; transform: none; }
+    html { scroll-behavior: auto; }
   }
 </style>
 </head>
 <body>
+<a class="skip-link" href="#main">Saltar al contenido</a>
 
 <script>
   // Solo redirigir si NO viene desde la app (sin parámetro ?show)
@@ -691,6 +993,8 @@
   })();
 </script>
 
+<main id="main">
+
 <!-- ═══════ HERO ═══════ -->
 <div class="hero-wrapper">
   <div class="hero-particles" aria-hidden="true">
@@ -700,12 +1004,20 @@
   </div>
   <div class="hero-content">
     <div class="hero-logo">
-      <img src="img/logo-mark.svg" alt="Mi Turno" draggable="false">
+      <img src="img/logo-mark.svg" alt="Mi Turno" width="48" height="48" draggable="false">
     </div>
     <h1>Tu salario real,<br>sin letra chica</h1>
     <div class="tagline">Colombia · Nómina inteligente</div>
     <p class="sub">Calculá cada turno con todos los recargos de ley. Sin internet, sin Excel, sin perder plata.</p>
-    <a href="/app" class="btn-enter">Calcular mi salario →</a>
+    <div class="hero-actions">
+      <a href="/app" class="btn-enter">Calcular mi salario →</a>
+      <a href="#aiProof" class="btn-secondary">Ver la IA por dentro</a>
+    </div>
+    <div class="hero-proof-strip" aria-label="Resumen técnico">
+      <span>IA local primero</span>
+      <span>Reglas legales por fecha</span>
+      <span>Sin anuncios ni tracking</span>
+    </div>
   </div>
 </div>
 
@@ -729,6 +1041,8 @@
         playsinline
         autoplay
         preload="none"
+        width="560"
+        height="315"
         aria-label="Video demostrativo de Mi Turno: registro de turnos, recargos automáticos y cálculo de salario">
         <source src="video/demo.mp4" type="video/mp4">
       </video>
@@ -744,11 +1058,11 @@
     <p class="calc-sub">Simulá un mes típico con recargos para ver la diferencia.</p>
     <div class="calc-row">
       <div class="calc-input-group">
-        <label>Tu salario base mensual</label>
-        <input type="number" id="calcSalario" value="1750905" min="500000" step="50000" placeholder="Ej: 1.750.905">
+        <label for="calcSalario">Tu salario base mensual</label>
+        <input type="number" id="calcSalario" value="1750905" min="500000" step="50000" inputmode="numeric" placeholder="Ej: 1.750.905">
       </div>
       <div class="calc-input-group">
-        <label>Tipo de jornada</label>
+        <label for="calcJornada">Tipo de jornada</label>
         <select id="calcJornada">
           <option value="diurna">Solo diurna (día)</option>
           <option value="mixta" selected>Mixta (más común)</option>
@@ -758,28 +1072,80 @@
     </div>
     <div class="calc-row">
       <div class="calc-input-group">
-        <label>Horas extra al mes</label>
-        <input type="number" id="calcExtras" value="12" min="0" max="80" step="1" placeholder="Ej: 12">
+        <label for="calcExtras">Horas extra al mes</label>
+        <input type="number" id="calcExtras" value="12" min="0" max="80" step="1" inputmode="numeric" placeholder="Ej: 12">
       </div>
       <div class="calc-input-group">
-        <label>Domingos/festivos trabajados</label>
-        <input type="number" id="calcFestivos" value="4" min="0" max="12" step="1" placeholder="Ej: 4">
+        <label for="calcFestivos">Domingos/festivos trabajados</label>
+        <input type="number" id="calcFestivos" value="4" min="0" max="12" step="1" inputmode="numeric" placeholder="Ej: 4">
       </div>
     </div>
     <div class="calc-result">
       <div class="loss-number" id="calcLoss">$ 352.000</div>
       <div class="loss-label">es lo que podrías estar dejando de recibir cada mes</div>
       <div class="gain-note" id="calcGain">💡 Con Mi Turno lo sabrías al instante</div>
+      <div class="calc-ai-note" id="calcAiNote">IA: separo base, nocturnos, extras y festivos para explicarte de dónde sale cada peso.</div>
     </div>
-    <p class="disclaimer">Estimación basada en Ley 2101/2021. No constituye asesoría legal.</p>
+    <p class="disclaimer">Estimación simplificada basada en Ley 2101/2021 y Ley 2466/2025. No constituye asesoría legal.</p>
   </div>
 </div>
+
+<!-- ═══════ AI PROOF ═══════ -->
+<section class="ai-section" id="aiProof" aria-labelledby="aiProofTitle">
+  <div class="section-kicker">IA verificable</div>
+  <h2 id="aiProofTitle">No es un chatbot pegado: es un agente de nómina</h2>
+  <div class="ai-showcase">
+    <div class="ai-terminal" aria-label="Ejemplo de respuesta del asistente de Mi Turno">
+      <div class="ai-terminal-top">
+        <div class="ai-terminal-title">● Mi Turno AI · local-first</div>
+        <div class="ai-status">sin exponer datos</div>
+      </div>
+      <div class="ai-chat">
+        <div class="ai-bubble user">¿Me están pagando bien este mes?</div>
+        <div class="ai-bubble bot">Reviso tus turnos, separo recargos y comparo contra lo que deberías recibir. Si hay diferencia, te digo qué parte mirar: nocturna, extra o dominical/festiva.</div>
+      </div>
+      <div class="ai-evidence">
+        <span>Usa tu historial real, no respuestas genéricas.</span>
+        <span>Explica fórmulas y recargos antes de recomendar.</span>
+      </div>
+    </div>
+    <div class="ai-proof-grid">
+      <div class="ai-proof"><strong>100/100</strong><span>benchmark interno de NLU para evitar regresiones</span></div>
+      <div class="ai-proof"><strong>0</strong><span>datos obligatorios en la nube para calcular turnos</span></div>
+      <div class="ai-proof"><strong>24/7</strong><span>asistente disponible incluso con mala señal</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ LEGAL ENGINE ═══════ -->
+<section class="legal-section" aria-labelledby="legalTitle">
+  <div class="section-kicker">Motor legal date-aware</div>
+  <h2 id="legalTitle">La ley cambia; el cálculo también</h2>
+  <div class="legal-grid">
+    <div class="legal-card">
+      <small>Jornada máxima hoy</small>
+      <strong id="legalHsem">--h</strong>
+      <span id="legalHsemNote">según la fecha actual del navegador</span>
+    </div>
+    <div class="legal-card">
+      <small>Dominical/festivo</small>
+      <strong id="legalFest">+--%</strong>
+      <span id="legalFestNote">recargo vigente por fecha del turno</span>
+    </div>
+    <div class="legal-card">
+      <small>Nocturno desde</small>
+      <strong id="legalNight">--:00</strong>
+      <span>cada minuto se clasifica según su hora real</span>
+    </div>
+  </div>
+  <p class="legal-note" id="legalNext">Mi Turno no congela porcentajes: calcula cada turno con la regla vigente ese día.</p>
+</section>
 
 <!-- ═══════ STATS ═══════ -->
 <div class="stats">
   <div>
     <div class="stat-val" data-target="35">0%</div>
-    <div class="stat-lbl">promedio que un trabajador deja de recibir por no calcular recargos</div>
+    <div class="stat-lbl">recargo nocturno base que el motor detecta por minuto</div>
   </div>
   <div>
     <div class="stat-val">100%</div>
@@ -795,7 +1161,7 @@
 <div class="features">
   <div class="feat">
     <div class="feat-ico">⚖️</div>
-    <div><h3>Cálculos con respaldo legal</h3><p>Recargos nocturnos (+35%), dominicales y festivos (+75%), horas extra y sus combinaciones. Todo según el CST colombiano y la Ley 2101/2021.</p></div>
+    <div><h3>Cálculos con respaldo legal</h3><p>Recargos nocturnos (+35%), dominicales y festivos por fecha (75→80→90→100%), horas extra y combinaciones. Todo según el CST colombiano, Ley 2101/2021 y Ley 2466/2025.</p></div>
   </div>
   <div class="feat">
     <div class="feat-ico">📡</div>
@@ -803,7 +1169,7 @@
   </div>
   <div class="feat">
     <div class="feat-ico">🤖</div>
-    <div><h3>Asistente IA local</h3><p>Preguntale "¿cuánto gané hoy?" o "¿cómo voy vs el mes pasado?". Responde al instante, sin enviar tus datos a ningún servidor.</p></div>
+    <div><h3>Asistente IA local-first</h3><p>Preguntale "¿cuánto gané hoy?", "¿me pagan bien?" o "¿cómo voy vs el mes pasado?". El motor principal razona con tus datos locales y la nube es opcional.</p></div>
   </div>
   <div class="feat">
     <div class="feat-ico">📱</div>
@@ -822,7 +1188,8 @@
 <!-- ═══════ TRUST BADGES ═══════ -->
 <div class="trust-section">
   <div class="trust-badge"><span class="badge-icon">🔒</span> Sin tracking ni anuncios</div>
-  <div class="trust-badge"><span class="badge-icon">🇨🇴</span> Ley 2101/2021</div>
+  <div class="trust-badge"><span class="badge-icon">🇨🇴</span> Ley 2101 + 2466</div>
+  <div class="trust-badge"><span class="badge-icon">🤖</span> IA local-first</div>
   <div class="trust-badge"><span class="badge-icon">✅</span> Auditado WCAG AA</div>
   <div class="trust-badge"><span class="badge-icon">📵</span> 100% offline</div>
 </div>
@@ -840,7 +1207,7 @@
   </details>
   <details class="faq-item">
     <summary>¿Qué leyes aplica para los cálculos? <span class="faq-arrow">▼</span></summary>
-    <div class="faq-answer">Aplica el Código Sustantivo del Trabajo (Art. 168–171) para recargos y la Ley 2101 de 2021 para la reducción gradual de la jornada semanal (de 48h a 42h).</div>
+    <div class="faq-answer">Aplica el Código Sustantivo del Trabajo para recargos, la Ley 2101 de 2021 para la reducción gradual de la jornada semanal y la Ley 2466 de 2025 para cambios de dominical/festivo y jornada nocturna.</div>
   </details>
   <details class="faq-item">
     <summary>¿Mis datos están seguros? <span class="faq-arrow">▼</span></summary>
@@ -862,7 +1229,7 @@
       <a href="https://github.com/aedincen-rgb/mi-turno-BETA/releases/latest/download/app-release-signed.apk" class="btn-download" id="btnDownload" style="display:inline-block;padding:13px 28px;border-radius:26px;background:linear-gradient(135deg,#34c759,#30b350);color:#fff;font-size:15px;font-weight:700;text-decoration:none;box-shadow:0 4px 16px rgba(52,199,89,0.3);transition:transform 0.2s,box-shadow 0.2s;">
         ⬇️ Descargar APK · 1.6 MB
       </a>
-      <p style="font-size:10.5px;color:var(--text-dim);margin-top:12px;opacity:0.65;">También disponible como PWA desde el navegador · v236</p>
+      <p style="font-size:10.5px;color:var(--text-dim);margin-top:12px;opacity:0.65;">También disponible como PWA desde el navegador · <span data-app-version>versión actual</span></p>
     </div>
   </div>
 </div>
@@ -888,8 +1255,10 @@
 <div class="footer">
   <a href="/privacy.html">Política de privacidad</a> · 
   <a href="mailto:aedincen@gmail.com">Contacto</a> · 
-  Hecho en Colombia 🇨🇴 · v236
+  Hecho en Colombia 🇨🇴 · <span data-app-version>versión actual</span>
 </div>
+
+</main>
 
 <!-- ═══════ SCRIPTS ═══════ -->
 <script>
@@ -903,19 +1272,43 @@
   var festInput = document.getElementById('calcFestivos');
   var lossEl = document.getElementById('calcLoss');
   var gainEl = document.getElementById('calcGain');
+  var aiNoteEl = document.getElementById('calcAiNote');
 
-  // Factores de recargo (simplificados para la landing)
-  var FACTORES = {
-    diurna:  { noct: 0.0,  fest: 1.75, extra: 1.25, extraNoct: 1.75, extraFest: 2.0 },
-    mixta:   { noct: 0.35, fest: 1.75, extra: 1.25, extraNoct: 1.75, extraFest: 2.0 },
-    nocturna:{ noct: 0.35, fest: 2.10, extra: 1.75, extraNoct: 1.75, extraFest: 2.0 }
+  // Perfil simplificado para la landing. El motor real de la app calcula minuto a minuto.
+  var JORNADAS = {
+    diurna:   { pctNoct: 0,    extra: 1.25 },
+    mixta:    { pctNoct: 0.20, extra: 1.25 },
+    nocturna: { pctNoct: 0.55, extra: 1.75 }
   };
 
-  // Jornada semanal según Ley 2101 (2026: 44h a partir del 15 jun)
-  var HSEM_ACTUAL = 45; // antes del 15 jun 2026
+  function getLandingHSEM(fecha) {
+    var d = fecha instanceof Date ? fecha : new Date(fecha);
+    if (d >= new Date(2026, 6, 15)) return 42;
+    if (d >= new Date(2025, 6, 15)) return 44;
+    if (d >= new Date(2024, 6, 15)) return 46;
+    if (d >= new Date(2023, 6, 15)) return 47;
+    return 48;
+  }
+
+  function getLandingRecargoFestivo(fecha) {
+    var d = fecha instanceof Date ? fecha : new Date(fecha);
+    if (d >= new Date(2027, 6, 1)) return 1.0;
+    if (d >= new Date(2026, 6, 1)) return 0.9;
+    if (d >= new Date(2025, 6, 1)) return 0.8;
+    return 0.75;
+  }
+
+  function getLandingInicioNocturno(fecha) {
+    var d = fecha instanceof Date ? fecha : new Date(fecha);
+    return d >= new Date(2025, 11, 25) ? 19 : 21;
+  }
 
   function formatCOP(n) {
     return '$ ' + Math.round(n).toLocaleString('es-CO').replace(/,/g, '.');
+  }
+
+  function formatDateShort(d) {
+    return d.toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' });
   }
 
   function recalcular() {
@@ -923,21 +1316,20 @@
     var jornada = jornadaSelect.value;
     var hrsExtra = parseInt(extrasInput.value) || 0;
     var diasFest = parseInt(festInput.value) || 0;
+    var hoy = new Date();
+    var hsemActual = getLandingHSEM(hoy);
+    var festExtra = getLandingRecargoFestivo(hoy);
 
-    var vh = salario / (HSEM_ACTUAL * 4.33); // valor hora aprox
-    var f = FACTORES[jornada];
-
-    // Estimación: % de horas nocturnas según jornada
-    var pctNoct = jornada === 'nocturna' ? 0.55 : jornada === 'mixta' ? 0.20 : 0;
+    var vh = salario / (hsemActual * 4.33); // valor hora aprox
+    var f = JORNADAS[jornada] || JORNADAS.mixta;
 
     // Horas trabajadas al mes (asumiendo jornada completa)
-    var hrsMes = HSEM_ACTUAL * 4.33;
-    var hrsNoct = hrsMes * pctNoct;
-    var hrsDiur = hrsMes - hrsNoct;
+    var hrsMes = hsemActual * 4.33;
+    var hrsNoct = hrsMes * f.pctNoct;
 
     // Cálculo simplificado del recargo perdido
-    var recargoNoct = hrsNoct * vh * f.noct;
-    var recargoFest = diasFest * 8 * vh * (f.fest - 1);
+    var recargoNoct = hrsNoct * vh * 0.35;
+    var recargoFest = diasFest * 8 * vh * festExtra;
     var recargoExtra = hrsExtra * vh * (f.extra - 1);
 
     var totalPerdido = recargoNoct + recargoFest + recargoExtra;
@@ -956,6 +1348,64 @@
       gainEl.textContent = '✅ Estás bastante cerca del valor real. ¡Igual Mi Turno te ayuda a confirmarlo!';
       gainEl.style.color = '#52cc7c';
     }
+
+    if (aiNoteEl) {
+      var bits = [];
+      if (recargoNoct > 0) bits.push('nocturnos ' + formatCOP(recargoNoct));
+      if (recargoFest > 0) bits.push('dominical/festivo ' + formatCOP(recargoFest));
+      if (recargoExtra > 0) bits.push('extras ' + formatCOP(recargoExtra));
+      aiNoteEl.textContent = bits.length
+        ? 'IA: detectaría ' + bits.join(' · ') + ' y te mostraría la fórmula, no solo el total.'
+        : 'IA: si no hay recargos, te lo diría claro y te dejaría el valor hora listo para verificar.';
+    }
+  }
+
+  function actualizarMotorLegal() {
+    var hoy = new Date();
+    var legalHsem = document.getElementById('legalHsem');
+    var legalHsemNote = document.getElementById('legalHsemNote');
+    var legalFest = document.getElementById('legalFest');
+    var legalFestNote = document.getElementById('legalFestNote');
+    var legalNight = document.getElementById('legalNight');
+    var legalNext = document.getElementById('legalNext');
+    var festExtra = getLandingRecargoFestivo(hoy);
+    var night = getLandingInicioNocturno(hoy);
+
+    if (legalHsem) legalHsem.textContent = getLandingHSEM(hoy) + 'h';
+    if (legalHsemNote) legalHsemNote.textContent = 'Ley 2101/2021 · semana legal actual';
+    if (legalFest) legalFest.textContent = '+' + Math.round(festExtra * 100) + '%';
+    if (legalFestNote) legalFestNote.textContent = 'Ley 2466/2025 · dominical/festivo';
+    if (legalNight) legalNight.textContent = (night < 10 ? '0' : '') + night + ':00';
+
+    if (legalNext) {
+      var milestones = [
+        { d: new Date(2026, 6, 1), text: 'El 1 de julio de 2026 el recargo dominical/festivo sube a +90%.' },
+        { d: new Date(2026, 6, 15), text: 'El 15 de julio de 2026 la jornada máxima baja a 42h semanales.' },
+        { d: new Date(2027, 6, 1), text: 'El 1 de julio de 2027 el recargo dominical/festivo llega a +100%.' }
+      ];
+      var next = null;
+      for (var i = 0; i < milestones.length; i++) {
+        if (hoy < milestones[i].d) {
+          next = milestones[i];
+          break;
+        }
+      }
+      legalNext.textContent = next
+        ? 'Próximo cambio: ' + next.text
+        : 'Mi Turno no congela porcentajes: calcula cada turno con la regla vigente ese día.';
+    }
+  }
+
+  function pintarVersion() {
+    var nodes = document.querySelectorAll('[data-app-version]');
+    if (!nodes.length || typeof fetch !== 'function') return;
+    fetch('/version.json', { cache: 'no-store' })
+      .then(function(r) { return r.ok ? r.json() : null; })
+      .then(function(data) {
+        if (!data || !data.v) return;
+        nodes.forEach(function(n) { n.textContent = data.v; });
+      })
+      .catch(function(){});
   }
 
   salarioInput.addEventListener('input', recalcular);
@@ -965,6 +1415,8 @@
 
   // Calcular al cargar
   recalcular();
+  actualizarMotorLegal();
+  pintarVersion();
 
   // ── VIDEO SHOWCASE: reveal + lazy play/pause ─────────────────
   var videoSection = document.getElementById('videoSection');
