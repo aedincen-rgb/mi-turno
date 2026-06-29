@@ -114,6 +114,10 @@ function App(props) {
   var compactRef = useRef(false);
   compactRef.current = compact;
 
+  // Ref para leer el tab actual dentro del popstate handler sin stale closure
+  var tabRef = useRef('home');
+  tabRef.current = tab;
+
   // ── Lazy tabs: solo la activa y la previa se mantienen en DOM ──
   var mountedRef = useRef({ home: true });
   useEffect(
@@ -165,6 +169,35 @@ function App(props) {
       }
     },
     [syncPending]
+  );
+
+  // ── Gesto "volver" en Android (PWA): atrapar para no cerrar la app ──
+  useEffect(
+    function () {
+      // Crea la primera entrada de historial. Sin ella el primer gesto sale de la app.
+      history.pushState({ mt: 'app' }, '');
+
+      function onPopState() {
+        // Reinsertar la entrada de inmediato para que el siguiente gesto tampoco cierre.
+        history.pushState({ mt: 'app' }, '');
+        // Si hay un handler de modal registrado (bottom sheet abierto), invocarlo.
+        if (typeof window._mtHandleBack === 'function') {
+          window._mtHandleBack();
+          return;
+        }
+        // Si no estamos en home, volver a home.
+        if (tabRef.current !== 'home') {
+          setTab('home');
+        }
+        // Si ya estamos en home: el pushState de arriba absorbe el gesto, la app sigue abierta.
+      }
+
+      window.addEventListener('popstate', onPopState);
+      return function () {
+        window.removeEventListener('popstate', onPopState);
+      };
+    },
+    [] // solo al montar — el ref lee el tab fresco en cada evento
   );
 
   // ── BANNER DE CONEXIÓN · DOM directo (seguro, sin React) ──
