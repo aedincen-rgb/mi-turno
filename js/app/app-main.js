@@ -118,6 +118,19 @@ function App(props) {
   var tabRef = useRef('home');
   tabRef.current = tab;
 
+  // Dirección de animación al cambiar tab por swipe ('from-right' | 'from-left' | null)
+  var sadd = useState(null);
+  var swipeAnimDir = sadd[0],
+    setSwipeAnimDir = sadd[1];
+
+  function changeTabSwipe(newTab, dir) {
+    setSwipeAnimDir(dir);
+    setTab(newTab);
+    setTimeout(function () {
+      setSwipeAnimDir(null);
+    }, 300);
+  }
+
   // ── Lazy tabs: solo la activa y la previa se mantienen en DOM ──
   var mountedRef = useRef({ home: true });
   useEffect(
@@ -198,6 +211,79 @@ function App(props) {
       };
     },
     [] // solo al montar — el ref lee el tab fresco en cada evento
+  );
+
+  // ── Swipe horizontal entre tabs ──
+  useEffect(
+    function () {
+      var el = scrRef.current;
+      if (!el) return;
+      var x0 = 0,
+        y0 = 0,
+        isHoriz = null,
+        active = false;
+      var TAB_IDS = ['home', 'dashboard', 'ai', 'history', 'config'];
+      var THRESH = window.innerWidth * 0.25;
+
+      function onSwipeStart(ev) {
+        x0 = ev.touches[0].clientX;
+        y0 = ev.touches[0].clientY;
+        isHoriz = null;
+        active = true;
+      }
+      function onSwipeMove(ev) {
+        if (!active || isHoriz === false) return;
+        var dx = ev.touches[0].clientX - x0;
+        var dy = ev.touches[0].clientY - y0;
+        if (isHoriz === null && (Math.abs(dx) > 6 || Math.abs(dy) > 6)) {
+          isHoriz = Math.abs(dx) > Math.abs(dy);
+        }
+      }
+      function onSwipeEnd(ev) {
+        if (!active || !isHoriz) {
+          active = false;
+          isHoriz = null;
+          return;
+        }
+        active = false;
+        isHoriz = null;
+        var dx = ev.changedTouches[0].clientX - x0;
+        if (Math.abs(dx) < THRESH) return;
+        var idx = TAB_IDS.indexOf(tabRef.current);
+        if (idx < 0) return;
+        if (dx < 0) {
+          if (idx < TAB_IDS.length - 1) {
+            haptic && haptic();
+            changeTabSwipe(TAB_IDS[idx + 1], 'from-right');
+          }
+        } else {
+          if (tabRef.current === 'ai') {
+            if (typeof window._mtOpenAiMenu === 'function') {
+              haptic && haptic();
+              window._mtOpenAiMenu();
+            }
+          } else if (idx > 0) {
+            haptic && haptic();
+            changeTabSwipe(TAB_IDS[idx - 1], 'from-left');
+          }
+        }
+      }
+      function onSwipeCancel() {
+        active = false;
+        isHoriz = null;
+      }
+      el.addEventListener('touchstart', onSwipeStart, { passive: true });
+      el.addEventListener('touchmove', onSwipeMove, { passive: true });
+      el.addEventListener('touchend', onSwipeEnd, { passive: true });
+      el.addEventListener('touchcancel', onSwipeCancel, { passive: true });
+      return function () {
+        el.removeEventListener('touchstart', onSwipeStart);
+        el.removeEventListener('touchmove', onSwipeMove);
+        el.removeEventListener('touchend', onSwipeEnd);
+        el.removeEventListener('touchcancel', onSwipeCancel);
+      };
+    },
+    [] // refs son estables — el handler lee tabRef.current fresco en cada evento
   );
 
   // ── BANNER DE CONEXIÓN · DOM directo (seguro, sin React) ──
@@ -1272,7 +1358,10 @@ function App(props) {
       ),
       h(
         'main',
-        { className: 'tab-view', role: 'main' },
+        {
+          className: 'tab-view' + (swipeAnimDir ? ' swipe-' + swipeAnimDir : ''),
+          role: 'main'
+        },
         _lazy(
           'home',
           h(HomeTab, {

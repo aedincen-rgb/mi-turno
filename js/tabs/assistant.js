@@ -705,7 +705,12 @@ function AsistenteTab(props) {
 
   // Cleanup al desmontar el componente (evita memory leaks)
   useEffect(function () {
+    // Expone el menú lateral para que el swipe de app-main pueda abrirlo
+    window._mtOpenAiMenu = function () {
+      setMenuOpen(true);
+    };
     return function () {
+      window._mtOpenAiMenu = null;
       if (audioAnimRef.current) clearInterval(audioAnimRef.current);
       if (recognitionRef.current) {
         try {
