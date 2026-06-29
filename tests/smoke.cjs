@@ -2451,6 +2451,243 @@ group('ai: cierre enfocado / progressive disclosure (una sola CTA)');
   eq(w.aiFocusClose(medio), medio, 'no toca preguntas que no son el bloque de cierre');
 })();
 
+// ══════════════════════════════════════════════════════════════
+//  SUITE: chips precargados + lógica de "sí" + chips post-respuesta
+// ══════════════════════════════════════════════════════════════
+
+// Estado con datos para todos los tests de respuesta de chips.
+// Construido aquí para no depender de _stMeta (que vive en otra closure).
+var _stChips = (function () {
+  var ds = [
+    mkTurno(primerDomingo(_hoy.getFullYear(), _hoy.getMonth()), 8),
+    mkTurno(primerDiaNoFestivo(_hoy.getFullYear(), _hoy.getMonth()), 8)
+  ];
+  return {
+    turnos: ds, turnosAll: ds,
+    calc: w.doCalc(ds, null, new Date(), 10000),
+    vh: 10000, salario: 2400000,
+    session: { uid: 'u-chips', email: 'chips@x.com' }
+  };
+})();
+
+// ── A. Chips precargados de la pantalla vacía ────────────────────
+group('chips precargados: respuestas no vacías y sin placeholder');
+(function () {
+  var chipQueries = [
+    '¿Cuánto gané hoy?',
+    '¿Cuánto gané ayer?',
+    '¿Cuánto gané este mes?',
+    'Proyección al cierre',
+    'Revisá si mi pago está correcto'
+  ];
+  var PLACEHOLDER_GUARD = 'Procesando acción';
+
+  for (var ci = 0; ci < chipQueries.length; ci++) {
+    w.aiResetConv();
+    var cr = w.aiAnswer(chipQueries[ci], _stChips);
+    var ct = respText(cr);
+    truthy(
+      ct && ct.trim().length > 0,
+      'chip "' + chipQueries[ci] + '" no devuelve vacío'
+    );
+    truthy(
+      ct.indexOf(PLACEHOLDER_GUARD) < 0,
+      'chip "' + chipQueries[ci] + '" no filtra placeholder "Procesando acción"'
+    );
+  }
+
+  // "Revisá si mi pago está correcto" debe llegar al auditor (no al fallback genérico)
+  w.aiResetConv();
+  var rAudit = respText(w.aiAnswer('Revisá si mi pago está correcto', _stChips));
+  truthy(
+    rAudit.indexOf('No estoy seguro') < 0,
+    '"Revisá si mi pago está correcto" no cae al fallback genérico'
+  );
+  truthy(
+    rAudit.indexOf('pago') >= 0 || rAudit.indexOf('auditoría') >= 0 ||
+    rAudit.indexOf('turno') >= 0 || rAudit.indexOf('correcto') >= 0 ||
+    rAudit.indexOf('mes') >= 0 || rAudit.indexOf('calculé') >= 0,
+    '"Revisá si mi pago" produce respuesta sobre pagos/turnos (auditoría alcanzada)'
+  );
+})();
+
+// ── B. Lógica de "sí" después de un follow-up de la IA ──────────
+group('"sí" después de sugerencia: ejecuta la acción, no devuelve fallback');
+(function () {
+  // Paso 1: hacer una consulta que registre una sugerencia en lastSuggestion.
+  // _aiPickFollowUp() registra en _aiMemory.lastSuggestion — usamos el flujo
+  // de proyección que suele ofrecer follow-ups.
+  w.aiResetConv();
+  if (typeof w.aiClearMemory === 'function') w.aiClearMemory();
+
+  // Simular que la IA ofreció una sugerencia (como hace _aiPickFollowUp)
+  // Esto reproduce el escenario real: el asistente pregunta "¿Querés la
+  // proyección?" y el usuario dice "sí".
+  if (typeof w._aiMemory !== 'undefined' && w._aiMemory) {
+    w._aiMemory.lastSuggestion = {
+      intent: 'proyeccion',
+      query: 'proyección al cierre del mes',
+      text: '¿Querés que calcule la proyección al cierre?'
+    };
+    var rSi = respText(w.aiAnswer('sí', _stChips));
+    truthy(
+      rSi.indexOf('No estoy seguro') < 0,
+      '"sí" con sugerencia activa NO cae al fallback "No estoy seguro"'
+    );
+    truthy(
+      rSi.length > 0,
+      '"sí" con sugerencia activa produce respuesta no vacía'
+    );
+  }
+
+  // Paso 2: "sí" sin sugerencia activa → ack conversacional, NO fallback genérico.
+  // Este es el bug real: antes caía a "🤔 No estoy seguro de qué buscas"
+  // porque la regex de acknowledgments no incluía 'si'. Fix en ai.js.
+  w.aiResetConv();
+  if (typeof w.aiClearMemory === 'function') w.aiClearMemory();
+  if (typeof w._aiMemory !== 'undefined' && w._aiMemory) {
+    w._aiMemory.lastSuggestion = null;
+  }
+  var _stSiVacio = {
+    turnos: [], turnosAll: [],
+    calc: w.doCalc([], null, new Date(), 0),
+    vh: 0, salario: 0,
+    session: { uid: 'u-si', email: 'si@x.com' }
+  };
+  var rSiSolo = respText(w.aiAnswer('sí', _stSiVacio));
+  truthy(
+    typeof rSiSolo === 'string',
+    '"sí" sin sugerencia activa devuelve string (no explota)'
+  );
+  truthy(
+    rSiSolo.indexOf('No estoy seguro') < 0,
+    '"sí" sin sugerencia NO cae al fallback genérico "No estoy seguro" (fix del bug)'
+  );
+  // "si" sin tilde también debe ser ack
+  w.aiResetConv();
+  if (typeof w._aiMemory !== 'undefined' && w._aiMemory) w._aiMemory.lastSuggestion = null;
+  var rSiSinTilde = respText(w.aiAnswer('si', _stSiVacio));
+  truthy(
+    rSiSinTilde.indexOf('No estoy seguro') < 0,
+    '"si" sin tilde tampoco cae al fallback genérico'
+  );
+})();
+
+// ── C. "aiCheckFollowUp": el mecanismo de resolución de follow-ups ──
+group('aiCheckFollowUp: mecanismo de resolución de "sí"');
+(function () {
+  if (typeof w.aiCheckFollowUp !== 'function') {
+    truthy(false, 'aiCheckFollowUp existe como función');
+    return;
+  }
+  // Sin sugerencia activa → null
+  if (typeof w._aiMemory !== 'undefined' && w._aiMemory) {
+    w._aiMemory.lastSuggestion = null;
+    eq(w.aiCheckFollowUp('sí'), null, 'sin lastSuggestion → null (no inventa)');
+    eq(w.aiCheckFollowUp('si'), null, 'sin lastSuggestion "si" → null');
+
+    // Con sugerencia → devuelve el intent correcto
+    w._aiMemory.lastSuggestion = {
+      intent: 'ahorro',
+      query: '¿cuánto me falta para la meta?',
+      text: '¿Querés que calcule el plan de ahorro?'
+    };
+    var fuIntent = w.aiCheckFollowUp('sí');
+    truthy(fuIntent !== null, '"sí" con sugerencia devuelve intent (no null)');
+
+    // La sugerencia se consume (no se repite)
+    eq(w.aiCheckFollowUp('sí'), null, 'la sugerencia se consume en la primera respuesta');
+
+    // Respuestas afirmativas variadas también resuelven
+    w._aiMemory.lastSuggestion = {
+      intent: 'proyeccion',
+      query: 'proyección al cierre',
+      text: '¿Querés la proyección?'
+    };
+    truthy(w.aiCheckFollowUp('dale') !== null, '"dale" también resuelve la sugerencia');
+
+    // Restaurar estado limpio
+    w._aiMemory.lastSuggestion = null;
+  }
+})();
+
+// ── D. Chips post-respuesta no repiten el intent actual ──────────
+group('chips post-respuesta: no repiten el intent ya respondido');
+(function () {
+  if (typeof w.aiNextChips !== 'function') return;
+
+  var cNext = {
+    vh: 10000, totalCOP: 500000, festMins: 480,
+    nocturnasMins: 120, totalCOPMesPasado: 400000
+  };
+
+  // Para intent "total_ganado", los chips de abrir NO deben ser "total_ganado"
+  w.aiConvReset();
+  var baseActions = [{ label: 'Desglose', query: 'distribución de recargos' }];
+  var rNext = w.aiNextChips('total_ganado', cNext, baseActions);
+  if (rNext && rNext.actions) {
+    var hasRepeat = false;
+    rNext.actions.forEach(function (a) {
+      // "cuánto gané este mes" y "cuánto llevo" son el mismo intent
+      if (a.query && (
+        a.query.indexOf('cuánto llevo') >= 0 ||
+        a.query.indexOf('cuanto llevo') >= 0 ||
+        a.query.indexOf('este mes') >= 0
+      )) {
+        hasRepeat = true;
+      }
+    });
+    truthy(!hasRepeat, 'chips post-respuesta no ofrecen "este mes" al responder total_ganado');
+    truthy(rNext.actions.length <= 3, 'dosificación: ≤ 3 chips post-respuesta');
+  }
+
+  // Para "saludo": el motor no lo toca (retorna null)
+  truthy(w.aiNextChips('saludo', cNext, baseActions) === null,
+    'saludo: aiNextChips devuelve null (no pisa los chips de onboarding)');
+})();
+
+// ── E. Número aislado "1500000" en contexto de salary-setup ─────
+group('flujo salary-setup: número aislado se procesa como salario (no query nueva)');
+(function () {
+  // Simular contexto: la IA preguntó "¿cuánto ganás al mes?" y registró
+  // una sugerencia de tipo configurar_salario. El usuario responde "1500000".
+  if (typeof w._aiMemory !== 'undefined' && w._aiMemory) {
+    w._aiMemory.lastSuggestion = {
+      intent: 'configurar_salario',
+      query: '¿cuánto ganás al mes?',
+      text: '¿Cuánto ganás al mes? Decime el monto para configurar tu salario.'
+    };
+  }
+  // El NLP no debe clasificar "1500000" como total_ganado; debe ir a configurar_salario
+  var nlpNum = w.aiClassifyIntent('1500000');
+  truthy(
+    nlpNum && nlpNum.confidence < 0.5,
+    '"1500000" solo → confianza baja (no es una query de datos)'
+  );
+  // Restaurar
+  if (typeof w._aiMemory !== 'undefined' && w._aiMemory) {
+    w._aiMemory.lastSuggestion = null;
+  }
+
+  // El handler de configurar_salario debe reconocer un número grande como salario
+  var stSalario = {
+    turnos: [], turnosAll: [],
+    calc: w.doCalc([], null, new Date(), 0),
+    vh: 0, salario: 0,
+    session: { uid: 'u-sal', email: 'sal@x.com' }
+  };
+  w.aiResetConv();
+  var rSalario = w.aiAnswer('mi salario es 1500000', stSalario);
+  var tSalario = respText(rSalario);
+  truthy(
+    (rSalario && rSalario.execute && rSalario.execute.type === 'SET_SALARY') ||
+    tSalario.indexOf('1.500.000') >= 0 ||
+    tSalario.indexOf('salario') >= 0 ||
+    tSalario.indexOf('guardar') >= 0,
+    '"mi salario es 1500000" produce SET_SALARY o confirma el monto'
+  );
+})();
+
 // ── hashPassword / verifyPassword (PBKDF2 + salt, v49) ──────────
 group('password-hash (PBKDF2 con salt)');
 (async function () {

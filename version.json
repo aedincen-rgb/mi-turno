@@ -1,4 +1,4 @@
 {
-  "v": "v360",
-  "label": "IA: saludo motivacional primero — quita + y círculo"
+  "v": "v361",
+  "label": "fix bug si/sí → ack + tests chips precargados y flujo conversacional"
 }

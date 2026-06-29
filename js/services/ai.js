@@ -4402,9 +4402,14 @@ function _aiAnswerCore(question, state) {
     ];
     return _gracOpts[Math.floor(Math.random() * _gracOpts.length)];
   }
-  // Acknowledgments cortos — "ok", "dale", "listo", "perfecto" solos
+  // Acknowledgments cortos — "ok", "dale", "listo", "perfecto", "si" solos.
+  // "si" y "sí" (normalizado a "si") se incluyen aquí: sin lastSuggestion activa
+  // no son confirmaciones a nada concreto — son acknowledgments conversacionales.
+  // El regex ancla inicio y fin para no atrapar "si trabajara" ni "si me pagaran".
   if (
-    /^(ok|dale|listo|bueno|va|vamos|sisas|claro|entendido|perfecto|genial|excelente)\.?!?$/.test(t)
+    /^(si|ok|dale|listo|bueno|va|vamos|sisas|claro|entendido|perfecto|genial|excelente|sip|obvio|porfa|porfi)\.?!?$/.test(
+      t
+    )
   ) {
     var _ackOpts = ['Con gusto 💪', 'Acá estoy si necesitás algo más.', '¿En qué más te ayudo?'];
     return _ackOpts[Math.floor(Math.random() * _ackOpts.length)];
