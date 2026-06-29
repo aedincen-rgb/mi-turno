@@ -37,11 +37,11 @@ function _aiNombrePersonal(props) {
   return '';
 }
 
-// ── Micro-reconocimiento psicológico laboral con personalización ──
-// Frases contextuales basadas en evidencia: reconocimiento específico
-// (qué hiciste), refuerza el esfuerzo, mezcla condicional + incondicional.
-// Cuando hay un nombre personal disponible, lo intercala de forma natural
-// — no en todas las frases, para no parecer cliché.
+// ── Micro-frases motivacionales personalizadas (v360) ──
+// Filosofía: 70% motivacional · 30% dato como prueba del esfuerzo.
+// Frases cortas (≤ 70 chars), sin emojis innecesarios, muy variadas.
+// Metodología: PERMA (Seligman) + Aprecio Específico + Micro-afirmaciones.
+// El dato financiero aparece solo como evidencia, nunca como titular.
 function _aiHeroPhrases(props) {
   var c = props.calc || {};
   var bd = c.bd || {};
@@ -63,18 +63,14 @@ function _aiHeroPhrases(props) {
   var isLunes = diaSemana === 1;
   var isViernes = diaSemana === 5;
 
-  // Nombre personal (puede ser vacío)
   var nm = _aiNombrePersonal(props);
-  // Helper: prefija el nombre con coma si existe ("Pipe, ..."), si no devuelve la frase tal cual
   function n(frase) {
     return nm ? nm + ', ' + frase : frase.charAt(0).toUpperCase() + frase.slice(1);
   }
-  // Helper: saludo natural — "Hola pipe" o "Hola"
   function hola() {
     return nm ? 'Hola ' + nm : 'Hola';
   }
 
-  // Duración del turno activo en minutos
   var durActualMins = activo ? Math.round((ahora - new Date(activo.inicio)) / 60000) : 0;
 
   // Horas semanales acumuladas
@@ -97,8 +93,6 @@ function _aiHeroPhrases(props) {
   }
   var extraMins =
     _mins('extraDiurna') + _mins('extraNoct') + _mins('extraFestDiur') + _mins('extraFestNoct');
-  var festMins =
-    _mins('diurnaFest') + _mins('noctFest') + _mins('extraFestDiur') + _mins('extraFestNoct');
   var noctMins = _mins('noctOrd') + _mins('extraNoct') + _mins('noctFest') + _mins('extraFestNoct');
 
   // Días trabajados del mes (turnos cerrados, días únicos)
@@ -111,9 +105,7 @@ function _aiHeroPhrases(props) {
   });
   var diasTrab = Object.keys(diasSet).length;
 
-  // ── Racha consecutiva de días trabajados (anti-burnout) ──
-  // Cuenta hacia atrás desde ayer (o hoy si ya hubo turno) cuántos
-  // días seguidos hay un turno cerrado, hasta que aparezca un día vacío.
+  // Racha consecutiva de días trabajados
   function _diaKey(d) {
     return d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate();
   }
@@ -123,14 +115,13 @@ function _aiHeroPhrases(props) {
     if (diasSet[_diaKey(cursor)]) {
       rachaSeguidos++;
       cursor.setDate(cursor.getDate() - 1);
-      if (rachaSeguidos > 30) break; // tope de seguridad
+      if (rachaSeguidos > 30) break;
     } else {
       break;
     }
   }
 
-  // ── Mejor día del mes (récord personal de COP en un día) ──
-  // Solo lo calculamos si hay calcPorDia disponible globalmente.
+  // Récord personal del mes
   var mejorDiaCOP = 0;
   var mejorDiaEsHoy = false;
   try {
@@ -152,388 +143,226 @@ function _aiHeroPhrases(props) {
     }
   } catch (_) {}
 
-  // ── Sin datos aún → frases de arranque
+  // ── Sin datos aún → frases de arranque ──
   if (totalMins <= 0 && !activo) {
     if (nm) {
       return [
-        hola() + '. Cuando estés listo, toca Iniciar y empezamos juntos. ✦',
+        hola() + '. Cuando estés listo, arrancamos juntos.',
         n('aquí empieza todo. Tu primer turno está a un toque.'),
-        nm + ', cada turno que registres se calcula automático — sin Excel, sin cuentas.',
-        'Listos cuando vos digás, ' + nm.toLowerCase() + '. El primer paso es el más importante.'
+        n('cada turno que registrés lo calculo automático.'),
+        'El primer paso es el que más vale, ' + nm.toLowerCase() + '.'
       ];
     }
     return [
-      'Aquí empieza todo. Toca Iniciar y el resto corre por mi cuenta.',
-      'Listo para calcular tus recargos en tiempo real, turno a turno.',
-      'Tu primer registro está a un toque. Cuando quieras, arrancamos.'
+      'Aquí empieza todo. Tocá Iniciar y yo me encargo.',
+      'Tu primer turno está a un toque. Cuando quieras, vamos.',
+      'Listo para calcular tus recargos en tiempo real.'
     ];
   }
 
   var f = [];
 
-  // ══════ 1. SALUDO POR HORA + DÍA (incondicional, cálido) ══════
+  // ══ 1. PRESENCIA POR HORA (siempre) ══
   if (isMadrugada) {
-    if (activo)
-      f.push(
-        n(
-          'a esta hora hay pocos como vos. Llevás ' +
-            fDur(durActualMins) +
-            ' — gracias por estar acá.'
-        )
-      );
-    else
-      f.push(
-        nm
-          ? hola() + '. Madrugada acompañándote. Lo que registres ahora vale más.'
-          : 'Madrugada. A esta hora cada minuto cuenta el doble.'
-      );
-  } else if (hora >= 5 && hora < 9) {
-    f.push(
-      nm
-        ? hola() + ', buenos días ☀️. El día apenas arranca y vos ya estás acá.'
-        : 'Buenos días. El día apenas arranca y vos ya estás acá.'
-    );
-  } else if (hora >= 9 && hora < 12) {
-    f.push(
-      nm
-        ? n('buen día. La mañana avanza y tu esfuerzo también.')
-        : 'Buen día. La mañana avanza y tu esfuerzo también.'
-    );
-  } else if (hora >= 12 && hora < 14) {
-    f.push(
-      nm
-        ? hola() + '. Mediodía — recordá comer algo, eso también cuenta.'
-        : 'Mediodía. Recordá comer algo, eso también cuenta.'
-    );
-  } else if (hora >= 14 && hora < 18) {
-    if (activo)
-      f.push(n('buenas tardes. Llevás ' + fDur(durActualMins) + ' en este turno — buen ritmo.'));
-    else
-      f.push(
-        nm
-          ? hola() + ', buenas tardes. Tu día de hoy ya quedó registrado.'
-          : 'Buenas tardes. Tu día de hoy ya quedó registrado.'
-      );
-  } else if (hora >= 18 && hora < 21) {
-    f.push(
-      nm
-        ? n('el atardecer y vos seguís dándole. Eso se llama disciplina.')
-        : 'El atardecer y vos seguís dándole. Eso se llama disciplina.'
-    );
-  } else {
-    // 21–23
-    f.push(
-      nm
-        ? hola() + '. Trabajar a esta hora pesa — el +35% nocturno ya está corriendo.'
-        : 'Buenas noches. Trabajar a esta hora pesa — el +35% nocturno ya está corriendo.'
-    );
-  }
-
-  // ══════ 2. DURACIÓN DEL TURNO ACTIVO (refuerzo específico) ══════
-  if (activo && durActualMins > 0) {
-    if (durActualMins < 30) {
-      f.push(n('recién arrancás. Cada minuto desde ahora queda registrado.'));
-    } else if (durActualMins < 60) {
-      f.push('Turno en marcha. Vamos juntos en esto' + (nm ? ', ' + nm.toLowerCase() : '') + '.');
-    } else if (durActualMins < 180) {
-      var hA = Math.floor(durActualMins / 60);
-      f.push(
-        (hA === 1 ? '1 hora' : hA + ' horas') +
-          ' seguidas' +
-          (nm ? ', ' + nm.toLowerCase() : '') +
-          ' — el foco está ahí.'
-      );
-    } else if (durActualMins < 300) {
-      f.push(
-        nm
-          ? nm + ', llevás ' + fDur(durActualMins) + ' sin parar. Eso es constancia pura.'
-          : 'Llevás ' + fDur(durActualMins) + ' sin parar. Eso es constancia pura.'
-      );
-    } else if (durActualMins < 480) {
-      f.push(
-        n('llevás ' + fDur(durActualMins) + '. Si necesitás un respiro, tomalo — te lo merecés.')
-      );
-    } else if (durActualMins < 600) {
-      f.push(n('8 horas en este turno. Jornada completa. Lo que sigue ya se paga como extra. 💪'));
-    } else if (durActualMins < 720) {
-      f.push(
-        nm
-          ? nm +
-              ', ' +
-              fDur(durActualMins) +
-              ' seguidas… esto es de otro nivel. Cuidate también, ¿sí?'
-          : fDur(durActualMins) + ' seguidas. Esto es de otro nivel. Cuidate también, ¿sí?'
-      );
+    if (activo) {
+      f.push(n('a esta hora hay pocos como vos.'));
+      f.push(n('madrugada de turno. Estoy acá contigo.'));
     } else {
-      f.push(
-        n(
-          'más de 12 horas en este turno. Por favor, descansá pronto. Tu cuerpo te lo va a agradecer.'
-        )
-      );
+      f.push(nm ? hola() + '. Madrugada — buen momento para revisar.' : 'Madrugada. Estoy acá.');
+      f.push(n('hasta a esta hora el trabajo cuenta. Bien.'));
+    }
+  } else if (hora >= 5 && hora < 9) {
+    f.push(n('el día arranca y vos ya estás. Eso vale.'));
+    f.push(n('mañana temprano y en pie. Se nota el compromiso.'));
+  } else if (hora >= 9 && hora < 12) {
+    f.push(n('buen ritmo esta mañana. Seguimos.'));
+    f.push(n('la mañana avanza bien — y vos con ella.'));
+  } else if (hora >= 12 && hora < 14) {
+    f.push(nm ? hola() + '. Mediodía — seguís firme.' : 'Mediodía y seguís firme. Eso habla bien.');
+    f.push(n('mitad del día y sin parar. Eso es ritmo.'));
+  } else if (hora >= 14 && hora < 18) {
+    if (activo) {
+      f.push(n('buenas tardes. El turno avanza bien.'));
+    } else {
+      f.push(n('buenas tardes. Lo de hoy ya quedó registrado.'));
+    }
+    f.push(n('tarde activa. Lo que hiciste hoy ya es tuyo.'));
+  } else if (hora >= 18 && hora < 21) {
+    f.push(n('el atardecer y seguís dándole. Eso es disciplina.'));
+    f.push(n('hora pico de turnos — y vos ya tenés el tuyo.'));
+  } else {
+    if (activo) {
+      f.push(n('noche de turno — el recargo ya corre a tu favor.'));
+      f.push(n('turno nocturno en curso. Estoy acá.'));
+    } else {
+      f.push(n('trabajar a esta hora pesa. Tu dedicación se nota.'));
+      f.push(n('la noche también forma parte de tu esfuerzo.'));
     }
   }
 
-  // ══════ 3. HORAS SEMANALES ══════
+  // ══ 2. TURNO ACTIVO ══
+  if (activo && durActualMins > 0) {
+    if (durActualMins < 30) {
+      f.push(n('recién arrancás. Cada minuto queda registrado.'));
+    } else if (durActualMins < 60) {
+      f.push('Turno en marcha' + (nm ? ', ' + nm.toLowerCase() : '') + '. Vamos juntos.');
+    } else if (durActualMins < 120) {
+      f.push(n('una hora de turno. El foco está ahí.'));
+    } else if (durActualMins < 180) {
+      var hA = Math.floor(durActualMins / 60);
+      f.push(hA + 'h de turno' + (nm ? ', ' + nm.toLowerCase() : '') + '. Buen ritmo.');
+    } else if (durActualMins < 300) {
+      f.push(n(fDur(durActualMins) + ' seguidas. Constancia pura.'));
+    } else if (durActualMins < 480) {
+      f.push(n(fDur(durActualMins) + ' en turno. Si podés respirar un momento, tomalo.'));
+    } else if (durActualMins < 720) {
+      f.push(n('jornada completa y más. Eso no lo hace cualquiera.'));
+      f.push(n('más de 8h — el extra ya corre. Descansá pronto.'));
+    } else {
+      f.push(n('más de 12h. Por favor, descansá cuando puedas.'));
+    }
+  }
+
+  // ══ 3. SEMANA ══
   var hsemActual = typeof getHSEM === 'function' ? getHSEM(ahora) : 44;
   if (horasSemana >= hsemActual) {
+    f.push(n('semana completa. Todo lo que sumes ahora es extra.'));
+    f.push(n('superaste las horas semanales. Excelente semana.'));
+  } else if (horasSemana >= hsemActual - 8) {
+    f.push(n(Math.round(horasSemana) + 'h esta semana. Falta poquito.'));
+  } else if (horasSemana >= 24) {
     f.push(
       Math.round(horasSemana) +
         'h esta semana' +
         (nm ? ', ' + nm.toLowerCase() : '') +
-        ' — completaste las ' +
-        hsemActual +
-        'h legales. Todo lo que sumes es extra. 🎯'
-    );
-  } else if (horasSemana >= hsemActual - 8) {
-    f.push(
-      nm
-        ? nm +
-            ', llevás ' +
-            Math.round(horasSemana) +
-            'h esta semana. Falta poquito para las ' +
-            hsemActual +
-            'h.'
-        : 'Llevás ' +
-            Math.round(horasSemana) +
-            'h esta semana. Falta poquito para las ' +
-            hsemActual +
-            'h.'
-    );
-  } else if (horasSemana >= 20) {
-    f.push(
-      Math.round(horasSemana) +
-        'h acumuladas esta semana' +
-        (nm ? ', ' + nm.toLowerCase() : '') +
-        ' — vas más de la mitad.'
+        '. Vas muy bien.'
     );
   } else if (horasSemana >= 10) {
-    f.push(
-      (nm ? nm + ', ' : '') + Math.round(horasSemana) + 'h registradas esta semana. Buen arranque.'
-    );
+    f.push(n('buen arranque de semana. Seguimos.'));
   }
 
-  // ══════ 4. DÍAS ESPECIALES Y CONTEXTO ══════
+  // ══ 4. DÍAS ESPECIALES ══
   if (isFestivo && isNoche) {
-    f.push(
-      (nm ? nm + ', festivo nocturno' : 'Festivo nocturno') +
-        '. Tu recargo llega al +110% — ese compromiso tiene peso. 🔥'
-    );
+    f.push(n('festivo nocturno. Doble mérito — eso tiene peso real.'));
   } else if (isFestivo) {
-    f.push(
-      (nm ? 'Trabajando en festivo, ' + nm.toLowerCase() : 'Trabajando en festivo') +
-        '. Ese esfuerzo tiene +75% a tu favor.'
-    );
+    f.push(n('trabajando en festivo. Ese compromiso se nota.'));
+    f.push(n('festivo que no te detiene. Eso habla de vos.'));
   }
-  if (isDomingo && !isFestivo && activo) {
-    f.push(
-      (nm ? nm + ', ' : '') +
-        'domingo trabajando. Cuando otros descansan, vos sumás. Eso no es poco.'
-    );
-  } else if (isFinDeSemana && !isFestivo && !isDomingo) {
-    f.push(
-      (nm ? 'Sábado, ' + nm.toLowerCase() + ', ' : 'Sábado: ') +
-        'lo que hagas hoy se va a notar en la próxima nómina.'
-    );
+  if (isDomingo && activo) {
+    f.push(n('domingo trabajando. Cuando otros descansan, vos sumás.'));
+  }
+  if (isFinDeSemana && !isDomingo) {
+    f.push(n('sábado que suma. Lo que hagas hoy se nota en la nómina.'));
   }
   if (isLunes && totalMins > 0 && hora < 12) {
-    f.push(
-      (nm ? nm + ', ' : '') + 'arrancando lunes con turno. La semana empieza con vos al volante.'
-    );
+    f.push(n('arrancando lunes con turno. La semana empieza con vos.'));
+    f.push(n('lunes de trabajo — la semana arranca bien.'));
   } else if (isViernes && activo) {
-    f.push(
-      (nm ? nm + ', ' : '') +
-        'viernes y dándole. El fin de semana se va a sentir mejor sabiendo que cumpliste.'
-    );
+    f.push(n('viernes y seguís dándole. La semana cierra bien.'));
+    f.push(n('último empujón del viernes — ya casi.'));
   }
 
-  // ══════ 5. TURNO NOCTURNO ══════
-  if (isNoche && activo) {
-    f.push(
-      (nm ? nm + ', ' : '') +
-        'turno nocturno en curso — el +35% ya corre a tu favor en cada minuto.'
-    );
-  } else if (isNoche && !activo && totalMins > 0) {
-    f.push(
-      (nm ? nm + ', ' : '') + 'trabajando hasta tarde. Tu dedicación a esta hora habla sola. 🌙'
-    );
-  }
-
-  // ══════ 6. HITOS DE META MENSUAL ══════
+  // ══ 5. META MENSUAL (dato como respaldo motivacional) ══
   if (totalMins > 0) {
     if (pct >= 100) {
-      f.push(
-        (nm ? '¡' + nm + ', meta superada' : '¡Meta mensual superada') +
-          '! Llevás ' +
-          fCOP(totalCOP) +
-          ' — descansá cuando puedas. 🎉'
-      );
+      f.push(n('meta del mes superada. Podés cerrar tranquilo.'));
+      f.push(n('llegaste a tu meta. Todo lo que sigue es ganancia extra.'));
     } else if (pct >= 90) {
-      f.push((nm ? nm + ', ' : '') + 'al ' + pct + '% de tu meta. Estás a un suspiro de llegar.');
+      f.push(n('al ' + pct + '% de tu meta. Estás a un suspiro.'));
+      f.push(n('casi, ' + (nm ? nm.toLowerCase() : 'ya') + '. Falta poquísimo.'));
     } else if (pct >= 75) {
-      f.push((nm ? nm + ', ' : '') + 'vas en el ' + pct + '%. Con este ritmo, llegás sobrado.');
+      f.push(n('vas en el ' + pct + '%. Con este ritmo llegás cómodo.'));
     } else if (pct >= 50) {
-      f.push(
-        (nm ? nm + ', ' : '') +
-          'llevás el ' +
-          pct +
-          '%. Mitad del camino — exactamente donde tenés que estar.'
-      );
+      f.push(n('mitad del camino. Exactamente donde tenés que estar.'));
     } else if (pct >= 25) {
-      f.push((nm ? nm + ', ' : '') + fCOP(totalCOP) + ' acumulados. Cada turno suma al total.');
+      f.push(n('el mes avanza bien. Paso a paso es como se llega.'));
     } else {
-      f.push(
-        (nm ? nm + ', ' : '') +
-          'el mes recién arranca. ' +
-          fCOP(totalCOP) +
-          ' por ahora — paso a paso.'
-      );
+      f.push(n('el mes arranca. Sin apuro — cada turno suma al total.'));
     }
   }
 
-  // ══════ 7. RECARGOS Y ESPECIALES DEL MES ══════
-  if (extraMins > 0 && extraMins >= 60) {
-    f.push(
-      (nm ? nm + ', ' : '') +
-        'tenés ' +
-        fDur(extraMins) +
-        ' en horas extra este mes — entre +25% y +150% sobre tu valor hora. 💰'
-    );
-  }
-  if (festMins > 0 && !isFestivo) {
-    f.push(
-      'Has trabajado ' +
-        fDur(festMins) +
-        ' en festivos este mes' +
-        (nm ? ', ' + nm.toLowerCase() : '') +
-        '. Ese esfuerzo extra se nota en el bolsillo.'
-    );
-  }
-  if (noctMins > 60 * 10) {
-    f.push((nm ? nm + ', ' : '') + 'más de 10h nocturnas este mes — turnero de verdad. 🌙');
-  }
-
-  // ══════ 8. RECONOCIMIENTOS POR PATRONES ══════
-  if (diasTrab >= 20) {
-    f.push((nm ? nm + ', ' : '') + diasTrab + ' días trabajados este mes. Constancia que se ve.');
-  } else if (diasTrab >= 10) {
-    f.push((nm ? nm + ', ' : '') + 'llevás ' + diasTrab + ' días trabajados. Vas firme.');
-  }
-
-  // ══════ 9-A. ANTI-BURNOUT (racha de días seguidos) ══════
+  // ══ 6. RACHA Y PATRONES ══
   if (rachaSeguidos >= 12) {
-    f.push(
-      (nm ? nm + ', ' : '') +
-        rachaSeguidos +
-        ' días seguidos. Sos una máquina — pero las máquinas también descansan. Buscá un día libre pronto. 🙏'
-    );
+    f.push(n(rachaSeguidos + ' días seguidos. Increíble — pero descansá pronto.'));
   } else if (rachaSeguidos >= 7) {
-    f.push(
-      (nm ? nm + ', ' : '') +
-        rachaSeguidos +
-        ' días seguidos trabajando. Una pausa esta semana te haría bien.'
-    );
+    f.push(n(rachaSeguidos + ' días sin parar. Una pausa te haría bien.'));
   } else if (rachaSeguidos >= 5) {
+    f.push(n(rachaSeguidos + ' días seguidos. Buena constancia.'));
     f.push(
-      'Llevás ' +
-        rachaSeguidos +
-        ' días seguidos' +
-        (nm ? ', ' + nm.toLowerCase() : '') +
-        ' — muy buena constancia.'
+      rachaSeguidos + ' días consecutivos' + (nm ? ', ' + nm.toLowerCase() : '') + '. Se nota.'
     );
+  } else if (rachaSeguidos >= 3) {
+    f.push(n(rachaSeguidos + ' días seguidos. Buen ritmo.'));
   }
 
-  // ══════ 9-B. ANTI-CULPA (semanas/días bajos) ══════
-  if (totalMins > 0 && horasSemana > 0 && horasSemana < 20 && diaSemana >= 5) {
-    f.push(
-      (nm ? nm + ', ' : '') +
-        'una semana más liviana no define tu mes. Lo que viene sigue siendo tuyo.'
-    );
-  }
-  if (diasTrab > 0 && diasTrab < 5 && ahora.getDate() > 20) {
-    f.push((nm ? nm + ', ' : '') + 'tu ritmo es tuyo. Cada turno cuenta — no hace falta comparar.');
+  if (diasTrab >= 20) {
+    f.push(n(diasTrab + ' días trabajados este mes. La constancia se ve.'));
+  } else if (diasTrab >= 15) {
+    f.push(n(diasTrab + ' días este mes. Vas a paso firme.'));
+  } else if (diasTrab >= 10) {
+    f.push(n(diasTrab + ' días trabajados. Vas bien encaminado.'));
   }
 
-  // ══════ 9-C. SOLEDAD A HORAS RARAS (compañía emocional) ══════
+  // ══ 7. HORAS EXTRA Y NOCTURNOS ══
+  if (extraMins >= 120) {
+    f.push(n('tenés horas extra este mes. El esfuerzo se convierte en más.'));
+  }
+  if (noctMins >= 600) {
+    f.push(n('más de 10h nocturnas este mes. Turnero de verdad.'));
+  } else if (noctMins >= 180 && isNoche) {
+    f.push(n('ya acumulás varias noches este mes. El recargo es tuyo.'));
+  }
+
+  // ══ 8. RÉCORD PERSONAL ══
+  if (mejorDiaEsHoy && totalMins > 60) {
+    f.push('Hoy es tu mejor día del mes' + (nm ? ', ' + nm : '') + '. Récord personal.');
+  }
+
+  // ══ 9. BIENESTAR Y COMPAÑÍA ══
   if (isMadrugada && activo && durActualMins >= 60) {
-    f.push(
-      (nm ? nm + ', ' : '') +
-        'a esta hora hay pocos despiertos. Yo estoy acá, no estás solo en este turno. 🌙'
-    );
+    f.push(n('no estás solo en este turno. Estoy acá.'));
+    f.push(n('madrugada de turno — acá acompañándote.'));
   }
   if (hora >= 23 && activo) {
-    f.push(
-      (nm ? nm + ', ' : '') + 'la noche se hace más corta cuando alguien la registra con vos.'
-    );
+    f.push(n('la noche se hace más corta cuando la registrás.'));
   }
-
-  // ══════ 9-D. RÉCORD PERSONAL DEL MES ══════
-  if (mejorDiaEsHoy && totalMins > 60) {
-    f.push(
-      (nm ? '¡' + nm + ', ' : '¡') +
-        'hoy es tu mejor día del mes! ' +
-        fCOP(mejorDiaCOP) +
-        ' — récord personal. 🏆'
-    );
-  } else if (mejorDiaCOP > 0 && totalMins > 60 && hora >= 14) {
-    var hoyCOP = 0;
-    try {
-      if (typeof calcPorDia === 'function') {
-        var vhh = props.vh || (salario ? salario / 240 : 0);
-        var dxdh = calcPorDia(turnos, vhh) || [];
-        var hkey =
-          ahora.getFullYear() +
-          '-' +
-          String(ahora.getMonth() + 1).padStart(2, '0') +
-          '-' +
-          String(ahora.getDate()).padStart(2, '0');
-        for (var i = 0; i < dxdh.length; i++) {
-          if (dxdh[i].fecha === hkey) {
-            hoyCOP = dxdh[i].cop;
-            break;
-          }
-        }
-      }
-    } catch (_) {}
-    if (hoyCOP > 0 && hoyCOP > mejorDiaCOP * 0.85 && !mejorDiaEsHoy) {
-      f.push(
-        (nm ? nm + ', ' : '') + 'vas muy cerca de tu mejor día del mes. Si seguís así, lo rompés.'
-      );
-    }
-  }
-
-  // ══════ 9-E. NUDGES SUAVES DE SALUD (sin ser moralista) ══════
   if (activo && durActualMins >= 300 && durActualMins < 360) {
-    f.push((nm ? nm + ', ' : '') + 'llevás 5h. ¿Tomaste agua hace rato? Es un buen momento.');
+    f.push(n('¿tomaste agua? Con 5h de turno, es buen momento.'));
   } else if (activo && durActualMins >= 420 && durActualMins < 480) {
-    f.push(
-      (nm ? nm + ', ' : '') + 'si podés estirar un poco antes de seguir, tu espalda lo va a notar.'
-    );
+    f.push(n('estirá un poco si podés — la espalda lo va a notar.'));
   }
 
-  // ══════ 9. MENSAJES CÁLIDOS DE CIERRE / TRANSICIÓN ══════
-  if (!activo && totalMins > 0 && hora >= 18) {
-    f.push(
-      (nm ? nm + ', ' : '') + 'turno cerrado por hoy. Lo que hiciste ya quedó. Descansá bien. ✨'
-    );
+  // ══ 10. CIERRE Y TRANSICIÓN ══
+  if (!activo && totalMins > 0 && hora >= 18 && hora < 23) {
+    f.push(n('turno cerrado por hoy. Lo que hiciste ya quedó.'));
+    f.push(n('cerraste bien el día. Descansá.'));
   }
   if (!activo && totalMins > 0 && isMadrugada) {
-    f.push((nm ? nm + ', ' : '') + 'descansá. Mañana también vamos a estar acá para vos.');
+    f.push(n('descansá. Mañana también estamos acá para vos.'));
   }
 
-  // ══════ 10. FALLBACKS CÁLIDOS ══════
-  if (f.length < 3) {
-    f.push(
-      (nm ? nm + ', ' : '') +
-        'llevás ' +
-        fDur(totalMins) +
-        ' registradas este mes. Cada minuto cuenta.'
-    );
+  // ══ ANTI-CULPA ══
+  if (totalMins > 0 && horasSemana > 0 && horasSemana < 20 && diaSemana >= 5) {
+    f.push(n('una semana más liviana no define tu mes.'));
+    f.push(n('el ritmo varía — lo que cuenta es seguir.'));
   }
-  if (f.length < 3) {
-    f.push(
-      (nm ? nm + ', tocame ' : 'Tocame ') + 'si querés revisar algo de tu nómina. Estoy acá. ✦'
-    );
+  if (diasTrab > 0 && diasTrab < 5 && ahora.getDate() > 20) {
+    f.push(n('tu ritmo es tuyo. No hace falta comparar.'));
+    f.push(n('cada turno que registrés suma — sin presión.'));
   }
+
+  // ══ FRASES GENÉRICAS DE CALIDAD (variedad extra) ══
+  f.push(n('lo que no se registra no cuenta. Vos lo hacés bien.'));
+  f.push('Tocame' + (nm ? ', ' + nm.toLowerCase() : '') + ' si querés revisar algo. Estoy acá.');
+  if (totalMins > 0) {
+    f.push(n(fDur(totalMins) + ' registradas este mes. Todo sumado.'));
+  }
+  f.push(n('cada turno que cerrás es un paso más. Bien.'));
+  f.push(
+    'El trabajo que no se mide no se valora' +
+      (nm ? ', ' + nm.toLowerCase() : '') +
+      '. Vos lo medís.'
+  );
 
   return f;
 }

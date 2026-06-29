@@ -1125,12 +1125,11 @@ function AsistenteTab(props) {
   // Rotación de microcopy contextual junto al saludo, solo en estado inicial.
   useEffect(
     function () {
-      if (tieneConversacion) return;
       var t = setInterval(function () {
         setHeroIdx(function (n) {
           return n + 1;
         });
-      }, 7000);
+      }, 9000);
       return function () {
         clearInterval(t);
       };
@@ -2144,21 +2143,6 @@ function AsistenteTab(props) {
   }
 
   var phrases = typeof _aiHeroPhrases === 'function' ? _aiHeroPhrases(props) : [];
-  if (typeof aiBriefing === 'function' && typeof buildContext === 'function') {
-    var _briefCtx = props.calc
-      ? buildContext({
-          turnos: props.turnos,
-          turnosAll: props.turnosAll || props.turnos,
-          calc: props.calc,
-          salario: props.salario,
-          vh: props.vh,
-          session: props.session,
-          activo: props.activo || null
-        })
-      : null;
-    var briefing = aiBriefing(_briefCtx);
-    if (briefing) phrases = [briefing].concat(phrases);
-  }
   var personalNote = phrases && phrases.length ? phrases[heroIdx % phrases.length] : '';
 
   // ¿Hay APIs de voz? Gobierna el chip de voz del composer y el sheet.
@@ -2201,23 +2185,11 @@ function AsistenteTab(props) {
           'div',
           { className: 'asistente-top-title' },
           h('h1', { className: 'asistente-greeting' }, saludo + '.'),
-          !tieneConversacion && personalNote
+          personalNote
             ? h('p', { className: 'asistente-personal-note', key: heroIdx }, personalNote)
             : null
         ),
-        h(
-          'button',
-          {
-            className: 'asistente-new-btn',
-            type: 'button',
-            'aria-label': tieneConversacion ? 'Nueva conversación' : 'Asistente listo',
-            disabled: !tieneConversacion,
-            onClick: tieneConversacion ? clearChat : undefined
-          },
-          tieneConversacion
-            ? _aiIcon('plus')
-            : h('span', { className: 'asistente-status-dot', 'aria-hidden': 'true' })
-        )
+        null
       ),
 
       h(

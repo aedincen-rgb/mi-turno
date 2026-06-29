@@ -3109,7 +3109,7 @@
 }
 
 .scr--assistant .asistente-topbar {
-  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  grid-template-columns: 44px minmax(0, 1fr);
   min-height: 48px;
   gap: 2px;
 }
@@ -3165,15 +3165,22 @@
 
 .scr--assistant .asistente-personal-note {
   display: -webkit-box;
-  margin: 4px 0 0;
-  color: color-mix(in srgb, var(--muted) 88%, var(--text));
-  font-size: 12.5px;
-  font-weight: 560;
-  letter-spacing: 0;
-  line-height: 1.34;
+  margin: 5px 0 0;
+  color: color-mix(in srgb, var(--text) 72%, var(--muted));
+  font-size: 13px;
+  font-weight: 580;
+  letter-spacing: -0.01em;
+  line-height: 1.35;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   overflow: hidden;
+  transition: opacity 0.4s var(--ease);
+}
+/* En chat: 1 línea para no robar espacio al header */
+.scr--assistant .asistente-wrap.has-chat .asistente-personal-note {
+  -webkit-line-clamp: 1;
+  font-size: 12px;
+  opacity: 0.85;
 }
 
 .scr--assistant .asistente-chips {
