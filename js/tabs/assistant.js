@@ -6,7 +6,7 @@
 //    · services/ai-greeting.js      saludo + nombre + frases del hero
 //    · modals/email-compose-card.js EmailComposeCard (inline en chat)
 //  Globales usadas: useState, useEffect, useCallback, useRef, h,
-//  haptic, aiAnswer, CLOUD_MODE, EmailComposeCard, _aiLoadHistory,
+//  haptic, aiAnswer, CLOUD_MODE, tabIcon, EmailComposeCard, _aiLoadHistory,
 //  _aiSaveHistory, _aiClearHistory, _aiFormat, _aiHeroPhrases.
 // ═══════════════════════════════════════════════════════════════
 
@@ -1900,7 +1900,14 @@ function AsistenteTab(props) {
   ];
 
   var menuItems = [
-    { id: 'volver', label: 'Volver', hint: 'Regresar a la app', icon: '←', featured: true },
+    {
+      id: 'volver',
+      label: 'Inicio',
+      hint: 'Volver a la pantalla principal',
+      icon: tabIcon('home'),
+      iconCls: 'home-tab-pill',
+      featured: true
+    },
     {
       id: 'ingresos',
       label: 'Ingresos',
@@ -2326,7 +2333,13 @@ function AsistenteTab(props) {
                         runMenuItem(item);
                       }
                     },
-                    h('span', { className: 'asistente-menu-icon' }, item.icon),
+                    h(
+                      'span',
+                      {
+                        className: 'asistente-menu-icon' + (item.iconCls ? ' ' + item.iconCls : '')
+                      },
+                      item.icon
+                    ),
                     h(
                       'span',
                       { className: 'asistente-menu-copy' },
